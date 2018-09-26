@@ -6,8 +6,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="js/miniblazor.js" />
     <Compile Include="Html.fs" />
-    <Compile Include="Library.fs" />
+    <Compile Include="Render.fs" />
+    <Compile Include="App.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <BlazorJsFile Include="js/miniblazor.js" />
   </ItemGroup>
 
   <ItemGroup>
