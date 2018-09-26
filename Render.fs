@@ -44,6 +44,7 @@ let rec toRenderedNode wrapEvent = function
             revents.Add(name, new DotNetObjectRef(handler))
         let rchildren = [| for c in children -> toRenderedNode wrapEvent c |]
         rnode name attrs revents rchildren
+    | Empty | Concat _ -> failwith "Should not have composite nodes at render time"
 
 let skip = box "s"
 
@@ -63,7 +64,7 @@ let insert wrapEvent node =
 let inPlace attrs events children =
     box { a = attrs; e = events; c = children }
 
-let rec diff wrapEvent (before: RenderedNode) (after: Node<'Message>) =
+let rec diff wrapEvent (before: RenderedNode) (after: Node<'Message>) : DiffResult * RenderedNode =
     match before, after with
     | :? RNode as b, Elt (aname, aattrs, aevents, achildren) ->
         if aname = b.n then

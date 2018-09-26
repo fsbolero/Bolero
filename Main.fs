@@ -19,16 +19,18 @@ let Update message model =
 
 let Render model : Node<Message> =
     div [] [
-        yield input [value model.input; onInput SetInput]
-        yield input [type_ "submit"; onClick Submit]
-        yield div [] [text (defaultArg model.submitted "")]
-        match model.submitted with
+        input [value model.input; onInput SetInput]
+        input [type_ "submit"; onClick Submit]
+        div [] [text (defaultArg model.submitted "")]
+        (match model.submitted with
         | Some s ->
-            if s.Contains "secret" then
-                yield div [] [text "You typed the secret password!"]
-            if s.Contains "super" then
-                yield div [] [text "You typed the super secret password!"]
-        | _ -> ()
+            concat [
+                if s.Contains "secret" then
+                    yield div [] [text "You typed the secret password!"]
+                if s.Contains "super" then
+                    yield div [] [text "You typed the super secret password!"]
+            ]
+        | None -> empty)
     ]
 
 [<EntryPoint>]

@@ -6,6 +6,8 @@ open System.Net
 open Microsoft.JSInterop.Internal
 
 type Node<'Message> =
+    | Empty
+    | Concat of list<Node<'Message>>
     | Elt of name: string * attrs: IDictionary<string, string> * events: IDictionary<string, obj -> 'Message> * children: list<Node<'Message>>
     | Text of text: string
 
@@ -14,6 +16,14 @@ type Attr<'Message> =
     | PlainAttr of aname: string * avalue: string
     | Handler of ename: string * ehandler: (obj -> 'Message)
 
+let private collect nodes =
+    nodes
+    |> List.collect (function
+        | Empty -> []
+        | Concat l -> l
+        | x -> [x]
+    )
+
 let Element name attrsAndEvents children =
     let attrs = Dictionary<string, string>()
     let events = Dictionary<string, obj -> 'Message>()
@@ -21,16 +31,21 @@ let Element name attrsAndEvents children =
         match a with
         | PlainAttr(name, value) -> attrs.[name] <- value
         | Handler(name, handler) -> events.[name] <- handler
-    Elt(name, attrs, events, children)
+    Elt(name, attrs, events, collect children)
 
 let text str = Text str
+let [<GeneralizableValue>] empty<'Message> = Empty : Node<'Message>
+let concat nodes = Concat (collect nodes)
+
 let div attrs children = Element "div" attrs children
 let input attrs = Element "input" attrs []
 let b attrs children = Element "b" attrs children
 let i attrs children = Element "i" attrs children
+
 let (=>) name value = PlainAttr(name, value)
 let value x = "value" => x
 let type_ x = "type" => x
+
 let onLazy event handler = Handler(event, handler)
 let on event message = Handler(event, fun _ -> message)
 let onChange message = onLazy "change" (fun args -> message (args :?> string))
