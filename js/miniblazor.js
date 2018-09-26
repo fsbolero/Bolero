@@ -31,8 +31,8 @@ RenderedTree.prototype.makeTree = function(tree) {
             node.setAttribute(a, tree.a[a]);
         }
         // WTF: why is tree.events an array? it's serialized from Dictionary<string, obj> just like tree.attrs
-        for (let i = 0; i < tree.e.length; i++) {
-            this.addEvent(node, tree.e[i].key, tree.e[i].value);
+        for (let e in tree.e) {
+            this.addEvent(node, e, tree.e[e]);
         }
         for (let i = 0; i < tree.c.length; i++) {
             node.appendChild(this.makeTree(tree.c[i]));
@@ -67,8 +67,8 @@ RenderedTree.prototype.applyDiff = function(diff, parent, node) {
                 node.setAttribute(a, diff.a[a]);
             }
         }
-        for (let i = 0; i < diff.e.length; i++) {
-            this.addEvent(node, diff.e[i].key, diff.e[i].value);
+        for (let e in diff.e) {
+            this.addEvent(node, e, diff.e[e]);
         }
         let child = node.firstChild;
         for (let i = 0; i < diff.c.length; i++) {
@@ -86,6 +86,7 @@ RenderedTree.prototype.applyDiff = function(diff, parent, node) {
 var MiniBlazor = {
     RenderedTree: RenderedTree,
     mount: function(selector, initTree) {
+        console.log(initTree);
         document.querySelector(selector)
             .appendChild((new RenderedTree(initTree)).node);
     }

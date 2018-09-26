@@ -5,91 +5,82 @@ open Microsoft.JSInterop
 open Microsoft.JSInterop.Internal
 open MiniBlazor.Html
 
+type RenderedNode = obj
+
+type RNode =
+    { n: string
+      a: IDictionary<string, string>
+      e: IDictionary<string, obj>
+      c: RenderedNode[] }
+
+let rnode name attrs events children : RenderedNode =
+    box { n = name; a = attrs; e = events; c = children }
+
+type DiffResult = obj
+
+type InPlaceDiff =
+    { a: IDictionary<string, string>
+      e: IDictionary<string, obj>
+      c: DiffResult[] }
+
+type ReplaceDiff =
+    { r: RenderedNode }
+
+type InsertDiff =
+    { i: RenderedNode }
+
 type RenderedEvent =
     { mutable handler: obj -> DiffResult }
 
     [<JSInvokable>]
     member this.Handle(args) = this.handler(args)
 
-and RenderedNode =
-    | RText of text: string
-    | RElt of name: string * attrs: IDictionary<string, string> * events: IDictionary<string, DotNetObjectRef> * children: RenderedNode[]
-
-    interface ICustomArgSerializer with
-        member this.ToJsonPrimitive() =
-            match this with
-            | RText t -> box t
-            | RElt(name, attrs, events, children) -> box { n = name; a = attrs; e = events; c = children }
-
-and DiffResult =
-    | Skip
-    | Delete
-    // For `attr` and `events`, a null value means remove.
-    | InPlace of attr: IDictionary<string, string> * events: IDictionary<string, DotNetObjectRef> * children: DiffResult[]
-    | Replace of node: RenderedNode
-    | Insert of node: RenderedNode
-
-    interface ICustomArgSerializer with
-        member this.ToJsonPrimitive() =
-            match this with
-            | Skip -> box "s"
-            | Delete -> box "d"
-            | InPlace(attr, events, children) -> box { a = attr; e = events; c = children }
-            | Replace node -> box { r = node }
-            | Insert node -> box { i = node }
-
-and InPlaceResult =
-    { a: IDictionary<string, string>
-      e: IDictionary<string, DotNetObjectRef>
-      c: DiffResult[] }
-
-and RNode =
-    { n: string
-      a: IDictionary<string, string>
-      e: IDictionary<string, DotNetObjectRef>
-      c: RenderedNode[] }
-
-and ReplaceResult =
-    { r: RenderedNode }
-
-and InsertResult =
-    { i: RenderedNode }
-
 let rec toRenderedNode wrapEvent = function
-    | Text text -> RText text
+    | Text text -> box text
     | Elt(name, attrs, events, children) ->
-        let revents = Dictionary<string, DotNetObjectRef>()
+        let revents = Dictionary<string, obj>()
         for KeyValue(name, handler) in events do
             let handler : RenderedEvent = { handler = wrapEvent handler }
             revents.Add(name, new DotNetObjectRef(handler))
         let rchildren = [| for c in children -> toRenderedNode wrapEvent c |]
-        RElt(name, attrs, revents, rchildren)
+        rnode name attrs revents rchildren
+
+let skip = box "s"
+
+let isSkip (x: DiffResult) =
+    match x with
+    | :? string as s when s = "s" -> true
+    | _ -> false
 
 let replace wrapEvent node =
     let rendered = toRenderedNode wrapEvent node
-    Replace rendered, rendered
+    box { r = rendered }, rendered
 
 let insert wrapEvent node =
     let rendered = toRenderedNode wrapEvent node
-    Insert rendered, rendered
+    box { i = rendered }, rendered
+
+let inPlace attrs events children =
+    box { a = attrs; e = events; c = children }
 
 let rec diff wrapEvent (before: RenderedNode) (after: Node<'Message>) =
     match before, after with
-    | RElt (bname, battrs, bevents, bchildren), Elt (aname, aattrs, aevents, achildren) ->
-        if aname = bname then
+    | :? RNode as b, Elt (aname, aattrs, aevents, achildren) ->
+        if aname = b.n then
             let attrDiff = Dictionary<string, string>()
-            let eventDiff = Dictionary<string, DotNetObjectRef>()
-            let newEvents = Dictionary<string, DotNetObjectRef>()
+            let eventDiff = Dictionary<string, obj>()
+            let newEvents = Dictionary<string, obj>()
             for KeyValue(k, av) in aattrs do
-                match battrs.TryGetValue(k) with
+                match b.a.TryGetValue(k) with
                 | true, bv ->
                     if av <> bv then attrDiff.Add(k, av)
                 | false, _ ->
                     attrDiff.Add(k, av)
             for KeyValue(k, av) in aevents do
                 let av =
-                    match bevents.TryGetValue(k) with
+                    match b.e.TryGetValue(k) with
                     | true, bv ->
+                        let bv = bv :?> DotNetObjectRef
                         (bv.Value :?> RenderedEvent).handler <- wrapEvent av
                         bv
                     | false, _ ->
@@ -97,38 +88,37 @@ let rec diff wrapEvent (before: RenderedNode) (after: Node<'Message>) =
                         eventDiff.Add(k, av)
                         av
                 newEvents.Add(k, av)
-            for KeyValue(k, _) in battrs do
+            for KeyValue(k, _) in b.a do
                 if not (aattrs.ContainsKey k) then
                     attrDiff.Add(k, null)
-            for KeyValue(k, v) in bevents do
-                if not (bevents.ContainsKey k) then
+            for KeyValue(k, v) in b.e do
+                if not (b.e.ContainsKey k) then
+                    let v = v :?> DotNetObjectRef
                     v.Dispose()
                     eventDiff.Add(k, null)
             let childDiff, newChildren =
                 achildren
                 |> List.mapi (fun i a ->
-                    if i >= bchildren.Length then
+                    if i >= b.c.Length then
                         insert wrapEvent a
                     else
-                        diff wrapEvent bchildren.[i] a
+                        diff wrapEvent b.c.[i] a
                 )
                 |> List.unzip
             let childDiff = Array.ofList childDiff
-            let skip =
-                attrDiff.Count = 0 &&
+            if  attrDiff.Count = 0 &&
                 eventDiff.Count = 0 &&
-                childDiff |> Array.forall (function Skip -> true | _ -> false)
-            if skip then
-                Skip, before
+                childDiff |> Array.forall (function :? string as s when s = "s" -> true | _ -> false) then
+                skip, before
             else
-                let diff = InPlace(attrDiff, eventDiff, childDiff)
-                let newTree = RElt(aname, aattrs, newEvents, Array.ofList newChildren)
+                let diff = inPlace attrDiff eventDiff childDiff
+                let newTree = rnode aname aattrs newEvents (Array.ofList newChildren)
                 diff, newTree
         else
             replace wrapEvent after
-    | RText btext, Text atext ->
+    | :? string as btext, Text atext ->
         if atext = btext then
-            Skip, before
+            skip, before
         else
             replace wrapEvent after
     | _ ->
