@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <BlazorJsFile Include="js/miniblazor.js" />
+    <Watch Include="js/miniblazor.js" />
   </ItemGroup>
 
   <ItemGroup>

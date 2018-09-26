@@ -14,6 +14,16 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "watch",
+            "command": "dotnet watch build",
+            "type": "shell",
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "run",
             "command": "dotnet blazor serve",
             "type": "shell",
