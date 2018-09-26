@@ -18,7 +18,7 @@ let Update message model =
     | Submit -> { model with submitted = Some model.input }
 
 let Render model : Node<Message> =
-    div [] [
+    concat [
         input [value model.input; onInput SetInput]
         input [type_ "submit"; onClick Submit]
         div [] [text (defaultArg model.submitted "")]

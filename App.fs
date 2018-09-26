@@ -12,15 +12,15 @@ let Create<'Message, 'Model> init update render : App<'Message, 'Model> =
 
 type RunState<'Message, 'Model> =
     { mutable State : 'Model
-      mutable Tree : Render.RenderedNode
+      mutable Tree : Render.RenderedNode[]
       Update : 'Message -> 'Model -> 'Model
       Render : 'Model -> Html.Node<'Message> }
 
 let rec private applyUpdate (state: RunState<'Message, 'Model>) (msg: 'Message) =
     let newState = state.Update msg state.State
     let diff, newTree =
-        state.Render newState
-        |> Render.diff (fun f args -> applyUpdate state (f args)) state.Tree
+        [state.Render newState]
+        |> Render.diffSiblings (fun f args -> applyUpdate state (f args)) state.Tree
     state.Tree <- newTree
     state.State <- newState
     diff
@@ -36,7 +36,8 @@ let Run (selector: string) (app: App<'Message, 'Model>) =
           Update = fun msg model -> app.Update msg model
           Render = fun model -> app.Render model }
     let rInitTree =
-        Render.toRenderedNode (fun f args -> applyUpdate state (f args)) initTree
+        [initTree]
+        |> Render.toRenderedNodes (fun f args -> applyUpdate state (f args))
     state.Tree <- rInitTree
     JSRuntime.Current.InvokeAsync<unit>("MiniBlazor.mount", selector, rInitTree)
     |> ignore

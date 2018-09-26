@@ -1,5 +1,9 @@
-let RenderedTree = function(initTree) {
-    this.node = this.makeTree(initTree);
+let RenderedTree = function(root, initTree) {
+    let nodes = initTree.map(t => this.makeTree(t));
+    for (let i = 0; i < nodes.length; i++) {
+        root.appendChild(nodes[i]);
+    }
+    this.root = root;
 }
 
 let eventArgs = (event, element) => {
@@ -17,7 +21,7 @@ RenderedTree.prototype.addEvent = function(node, name, handler) {
         handler.invokeMethodAsync("Handle", eventArgs(event, node))
             .then(diff => {
                 console.log("DIFF", diff);
-                this.applyDiff(diff, this.node.parentNode, this.node);
+                this.applyDiff({c:diff}, null, this.root);
             });
     });
 }
@@ -42,24 +46,25 @@ RenderedTree.prototype.makeTree = function(tree) {
 };
 
 RenderedTree.prototype.applyDiff = function(diff, parent, node) {
-    let next = node ? node.nextSibling : null;
     if (diff == 's') {
-        return next;
-    } else if (diff == 'd') {
-        parent.removeChild(node);
-        return next;
+        // Skip
+        return node.nextSibling;
     } else if (diff.r) {
+        // Replace
+        let next = node.nextSibling;
         parent.replaceChild(this.makeTree(diff.r), node);
         return next;
     } else if (diff.i) {
+        // Insert
         let newNode = this.makeTree(diff.i);
-        if (next === null) {
-            parent.appendChild(newNode)
+        if (node.nextSibling === null) {
+            parent.appendChild(newNode);
         } else {
             parent.insertBefore(newNode, node);
         }
         return node;
-    } else if (diff.a) {
+    } else {
+        // Modify
         for (let a in diff.a) {
             if (diff.a[a] === null) {
                 node.removeAttribute(a);
@@ -75,11 +80,11 @@ RenderedTree.prototype.applyDiff = function(diff, parent, node) {
             child = this.applyDiff(diff.c[i], node, child);
         }
         while (child) {
-            next = child.nextSibling;
+            let next = child.nextSibling;
             node.removeChild(child);
             child = next;
         }
-        return next;
+        return node.nextSibling;
     }
 }
 
@@ -87,7 +92,7 @@ var MiniBlazor = {
     RenderedTree: RenderedTree,
     mount: function(selector, initTree) {
         console.log(initTree);
-        document.querySelector(selector)
-            .appendChild((new RenderedTree(initTree)).node);
+        let root = document.querySelector(selector);
+        new RenderedTree(root, initTree);
     }
 }

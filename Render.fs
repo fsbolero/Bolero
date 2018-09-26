@@ -30,7 +30,7 @@ type InsertDiff =
     { i: RenderedNode }
 
 type RenderedEvent =
-    { mutable handler: obj -> DiffResult }
+    { mutable handler: obj -> DiffResult[] }
 
     [<JSInvokable>]
     member this.Handle(args) = this.handler(args)
@@ -42,9 +42,20 @@ let rec toRenderedNode wrapEvent = function
         for KeyValue(name, handler) in events do
             let handler : RenderedEvent = { handler = wrapEvent handler }
             revents.Add(name, new DotNetObjectRef(handler))
-        let rchildren = [| for c in children -> toRenderedNode wrapEvent c |]
-        rnode name attrs revents rchildren
+        rnode name attrs revents (toRenderedNodes wrapEvent children)
     | Empty | Concat _ -> failwith "Should not have composite nodes at render time"
+
+and toRenderedNodes wrapEvent nodes =
+    let acc = ResizeArray()
+    let rec go = function
+        | [] -> ()
+        | Empty :: rest -> go rest
+        | Concat a :: rest -> go a; go rest
+        | n :: rest ->
+            acc.Add(toRenderedNode wrapEvent n)
+            go rest
+    go nodes
+    acc.ToArray()
 
 let skip = box "s"
 
@@ -64,6 +75,7 @@ let insert wrapEvent node =
 let inPlace attrs events children =
     box { a = attrs; e = events; c = children }
 
+// Assumes that `after` is a single node, ie either Text or Elt.
 let rec diff wrapEvent (before: RenderedNode) (after: Node<'Message>) : DiffResult * RenderedNode =
     match before, after with
     | :? RNode as b, Elt (aname, aattrs, aevents, achildren) ->
@@ -97,23 +109,15 @@ let rec diff wrapEvent (before: RenderedNode) (after: Node<'Message>) : DiffResu
                     let v = v :?> DotNetObjectRef
                     v.Dispose()
                     eventDiff.Add(k, null)
-            let childDiff, newChildren =
-                achildren
-                |> List.mapi (fun i a ->
-                    if i >= b.c.Length then
-                        insert wrapEvent a
-                    else
-                        diff wrapEvent b.c.[i] a
-                )
-                |> List.unzip
-            let childDiff = Array.ofList childDiff
+            let childDiff, newChildren = diffSiblings wrapEvent b.c achildren
             if  attrDiff.Count = 0 &&
                 eventDiff.Count = 0 &&
-                childDiff |> Array.forall (function :? string as s when s = "s" -> true | _ -> false) then
+                childDiff |> Array.forall (function :? string as s when s = "s" -> true | _ -> false)
+            then
                 skip, before
             else
                 let diff = inPlace attrDiff eventDiff childDiff
-                let newTree = rnode aname aattrs newEvents (Array.ofList newChildren)
+                let newTree = rnode aname aattrs newEvents newChildren
                 diff, newTree
         else
             replace wrapEvent after
@@ -124,3 +128,19 @@ let rec diff wrapEvent (before: RenderedNode) (after: Node<'Message>) : DiffResu
             replace wrapEvent after
     | _ ->
         replace wrapEvent after
+
+and diffSiblings wrapEvent (before: RenderedNode[]) (after: list<Node<'Message>>) : DiffResult[] * RenderedNode[] =
+    let acc = ResizeArray()
+    let rec go i = function
+        | [] -> i
+        | Empty :: arest -> go i arest
+        | Concat a :: arest -> go (go i a) arest
+        | a :: arest ->
+            if i = before.Length then
+                insert wrapEvent a
+            else
+                diff wrapEvent before.[i] a
+            |> acc.Add
+            go (i + 1) arest
+    go 0 after |> ignore
+    acc.ToArray() |> Array.unzip
