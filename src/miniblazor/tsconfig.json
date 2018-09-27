@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "outFile": "js/miniblazor.js",
+        "target": "es6",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "module": "none",
+    },
+    "files": [
+        "miniblazor.ts"
+    ],
+}

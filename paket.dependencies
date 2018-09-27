@@ -7,3 +7,4 @@ nuget Microsoft.AspNetCore.Blazor.Build
 clitool Microsoft.AspNetCore.Blazor.Cli
 nuget Microsoft.JSInterop
 nuget Mono.WebAssembly.Interop
+nuget Microsoft.TypeScript.MSBuild

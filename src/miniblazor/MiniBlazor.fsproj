@@ -4,13 +4,15 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="tsconfig.json" />
+    <Content Include="miniblazor.ts" />
     <EmbeddedResource Include="js/miniblazor.js" LogicalName="blazor:js:miniblazor.js" />
     <Compile Include="Html.fs" />
     <Compile Include="Render.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
   <ItemGroup>
-    <Watch Include="js/miniblazor.js" />
+    <Watch Include="miniblazor.ts" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
