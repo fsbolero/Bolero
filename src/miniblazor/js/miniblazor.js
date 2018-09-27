@@ -57,7 +57,7 @@ RenderedTree.prototype.applyDiff = function(diff, parent, node) {
     } else if (diff.i) {
         // Insert
         let newNode = this.makeTree(diff.i);
-        if (node.nextSibling === null) {
+        if (node === null) {
             parent.appendChild(newNode);
         } else {
             parent.insertBefore(newNode, node);

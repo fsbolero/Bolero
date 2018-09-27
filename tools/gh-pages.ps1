@@ -32,8 +32,8 @@ if ($env -eq "appveyor") {
 
 git checkout gh-pages
 git rm -rf *
-cp -r -force ../../wwwroot/* .
-cp -r -force ../../bin/Release/netstandard2.0/dist/_framework .
+cp -r -force ../../src/miniblazor/wwwroot/* .
+cp -r -force ../../src/miniblazor/bin/Release/netstandard2.0/dist/_framework .
 git add . 2>git.log
 git commit -am $msg
 git push -f -u origin gh-pages
