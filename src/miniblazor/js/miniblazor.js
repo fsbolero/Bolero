@@ -40,23 +40,32 @@ this.MiniBlazor.RenderedTree = class RenderedTree {
             return fragment;
         } else {
             let node = document.createElement(tree.n);
-            for (let a in tree.a) {
-                node.setAttribute(a, tree.a[a]);
+            if (tree.a) {
+                for (let a in tree.a) {
+                    node.setAttribute(a, tree.a[a]);
+                }
             }
-            for (let e in tree.e) {
-                this.addEvent(node, e, tree.e[e]);
+            if (tree.e) {
+                for (let e in tree.e) {
+                    this.addEvent(node, e, tree.e[e]);
+                }
             }
-            for (let i = 0; i < tree.c.length; i++) {
-                node.appendChild(this.makeTree(tree.c[i]));
+            if (tree.c) {
+                for (let i = 0; i < tree.c.length; i++) {
+                    node.appendChild(this.makeTree(tree.c[i]));
+                }
             }
             return node;
         }
     }
 
     applyDiff(diff, parent, node) {
-        if (diff === 's') {
+        if (diff.s !== undefined) {
             // Skip
-            return node.nextSibling;
+            for (let i = 0; i < diff.s; i++) {
+                node = node.nextSibling;
+            }
+            return node;
         } else if (diff.r !== undefined) {
             // Replace
             let next = node.nextSibling;
@@ -87,24 +96,25 @@ this.MiniBlazor.RenderedTree = class RenderedTree {
             return node;
         } else {
             // Modify
-            for (let a in diff.a) {
-                if (diff.a[a] === null) {
-                    node.removeAttribute(a);
-                } else {
-                    node.setAttribute(a, diff.a[a]);
+            if (diff.a) {
+                for (let a in diff.a) {
+                    if (diff.a[a] === null) {
+                        node.removeAttribute(a);
+                    } else {
+                        node.setAttribute(a, diff.a[a]);
+                    }
                 }
             }
-            for (let e in diff.e) {
-                this.addEvent(node, e, diff.e[e]);
+            if (diff.e) {
+                for (let e in diff.e) {
+                    this.addEvent(node, e, diff.e[e]);
+                }
             }
-            let child = node.firstChild;
-            for (let i = 0; i < diff.c.length; i++) {
-                child = this.applyDiff(diff.c[i], node, child);
-            }
-            while (child) {
-                let next = child.nextSibling;
-                node.removeChild(child);
-                child = next;
+            if (diff.c) {
+                let child = node.firstChild;
+                for (let i = 0; i < diff.c.length; i++) {
+                    child = this.applyDiff(diff.c[i], node, child);
+                }
             }
             return node.nextSibling;
         }

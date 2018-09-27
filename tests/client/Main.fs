@@ -58,7 +58,7 @@ let View model : Node<Message> =
             | None -> empty)
         ]
         p [] [
-            input [value (string model.addKey); onChange(int >> SetAddKey)]
+            input [value (string model.addKey); onInput (int >> SetAddKey)]
             button [onClick AddKey] [text "Add"]
             ul [] [
                 keyed [

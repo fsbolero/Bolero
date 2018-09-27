@@ -15,12 +15,17 @@ type RenderedNode =
             match this with
             | RText text -> box text
             | RElt(name, attrs, events, children) ->
-                box { n = name; a = attrs; e = events; c = children }
+                box <| dict [
+                    yield "n", box name
+                    if attrs.Count > 0 then yield "a", box attrs
+                    if events.Count > 0 then yield "e", box events
+                    if children.Length > 0 then yield "c", box children
+                ]
             | RKeyedFragment nodes ->
                 nodes |> Array.collect snd |> box
 
 and DiffResult =
-    | Skip
+    | Skip of count: int
     | Delete of count: int
     | Replace of RenderedNode
     | Insert of RenderedNode
@@ -30,38 +35,18 @@ and DiffResult =
     interface ICustomArgSerializer with
         member this.ToJsonPrimitive() =
             match this with
-            | Skip -> box "s"
-            | Delete count -> box { d = count }
-            | Replace node -> box { r = node }
-            | Insert node -> box { i = node }
+            | Skip count -> box <| dict ["s", box count]
+            | Delete count -> box <| dict ["d", box count]
+            | Replace node -> box <| dict ["r", box node]
+            | Insert node -> box <| dict ["i", box node]
             | InPlace(attrs, events, children) ->
-                box { a = attrs; e = events; c = children }
+                box <| dict [
+                    if attrs.Count > 0 then yield "a", box attrs
+                    if events.Count > 0 then yield "e", box events
+                    if children.Length > 0 then yield "c", box children
+                ]
             | Move(from, count) ->
-                box { f = from; n = count }
-
-and RNode =
-    { n: string
-      a: IDictionary<string, string>
-      e: IDictionary<string, obj>
-      c: RenderedNode[] }
-
-and InPlaceDiff =
-    { a: IDictionary<string, string>
-      e: IDictionary<string, obj>
-      c: DiffResult[] }
-
-and DeleteDiff =
-    { d: int }
-
-and MoveDiff =
-    { f: int
-      n: int }
-
-and ReplaceDiff =
-    { r: RenderedNode }
-
-and InsertDiff =
-    { i: RenderedNode }
+                box <| dict ["f", box from; "n", box count]
 
 type RenderedEvent =
     { mutable handler: obj -> DiffResult[] }
@@ -69,7 +54,7 @@ type RenderedEvent =
     [<JSInvokable>]
     member this.Handle(args) = this.handler(args)
 
-let isSkip = function Skip -> true | _ -> false
+let isSkip = function Skip _ -> true | _ -> false
 
 let rec countActualNodes = function
     | RText _ | RElt _ -> 1
@@ -119,6 +104,14 @@ type Renderer<'Message>(wrapEvent) =
         let rendered = toRenderedNode node
         Insert rendered, rendered
 
+    let pushDiff (diffs: ResizeArray<DiffResult>) (diff: DiffResult) =
+        let lastId = diffs.Count - 1
+        if lastId = -1 then diffs.Add(diff) else
+        match diffs.[lastId], diff with
+        | Skip a, Skip b -> diffs.[lastId] <- Skip (a + b)
+        | Delete a, Delete b -> diffs.[lastId] <- Delete (a + b)
+        | _ -> diffs.Add(diff)
+
     /// Diff between the currently rendered node and the new content.
     /// Assumes that `after` is a single node, ie either Text or Elt.
     let rec diff (before: RenderedNode) (after: Node<'Message>) : DiffResult * RenderedNode =
@@ -163,13 +156,13 @@ type Renderer<'Message>(wrapEvent) =
                         v.Dispose()
                         eventDiff.Add(k, null)
                 // 3. Diff children.
-                let childDiff, newChildren, _, _ = diffSiblings 0 bchildren achildren
+                let childDiff, newChildren, _ = diffSiblings 0 bchildren achildren
                 if  attrDiff.Count = 0 &&
                     eventDiff.Count = 0 &&
                     childDiff |> Array.forall isSkip
                 // If there are no changes to attributes, events, nor children, then we can skip.
                 then
-                    Skip, before
+                    Skip 1, before
                 else
                 // Otherwise, apply in-place changes.
                     let diff = InPlace(attrDiff, eventDiff, childDiff)
@@ -181,7 +174,7 @@ type Renderer<'Message>(wrapEvent) =
         | RText btext, Text atext ->
             // Both text nodes: replace iff the content is different.
             if atext = btext then
-                Skip, before
+                Skip 1, before
             else
                 replace after
         | _ ->
@@ -189,7 +182,7 @@ type Renderer<'Message>(wrapEvent) =
             replace after
 
     /// Diffs between the currently rendered set of sibling nodes and the new content.
-    and diffSiblings pos (before: RenderedNode[]) (after: list<Node<'Message>>) : DiffResult[] * RenderedNode[] * int * int =
+    and diffSiblings pos (before: RenderedNode[]) (after: list<Node<'Message>>) : DiffResult[] * RenderedNode[] * int =
         let diffOut = ResizeArray()
         let nodeOut = ResizeArray()
         // Run in parallel through `before` (which is a plain array)
@@ -203,9 +196,8 @@ type Renderer<'Message>(wrapEvent) =
                 if i < before.Length then
                     match before.[i] with
                     | RKeyedFragment b ->
-                        let diffs, res, deleteCount, pos = diffKeyedFragments pos b ak
-                        diffOut.AddRange(diffs)
-                        if deleteCount > 0 then diffOut.Add(Delete deleteCount)
+                        let diffs, res, pos = diffKeyedFragments pos b ak
+                        Array.iter (pushDiff diffOut) diffs
                         nodeOut.Add(RKeyedFragment res)
                         go pos (i + 1) arest
                     | _ -> normalGo pos i a arest
@@ -219,11 +211,14 @@ type Renderer<'Message>(wrapEvent) =
                     insert a
                 else
                     diff before.[i] a
-            diffOut.Add(diff)
+            pushDiff diffOut diff
             nodeOut.Add(node)
             go (pos + 1) (i + 1) arest
         let pos, i = go pos 0 after
-        diffOut.ToArray(), nodeOut.ToArray(), countActualNodesFrom i before, pos
+        let deleteCountAtEnd = countActualNodesFrom i before
+        if deleteCountAtEnd > 0 then
+            pushDiff diffOut (Delete deleteCountAtEnd)
+        diffOut.ToArray(), nodeOut.ToArray(), pos
 
     and diffKeyedFragments pos (before: (string * RenderedNode[])[]) (after: list<string * Node<'Message>>) =
         let diffOut = ResizeArray()
@@ -235,6 +230,8 @@ type Renderer<'Message>(wrapEvent) =
             let res = handledBefore.Add(k)
             if not res then printfn "Warning: duplicate key: %s" k
             res
+        // Run in parallel through `before` (which is a plain array)
+        // and `after` (which is a forest because of Concat) in prefix order.
         let rec go pos i after =
             if i < before.Length && handledBefore.Contains(fst before.[i]) then
                 go pos (i + 1) after
@@ -246,9 +243,8 @@ type Renderer<'Message>(wrapEvent) =
                     let bk, b = before.[i]
                     if bk = ak then
                         if addHandled ak then
-                            let diffs, nodes, deleteCount, pos = diffSiblings pos b [a]
-                            diffOut.AddRange(diffs)
-                            if deleteCount > 0 then diffOut.Add(Delete deleteCount)
+                            let diffs, nodes, pos = diffSiblings pos b [a]
+                            Array.iter (pushDiff diffOut) diffs
                             nodeOut.Add((ak, nodes))
                             go pos (i + 1) arest
                         else
@@ -257,7 +253,7 @@ type Renderer<'Message>(wrapEvent) =
                         nonImmediateGo pos i ak a arest
                     else
                         addHandled bk |> ignore
-                        diffOut.Add(Delete (Array.sumBy countActualNodes b))
+                        pushDiff diffOut (Delete (Array.sumBy countActualNodes b))
                         go pos (i + 1) after
                 else
                     nonImmediateGo pos i ak a arest
@@ -266,17 +262,16 @@ type Renderer<'Message>(wrapEvent) =
             | Some (mpos, mi) ->
                 if addHandled ak then
                     let _, b = before.[mi]
-                    diffOut.Add(Move(mpos, Array.sumBy countActualNodes b))
-                    let diffs, nodes, deleteCount, pos = diffSiblings pos b [a]
-                    diffOut.AddRange(diffs)
-                    if deleteCount > 0 then diffOut.Add(Delete deleteCount)
+                    pushDiff diffOut (Move(mpos, Array.sumBy countActualNodes b))
+                    let diffs, nodes, pos = diffSiblings pos b [a]
+                    Array.iter (pushDiff diffOut) diffs
                     nodeOut.Add((ak, nodes))
                     go pos (i + 1) arest
                 else
                     go pos (i + 1) arest
             | None ->
                 let nodes = toRenderedNodes [a]
-                for node in nodes do diffOut.Add(Insert node)
+                for node in nodes do pushDiff diffOut (Insert node)
                 nodeOut.Add((ak, nodes))
                 go (pos + Array.sumBy countActualNodes nodes) i arest
         and tryFindBefore pos i k =
@@ -287,16 +282,18 @@ type Renderer<'Message>(wrapEvent) =
             else
                 tryFindBefore (pos + Array.sumBy countActualNodes b) (i + 1) k
         let pos, i = go pos 0 after
-        let deleteCount =
+        let deleteCountAtEnd =
             before |> Array.sumBy (fun (k, nodes) ->
                 if handledBefore.Contains(k) then
                     0
                 else
                     Array.sumBy countActualNodes nodes)
-        diffOut.ToArray(), nodeOut.ToArray(), deleteCount, pos
+        if deleteCountAtEnd > 0 then
+            pushDiff diffOut (Delete deleteCountAtEnd)
+        diffOut.ToArray(), nodeOut.ToArray(), pos
 
     member this.ToRenderedNodes(nodes) = toRenderedNodes nodes
 
     member this.DiffSiblings(before, after) =
-        let diff, nodes, _, _ = diffSiblings 0 before after
+        let diff, nodes, _ = diffSiblings 0 before after
         diff, nodes
