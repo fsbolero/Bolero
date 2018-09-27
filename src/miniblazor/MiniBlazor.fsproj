@@ -1,23 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
-
   <ItemGroup>
     <EmbeddedResource Include="js/miniblazor.js" LogicalName="blazor:js:miniblazor.js" />
     <Compile Include="Html.fs" />
     <Compile Include="Render.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
-
   <ItemGroup>
     <Watch Include="js/miniblazor.js" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.JSInterop" Version="0.5.1" />
-    <PackageReference Include="Mono.WebAssembly.Interop" Version="0.5.1" />
-  </ItemGroup>
-
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

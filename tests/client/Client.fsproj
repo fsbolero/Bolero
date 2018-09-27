@@ -1,5 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <!-- The following properties are needed so Blazor doesn't try to csc the F# files. -->
@@ -7,18 +7,11 @@
     <DesignTimeBuild>true</DesignTimeBuild>
     <BuildProjectReferences>true</BuildProjectReferences>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="Main.fs" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\src\miniblazor\MiniBlazor.fsproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="0.5.1" />
-    <DotNetCliToolReference Include="Microsoft.AspNetCore.Blazor.Cli" Version="0.5.1" />
-  </ItemGroup>
-
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

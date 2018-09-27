@@ -3,6 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{F4240B7F-AB75-4130-A777-266DB2A13A35}"
+	ProjectSection(SolutionItems) = preProject
+		paket.dependencies = paket.dependencies
+	EndProjectSection
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{543990D6-AD25-4617-8ED9-D2D9DC5AA183}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MiniBlazor", "src\miniblazor\MiniBlazor.fsproj", "{5B1039AC-2BAB-4921-9AC1-B151443AC0A1}"

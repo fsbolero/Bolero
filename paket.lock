@@ -1,0 +1,16 @@
+STORAGE: NONE
+RESTRICTION: == netstandard2.0
+NUGET
+  remote: https://api.nuget.org/v3/index.json
+    FSharp.Core (4.5.2)
+    Microsoft.AspNetCore.Blazor.Analyzers (0.5.1)
+    Microsoft.AspNetCore.Blazor.Build (0.5.1)
+      Microsoft.AspNetCore.Blazor.Analyzers (>= 0.5.1)
+      Microsoft.AspNetCore.Razor.Design (>= 2.1)
+    Microsoft.AspNetCore.Blazor.Cli (0.5.1) - clitool: true
+    Microsoft.AspNetCore.Razor.Design (2.1.2)
+    Microsoft.JSInterop (0.5.1)
+      Microsoft.TypeScript.MSBuild (>= 2.9.2)
+    Microsoft.TypeScript.MSBuild (3.0.3)
+    Mono.WebAssembly.Interop (0.5.1)
+      Microsoft.JSInterop (>= 0.5.1)
