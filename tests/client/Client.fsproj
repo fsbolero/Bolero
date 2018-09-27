@@ -2,7 +2,10 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- The following properties are needed so Blazor doesn't try to csc the F# files. -->
+    <!-- They will be unnecessary with Blazor 0.6. (see https://github.com/aspnet/Blazor/issues/1450) -->
     <DesignTimeBuild>true</DesignTimeBuild>
+    <BuildProjectReferences>true</BuildProjectReferences>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,7 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.Browser" Version="0.5.1" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="0.5.1" />
     <DotNetCliToolReference Include="Microsoft.AspNetCore.Blazor.Cli" Version="0.5.1" />
   </ItemGroup>
