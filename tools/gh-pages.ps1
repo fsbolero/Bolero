@@ -2,7 +2,7 @@
 
 param ([string] $env = "local")
 
-$msg = 'gh-pages.ps1: src/wwwroot -> gh-pages'
+$msg = 'gh-pages.ps1: tests/client/wwwroot -> gh-pages'
 $gitURL = "https://github.com/tarmil/MiniBlazor"
 
 write-host -foregroundColor "green" "=====> $msg"
@@ -32,8 +32,9 @@ if ($env -eq "appveyor") {
 
 git checkout gh-pages
 git rm -rf *
-cp -r -force ../../src/miniblazor/wwwroot/* .
-cp -r -force ../../src/miniblazor/bin/Release/netstandard2.0/dist/_framework .
+cp -r -force ../../tests/client/wwwroot/* .
+cp -r -force ../../tests/client/bin/Release/netstandard2.0/dist/_framework .
+cp -r -force ../../tests/client/bin/Release/netstandard2.0/dist/_content .
 git add . 2>git.log
 git commit -am $msg
 git push -f -u origin gh-pages

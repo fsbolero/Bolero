@@ -1,5 +1,6 @@
-module MiniBlazor.Main
+module MiniBlazor.Test.Client.Main
 
+open MiniBlazor
 open MiniBlazor.Html
 
 type Model =
