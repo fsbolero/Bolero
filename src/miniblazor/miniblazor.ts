@@ -28,11 +28,10 @@ namespace MiniBlazor {
         root: Element;
 
         constructor(root: Element, initTree: RenderedNode[]) {
-            let nodes = initTree.map(t => this.makeTree(t));
-            let fragment = document.createDocumentFragment();
-            for (let i = 0; i < nodes.length; i++) {
-                fragment.appendChild(nodes[i]);
-            }
+            const fragment = document.createDocumentFragment();
+            initTree.forEach(node => {
+                fragment.appendChild(this.makeTree(node));
+            });
             root.appendChild(fragment);
             this.root = root;
         }
@@ -41,7 +40,7 @@ namespace MiniBlazor {
             switch (event.type) {
                 case 'change':
                 case 'input':
-                    return (<HTMLInputElement>element).value;
+                    return (element as HTMLInputElement).value;
                 default:
                     return null;
             }
@@ -61,27 +60,27 @@ namespace MiniBlazor {
             if (typeof tree == 'string') {
                 return document.createTextNode(tree);
             } else if (tree instanceof Array) {
-                let fragment = document.createDocumentFragment();
-                for (let i = 0; i < tree.length; i++) {
-                    fragment.appendChild(this.makeTree(tree[i]));
-                }
+                const fragment = document.createDocumentFragment();
+                tree.forEach(node => {
+                    fragment.appendChild(this.makeTree(node));
+                });
                 return fragment;
             } else {
-                let node = document.createElement(tree.n);
+                const node = document.createElement(tree.n);
                 if (tree.a) {
-                    for (let a in tree.a) {
+                    for (const a in tree.a) {
                         node.setAttribute(a, tree.a[a]);
                     }
                 }
                 if (tree.e) {
-                    for (let e in tree.e) {
+                    for (const e in tree.e) {
                         this.addEvent(node, e, tree.e[e]);
                     }
                 }
                 if (tree.c) {
-                    for (let i = 0; i < tree.c.length; i++) {
-                        node.appendChild(this.makeTree(tree.c[i]));
-                    }
+                    tree.c.forEach(child => {
+                        node.appendChild(this.makeTree(child));
+                    });
                 }
                 return node;
             }
@@ -96,12 +95,12 @@ namespace MiniBlazor {
                 return node;
             } else if ('r' in diff) {
                 // Replace
-                let next = node.nextSibling;
+                const next = node.nextSibling;
                 parent.replaceChild(this.makeTree(diff.r), node);
                 return next;
             } else if ('i' in diff) {
                 // Insert
-                let newNode = this.makeTree(diff.i);
+                const newNode = this.makeTree(diff.i);
                 if (node === null) {
                     parent.appendChild(newNode);
                 } else {
@@ -111,7 +110,7 @@ namespace MiniBlazor {
             } else if ('d' in diff) {
                 // Delete
                 for (let i = 0; i < diff.d; i++) {
-                    let next = node.nextSibling;
+                    const next = node.nextSibling;
                     parent.removeChild(node);
                     node = next;
                 }
@@ -124,9 +123,9 @@ namespace MiniBlazor {
                 return node;
             } else {
                 // Modify
-                let element = node as Element;
+                const element = node as Element;
                 if (diff.a) {
-                    for (let a in diff.a) {
+                    for (const a in diff.a) {
                         if (diff.a[a] === null) {
                             element.removeAttribute(a);
                         } else {
@@ -135,15 +134,15 @@ namespace MiniBlazor {
                     }
                 }
                 if (diff.e) {
-                    for (let e in diff.e) {
+                    for (const e in diff.e) {
                         this.addEvent(element, e, diff.e[e]);
                     }
                 }
                 if (diff.c) {
                     let child = element.firstChild;
-                    for (let i = 0; i < diff.c.length; i++) {
-                        child = this.applyDiff(diff.c[i], element, child);
-                    }
+                    diff.c.forEach(childDiff => {
+                        child = this.applyDiff(childDiff, element, child);
+                    });
                 }
                 return element.nextSibling;
             }
@@ -151,7 +150,7 @@ namespace MiniBlazor {
     }
 
     export function mount(selector: string, initTree: RenderedNode[]): void {
-        let root = document.querySelector(selector);
+        const root = document.querySelector(selector);
         new MiniBlazor.RenderedTree(root, initTree);
     }
 }
