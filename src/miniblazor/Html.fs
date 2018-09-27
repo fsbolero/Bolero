@@ -1,15 +1,13 @@
 module rec MiniBlazor.Html
 
 open System.Collections.Generic
-open System.Text
-open System.Net
-open Microsoft.JSInterop.Internal
 
 type Node<'Message> =
     | Empty
     | Concat of list<Node<'Message>>
     | Elt of name: string * attrs: IDictionary<string, string> * events: IDictionary<string, obj -> 'Message> * children: list<Node<'Message>>
     | Text of text: string
+    | KeyedFragment of list<string * Node<'Message>>
 
     static member Collect (nodes: list<Node<'Message>>) =
         nodes |> List.collect (function
@@ -41,11 +39,16 @@ let Element name attrsAndEvents (children: list<_>) =
 let text str = Text str
 let [<GeneralizableValue>] empty<'Message> = Empty : Node<'Message>
 let concat nodes = Concat nodes
+let keyed items = KeyedFragment items
 
 let div attrs children = Element "div" attrs children
 let input attrs = Element "input" attrs []
+let button attrs children = Element "button" attrs children
 let b attrs children = Element "b" attrs children
 let i attrs children = Element "i" attrs children
+let ul attrs children = Element "ul" attrs children
+let li attrs children = Element "li" attrs children
+let p attrs children = Element "p" attrs children
 
 let (=>) name value = PlainAttr(name, value)
 let value x = "value" => x

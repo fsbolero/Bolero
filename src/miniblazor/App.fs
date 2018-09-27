@@ -16,28 +16,30 @@ type RunState<'Message, 'Model> =
       Update : 'Message -> 'Model -> 'Model
       Render : 'Model -> Html.Node<'Message> }
 
-let rec private applyUpdate (state: RunState<'Message, 'Model>) (msg: 'Message) =
-    let newState = state.Update msg state.State
-    let diff, newTree =
-        [state.Render newState]
-        |> Render.diffSiblings (fun f args -> applyUpdate state (f args)) state.Tree
-    state.Tree <- newTree
-    state.State <- newState
-    diff
+type RunState'<'Message, 'Model>
+    (
+        init: 'Model,
+        update: 'Message -> 'Model -> 'Model,
+        render: 'Model -> Html.Node<'Message>
+    ) as this =
+    let mutable state = init
+    let renderer = Render.Renderer<'Message>(fun f args -> this.ApplyUpdate (f args))
+    let mutable tree = renderer.ToRenderedNodes([render init])
+
+    member this.ApplyUpdate(msg: 'Message) =
+        let newState = update msg state
+        let diff, newTree =
+            renderer.DiffSiblings(tree, [render newState])
+        tree <- newTree
+        state <- newState
+        diff
+
+    member this.Tree = tree
 
 let Run (selector: string) (app: App<'Message, 'Model>) =
     if isNull JSRuntime.Current then
         Mono.WebAssembly.Interop.MonoWebAssemblyJSRuntime()
         |> JSRuntime.SetCurrentJSRuntime
-    let initTree = app.Render app.Init
-    let state =
-        { State = app.Init
-          Tree = Unchecked.defaultof<_>
-          Update = fun msg model -> app.Update msg model
-          Render = fun model -> app.Render model }
-    let rInitTree =
-        [initTree]
-        |> Render.toRenderedNodes (fun f args -> applyUpdate state (f args))
-    state.Tree <- rInitTree
-    JSRuntime.Current.InvokeAsync<unit>("MiniBlazor.mount", selector, rInitTree)
+    let state = RunState'(app.Init, app.Update, app.Render)
+    JSRuntime.Current.InvokeAsync<unit>("MiniBlazor.mount", selector, state.Tree)
     |> ignore

@@ -32,6 +32,12 @@ this.MiniBlazor.RenderedTree = class RenderedTree {
     makeTree(tree) {
         if (typeof tree == 'string') {
             return document.createTextNode(tree);
+        } else if (tree instanceof Array) {
+            let fragment = document.createDocumentFragment();
+            for (let i = 0; i < tree.length; i++) {
+                fragment.appendChild(this.makeTree(tree[i]));
+            }
+            return fragment;
         } else {
             let node = document.createElement(tree.n);
             for (let a in tree.a) {
@@ -63,6 +69,20 @@ this.MiniBlazor.RenderedTree = class RenderedTree {
                 parent.appendChild(newNode);
             } else {
                 parent.insertBefore(newNode, node);
+            }
+            return node;
+        } else if (diff.d !== undefined) {
+            // Delete
+            for (let i = 0; i < diff.d; i++) {
+                let next = node.nextSibling;
+                parent.removeChild(node);
+                node = next;
+            }
+            return node;
+        } else if (diff.f !== undefined) {
+            // Move
+            for (let i = 0; i < diff.n; i++) {
+                parent.insertBefore(parent.children[diff.f], node);
             }
             return node;
         } else {
