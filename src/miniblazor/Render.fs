@@ -201,17 +201,18 @@ type Renderer<'Message>(wrapEvent) =
             | [] -> pos, i
             | Empty :: arest -> go pos i arest
             | Concat a :: arest -> let pos, i = go pos i a in go pos i arest
-            | KeyedFragment ak as a :: arest ->
-                if i < before.Length then
-                    match before.[i] with
-                    | RKeyedFragment(b, _) ->
-                        let diffs, res, pos = diffKeyedFragments pos b ak
-                        Array.iter (pushDiff diffOut) diffs
-                        nodeOut.Add(res)
-                        go pos (i + 1) arest
-                    | _ -> normalGo pos i a arest
-                else
-                    normalGo pos i a arest
+            | KeyedFragment ak :: arest ->
+                let b, j =
+                    if i < before.Length then
+                        match before.[i] with
+                        | RKeyedFragment(b, _) -> b, i + 1
+                        | _ -> [||], i
+                    else
+                        [||], i
+                let diffs, res, pos = diffKeyedFragments pos b ak
+                Array.iter (pushDiff diffOut) diffs
+                nodeOut.Add(res)
+                go pos j arest
             | (Text _ | Elt _ as a) :: arest ->
                 normalGo pos i a arest
         and normalGo pos i a arest =
