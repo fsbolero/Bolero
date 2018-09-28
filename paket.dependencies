@@ -1,19 +1,20 @@
 source https://api.nuget.org/v3/index.json
+source https://dotnet.myget.org/F/blazor-dev/api/v3/index.json
 storage: none
 framework: netstandard2.0
 
 nuget FSharp.Core
-nuget Microsoft.AspNetCore.Blazor.Build
-clitool Microsoft.AspNetCore.Blazor.Cli
-nuget Microsoft.JSInterop
-nuget Mono.WebAssembly.Interop
+nuget Microsoft.AspNetCore.Blazor.Build ~> 0.7.0-preview1-20180925.6
+clitool Microsoft.AspNetCore.Blazor.Cli ~> 0.7.0-preview1-20180925.6
+nuget Microsoft.JSInterop ~> 0.7.0-preview1-20180925.6
+nuget Mono.WebAssembly.Interop ~> 0.7.0-preview1-20180925.6
 nuget Microsoft.TypeScript.MSBuild
 clitool dotnet-fake ~> 5.0
 
 group fake
 source https://api.nuget.org/v3/index.json
 storage: none
-//framework: netcoreapp2.0
+framework: netstandard2.0
 
 nuget Fake.Core.Target
 nuget Fake.DotNet.Cli

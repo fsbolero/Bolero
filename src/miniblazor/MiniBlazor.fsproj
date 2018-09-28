@@ -2,6 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <TypeScriptVersion>2.7.2</TypeScriptVersion>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="tsconfig.json" />
@@ -10,9 +11,6 @@
     <Compile Include="Html.fs" />
     <Compile Include="Render.fs" />
     <Compile Include="App.fs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Watch Include="miniblazor.ts" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
