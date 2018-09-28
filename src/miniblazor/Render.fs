@@ -8,7 +8,15 @@ open MiniBlazor.Html
 type RenderedNode =
     | RText of text: string
     | RElt of name: string * attrs: IDictionary<string, string> * events: IDictionary<string, obj> * children: RenderedNode[]
-    | RKeyedFragment of nodes: (string * RenderedNode[])[]
+    | RKeyedFragment of nodes: (string * RenderedNode[])[] * nodeCount: int
+
+    static member NodeCount(node: RenderedNode) =
+        match node with
+        | RText _ | RElt _ -> 1
+        | RKeyedFragment(_, count) -> count
+
+    static member NodeCount(nodes: RenderedNode[]) =
+        nodes |> Array.sumBy RenderedNode.NodeCount
 
     interface ICustomArgSerializer with
         member this.ToJsonPrimitive() =
@@ -21,7 +29,7 @@ type RenderedNode =
                     if events.Count > 0 then yield "e", box events
                     if children.Length > 0 then yield "c", box children
                 ]
-            | RKeyedFragment nodes ->
+            | RKeyedFragment(nodes, _) ->
                 nodes |> Array.collect snd |> box
 
 and DiffResult =
@@ -56,18 +64,12 @@ type RenderedEvent =
 
 let isSkip = function Skip _ -> true | _ -> false
 
-let rec countActualNodes = function
-    | RText _ | RElt _ -> 1
-    | RKeyedFragment es ->
-        es |> Array.sumBy (fun (_, n) ->
-            Array.sumBy countActualNodes n)
-
 let countActualNodesFrom i (nodes: RenderedNode[]) =
     let rec go acc i =
         if i >= nodes.Length then
             acc
         else
-            go (acc + countActualNodes nodes.[i]) (i + 1)
+            go (acc + RenderedNode.NodeCount nodes.[i]) (i + 1)
     go 0 i
 
 type Renderer<'Message>(wrapEvent) =
@@ -81,7 +83,14 @@ type Renderer<'Message>(wrapEvent) =
                 revents.Add(name, new DotNetObjectRef(handler))
             RElt(name, attrs, revents, toRenderedNodes children)
         | KeyedFragment nodes ->
-            RKeyedFragment [| for k, v in nodes -> k, toRenderedNodes [v] |]
+            let mutable nodeCount = 0
+            let nodes = [|
+                for k, v in nodes do
+                    let rendered = toRenderedNodes [v]
+                    nodeCount <- nodeCount + RenderedNode.NodeCount rendered
+                    yield k, rendered
+            |]
+            RKeyedFragment(nodes, nodeCount)
         | Empty | Concat _ -> failwith "Should not have composite nodes at render time"
 
     and toRenderedNodes nodes =
@@ -195,7 +204,7 @@ type Renderer<'Message>(wrapEvent) =
             | KeyedFragment ak as a :: arest ->
                 if i < before.Length then
                     match before.[i] with
-                    | RKeyedFragment b ->
+                    | RKeyedFragment(b, _) ->
                         let diffs, res, pos = diffKeyedFragments pos b ak
                         Array.iter (pushDiff diffOut) diffs
                         nodeOut.Add(res)
@@ -230,6 +239,20 @@ type Renderer<'Message>(wrapEvent) =
             let res = handledBefore.Add(k)
             if not res then printfn "Warning: duplicate key: %s" k
             res
+        let mutable nodeCount = 0
+        let pushNode (node: string * RenderedNode[]) =
+            nodeCount <- nodeCount + RenderedNode.NodeCount (snd node)
+            nodeOut.Add(node)
+        let rec tryFindBefore pos i k =
+            if i >= before.Length then None else
+            let bk, b = before.[i]
+            if handledBefore.Contains bk then
+                tryFindBefore pos (i + 1) k
+            elif bk = k then
+                Some (pos, b)
+            else
+                let count = RenderedNode.NodeCount b
+                tryFindBefore (pos + count) (i + 1) k
         // Run in parallel through `before` (which is a plain array)
         // and `after` (which is a forest because of Concat) in prefix order.
         let rec go pos i after =
@@ -245,7 +268,7 @@ type Renderer<'Message>(wrapEvent) =
                         if addHandled ak then
                             let diffs, nodes, pos = diffSiblings pos b [a]
                             Array.iter (pushDiff diffOut) diffs
-                            nodeOut.Add((ak, nodes))
+                            pushNode (ak, nodes)
                             go pos (i + 1) arest
                         else
                             go pos (i + 1) arest
@@ -253,7 +276,7 @@ type Renderer<'Message>(wrapEvent) =
                         nonImmediateGo pos i ak a arest
                     else
                         addHandled bk |> ignore
-                        pushDiff diffOut (Delete (Array.sumBy countActualNodes b))
+                        pushDiff diffOut (Delete (RenderedNode.NodeCount b))
                         go pos (i + 1) after
                 else
                     nonImmediateGo pos i ak a arest
@@ -261,7 +284,7 @@ type Renderer<'Message>(wrapEvent) =
             match tryFindBefore pos i ak with
             | Some (mpos, mb) ->
                 if addHandled ak then
-                    pushDiff diffOut (Move(mpos, Array.sumBy countActualNodes mb))
+                    pushDiff diffOut (Move(mpos, RenderedNode.NodeCount mb))
                     let diffs, nodes, pos = diffSiblings pos mb [a]
                     Array.iter (pushDiff diffOut) diffs
                     nodeOut.Add((ak, nodes))
@@ -272,27 +295,17 @@ type Renderer<'Message>(wrapEvent) =
                 let nodes = toRenderedNodes [a]
                 for node in nodes do pushDiff diffOut (Insert node)
                 nodeOut.Add((ak, nodes))
-                go (pos + Array.sumBy countActualNodes nodes) i arest
-        and tryFindBefore pos i k =
-            if i >= before.Length then None else
-            let bk, b = before.[i]
-            if handledBefore.Contains bk then
-                tryFindBefore pos (i + 1) k
-            elif bk = k then
-                Some (pos, b)
-            else
-                let count = Array.sumBy countActualNodes b
-                tryFindBefore (pos + count) (i + 1) k
+                go (pos + RenderedNode.NodeCount nodes) i arest
         let pos, i = go pos 0 after
         let deleteCountAtEnd =
             before |> Array.sumBy (fun (k, nodes) ->
                 if handledBefore.Contains(k) then
                     0
                 else
-                    Array.sumBy countActualNodes nodes)
+                    RenderedNode.NodeCount nodes)
         if deleteCountAtEnd > 0 then
             pushDiff diffOut (Delete deleteCountAtEnd)
-        diffOut.ToArray(), RKeyedFragment (nodeOut.ToArray()), pos
+        diffOut.ToArray(), RKeyedFragment (nodeOut.ToArray(), nodeCount), pos
 
     member this.ToRenderedNodes(nodes) = toRenderedNodes nodes
 
