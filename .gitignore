@@ -3,4 +3,5 @@ obj/
 .vs/
 *.user
 paket-files/
+.fake/
 src/miniblazor/js/

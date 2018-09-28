@@ -139,7 +139,7 @@ namespace MiniBlazor {
                     }
                 }
                 if (diff.c) {
-                    let child = element.firstChild;
+                    let child: Node = element.firstChild;
                     diff.c.forEach(childDiff => {
                         child = this.applyDiff(childDiff, element, child);
                     });

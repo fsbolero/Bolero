@@ -8,3 +8,12 @@ clitool Microsoft.AspNetCore.Blazor.Cli
 nuget Microsoft.JSInterop
 nuget Mono.WebAssembly.Interop
 nuget Microsoft.TypeScript.MSBuild
+clitool dotnet-fake ~> 5.0
+
+group fake
+source https://api.nuget.org/v3/index.json
+storage: none
+//framework: netcoreapp2.0
+
+nuget Fake.Core.Target
+nuget Fake.DotNet.Cli
