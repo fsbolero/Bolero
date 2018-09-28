@@ -6,7 +6,7 @@ init:
   - git config --global core.autocrlf input
 
 build_script:
-  - cmd: dotnet build -c Release
+  - cmd: .\build.cmd
 
 test: off
 

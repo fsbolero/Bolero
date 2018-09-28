@@ -36,16 +36,6 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "watch",
-            "command": "watch",
-            "type": "shell",
-            "group": "build",
-            "presentation": {
-                "reveal": "silent"
-            },
-            "problemMatcher": "$msCompile"
-        },
-        {
             "label": "run",
             "command": "run",
             "type": "shell",
