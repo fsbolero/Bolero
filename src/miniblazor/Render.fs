@@ -198,7 +198,7 @@ type Renderer<'Message>(wrapEvent) =
                     | RKeyedFragment b ->
                         let diffs, res, pos = diffKeyedFragments pos b ak
                         Array.iter (pushDiff diffOut) diffs
-                        nodeOut.Add(RKeyedFragment res)
+                        nodeOut.Add(res)
                         go pos (i + 1) arest
                     | _ -> normalGo pos i a arest
                 else
@@ -259,16 +259,15 @@ type Renderer<'Message>(wrapEvent) =
                     nonImmediateGo pos i ak a arest
         and nonImmediateGo pos i ak a arest =
             match tryFindBefore pos i ak with
-            | Some (mpos, mi) ->
+            | Some (mpos, mb) ->
                 if addHandled ak then
-                    let _, b = before.[mi]
-                    pushDiff diffOut (Move(mpos, Array.sumBy countActualNodes b))
-                    let diffs, nodes, pos = diffSiblings pos b [a]
+                    pushDiff diffOut (Move(mpos, Array.sumBy countActualNodes mb))
+                    let diffs, nodes, pos = diffSiblings pos mb [a]
                     Array.iter (pushDiff diffOut) diffs
                     nodeOut.Add((ak, nodes))
-                    go pos (i + 1) arest
+                    go pos i arest
                 else
-                    go pos (i + 1) arest
+                    go pos i arest
             | None ->
                 let nodes = toRenderedNodes [a]
                 for node in nodes do pushDiff diffOut (Insert node)
@@ -277,10 +276,13 @@ type Renderer<'Message>(wrapEvent) =
         and tryFindBefore pos i k =
             if i >= before.Length then None else
             let bk, b = before.[i]
-            if bk = k then
-                Some (pos, i)
+            if handledBefore.Contains bk then
+                tryFindBefore pos (i + 1) k
+            elif bk = k then
+                Some (pos, b)
             else
-                tryFindBefore (pos + Array.sumBy countActualNodes b) (i + 1) k
+                let count = Array.sumBy countActualNodes b
+                tryFindBefore (pos + count) (i + 1) k
         let pos, i = go pos 0 after
         let deleteCountAtEnd =
             before |> Array.sumBy (fun (k, nodes) ->
@@ -290,7 +292,7 @@ type Renderer<'Message>(wrapEvent) =
                     Array.sumBy countActualNodes nodes)
         if deleteCountAtEnd > 0 then
             pushDiff diffOut (Delete deleteCountAtEnd)
-        diffOut.ToArray(), nodeOut.ToArray(), pos
+        diffOut.ToArray(), RKeyedFragment (nodeOut.ToArray()), pos
 
     member this.ToRenderedNodes(nodes) = toRenderedNodes nodes
 

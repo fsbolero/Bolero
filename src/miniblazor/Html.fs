@@ -45,6 +45,7 @@ let div attrs children = Element "div" attrs children
 let input attrs = Element "input" attrs []
 let button attrs children = Element "button" attrs children
 let b attrs children = Element "b" attrs children
+let br attrs = Element "br" attrs []
 let i attrs children = Element "i" attrs children
 let ul attrs children = Element "ul" attrs children
 let li attrs children = Element "li" attrs children
@@ -54,8 +55,22 @@ let (=>) name value = PlainAttr(name, value)
 let value x = "value" => x
 let type_ x = "type" => x
 
-let onLazy event handler = Handler(event, handler)
-let on event message = Handler(event, fun _ -> message)
-let onChange message = onLazy "change" (fun args -> message (args :?> string))
-let onInput message = onLazy "input" (fun args -> message (args :?> string))
-let onClick message = on "click" message
+type onLazy =
+    static member event<'Message> event (message: obj -> 'Message) =
+        Handler(event, message)
+
+    static member click<'Message> (message: obj -> 'Message) =
+        onLazy.event "click" (fun _ -> message())
+
+type on =
+    static member event<'Message> event (message: 'Message) =
+        onLazy.event event (fun _ -> message)
+
+    static member change<'T, 'Message> (message: 'T -> 'Message) =
+        onLazy.event<'Message> "change" (fun args -> message (args :?> 'T))
+
+    static member input<'T, 'Message> (message: 'T -> 'Message) =
+        onLazy.event<'Message> "input" (fun args -> message (args :?> 'T))
+
+    static member click<'Message> (message: 'Message) =
+        on.event "click" message

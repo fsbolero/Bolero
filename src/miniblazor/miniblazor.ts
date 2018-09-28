@@ -120,10 +120,14 @@ namespace MiniBlazor {
                 return node;
             } else if ('f' in diff) {
                 // Move
+                let firstAdded = node;
                 for (let i = 0; i < diff.n; i++) {
-                    parent.insertBefore(parent.children[diff.f], node);
+                    let n = parent.insertBefore(parent.children[diff.f], node);
+                    if (i == 0) {
+                        firstAdded = n;
+                    }
                 }
-                return node;
+                return firstAdded;
             } else {
                 // Modify
                 const element = node as Element;
