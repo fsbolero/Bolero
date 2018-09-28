@@ -32,6 +32,9 @@ namespace MiniBlazor {
             initTree.forEach(node => {
                 fragment.appendChild(this.makeTree(node));
             });
+            while (root.firstChild) {
+                root.removeChild(root.firstChild);
+            }
             root.appendChild(fragment);
             this.root = root;
         }
