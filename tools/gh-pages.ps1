@@ -36,7 +36,7 @@ cp -r -force ../../tests/client/wwwroot/* .
 cp -r -force ../../tests/client/bin/Release/netstandard2.0/dist/_framework .
 cp -r -force ../../tests/client/bin/Release/netstandard2.0/dist/_content .
 git add . 2>git.log
-git commit -am $msg
+git commit --amend -am $msg
 git push -f -u origin gh-pages
 cd ../..
 clearDir
