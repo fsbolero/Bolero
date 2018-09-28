@@ -5,6 +5,7 @@ framework: netstandard2.0
 
 nuget FSharp.Core
 nuget Microsoft.AspNetCore.Blazor.Build ~> 0.7.0-preview1-20180925.6
+nuget Microsoft.AspNetCore.Blazor.Server ~> 0.7.0-preview1-20180925.6
 clitool Microsoft.AspNetCore.Blazor.Cli ~> 0.7.0-preview1-20180925.6
 nuget Microsoft.JSInterop ~> 0.7.0-preview1-20180925.6
 nuget Mono.WebAssembly.Interop ~> 0.7.0-preview1-20180925.6
