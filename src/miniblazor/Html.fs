@@ -69,8 +69,8 @@ type on =
     static member change<'T, 'Message> (message: 'T -> 'Message) =
         onLazy.event<'Message> "change" (fun args -> message (args :?> 'T))
 
-    static member input<'T, 'Message> (message: 'T -> 'Message) =
-        onLazy.event<'Message> "input" (fun args -> message (args :?> 'T))
+    static member input<'Message> (message: string -> 'Message) =
+        onLazy.event<'Message> "input" (fun args -> message (args :?> string))
 
     static member click<'Message> (message: 'Message) =
         on.event "click" message
