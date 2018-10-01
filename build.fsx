@@ -13,7 +13,7 @@ Target.create "corebuild" (fun o ->
 )
 
 // Strip F# assemblies of their optdata / sigdata
-Target.create "strip" (fun o ->
+Target.create "strip" (fun _ ->
     let stripFile f =
         let mutable anyChanged = false
         let bytes = File.ReadAllBytes(f)
@@ -41,13 +41,19 @@ Target.create "strip" (fun o ->
 
 Target.create "build" ignore
 
-Target.create "run" (fun _ ->
+Target.create "runclient" (fun _ ->
     dotnet' "tests/client" "blazor" "serve"
+)
+
+Target.create "runserver" (fun _ ->
+    dotnet' "tests/server" "run" ""
 )
 
 "corebuild"
     ==> "strip"
     ==> "build"
-    ==> "run"
+
+"build" ==> "runclient"
+"build" ==> "runserver"
 
 Target.runOrDefaultWithArguments "build"

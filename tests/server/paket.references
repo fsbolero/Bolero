@@ -1,0 +1,6 @@
+Microsoft.AspNetCore.Blazor.Build
+Microsoft.AspNetCore.Blazor.Server
+Microsoft.AspNetCore.Blazor.Cli
+FSharp.Core
+Microsoft.AspNetCore.All
+System.Buffers

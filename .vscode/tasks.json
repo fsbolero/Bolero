@@ -36,8 +36,18 @@
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "run",
-            "command": "run",
+            "label": "runclient",
+            "command": "runclient",
+            "type": "shell",
+            "group": "test",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "runserver",
+            "command": "runserver",
             "type": "shell",
             "group": "test",
             "presentation": {

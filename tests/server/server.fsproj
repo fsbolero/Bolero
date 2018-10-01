@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <BlazorLinkOnBuild>false</BlazorLinkOnBuild>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- illink can't find System.Buffers.dll, because it's not copied locally by default nor present in mono's standard assemblies.
+          https://github.com/aspnet/Blazor/issues/1504 -->
+    <ReferenceCopyLocalPaths Include="$(NuGetPackageRoot)system.buffers/4.5.0/lib/netstandard2.0/System.Buffers.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\miniblazor\MiniBlazor.fsproj" />
+    <ProjectReference Include="..\client\Client.fsproj" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>
