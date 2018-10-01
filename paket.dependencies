@@ -12,6 +12,8 @@ nuget Mono.WebAssembly.Interop ~> 0.7.0-preview1-20180925.6
 nuget Microsoft.TypeScript.MSBuild
 clitool dotnet-fake ~> 5.0
 nuget Microsoft.AspNetCore.All ~> 2.0.0
+nuget HtmlAgilityPack
+nuget Fizzler.Systems.HtmlAgilityPack
 
 group fake
 source https://api.nuget.org/v3/index.json

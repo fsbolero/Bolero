@@ -57,7 +57,7 @@ let Update message model =
     | ToggleRevOrder -> { model with revOrder = not model.revOrder }
 
 let ViewInput model =
-    p [] [
+    div [] [
         input [value model.input; on.input SetInput]
         input [type_ "submit"; on.click Submit]
         div [] [text (defaultArg model.submitted "")]
@@ -88,7 +88,7 @@ let ViewList model =
             Seq.rev model.items
         else
             model.items :> _
-    p [] [
+    div [] [
         input [value (string model.addKey); on.input (int >> SetAddKey)]
         button [on.click AddKey] [text "Add"]
         br []
@@ -104,8 +104,9 @@ let View model =
         ViewList model
     ]
 
+let MyApp = App.Create InitModel Update View
+
 [<EntryPoint>]
 let Main args =
-    App.Create InitModel Update View
-    |> App.Run "#main"
+    App.Run "#main" MyApp
     0

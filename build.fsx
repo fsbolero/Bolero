@@ -49,11 +49,16 @@ Target.create "runserver" (fun _ ->
     dotnet' "tests/server" "run" ""
 )
 
+Target.create "runiso" (fun _ ->
+    dotnet' "tests/isomorphic" "run" ""
+)
+
 "corebuild"
     ==> "strip"
     ==> "build"
 
 "build" ==> "runclient"
 "build" ==> "runserver"
+"build" ==> "runiso"
 
 Target.runOrDefaultWithArguments "build"

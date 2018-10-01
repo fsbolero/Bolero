@@ -27,15 +27,19 @@ namespace MiniBlazor {
     export class RenderedTree {
         root: Element;
 
-        constructor(root: Element, initTree: RenderedNode[]) {
-            const fragment = document.createDocumentFragment();
-            initTree.forEach(node => {
-                fragment.appendChild(this.makeTree(node));
-            });
-            while (root.firstChild) {
-                root.removeChild(root.firstChild);
+        constructor(root: Element, initTree: RenderedNode[], hydrateOnly: boolean) {
+            if (hydrateOnly) {
+                this.hydrate({n: root.nodeName, c: initTree}, root);
+            } else {
+                const fragment = document.createDocumentFragment();
+                initTree.forEach(node => {
+                    fragment.appendChild(this.makeTree(node));
+                });
+                while (root.firstChild) {
+                    root.removeChild(root.firstChild);
+                }
+                root.appendChild(fragment);
             }
-            root.appendChild(fragment);
             this.root = root;
         }
 
@@ -86,6 +90,38 @@ namespace MiniBlazor {
                     });
                 }
                 return node;
+            }
+        }
+
+        hydrate(tree: RenderedNode, node: Node) {
+            if (typeof tree == 'string') {
+                if (tree == '') {
+                    node.parentNode.insertBefore(document.createTextNode(''), node);
+                }
+                return node.nextSibling;
+            } else if (tree instanceof Array) {
+                tree.forEach(sub => {
+                    node = this.hydrate(sub, node);
+                });
+                return node;
+            } else {
+                if (tree.e) {
+                    for (const e in tree.e) {
+                        this.addEvent(node as Element, e, tree.e[e]);
+                    }
+                }
+                if (tree.c) {
+                    let child: Node = node.firstChild;
+                    tree.c.forEach(sub => {
+                        if (child == null) {
+                            // This should only happen if tree.c is [""]
+                            node.appendChild(this.makeTree(sub));
+                        } else {
+                            child = this.hydrate(sub, child);
+                        }
+                    });
+                }
+                return node.nextSibling;
             }
         }
 
@@ -158,7 +194,9 @@ namespace MiniBlazor {
 
     export function mount(selector: string, initTree: RenderedNode[]): void {
         const root = document.querySelector(selector);
-        new MiniBlazor.RenderedTree(root, initTree);
+        const hydrate = root.hasAttribute("data-miniblazor-hydrate");
+        if (hydrate) root.removeAttribute("data-miniblazor-hydrate");
+        new MiniBlazor.RenderedTree(root, initTree, hydrate);
     }
 }
 
