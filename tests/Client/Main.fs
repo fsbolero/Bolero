@@ -1,6 +1,7 @@
 module MiniBlazor.Test.Client.Main
 
-open MiniBlazor
+open Elmish
+open Elmish.MiniBlazor
 open MiniBlazor.Html
 
 type Item =
@@ -104,9 +105,11 @@ let View model dispatch =
         ViewList model dispatch
     ]
 
-let MyApp = App.Create InitModel Update View
+let MyApp =
+    Program.mkSimple (fun () -> InitModel) Update View
+    |> Program.withMiniBlazor "#main"
 
 [<EntryPoint>]
 let Main args =
-    App.Run "#main" MyApp
+    Program.run MyApp
     0

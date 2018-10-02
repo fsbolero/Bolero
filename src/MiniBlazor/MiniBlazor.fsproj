@@ -10,7 +10,7 @@
     <EmbeddedResource Include="js/miniblazor.js" LogicalName="blazor:js:miniblazor.js" />
     <Compile Include="Html.fs" />
     <Compile Include="Render.fs" />
-    <Compile Include="App.fs" />
+    <Compile Include="Program.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

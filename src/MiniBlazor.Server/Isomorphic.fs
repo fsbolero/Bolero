@@ -21,23 +21,23 @@ type IIsomorphicApp =
 
 type IsomorphicApp<'Message, 'Model> =
     {
-        app: MiniBlazor.App.App<'Message, 'Model>
+        program: Elmish.Program<unit, 'Model, 'Message, Html.Node>
         assembly: Assembly
         file: string
         selector: string
     }
 
-    static member Of([<ReflectedDefinition true>] app: Expr<MiniBlazor.App.App<'Message, 'Model>>) =
-        match app with
-        | WithValue(app, _, PropertyGet(None, p, _)) ->
+    static member Of([<ReflectedDefinition true>] program: Expr<Elmish.Program<unit, 'Model, 'Message, Html.Node>>) =
+        match program with
+        | WithValue(program, _, PropertyGet(None, p, _)) ->
             IsomorphicApp<'Message, 'Model>
-                .Of(unbox app, p.DeclaringType.Assembly)
+                .Of(unbox program, p.DeclaringType.Assembly)
         | _ ->
-            failwith "You must pass a module top-level value as app, or call IsomorphicApp.Of(app, assembly)."
+            failwith "You must pass a module top-level value as app, or call IsomorphicApp.Of(program, assembly)."
 
-    static member Of(app, assembly) : IsomorphicApp<'Message, 'Model> =
+    static member Of(program, assembly) : IsomorphicApp<'Message, 'Model> =
         {
-            app = app
+            program = program
             assembly = assembly
             file = "index.html"
             selector = "#main"
@@ -46,7 +46,7 @@ type IsomorphicApp<'Message, 'Model> =
     interface IIsomorphicApp with
 
         member this.Run() =
-            MiniBlazor.App.Run this.selector this.app
+            Elmish.Program.run this.program
 
         member this.BlazorOptions =
             BlazorOptions(ClientAssemblyPath = this.assembly.Location)
@@ -93,7 +93,7 @@ module IsomorphicRunner =
         | null ->
             failwithf "Cannot find selector '%s' in file: %s" app.selector app.file
         | container ->
-            app.app.Render app.app.Init ignore
+            app.program.view (app.program.init() |> fst) ignore
             |> RenderNode container
             container.SetAttributeValue("data-miniblazor-hydrate", "true") |> ignore
             resp.ContentType <- "text/html"
