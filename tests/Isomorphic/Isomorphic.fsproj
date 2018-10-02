@@ -9,9 +9,9 @@
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\miniblazor\miniblazor.fsproj" />
-    <ProjectReference Include="..\..\src\miniblazor.isomorphic\miniblazor.isomorphic.fsproj" />
-    <ProjectReference Include="..\client\Client.fsproj" />
+    <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />
+    <ProjectReference Include="..\..\src\MiniBlazor.Server\MiniBlazor.Server.fsproj" />
+    <ProjectReference Include="..\Client\Client.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

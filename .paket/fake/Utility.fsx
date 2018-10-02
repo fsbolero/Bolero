@@ -22,7 +22,7 @@ let dotnet' dir cmd args =
 let dotnet cmd args =
     dotnet' slnDir cmd args
 
-// Manage the fact that we run fake from the src/fake directory
+// Manage the fact that we run fake from the .paket/fake directory
 let origDir = Directory.GetCurrentDirectory()
 Directory.SetCurrentDirectory slnDir
 Target.createFinal "reset-dir" (fun _ ->

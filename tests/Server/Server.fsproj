@@ -14,8 +14,8 @@
     <ReferenceCopyLocalPaths Include="$(NuGetPackageRoot)system.buffers/4.5.0/lib/netstandard2.0/System.Buffers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\miniblazor\MiniBlazor.fsproj" />
-    <ProjectReference Include="..\client\Client.fsproj" />
+    <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />
+    <ProjectReference Include="..\Client\Client.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

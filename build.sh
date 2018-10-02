@@ -7,6 +7,6 @@ if [ "$OS" = "Windows_NT" ]; then
 else
     mono .paket/paket.exe restore
 fi
-cd src/fake
+cd .paket/fake
 dotnet restore
 dotnet fake run ../../build.fsx "$@"

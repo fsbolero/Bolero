@@ -3,7 +3,7 @@
 .paket\paket restore
 if errorlevel 1 exit /b %errorlevel%
 
-cd src\fake
+cd .paket\fake
 
 dotnet restore
 if errorlevel 1 exit /b %errorlevel%

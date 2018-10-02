@@ -7,7 +7,7 @@
     <Compile Include="Isomorphic.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\miniblazor\miniblazor.fsproj" />
+    <ProjectReference Include="..\MiniBlazor\MiniBlazor.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
