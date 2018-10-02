@@ -93,7 +93,7 @@ module IsomorphicRunner =
         | null ->
             failwithf "Cannot find selector '%s' in file: %s" app.selector app.file
         | container ->
-            app.app.Render app.app.Init
+            app.app.Render app.app.Init ignore
             |> RenderNode container
             container.SetAttributeValue("data-miniblazor-hydrate", "true") |> ignore
             resp.ContentType <- "text/html"

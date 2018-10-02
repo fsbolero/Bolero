@@ -1,45 +1,33 @@
 module MiniBlazor.App
 
+#nowart "40" // Run: recursive dispatch and tree
+
 open Microsoft.JSInterop
+
+type Dispatch<'Message> = 'Message -> unit
 
 type App<'Message, 'Model> =
     { Init: 'Model
-      Render: 'Model -> Html.Node<'Message>
+      Render: 'Model -> Dispatch<'Message> -> Html.Node
       Update: 'Message -> 'Model -> 'Model }
 
 let Create<'Message, 'Model> init update render : App<'Message, 'Model> =
     { Init = init; Render = render; Update = update }
 
-type RunState<'Message, 'Model> =
-    { mutable State : 'Model
-      mutable Tree : Render.RenderedNode[]
-      Update : 'Message -> 'Model -> 'Model
-      Render : 'Model -> Html.Node<'Message> }
-
-type RunState'<'Message, 'Model>
-    (
-        init: 'Model,
-        update: 'Message -> 'Model -> 'Model,
-        render: 'Model -> Html.Node<'Message>
-    ) as this =
-    let mutable state = init
-    let renderer = Render.Renderer<'Message>(fun f args -> this.ApplyUpdate (f args))
-    let mutable tree = renderer.ToRenderedNodes([render init])
-
-    member this.ApplyUpdate(msg: 'Message) =
-        let newState = update msg state
-        let diff, newTree =
-            renderer.DiffSiblings(tree, [render newState])
-        tree <- newTree
-        state <- newState
-        diff
-
-    member this.Tree = tree
-
 let Run (selector: string) (app: App<'Message, 'Model>) =
     if isNull JSRuntime.Current then
         Mono.WebAssembly.Interop.MonoWebAssemblyJSRuntime()
         |> JSRuntime.SetCurrentJSRuntime
-    let state = RunState'(app.Init, app.Update, app.Render)
-    JSRuntime.Current.InvokeAsync<unit>("MiniBlazor.mount", selector, state.Tree)
+    let mutable state = app.Init
+    let mutable tree = [||]
+    let rec dispatch msg =
+        let newState = app.Update msg state
+        let newView = app.Render newState dispatch
+        let diff, newTree = Render.diffSiblings tree [newView]
+        tree <- newTree
+        state <- newState
+        JSRuntime.Current.InvokeAsync<unit>("MiniBlazor.applyDiff", selector, diff)
+        |> ignore
+    tree <- Render.toRenderedNodes [app.Render app.Init dispatch]
+    JSRuntime.Current.InvokeAsync<unit>("MiniBlazor.mount", selector, tree)
     |> ignore

@@ -2,34 +2,34 @@ module rec MiniBlazor.Html
 
 open System.Collections.Generic
 
-type Node<'Message> =
+type Node =
     | Empty
-    | Concat of list<Node<'Message>>
-    | Elt of name: string * attrs: IDictionary<string, string> * events: IDictionary<string, obj -> 'Message> * children: list<Node<'Message>>
+    | Concat of list<Node>
+    | Elt of name: string * attrs: IDictionary<string, string> * events: IDictionary<string, obj -> unit> * children: list<Node>
     | Text of text: string
-    | KeyedFragment of list<string * Node<'Message>>
+    | KeyedFragment of list<string * Node>
 
-    static member Collect (nodes: list<Node<'Message>>) =
+    static member Collect (nodes: list<Node>) =
         nodes |> List.collect (function
             | Empty -> []
             | Concat l -> l
             | x -> [x]
         )
 
-    static member Collect (node: Node<'Message>) =
+    static member Collect (node: Node) =
         match node with
         | Empty -> []
         | Concat l -> Node.Collect l
         | x -> [x]
 
 [<Struct>]
-type Attr<'Message> =
+type Attr =
     | PlainAttr of aname: string * avalue: string
-    | Handler of ename: string * ehandler: (obj -> 'Message)
+    | Handler of ename: string * ehandler: (obj -> unit)
 
 let Element name attrsAndEvents (children: list<_>) =
     let attrs = Dictionary<string, string>()
-    let events = Dictionary<string, obj -> 'Message>()
+    let events = Dictionary<string, obj -> unit>()
     for a in attrsAndEvents do
         match a with
         | PlainAttr(name, value) -> attrs.[name] <- value
@@ -37,7 +37,7 @@ let Element name attrsAndEvents (children: list<_>) =
     Elt(name, attrs, events, children)
 
 let text str = Text str
-let [<GeneralizableValue>] empty<'Message> = Empty : Node<'Message>
+let empty = Empty
 let concat nodes = Concat nodes
 let keyed items = KeyedFragment items
 
@@ -55,22 +55,15 @@ let (=>) name value = PlainAttr(name, value)
 let value x = "value" => x
 let type_ x = "type" => x
 
-type onLazy =
-    static member event<'Message> event (message: obj -> 'Message) =
-        Handler(event, message)
-
-    static member click<'Message> (message: obj -> 'Message) =
-        onLazy.event "click" (fun _ -> message())
-
 type on =
-    static member event<'Message> event (message: 'Message) =
-        onLazy.event event (fun _ -> message)
+    static member event<'T> event (callback: 'T -> unit) =
+        Handler(event, unbox<'T> >> callback)
 
-    static member change<'T, 'Message> (message: 'T -> 'Message) =
-        onLazy.event<'Message> "change" (fun args -> message (args :?> 'T))
+    static member change<'T> (callback: 'T -> unit) =
+        on.event "change" callback
 
-    static member input<'Message> (message: string -> 'Message) =
-        onLazy.event<'Message> "input" (fun args -> message (args :?> string))
+    static member input (message: string -> unit) =
+        on.event "input" message
 
-    static member click<'Message> (message: 'Message) =
-        on.event "click" message
+    static member click (message: unit -> unit) =
+        on.event "click" (fun _ -> message ())

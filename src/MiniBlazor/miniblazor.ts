@@ -55,11 +55,7 @@ namespace MiniBlazor {
 
         addEvent(node: Element, name: string, handler: DotNetObjectRef): void {
             node.addEventListener(name, (event: Event) => {
-                handler.invokeMethodAsync('Handle', RenderedTree.eventArgs(event, node))
-                    .then((diff: Diff[]) => {
-                        console.log('DIFF', diff);
-                        this.applyDiff({c: diff}, null, this.root);
-                    });
+                handler.invokeMethodAsync('Handle', RenderedTree.eventArgs(event, node));
             });
         }
 
@@ -123,6 +119,10 @@ namespace MiniBlazor {
                 }
                 return node.nextSibling;
             }
+        }
+
+        applyRootDiff(diff: Diff[]) {
+            this.applyDiff({c:diff}, null, this.root);
         }
 
         applyDiff(diff: Diff, parent: Element, node: Node) {
@@ -192,11 +192,17 @@ namespace MiniBlazor {
         }
     }
 
+    let running: {[key: string]: RenderedTree} = {};
+
     export function mount(selector: string, initTree: RenderedNode[]): void {
         const root = document.querySelector(selector);
         const hydrate = root.hasAttribute("data-miniblazor-hydrate");
         if (hydrate) root.removeAttribute("data-miniblazor-hydrate");
-        new MiniBlazor.RenderedTree(root, initTree, hydrate);
+        running[selector] = new MiniBlazor.RenderedTree(root, initTree, hydrate);
+    }
+
+    export function applyDiff(selector: string, diff: Diff[]) {
+        running[selector].applyRootDiff(diff);
     }
 }
 

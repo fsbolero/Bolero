@@ -56,10 +56,10 @@ let Update message model =
             { model with items = items }
     | ToggleRevOrder -> { model with revOrder = not model.revOrder }
 
-let ViewInput model =
+let ViewInput model dispatch =
     div [] [
-        input [value model.input; on.input SetInput]
-        input [type_ "submit"; on.click Submit]
+        input [value model.input; on.input (SetInput >> dispatch)]
+        input [type_ "submit"; on.click (fun () -> dispatch Submit)]
         div [] [text (defaultArg model.submitted "")]
         (match model.submitted with
         | Some s ->
@@ -72,36 +72,36 @@ let ViewInput model =
         | None -> empty)
     ]
 
-let ViewItem k v =
+let ViewItem k v dispatch =
     concat [
         li [] [text v]
         li [] [
             input []
-            button [on.click (SetKeyOf k)] [text "Set key from Add field"]
-            button [on.click (RemoveItem k)] [text "Remove"]
+            button [on.click (fun () -> dispatch (SetKeyOf k))] [text "Set key from Add field"]
+            button [on.click (fun () -> dispatch (RemoveItem k))] [text "Remove"]
         ]
     ]
 
-let ViewList model =
+let ViewList model dispatch =
     let items =
         if model.revOrder then
             Seq.rev model.items
         else
             model.items :> _
     div [] [
-        input [value (string model.addKey); on.input (int >> SetAddKey)]
-        button [on.click AddKey] [text "Add"]
+        input [value (string model.addKey); on.input (int >> SetAddKey >> dispatch)]
+        button [on.click (fun () -> dispatch AddKey)] [text "Add"]
         br []
-        button [on.click ToggleRevOrder] [text "Toggle order"]
+        button [on.click (fun () -> dispatch ToggleRevOrder)] [text "Toggle order"]
         ul [] [
-            keyed [for KeyValue(k, v) in items -> string k, ViewItem k v]
+            keyed [for KeyValue(k, v) in items -> string k, ViewItem k v dispatch]
         ]
     ]
 
-let View model =
+let View model dispatch =
     concat [
-        ViewInput model
-        ViewList model
+        ViewInput model dispatch
+        ViewList model dispatch
     ]
 
 let MyApp = App.Create InitModel Update View
