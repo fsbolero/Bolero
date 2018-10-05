@@ -4,6 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <RunCommand>dotnet</RunCommand>
     <RunArguments>blazor serve</RunArguments>
+    <DefineConstants Condition="'$(GhPages)' != ''">$(DefineConstants);GHPAGES</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Main.fs" />

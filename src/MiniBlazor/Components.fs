@@ -58,18 +58,19 @@ type ElmishProgramComponent<'model, 'msg>() =
     member val private View = Empty with get, set
     member val private Dispatch = ignore with get, set
     member val private BaseUri = "/" with get, set
+    member val private BasePath = "" with get, set
     member val private Router = None with get, set
 
     abstract Program : Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>
 
     member private this.OnLocationChanged (_: obj) (uri: string) =
         this.Router |> Option.iter (fun router ->
-            let uri = this.UriHelper.ToBaseRelativePath(this.BaseUri, uri)
+            let uri = this.UriHelper.ToBaseRelativePath(this.BaseUri + this.BasePath, uri)
             this.Dispatch (router.setRoute uri))
 
     member internal this.GetCurrentUri() =
         let uri = this.UriHelper.GetAbsoluteUri()
-        this.UriHelper.ToBaseRelativePath(this.BaseUri, uri)
+        this.UriHelper.ToBaseRelativePath(this.BaseUri + this.BasePath, uri)
 
     member internal this.SetState(program, model, dispatch) =
         this.View <- program.view model dispatch
@@ -90,15 +91,24 @@ type ElmishProgramComponent<'model, 'msg>() =
         }
         |> Program.runWith this
 
-    member internal this.InitRouter(r: Router<'model, 'msg>, program: Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>) =
+    member internal this.InitRouter
+        (
+            r: Router<'model, 'msg>,
+            program: Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>,
+            initModel: 'model
+        ) =
         this.Router <- Some r
         this.BaseUri <- this.UriHelper.GetBaseUri()
         System.EventHandler<string> this.OnLocationChanged
         |> this.UriHelper.OnLocationChanged.AddHandler
-        let model, initCmd = program.init this
         let msg = r.setRoute (this.GetCurrentUri())
-        let model, routeCmd = program.update msg model
-        model, (fun dispatch -> this.Dispatch <- dispatch) :: initCmd @ routeCmd
+        let model, routeCmd = program.update msg initModel
+        model, (fun dispatch -> this.Dispatch <- dispatch) :: routeCmd
+
+    member internal this.SetRouterBasePath(path: string) =
+        let path = path.TrimStart('/')
+        let path = if path.EndsWith("/") then path else path + "/"
+        this.BasePath <- path
 
     override this.Render() =
         this.View
@@ -110,5 +120,19 @@ type ElmishProgramComponent<'model, 'msg>() =
 
 module Program =
 
-    let withRouter (router: Router<'model, 'msg>) (program: Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>) =
-        { program with init = fun comp -> comp.InitRouter(router, program) }
+    let withRouter
+            (router: Router<'model, 'msg>)
+            (program: Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>) =
+        { program with
+            init = fun comp ->
+                let model, initCmd = program.init comp
+                let model, compCmd = comp.InitRouter(router, program, model)
+                model, initCmd @ compCmd }
+
+    let withRouterBasePath
+            (path: string)
+            (program: Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>) =
+        { program with
+            init = fun comp ->
+                comp.SetRouterBasePath(path)
+                program.init comp }

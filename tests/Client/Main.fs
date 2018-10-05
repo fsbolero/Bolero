@@ -33,7 +33,7 @@ type Message =
     | ToggleRevOrder
     | SetPage of Page
 
-let InitModel _ =
+let initModel _ =
     {
         input = ""
         submitted = None
@@ -48,7 +48,7 @@ let InitModel _ =
         page = Form
     }
 
-let Update message model =
+let update message model =
     match message with
     | SetInput text -> { model with input = text }
     | Submit -> { model with submitted = Some model.input }
@@ -64,7 +64,7 @@ let Update message model =
     | ToggleRevOrder -> { model with revOrder = not model.revOrder }
     | SetPage p -> { model with page = p }
 
-let ViewForm model dispatch =
+let viewForm model dispatch =
     div [] [
         input [attr.value model.input; on.change (fun e -> dispatch (SetInput (unbox e.Value)))]
         input [attr.``type`` "submit"; on.click (fun _ -> dispatch Submit)]
@@ -81,7 +81,7 @@ let ViewForm model dispatch =
         | None -> empty)
     ]
 
-let ViewItem k v dispatch =
+let viewItem k v dispatch =
     concat [
         li [] [text v]
         li [] [
@@ -91,7 +91,7 @@ let ViewItem k v dispatch =
         ]
     ]
 
-let ViewCollection model dispatch =
+let viewCollection model dispatch =
     let items =
         if model.revOrder then
             Seq.rev model.items
@@ -107,28 +107,31 @@ let ViewCollection model dispatch =
         br []
         button [on.click (fun _ -> dispatch ToggleRevOrder)] [text "Toggle order"]
         ul [] [
-            for KeyValue(k, v) in items -> ViewItem k v dispatch
+            for KeyValue(k, v) in items -> viewItem k v dispatch
         ]
     ]
 
-let View model dispatch =
+let navLink attrs children =
+    comp<NavLink> (("Match" => NavLinkMatch.All) :: attrs) children
+
+let view model dispatch =
     concat [
         style [] [text ".active { background: lightblue; }"]
         p [] [
-            comp<NavLink> [attr.href "/"; "Match" => NavLinkMatch.All] [text "Form"]
+            navLink [attr.href "/"] [text "Form"]
             text " "
-            comp<NavLink> [attr.href "/collection"; "Match" => NavLinkMatch.All] [text "Collection"]
+            navLink [attr.href "/collection"] [text "Collection"]
         ]
         (match model.page with
-        | Form -> ViewForm model dispatch
-        | Collection -> ViewCollection model dispatch)
+        | Form -> viewForm model dispatch
+        | Collection -> viewCollection model dispatch)
     ]
 
 type MyApp() =
     inherit ElmishProgramComponent<Model, Message>()
 
     override this.Program =
-        Program.mkSimple InitModel Update View
+        Program.mkSimple initModel update view
         |> Program.withConsoleTrace
         |> Program.withRouter {
             getRoute = fun m ->
@@ -141,3 +144,6 @@ type MyApp() =
                 | _ -> Form
                 |> SetPage
         }
+#if GHPAGES
+        |> Program.withRouterBasePath "/MiniBlazor"
+#endif
