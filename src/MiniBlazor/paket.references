@@ -1,5 +1,5 @@
 Microsoft.JSInterop
 Mono.WebAssembly.Interop
 FSharp.Core
-Microsoft.TypeScript.MSBuild
+Microsoft.AspNetCore.Blazor.Browser
 Elmish

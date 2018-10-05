@@ -1,16 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <TypeScriptVersion>2.7.2</TypeScriptVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="tsconfig.json" />
-    <Content Include="miniblazor.ts" />
-    <EmbeddedResource Include="js/miniblazor.js" LogicalName="blazor:js:miniblazor.js" />
     <Compile Include="Html.fs" />
     <Compile Include="Render.fs" />
-    <Compile Include="Program.fs" />
+    <Compile Include="Components.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

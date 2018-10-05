@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Main.fs" />
+    <Compile Include="Startup.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />

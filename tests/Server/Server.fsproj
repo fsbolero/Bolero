@@ -6,7 +6,7 @@
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Main.fs" />
+    <Compile Include="Startup.fs" />
   </ItemGroup>
   <ItemGroup>
     <!-- illink can't find System.Buffers.dll, because it's not copied locally by default nor present in mono's standard assemblies.

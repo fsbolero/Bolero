@@ -1,8 +1,11 @@
 module MiniBlazor.Test.Client.Main
 
+open Microsoft.AspNetCore.Blazor.Routing
 open Elmish
-open Elmish.MiniBlazor
+open MiniBlazor
 open MiniBlazor.Html
+
+type Page = Form | Collection
 
 type Item =
     {
@@ -17,6 +20,7 @@ type Model =
         addKey: int
         revOrder: bool
         items: Map<int, string>
+        page: Page
     }
 
 type Message =
@@ -27,8 +31,9 @@ type Message =
     | SetKeyOf of key: int
     | AddKey
     | ToggleRevOrder
+    | SetPage of Page
 
-let InitModel =
+let InitModel _ =
     {
         input = ""
         submitted = None
@@ -40,6 +45,7 @@ let InitModel =
             2, "it's 2"
             3, "it's 3"
         ]
+        page = Form
     }
 
 let Update message model =
@@ -56,17 +62,19 @@ let Update message model =
             let items = model.items |> Map.remove k |> Map.add model.addKey item
             { model with items = items }
     | ToggleRevOrder -> { model with revOrder = not model.revOrder }
+    | SetPage p -> { model with page = p }
 
-let ViewInput model dispatch =
+let ViewForm model dispatch =
     div [] [
-        input [value model.input; on.input (SetInput >> dispatch)]
-        input [type_ "submit"; on.click (fun () -> dispatch Submit)]
+        input [attr.value model.input; on.change (fun e -> dispatch (SetInput (unbox e.Value)))]
+        input [attr.``type`` "submit"; on.click (fun _ -> dispatch Submit)]
         div [] [text (defaultArg model.submitted "")]
         (match model.submitted with
         | Some s ->
             concat [
                 if s.Contains "secret" then
                     yield div [] [text "You typed the secret password!"]
+
                 if s.Contains "super" then
                     yield div [] [text "You typed the super secret password!"]
             ]
@@ -78,38 +86,58 @@ let ViewItem k v dispatch =
         li [] [text v]
         li [] [
             input []
-            button [on.click (fun () -> dispatch (SetKeyOf k))] [text "Set key from Add field"]
-            button [on.click (fun () -> dispatch (RemoveItem k))] [text "Remove"]
+            button [on.click (fun _ -> dispatch (SetKeyOf k))] [text "Set key from Add field"]
+            button [on.click (fun _ -> dispatch (RemoveItem k))] [text "Remove"]
         ]
     ]
 
-let ViewList model dispatch =
+let ViewCollection model dispatch =
     let items =
         if model.revOrder then
             Seq.rev model.items
         else
             model.items :> _
     div [] [
-        input [value (string model.addKey); on.input (int >> SetAddKey >> dispatch)]
-        button [on.click (fun () -> dispatch AddKey)] [text "Add"]
+        input [
+            attr.``type`` "number"
+            attr.value (string model.addKey)
+            on.change (fun e -> dispatch (SetAddKey (int (unbox<string> e.Value))))
+        ]
+        button [on.click (fun _ -> dispatch AddKey)] [text "Add"]
         br []
-        button [on.click (fun () -> dispatch ToggleRevOrder)] [text "Toggle order"]
+        button [on.click (fun _ -> dispatch ToggleRevOrder)] [text "Toggle order"]
         ul [] [
-            keyed [for KeyValue(k, v) in items -> string k, ViewItem k v dispatch]
+            for KeyValue(k, v) in items -> ViewItem k v dispatch
         ]
     ]
 
 let View model dispatch =
     concat [
-        ViewInput model dispatch
-        ViewList model dispatch
+        style [] [text ".active { background: lightblue; }"]
+        p [] [
+            comp<NavLink> [attr.href "/"; "Match" => NavLinkMatch.All] [text "Form"]
+            text " "
+            comp<NavLink> [attr.href "/collection"; "Match" => NavLinkMatch.All] [text "Collection"]
+        ]
+        (match model.page with
+        | Form -> ViewForm model dispatch
+        | Collection -> ViewCollection model dispatch)
     ]
 
-let MyApp =
-    Program.mkSimple (fun () -> InitModel) Update View
-    |> Program.withMiniBlazor "#main"
+type MyApp() =
+    inherit ElmishProgramComponent<Model, Message>()
 
-[<EntryPoint>]
-let Main args =
-    Program.run MyApp
-    0
+    override this.Program =
+        Program.mkSimple InitModel Update View
+        |> Program.withConsoleTrace
+        |> Program.withRouter {
+            getRoute = fun m ->
+                match m.page with
+                | Form -> ""
+                | Collection -> "collection"
+            setRoute = fun r ->
+                match r with
+                | "collection" -> Collection
+                | _ -> Form
+                |> SetPage
+        }
