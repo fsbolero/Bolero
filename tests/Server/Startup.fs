@@ -13,7 +13,13 @@ type Startup() =
         |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
-        app.UseServerSideBlazor<Client.Startup>()
+        app
+            // UseServerSideBlazor will try to serve Client's index.html, which points to blazor.webassembly.js.
+            // This overrides it with Server's index.html.
+            .UseDefaultFiles()
+            .UseStaticFiles()
+            // Then we can let ServerSideBlazor do its thing.
+            .UseServerSideBlazor<Client.Startup>()
         |> ignore
 
 module Program =

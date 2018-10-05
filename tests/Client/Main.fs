@@ -118,9 +118,9 @@ let view model dispatch =
     concat [
         style [] [text ".active { background: lightblue; }"]
         p [] [
-            navLink [attr.href "/"] [text "Form"]
+            navLink [attr.href ""] [text "Form"]
             text " "
-            navLink [attr.href "/collection"] [text "Collection"]
+            navLink [attr.href "collection"] [text "Collection"]
         ]
         (match model.page with
         | Form -> viewForm model dispatch
@@ -144,6 +144,3 @@ type MyApp() =
                 | _ -> Form
                 |> SetPage
         }
-#if GHPAGES
-        |> Program.withRouterBasePath "/MiniBlazor"
-#endif

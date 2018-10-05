@@ -58,19 +58,18 @@ type ElmishProgramComponent<'model, 'msg>() =
     member val private View = Empty with get, set
     member val private Dispatch = ignore with get, set
     member val private BaseUri = "/" with get, set
-    member val private BasePath = "" with get, set
     member val private Router = None with get, set
 
     abstract Program : Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>
 
     member private this.OnLocationChanged (_: obj) (uri: string) =
         this.Router |> Option.iter (fun router ->
-            let uri = this.UriHelper.ToBaseRelativePath(this.BaseUri + this.BasePath, uri)
+            let uri = this.UriHelper.ToBaseRelativePath(this.BaseUri, uri)
             this.Dispatch (router.setRoute uri))
 
     member internal this.GetCurrentUri() =
         let uri = this.UriHelper.GetAbsoluteUri()
-        this.UriHelper.ToBaseRelativePath(this.BaseUri + this.BasePath, uri)
+        this.UriHelper.ToBaseRelativePath(this.BaseUri, uri)
 
     member internal this.SetState(program, model, dispatch) =
         this.View <- program.view model dispatch
@@ -105,11 +104,6 @@ type ElmishProgramComponent<'model, 'msg>() =
         let model, routeCmd = program.update msg initModel
         model, (fun dispatch -> this.Dispatch <- dispatch) :: routeCmd
 
-    member internal this.SetRouterBasePath(path: string) =
-        let path = path.TrimStart('/')
-        let path = if path.EndsWith("/") then path else path + "/"
-        this.BasePath <- path
-
     override this.Render() =
         this.View
 
@@ -128,11 +122,3 @@ module Program =
                 let model, initCmd = program.init comp
                 let model, compCmd = comp.InitRouter(router, program, model)
                 model, initCmd @ compCmd }
-
-    let withRouterBasePath
-            (path: string)
-            (program: Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>) =
-        { program with
-            init = fun comp ->
-                comp.SetRouterBasePath(path)
-                program.init comp }

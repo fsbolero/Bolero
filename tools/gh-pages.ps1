@@ -33,6 +33,7 @@ if ($env -eq "appveyor") {
 git checkout gh-pages
 git rm -rf *
 cp -r -force ../../tests/client/wwwroot/* .
+(get-content '.\index.html').replace('<base href="/"', '<base href="/MiniBlazor/"') | set-content '.\index.html'
 cp -r -force ../../tests/client/bin/Release/netstandard2.0/dist/_framework .
 cp -r -force ../../tests/client/bin/Release/netstandard2.0/dist/_content .
 git add . 2>git.log
