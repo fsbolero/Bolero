@@ -19,24 +19,18 @@ let rec renderNode (builder: RenderTreeBuilder) sequence node =
         let sequence = List.fold (renderNode builder) sequence children
         builder.CloseElement()
         sequence
-    | Component (comp, attrs, children) ->
+    | Component (comp, i, attrs, children) ->
+        let initSequence = sequence
         builder.OpenComponent(sequence, comp)
         let sequence = sequence + 1
         let sequence = Seq.fold (renderAttr builder) sequence attrs
         let frag = RenderFragment(fun builder ->
-            Seq.fold (renderNode builder) sequence children |> ignore)
+            let sequence = Seq.fold (renderNode builder) sequence children
+            assert (sequence = initSequence + i.length))
         builder.AddAttribute(sequence, "ChildContent", frag)
         builder.CloseComponent()
-        sequence + List.sumBy nodeLength children
+        initSequence + i.length
 
 and renderAttr (builder: RenderTreeBuilder) sequence (name, value) =
     builder.AddAttribute(sequence, name, value)
     sequence + 1
-
-and nodeLength = function
-    | Empty -> 0
-    | Text _ -> 1
-    | Concat nodes -> List.sumBy nodeLength nodes
-    | Elt (_, attrs, children)
-    | Component (_, attrs, children) ->
-        1 + Seq.length attrs + List.sumBy nodeLength children

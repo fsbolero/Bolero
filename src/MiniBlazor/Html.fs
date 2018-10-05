@@ -1,7 +1,6 @@
 module rec MiniBlazor.Html
 
 open System
-open System.Collections.Generic
 open Microsoft.AspNetCore.Blazor
 
 type Node =
@@ -9,7 +8,7 @@ type Node =
     | Concat of list<Node>
     | Elt of name: string * attrs: list<string * obj> * children: list<Node>
     | Text of text: string
-    | Component of Type * attrs: list<string * obj> * children: list<Node>
+    | Component of Type * info: ComponentInfo * attrs: list<string * obj> * children: list<Node>
 
     static member Collect (nodes: list<Node>) =
         nodes |> List.collect (function
@@ -24,6 +23,8 @@ type Node =
         | Concat l -> Node.Collect l
         | x -> [x]
 
+and [<Struct>] ComponentInfo = { length: int }
+
 let Element name attrs (children: list<_>) =
     Elt(name, attrs, children)
 
@@ -31,7 +32,15 @@ let text str = Text str
 let empty = Empty
 let concat nodes = Concat nodes
 let comp<'T when 'T :> Components.IComponent> attrs children =
-    Component(typeof<'T>, attrs, children)
+    let rec nodeLength = function
+        | Empty -> 0
+        | Text _ -> 1
+        | Concat nodes -> List.sumBy nodeLength nodes
+        | Elt (_, attrs, children) ->
+            1 + Seq.length attrs + List.sumBy nodeLength children
+        | Component (_, i, _, _) -> i.length
+    let length = 1 + Seq.length attrs + List.sumBy nodeLength children
+    Component(typeof<'T>, { length = length }, attrs, children)
 
 // BEGIN TAGS
 let a attrs children = Element "a" attrs children
