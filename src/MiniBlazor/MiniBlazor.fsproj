@@ -3,9 +3,10 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Html.fs" />
+    <Compile Include="Node.fs" />
     <Compile Include="Render.fs" />
     <Compile Include="Components.fs" />
+    <Compile Include="Html.fs" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

@@ -40,7 +40,7 @@ Target.create "tags" (fun _ ->
         |> replace (Tags.GetSample().Rows) "TAGS" (fun s tag ->
             let esc = escapeDashes tag.Name
             s.AppendLine(
-                sprintf """let %s attrs%s = Element "%s" attrs %s"""
+                sprintf """let %s attrs%s = Node.Elt("%s", attrs, %s)"""
                     (if tag.NeedsEscape then "``" + esc + "``" else esc)
                     (if tag.CanHaveChildren then " children" else "")
                     tag.Name

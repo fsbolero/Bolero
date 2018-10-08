@@ -4,7 +4,6 @@ open System
 open Microsoft.AspNetCore.Blazor.Components
 open Microsoft.AspNetCore.Blazor.Services
 open Elmish
-open MiniBlazor.Html
 open MiniBlazor.Render
 
 /// A component built from `Html.Node`s.

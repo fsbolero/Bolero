@@ -1,6 +1,5 @@
 module MiniBlazor.Render
 
-open MiniBlazor.Html
 open Microsoft.AspNetCore.Blazor
 open Microsoft.AspNetCore.Blazor.RenderTree
 
