@@ -2,6 +2,7 @@ module MiniBlazor.Program
 
 open Elmish
 
+/// Attach `router` to `program` when it is run as the `Program` of an `ElmishProgramComponent`.
 let withRouter
         (router: IRouter<'model, 'msg>)
         (program: Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>) =
@@ -11,9 +12,11 @@ let withRouter
             let model, compCmd = comp.InitRouter(router, program, model)
             model, initCmd @ compCmd }
 
+/// Attach a router inferred from `makeMessage` and `getEndPoint` to `program`
+/// when it is run as the `Program` of an `ElmishProgramComponent`.
 let withRouterInfer
         (makeMessage: 'ep -> 'msg)
-        (getFromModel: 'model -> 'ep)
+        (getEndPoint: 'model -> 'ep)
         (program: Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>) =
     program
-    |> withRouter (Router.infer makeMessage getFromModel)
+    |> withRouter (Router.infer makeMessage getEndPoint)

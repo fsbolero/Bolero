@@ -3,6 +3,7 @@ module MiniBlazor.Render
 open Microsoft.AspNetCore.Blazor
 open Microsoft.AspNetCore.Blazor.RenderTree
 
+/// Render `node` into `builder` at `sequence` number.
 let rec renderNode (builder: RenderTreeBuilder) sequence node =
     match node with
     | Empty -> sequence
@@ -31,6 +32,7 @@ let rec renderNode (builder: RenderTreeBuilder) sequence node =
         builder.CloseComponent()
         initSequence + i.length
 
+/// Render an attribute with `name` and `value` into `builder` at `sequence` number.
 and renderAttr (builder: RenderTreeBuilder) sequence (name, value) =
     builder.AddAttribute(sequence, name, value)
     sequence + 1

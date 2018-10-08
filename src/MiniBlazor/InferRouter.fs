@@ -2,10 +2,10 @@ namespace MiniBlazor
 
 open System
 open System.Collections.Generic
-open System.Reflection
 open System.Text
 open FSharp.Reflection
 
+/// Declare how an F# union case matches to a URI.
 [<AttributeUsage(AttributeTargets.Property, AllowMultiple = false)>]
 type EndPointAttribute(endpoint: string) =
     inherit Attribute()
@@ -14,6 +14,7 @@ type EndPointAttribute(endpoint: string) =
 
     member this.EndPoint = endpoint
 
+/// Functions for building Routers that bind page navigation with Elmish.
 module Router =
 
     type ArraySegment<'T> with
@@ -83,6 +84,9 @@ module Router =
             )
             b.ToString()
 
+    /// Infer a router constructed around an endpoint type `'ep`.
+    /// This type must be an F# union type, and its cases should use `EndPointAttribute`
+    /// to declare how they match to a URI.
     let infer<'ep, 'model, 'msg> (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) =
         let ty = typeof<'ep>
         if not (FSharpType.IsUnion ty) then

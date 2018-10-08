@@ -41,32 +41,27 @@ Target.create "tags" (fun _ ->
         input
         |> replace (Tags.GetSample().Rows) "TAGS" (fun s tag ->
             let esc = escapeDashes tag.Name
-            s.AppendLine(
-                sprintf """let %s (attrs: list<Attr>)%s : Node =
-    elt "%s" attrs %s"""
-                    (if tag.NeedsEscape then "``" + esc + "``" else esc)
-                    (if tag.CanHaveChildren then " (children: list<Node>)" else "")
-                    tag.Name
-                    (if tag.CanHaveChildren then "children" else "[]")
-            )
+            let ident = if tag.NeedsEscape then "``" + esc + "``" else esc
+            let childrenArg = if tag.CanHaveChildren then " (children: list<Node>)" else ""
+            let childrenVal = if tag.CanHaveChildren then "children" else "[]"
+            s.AppendLine(sprintf """/// Create an HTML `<%s>` element.""" tag.Name)
+             .AppendLine(sprintf """let %s (attrs: list<Attr>)%s : Node =""" ident childrenArg)
+             .AppendLine(sprintf """    elt "%s" attrs %s""" tag.Name childrenVal)
+             .AppendLine()
         )
-        |> replace (Attrs.GetSample().Rows) "ATTRS" (fun s tag ->
-            let esc = escapeDashes tag.Name
-            s.AppendLine(
-                sprintf """    let %s (v: obj) : Attr = "%s" => v"""
-                    (if tag.NeedsEscape then "``" + esc + "``" else esc)
-                    tag.Name
-            )
+        |> replace (Attrs.GetSample().Rows) "ATTRS" (fun s attr ->
+            let esc = escapeDashes attr.Name
+            let ident = if attr.NeedsEscape then "``" + esc + "``" else esc
+            s.AppendLine(sprintf """    /// Create an HTML `%s` attribute.""" attr.Name)
+             .AppendLine(sprintf """    let %s (v: obj) : Attr = "%s" => v""" ident attr.Name)
+             .AppendLine()
         )
-        |> replace (Events.GetSample().Rows) "EVENTS" (fun s tag ->
-            let esc = escapeDashes tag.Name
-            s.AppendLine(
-                sprintf """    let %s (callback: UI%sEventArgs -> unit) : Attr =
-        "on%s" => BindMethods.GetEventHandlerValue callback"""
-                    esc
-                    tag.Type
-                    esc
-            )
+        |> replace (Events.GetSample().Rows) "EVENTS" (fun s event ->
+            let esc = escapeDashes event.Name
+            s.AppendLine(sprintf """    /// Create a handler for HTML event `%s`.""" event.Name)
+             .AppendLine(sprintf """    let %s (callback: UI%sEventArgs -> unit) : Attr =""" esc event.Type)
+             .AppendLine(sprintf """        "on%s" => BindMethods.GetEventHandlerValue callback""" esc)
+             .AppendLine()
         )
     if input <> output then
         File.WriteAllText(file, output)

@@ -17,6 +17,7 @@ type Component() =
         |> renderNode builder 0
         |> ignore
 
+    /// The rendered contents of the component.
     abstract Render : unit -> Node
 
 /// A component that is part of an Elmish view.
@@ -26,12 +27,16 @@ type ElmishComponent<'model, 'msg>() =
 
     let mutable oldModel = Unchecked.defaultof<'model>
 
+    /// The current value of the Elmish model.
+    /// Can be just a part of the full program's model.
     [<Parameter>]
     member val Model = Unchecked.defaultof<'model> with get, set
 
+    /// The Elmish dispatch function.
     [<Parameter>]
     member val Dispatch = Unchecked.defaultof<Dispatch<'msg>> with get, set
 
+    /// The Elmish view function.
     abstract View : 'model -> Dispatch<'msg> -> Node
 
     override this.ShouldRender() =
@@ -41,13 +46,20 @@ type ElmishComponent<'model, 'msg>() =
         oldModel <- this.Model
         this.View this.Model this.Dispatch
 
+/// A router that binds page navigation with Elmish.
 type IRouter<'model, 'msg> =
-    abstract GetRoute : 'model -> string
-    abstract SetRoute : string -> option<'msg>
+    /// Get the uri corresponding to `model`.
+    abstract GetRoute : model: 'model -> string
 
+    /// Get the message to send when the page navigates to `uri`.
+    abstract SetRoute : uri: string -> option<'msg>
+
+/// A simple hand-written router.
 type Router<'model, 'msg> =
     {
+        /// Get the uri corresponding to `model`.
         getRoute: 'model -> string
+        /// Get the message to send when the page navigates to `uri`.
         setRoute: string -> option<'msg>
     }
 
@@ -55,6 +67,7 @@ type Router<'model, 'msg> =
         member this.GetRoute(model) = this.getRoute model
         member this.SetRoute(uri) = this.setRoute uri
 
+/// A simple router where the endpoint corresponds to a value easily gettable from the model.
 type Router<'ep, 'model, 'msg> =
     {
         getEndPoint: 'model -> 'ep
@@ -62,6 +75,7 @@ type Router<'ep, 'model, 'msg> =
         setRoute: string -> option<'msg>
     }
 
+    /// Get the uri for the given endpoint.
     member this.Link(ep) = this.getRoute ep
 
     interface IRouter<'model, 'msg> with
@@ -80,6 +94,7 @@ type ElmishProgramComponent<'model, 'msg>() =
     member val private BaseUri = "/" with get, set
     member val private Router = None : option<IRouter<'model, 'msg>> with get, set
 
+    /// The Elmish program to run.
     abstract Program : Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>
 
     member private this.OnLocationChanged (_: obj) (uri: string) =
