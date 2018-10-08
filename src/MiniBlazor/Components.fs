@@ -41,11 +41,32 @@ type ElmishComponent<'model, 'msg>() =
         oldModel <- this.Model
         this.View this.Model this.Dispatch
 
+type IRouter<'model, 'msg> =
+    abstract GetRoute : 'model -> string
+    abstract SetRoute : string -> option<'msg>
+
 type Router<'model, 'msg> =
     {
         getRoute: 'model -> string
-        setRoute: string -> 'msg
+        setRoute: string -> option<'msg>
     }
+
+    interface IRouter<'model, 'msg> with
+        member this.GetRoute(model) = this.getRoute model
+        member this.SetRoute(uri) = this.setRoute uri
+
+type Router<'ep, 'model, 'msg> =
+    {
+        getEndPoint: 'model -> 'ep
+        getRoute: 'ep -> string
+        setRoute: string -> option<'msg>
+    }
+
+    member this.Link(ep) = this.getRoute ep
+
+    interface IRouter<'model, 'msg> with
+        member this.GetRoute(model) = this.getRoute (this.getEndPoint model)
+        member this.SetRoute(uri) = this.setRoute uri
 
 /// A component that runs an Elmish program.
 [<AbstractClass>]
@@ -57,14 +78,15 @@ type ElmishProgramComponent<'model, 'msg>() =
     member val private View = Empty with get, set
     member val private Dispatch = ignore with get, set
     member val private BaseUri = "/" with get, set
-    member val private Router = None with get, set
+    member val private Router = None : option<IRouter<'model, 'msg>> with get, set
 
     abstract Program : Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>
 
     member private this.OnLocationChanged (_: obj) (uri: string) =
         this.Router |> Option.iter (fun router ->
             let uri = this.UriHelper.ToBaseRelativePath(this.BaseUri, uri)
-            this.Dispatch (router.setRoute uri))
+            let route = router.SetRoute uri
+            Option.iter this.Dispatch route)
 
     member internal this.GetCurrentUri() =
         let uri = this.UriHelper.GetAbsoluteUri()
@@ -74,7 +96,7 @@ type ElmishProgramComponent<'model, 'msg>() =
         this.View <- program.view model dispatch
         this.StateHasChanged()
         this.Router |> Option.iter (fun router ->
-            let newUri = router.getRoute model
+            let newUri = router.GetRoute model
             let oldUri = this.GetCurrentUri()
             if newUri <> oldUri then
                 this.UriHelper.NavigateTo(newUri)
@@ -91,7 +113,7 @@ type ElmishProgramComponent<'model, 'msg>() =
 
     member internal this.InitRouter
         (
-            r: Router<'model, 'msg>,
+            r: IRouter<'model, 'msg>,
             program: Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>,
             initModel: 'model
         ) =
@@ -99,9 +121,14 @@ type ElmishProgramComponent<'model, 'msg>() =
         this.BaseUri <- this.UriHelper.GetBaseUri()
         System.EventHandler<string> this.OnLocationChanged
         |> this.UriHelper.OnLocationChanged.AddHandler
-        let msg = r.setRoute (this.GetCurrentUri())
-        let model, routeCmd = program.update msg initModel
-        model, (fun dispatch -> this.Dispatch <- dispatch) :: routeCmd
+        let setDispatch dispatch =
+            this.Dispatch <- dispatch
+        match r.SetRoute (this.GetCurrentUri()) with
+        | Some msg ->
+            let model, routeCmd = program.update msg initModel
+            model, setDispatch :: routeCmd
+        | None ->
+            initModel, [setDispatch]
 
     override this.Render() =
         this.View
@@ -110,14 +137,3 @@ type ElmishProgramComponent<'model, 'msg>() =
         member this.Dispose() =
             System.EventHandler<string> this.OnLocationChanged
             |> this.UriHelper.OnLocationChanged.RemoveHandler
-
-module Program =
-
-    let withRouter
-            (router: Router<'model, 'msg>)
-            (program: Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>) =
-        { program with
-            init = fun comp ->
-                let model, initCmd = program.init comp
-                let model, compCmd = comp.InitRouter(router, program, model)
-                model, initCmd @ compCmd }

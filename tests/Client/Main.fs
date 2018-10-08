@@ -5,7 +5,10 @@ open Elmish
 open MiniBlazor
 open MiniBlazor.Html
 
-type Page = Form | Collection
+type Page =
+    | [<EndPoint "">] Form
+    | [<EndPoint "collection">] Collection
+    | [<EndPoint "collection-item">] Item of key: int
 
 type Item =
     {
@@ -47,6 +50,8 @@ let initModel _ =
         ]
         page = Form
     }
+
+let router = Router.infer SetPage (fun m -> m.page)
 
 let update message model =
     match message with
@@ -91,6 +96,7 @@ type ViewItem() =
                 input []
                 button [on.click (fun _ -> dispatch (SetKeyOf k))] [text "Set key from Add field"]
                 button [on.click (fun _ -> dispatch (RemoveItem k))] [text "Remove"]
+                a [attr.href (router.Link (Item k))] [text "Go to page"]
             ]
         ]
 
@@ -114,20 +120,31 @@ let viewCollection model dispatch =
         ]
     ]
 
-let navLink attrs children =
-    comp<NavLink> (("Match" => NavLinkMatch.All) :: attrs) children
+let navLink ``match`` attrs children =
+    comp<NavLink> (("Match" => ``match``) :: attrs) children
+
+type ViewItemPage() =
+    inherit ElmishComponent<int * string, Message>()
+
+    override this.View ((k, v)) dispatch =
+        concat [
+            p [] [text ("Viewing page for item #" + string k)]
+            p [] [text ("Text is: " + v)]
+            p [] [a [attr.href (router.Link Collection)] [text "Back to collection"]]
+        ]
 
 let view model dispatch =
     concat [
         style [] [text ".active { background: lightblue; }"]
         p [] [
-            navLink [attr.href ""] [text "Form"]
+            navLink NavLinkMatch.All [attr.href (router.Link Form)] [text "Form"]
             text " "
-            navLink [attr.href "collection"] [text "Collection"]
+            navLink NavLinkMatch.Prefix [attr.href (router.Link Collection)] [text "Collection"]
         ]
         (match model.page with
         | Form -> viewForm model dispatch
-        | Collection -> viewCollection model dispatch)
+        | Collection -> viewCollection model dispatch
+        | Item k -> ecomp<ViewItemPage,_,_> (k, model.items.[k]) dispatch)
     ]
 
 type MyApp() =
@@ -136,14 +153,4 @@ type MyApp() =
     override this.Program =
         Program.mkSimple initModel update view
         |> Program.withConsoleTrace
-        |> Program.withRouter {
-            getRoute = fun m ->
-                match m.page with
-                | Form -> ""
-                | Collection -> "collection"
-            setRoute = fun r ->
-                match r with
-                | "collection" -> Collection
-                | _ -> Form
-                |> SetPage
-        }
+        |> Program.withRouter router
