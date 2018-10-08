@@ -81,15 +81,18 @@ let viewForm model dispatch =
         | None -> empty)
     ]
 
-let viewItem k v dispatch =
-    concat [
-        li [] [text v]
-        li [] [
-            input []
-            button [on.click (fun _ -> dispatch (SetKeyOf k))] [text "Set key from Add field"]
-            button [on.click (fun _ -> dispatch (RemoveItem k))] [text "Remove"]
+type ViewItem() =
+    inherit ElmishComponent<int * string, Message>()
+
+    override this.View ((k, v)) dispatch =
+        concat [
+            li [] [text v]
+            li [] [
+                input []
+                button [on.click (fun _ -> dispatch (SetKeyOf k))] [text "Set key from Add field"]
+                button [on.click (fun _ -> dispatch (RemoveItem k))] [text "Remove"]
+            ]
         ]
-    ]
 
 let viewCollection model dispatch =
     let items =
@@ -107,7 +110,7 @@ let viewCollection model dispatch =
         br []
         button [on.click (fun _ -> dispatch ToggleRevOrder)] [text "Toggle order"]
         ul [] [
-            for KeyValue(k, v) in items -> viewItem k v dispatch
+            for KeyValue(k, v) in items -> ecomp<ViewItem,_,_> (k, v) dispatch
         ]
     ]
 

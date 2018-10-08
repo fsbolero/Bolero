@@ -23,10 +23,11 @@ let rec renderNode (builder: RenderTreeBuilder) sequence node =
         builder.OpenComponent(sequence, comp)
         let sequence = sequence + 1
         let sequence = Seq.fold (renderAttr builder) sequence attrs
-        let frag = RenderFragment(fun builder ->
-            let sequence = Seq.fold (renderNode builder) sequence children
-            assert (sequence = initSequence + i.length))
-        builder.AddAttribute(sequence, "ChildContent", frag)
+        if not (List.isEmpty children) then
+            let frag = RenderFragment(fun builder ->
+                let sequence = Seq.fold (renderNode builder) sequence children
+                assert (sequence = initSequence + i.length))
+            builder.AddAttribute(sequence, "ChildContent", frag)
         builder.CloseComponent()
         initSequence + i.length
 
