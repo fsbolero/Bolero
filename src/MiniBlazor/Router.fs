@@ -5,6 +5,42 @@ open System.Collections.Generic
 open System.Text
 open FSharp.Reflection
 
+/// A router that binds page navigation with Elmish.
+type IRouter<'model, 'msg> =
+    /// Get the uri corresponding to `model`.
+    abstract GetRoute : model: 'model -> string
+
+    /// Get the message to send when the page navigates to `uri`.
+    abstract SetRoute : uri: string -> option<'msg>
+
+/// A simple hand-written router.
+type Router<'model, 'msg> =
+    {
+        /// Get the uri corresponding to `model`.
+        getRoute: 'model -> string
+        /// Get the message to send when the page navigates to `uri`.
+        setRoute: string -> option<'msg>
+    }
+
+    interface IRouter<'model, 'msg> with
+        member this.GetRoute(model) = this.getRoute model
+        member this.SetRoute(uri) = this.setRoute uri
+
+/// A simple router where the endpoint corresponds to a value easily gettable from the model.
+type Router<'ep, 'model, 'msg> =
+    {
+        getEndPoint: 'model -> 'ep
+        getRoute: 'ep -> string
+        setRoute: string -> option<'msg>
+    }
+
+    /// Get the uri for the given endpoint.
+    member this.Link(ep) = this.getRoute ep
+
+    interface IRouter<'model, 'msg> with
+        member this.GetRoute(model) = this.getRoute (this.getEndPoint model)
+        member this.SetRoute(uri) = this.setRoute uri
+
 /// Declare how an F# union case matches to a URI.
 [<AttributeUsage(AttributeTargets.Property, AllowMultiple = false)>]
 type EndPointAttribute(endpoint: string) =
@@ -12,7 +48,8 @@ type EndPointAttribute(endpoint: string) =
 
     let endpoint = endpoint.Trim('/')
 
-    member this.EndPoint = endpoint
+    /// The root path fragment that this endpoint recognizes.
+    member this.Root = endpoint
 
 /// Functions for building Routers that bind page navigation with Elmish.
 module Router =
@@ -46,7 +83,7 @@ module Router =
     let private parseEndPointCasePath (case: UnionCaseInfo) =
         case.GetCustomAttributes()
         |> Array.tryPick (function
-            | :? EndPointAttribute as e -> Some e.EndPoint
+            | :? EndPointAttribute as e -> Some e.Root
             | _ -> None)
         |> Option.defaultWith (fun () -> case.Name)
 

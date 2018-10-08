@@ -46,46 +46,12 @@ type ElmishComponent<'model, 'msg>() =
         oldModel <- this.Model
         this.View this.Model this.Dispatch
 
-/// A router that binds page navigation with Elmish.
-type IRouter<'model, 'msg> =
-    /// Get the uri corresponding to `model`.
-    abstract GetRoute : model: 'model -> string
-
-    /// Get the message to send when the page navigates to `uri`.
-    abstract SetRoute : uri: string -> option<'msg>
-
-/// A simple hand-written router.
-type Router<'model, 'msg> =
-    {
-        /// Get the uri corresponding to `model`.
-        getRoute: 'model -> string
-        /// Get the message to send when the page navigates to `uri`.
-        setRoute: string -> option<'msg>
-    }
-
-    interface IRouter<'model, 'msg> with
-        member this.GetRoute(model) = this.getRoute model
-        member this.SetRoute(uri) = this.setRoute uri
-
-/// A simple router where the endpoint corresponds to a value easily gettable from the model.
-type Router<'ep, 'model, 'msg> =
-    {
-        getEndPoint: 'model -> 'ep
-        getRoute: 'ep -> string
-        setRoute: string -> option<'msg>
-    }
-
-    /// Get the uri for the given endpoint.
-    member this.Link(ep) = this.getRoute ep
-
-    interface IRouter<'model, 'msg> with
-        member this.GetRoute(model) = this.getRoute (this.getEndPoint model)
-        member this.SetRoute(uri) = this.setRoute uri
-
 /// A component that runs an Elmish program.
 [<AbstractClass>]
 type ElmishProgramComponent<'model, 'msg>() =
     inherit Component()
+
+    let mutable oldModel = Unchecked.defaultof<'model>
 
     [<Inject>]
     member val UriHelper = Unchecked.defaultof<IUriHelper> with get, set
@@ -108,14 +74,16 @@ type ElmishProgramComponent<'model, 'msg>() =
         this.UriHelper.ToBaseRelativePath(this.BaseUri, uri)
 
     member internal this.SetState(program, model, dispatch) =
-        this.View <- program.view model dispatch
-        this.StateHasChanged()
-        this.Router |> Option.iter (fun router ->
-            let newUri = router.GetRoute model
-            let oldUri = this.GetCurrentUri()
-            if newUri <> oldUri then
-                this.UriHelper.NavigateTo(newUri)
-        )
+        if not <| obj.ReferenceEquals(model, oldModel) then
+            this.View <- program.view model dispatch
+            oldModel <- model
+            this.StateHasChanged()
+            this.Router |> Option.iter (fun router ->
+                let newUri = router.GetRoute model
+                let oldUri = this.GetCurrentUri()
+                if newUri <> oldUri then
+                    this.UriHelper.NavigateTo(newUri)
+            )
 
     override this.OnInit() =
         base.OnInit()

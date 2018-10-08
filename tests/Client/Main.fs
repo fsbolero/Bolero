@@ -6,9 +6,9 @@ open MiniBlazor
 open MiniBlazor.Html
 
 type Page =
-    | [<EndPoint "">] Form
-    | [<EndPoint "collection">] Collection
-    | [<EndPoint "collection-item">] Item of key: int
+    | [<EndPoint "/">] Form
+    | [<EndPoint "/collection">] Collection
+    | [<EndPoint "/collection-item">] Item of key: int
 
 type Item =
     {
