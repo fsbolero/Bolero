@@ -18,6 +18,8 @@ let [<Literal>] tagsFile = __SOURCE_DIRECTORY__ + "/src/MiniBlazor/tags.csv"
 type Tags = FSharp.Data.CsvProvider<tagsFile>
 let [<Literal>] attrsFile = __SOURCE_DIRECTORY__ + "/src/MiniBlazor/attrs.csv"
 type Attrs = FSharp.Data.CsvProvider<attrsFile>
+let [<Literal>] eventsFile = __SOURCE_DIRECTORY__ + "/src/MiniBlazor/events.csv"
+type Events = FSharp.Data.CsvProvider<eventsFile>
 
 // Generate HTML tags and attributes from CSV
 Target.create "tags" (fun _ ->
@@ -40,9 +42,10 @@ Target.create "tags" (fun _ ->
         |> replace (Tags.GetSample().Rows) "TAGS" (fun s tag ->
             let esc = escapeDashes tag.Name
             s.AppendLine(
-                sprintf """let %s attrs%s = Node.Elt("%s", attrs, %s)"""
+                sprintf """let %s (attrs: list<Attr>)%s : Node =
+    elt "%s" attrs %s"""
                     (if tag.NeedsEscape then "``" + esc + "``" else esc)
-                    (if tag.CanHaveChildren then " children" else "")
+                    (if tag.CanHaveChildren then " (children: list<Node>)" else "")
                     tag.Name
                     (if tag.CanHaveChildren then "children" else "[]")
             )
@@ -50,9 +53,19 @@ Target.create "tags" (fun _ ->
         |> replace (Attrs.GetSample().Rows) "ATTRS" (fun s tag ->
             let esc = escapeDashes tag.Name
             s.AppendLine(
-                sprintf """    let %s v = "%s" => v"""
+                sprintf """    let %s (v: obj) : Attr = "%s" => v"""
                     (if tag.NeedsEscape then "``" + esc + "``" else esc)
                     tag.Name
+            )
+        )
+        |> replace (Events.GetSample().Rows) "EVENTS" (fun s tag ->
+            let esc = escapeDashes tag.Name
+            s.AppendLine(
+                sprintf """    let %s (callback: UI%sEventArgs -> unit) : Attr =
+        "on%s" => BindMethods.GetEventHandlerValue callback"""
+                    esc
+                    tag.Type
+                    esc
             )
         )
     if input <> output then
