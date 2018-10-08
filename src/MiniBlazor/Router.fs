@@ -2,6 +2,7 @@ namespace MiniBlazor
 
 open System
 open System.Collections.Generic
+open System.Runtime.CompilerServices
 open System.Text
 open FSharp.Reflection
 
@@ -162,3 +163,10 @@ module Router =
             getRoute = getRoute
             setRoute = setRoute
         }
+
+[<Extension>]
+type RouterExtensions =
+
+    [<Extension>]
+    static member HRef(this: Router<'ep, _, _>, endpoint: 'ep) : Attr =
+        "href", box (this.Link endpoint)

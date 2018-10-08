@@ -96,7 +96,7 @@ type ViewItem() =
                 input []
                 button [on.click (fun _ -> dispatch (SetKeyOf k))] [text "Set key from Add field"]
                 button [on.click (fun _ -> dispatch (RemoveItem k))] [text "Remove"]
-                a [attr.href (router.Link (Item k))] [text "Go to page"]
+                a [router.HRef (Item k)] [text "Go to page"]
             ]
         ]
 
@@ -120,9 +120,6 @@ let viewCollection model dispatch =
         ]
     ]
 
-let navLink ``match`` attrs children =
-    comp<NavLink> (("Match" => ``match``) :: attrs) children
-
 type ViewItemPage() =
     inherit ElmishComponent<int * string, Message>()
 
@@ -130,16 +127,16 @@ type ViewItemPage() =
         concat [
             p [] [text ("Viewing page for item #" + string k)]
             p [] [text ("Text is: " + v)]
-            p [] [a [attr.href (router.Link Collection)] [text "Back to collection"]]
+            p [] [a [router.HRef Collection] [text "Back to collection"]]
         ]
 
 let view model dispatch =
     concat [
         style [] [text ".active { background: lightblue; }"]
         p [] [
-            navLink NavLinkMatch.All [attr.href (router.Link Form)] [text "Form"]
+            navLink NavLinkMatch.All [router.HRef Form] [text "Form"]
             text " "
-            navLink NavLinkMatch.Prefix [attr.href (router.Link Collection)] [text "Collection"]
+            navLink NavLinkMatch.Prefix [router.HRef Collection] [text "Collection"]
         ]
         (match model.page with
         | Form -> viewForm model dispatch

@@ -19,20 +19,17 @@ let (=>) name value = (name, box value)
 
 /// Create a fragment from a Blazor component.
 let comp<'T when 'T :> Components.IComponent> attrs children =
-    let rec nodeLength = function
-        | Empty -> 0
-        | Text _ -> 1
-        | Concat nodes -> List.sumBy nodeLength nodes
-        | Elt (_, attrs, children) ->
-            1 + List.length attrs + List.sumBy nodeLength children
-        | Component (_, i, _, _) -> i.length
-    let length = 1 + List.length attrs + List.sumBy nodeLength children
-    Node.Component(typeof<'T>, { length = length }, attrs, children)
+    Node.BlazorComponent<'T>(attrs, children)
 
 /// Create a fragment from an Elmish component.
 let ecomp<'T, 'model, 'msg when 'T :> ElmishComponent<'model, 'msg>>
         (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
     comp<'T> ["Model" => model; "Dispatch" => dispatch] []
+
+/// Create a navigation link which toggles its `active` class
+/// based on whether the current URI matches its `href`.
+let navLink (``match``: Routing.NavLinkMatch) attrs children =
+    comp<Routing.NavLink> (("Match" => ``match``) :: attrs) children
 
 // BEGIN TAGS
 /// Create an HTML `<a>` element.
