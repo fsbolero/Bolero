@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup Condition="'$(MiniBlazorTaskAssemblyPath)' == ''">
+    <MiniBlazorTaskAssemblyPath>$(MSBuildThisFileDirectory)..\tools\MiniBlazor.Build.dll</MiniBlazorTaskAssemblyPath>
+  </PropertyGroup>
+  <UsingTask AssemblyFile="$(MiniBlazorTaskAssemblyPath)" TaskName="MiniBlazor.Build.MiniBlazorTask"
+    Condition="'$(MiniBlazorStripAssemblies)' != 'False'" />
+  <Target Name="StripFSharp" BeforeTargets="_BlazorCopyFilesToOutputDirectory"
+    Condition="'$(MiniBlazorStripAssemblies)' != 'False'">
+    <ItemGroup>
+      <MiniBlazorStripAssemblies Include="@(BlazorItemOutput->WithMetadataValue('Extension', '.dll'))" />
+    </ItemGroup>
+    <MiniBlazorTask Assemblies="@(MiniBlazorStripAssemblies)" />
+  </Target>
+</Project>

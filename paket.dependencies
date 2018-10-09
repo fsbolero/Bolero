@@ -12,6 +12,8 @@ nuget Mono.WebAssembly.Interop ~> 0.6.0
 clitool dotnet-fake ~> 5.0
 nuget Microsoft.AspNetCore.All ~> 2.0.0
 nuget Elmish >= 2.0
+nuget Microsoft.Build.Utilities.Core ~> 15.0 storage: packages
+nuget Mono.Cecil ~> 0.10.0 storage: packages
 
 group fake
 source https://api.nuget.org/v3/index.json
@@ -21,4 +23,3 @@ nuget Fake.Core.Target
 nuget Fake.DotNet.Cli
 nuget Fake.DotNet.Paket
 nuget FSharp.Data ~> 3.0-beta
-nuget Mono.Cecil

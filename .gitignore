@@ -3,5 +3,6 @@ obj/
 .vs/
 *.user
 paket-files/
+packages/
 .fake/
 build/

@@ -10,5 +10,10 @@
     <Compile Include="Program.fs" />
     <Compile Include="Html.fs" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MiniBlazor.Build\MiniBlazor.Build.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

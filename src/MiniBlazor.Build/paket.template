@@ -1,0 +1,9 @@
+type file
+id MiniBlazor.Build
+description
+    Build tools for MiniBlazor: a set of tools and libraries to run F# applications in WebAssembly using Blazor
+authors
+    Loic Denuziere
+files
+    MiniBlazor.Build.targets ==> build/MiniBlazor.Build.targets
+    bin/Release/netstandard2.0/*.dll ==> tools

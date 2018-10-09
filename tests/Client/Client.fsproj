@@ -5,6 +5,7 @@
     <RunCommand>dotnet</RunCommand>
     <RunArguments>blazor serve</RunArguments>
     <DefineConstants Condition="'$(GhPages)' != ''">$(DefineConstants);GHPAGES</DefineConstants>
+    <MiniBlazorTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\src\MiniBlazor.Build\bin\$(Configuration)\netstandard2.0\MiniBlazor.Build.dll</MiniBlazorTaskAssemblyPath>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Main.fs" />
@@ -13,5 +14,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />
   </ItemGroup>
+  <Import Project="..\..\src\MiniBlazor.Build\MiniBlazor.Build.targets" />
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

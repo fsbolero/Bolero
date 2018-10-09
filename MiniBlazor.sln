@@ -3,6 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{E6F0FD47-D449-44A6-83A0-FDE7773E3945}"
+	ProjectSection(SolutionItems) = preProject
+		paket.dependencies = paket.dependencies
+	EndProjectSection
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8BE98B06-91C5-4948-B5AA-F80C67849031}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "MiniBlazor", "src\MiniBlazor\MiniBlazor.fsproj", "{97CF7319-42C6-4FCB-BFC9-D872D0E58309}"
@@ -12,6 +17,8 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Client", "tests\Client\Client.fsproj", "{F873CC90-1EC6-467C-A396-808D593B05E3}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Server", "tests\Server\Server.fsproj", "{218DBE0B-66C5-4C90-9892-113F4B233E79}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniBlazor.Build", "src\MiniBlazor.Build\MiniBlazor.Build.csproj", "{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -62,10 +69,23 @@ Global
 		{218DBE0B-66C5-4C90-9892-113F4B233E79}.Release|x64.Build.0 = Release|Any CPU
 		{218DBE0B-66C5-4C90-9892-113F4B233E79}.Release|x86.ActiveCfg = Release|Any CPU
 		{218DBE0B-66C5-4C90-9892-113F4B233E79}.Release|x86.Build.0 = Release|Any CPU
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}.Debug|x64.Build.0 = Debug|Any CPU
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}.Debug|x86.Build.0 = Debug|Any CPU
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}.Release|x64.ActiveCfg = Release|Any CPU
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}.Release|x64.Build.0 = Release|Any CPU
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}.Release|x86.ActiveCfg = Release|Any CPU
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{97CF7319-42C6-4FCB-BFC9-D872D0E58309} = {8BE98B06-91C5-4948-B5AA-F80C67849031}
 		{F873CC90-1EC6-467C-A396-808D593B05E3} = {7EB0C3D3-0BD4-4D72-8ACF-A30B71F7C8E8}
 		{218DBE0B-66C5-4C90-9892-113F4B233E79} = {7EB0C3D3-0BD4-4D72-8ACF-A30B71F7C8E8}
+		{930E2AD9-B712-4BA3-BEC5-E294A7446DF6} = {8BE98B06-91C5-4948-B5AA-F80C67849031}
 	EndGlobalSection
 EndGlobal

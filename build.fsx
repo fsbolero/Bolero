@@ -6,7 +6,6 @@ open System.Text
 open System.Text.RegularExpressions
 open Fake.Core
 open Fake.Core.TargetOperators
-open Mono.Cecil
 open Utility
 
 Target.create "corebuild" (fun o ->
@@ -67,34 +66,6 @@ Target.create "tags" (fun _ ->
         File.WriteAllText(file, output)
 )
 
-// Strip F# assemblies of their optdata / sigdata
-Target.create "strip" (fun _ ->
-    let stripFile f =
-        let mutable anyChanged = false
-        let bytes = File.ReadAllBytes(f)
-        use mem = new MemoryStream(bytes)
-        use asm = AssemblyDefinition.ReadAssembly(mem)
-        let resources = asm.MainModule.Resources
-        for i = resources.Count - 1 downto 0 do
-            let name = resources.[i].Name
-            if name = "FSharpOptimizationData." + asm.Name.Name
-                || name = "FSharpSignatureData." + asm.Name.Name
-                || name = "FSharpOptimizationInfo." + asm.Name.Name
-                || name = "FSharpSignatureInfo." + asm.Name.Name
-            then
-                resources.RemoveAt(i)
-                anyChanged <- true
-        if anyChanged then
-            printfn "Stripped F# data from %s" f
-            asm.Write(f)
-    for app in ["tests/client"; "tests/server"] do
-        for config in ["Debug"; "Release"] do
-            let dir = Path.Combine(app, "bin", config, "netstandard2.0/dist/_framework/_bin")
-            if Directory.Exists(dir) then
-                for f in Directory.EnumerateFiles(dir, "*.dll") do
-                    stripFile f
-)
-
 Target.create "build" ignore
 
 Target.create "pack" (fun o ->
@@ -116,7 +87,6 @@ Target.create "runserver" (fun _ ->
 )
 
 "corebuild"
-    ==> "strip"
     ==> "build"
     ==> "pack"
 
