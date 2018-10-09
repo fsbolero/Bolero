@@ -28,6 +28,7 @@
         {
             "label": "build",
             "command": "build",
+            "args": ["-c", "Debug"],
             "type": "shell",
             "group": "build",
             "presentation": {
@@ -38,6 +39,7 @@
         {
             "label": "runclient",
             "command": "runclient",
+            "args": ["-c", "Debug"],
             "type": "shell",
             "group": "test",
             "presentation": {
@@ -48,16 +50,7 @@
         {
             "label": "runserver",
             "command": "runserver",
-            "type": "shell",
-            "group": "test",
-            "presentation": {
-                "reveal": "silent"
-            },
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "runiso",
-            "command": "runiso",
+            "args": ["-c", "Debug"],
             "type": "shell",
             "group": "test",
             "presentation": {

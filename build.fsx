@@ -10,8 +10,8 @@ open Mono.Cecil
 open Utility
 
 Target.create "corebuild" (fun o ->
-    dotnet "build" "miniblazor.sln %s"
-        <| String.concat " " o.Context.Arguments
+    let config = getArg o "-c" "Release"
+    dotnet "build" "miniblazor.sln -c %s" config
 )
 
 let [<Literal>] tagsFile = __SOURCE_DIRECTORY__ + "/src/MiniBlazor/tags.csv"
@@ -97,6 +97,16 @@ Target.create "strip" (fun _ ->
 
 Target.create "build" ignore
 
+Target.create "pack" (fun o ->
+    let version = getArg o "-v" "0.1.0"
+    Fake.DotNet.Paket.pack (fun p ->
+        { p with
+            OutputPath = "build"
+            Version = version
+        }
+    )
+)
+
 Target.create "runclient" (fun _ ->
     dotnet' "tests/client" "blazor" "serve"
 )
@@ -105,16 +115,12 @@ Target.create "runserver" (fun _ ->
     dotnet' "tests/server" "run" ""
 )
 
-Target.create "runiso" (fun _ ->
-    dotnet' "tests/isomorphic" "run" ""
-)
-
 "corebuild"
     ==> "strip"
     ==> "build"
+    ==> "pack"
 
 "build" ==> "runclient"
 "build" ==> "runserver"
-"build" ==> "runiso"
 
 Target.runOrDefaultWithArguments "build"

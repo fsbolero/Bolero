@@ -2,7 +2,8 @@ source https://api.nuget.org/v3/index.json
 storage: none
 framework: netstandard2.0, netcoreapp2.0
 
-nuget FSharp.Core
+nuget FSharp.Core >= 4.5.0
+nuget Microsoft.AspNetCore.Blazor.Browser ~> 0.6.0
 nuget Microsoft.AspNetCore.Blazor.Build ~> 0.6.0
 nuget Microsoft.AspNetCore.Blazor.Server ~> 0.6.0
 clitool Microsoft.AspNetCore.Blazor.Cli ~> 0.6.0
@@ -10,9 +11,7 @@ nuget Microsoft.JSInterop ~> 0.6.0
 nuget Mono.WebAssembly.Interop ~> 0.6.0
 clitool dotnet-fake ~> 5.0
 nuget Microsoft.AspNetCore.All ~> 2.0.0
-nuget HtmlAgilityPack
-nuget Fizzler.Systems.HtmlAgilityPack
-nuget Elmish
+nuget Elmish >= 2.0
 
 group fake
 source https://api.nuget.org/v3/index.json
@@ -20,5 +19,6 @@ storage: none
 
 nuget Fake.Core.Target
 nuget Fake.DotNet.Cli
+nuget Fake.DotNet.Paket
 nuget FSharp.Data ~> 3.0-beta
 nuget Mono.Cecil

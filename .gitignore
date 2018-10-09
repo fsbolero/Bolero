@@ -4,4 +4,4 @@ obj/
 *.user
 paket-files/
 .fake/
-src/miniblazor/js/
+build/
