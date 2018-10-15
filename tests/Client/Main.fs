@@ -4,6 +4,7 @@ open Microsoft.AspNetCore.Blazor.Routing
 open Elmish
 open MiniBlazor
 open MiniBlazor.Html
+open System.Net.Http
 
 type Page =
     | [<EndPoint "/">] Form
@@ -23,6 +24,7 @@ type Model =
         addKey: int
         revOrder: bool
         items: Map<int, string>
+        remoteResult: option<string>
         page: Page
     }
 
@@ -49,25 +51,31 @@ let initModel _ =
             3, "it's 3"
         ]
         page = Form
+        remoteResult = None
     }
 
 let router = Router.infer SetPage (fun m -> m.page)
 
-let update message model =
+type MyRemoting =
+    {
+        greet: string -> Async<string>
+    }
+
+let update (http: HttpClient) message model =
     match message with
-    | SetInput text -> { model with input = text }
-    | Submit -> { model with submitted = Some model.input }
-    | RemoveItem k -> { model with items = Map.filter (fun k' _ -> k' <> k) model.items }
-    | SetAddKey i -> { model with addKey = i }
-    | AddKey -> { model with items = Map.add model.addKey (sprintf "it's %i" model.addKey) model.items }
+    | SetInput text -> { model with input = text }, []
+    | Submit -> { model with submitted = Some model.input }, []
+    | RemoveItem k -> { model with items = Map.filter (fun k' _ -> k' <> k) model.items }, []
+    | SetAddKey i -> { model with addKey = i }, []
+    | AddKey -> { model with items = Map.add model.addKey (sprintf "it's %i" model.addKey) model.items }, []
     | SetKeyOf k ->
         match Map.tryFind k model.items with
-        | None -> model
+        | None -> model, []
         | Some item ->
             let items = model.items |> Map.remove k |> Map.add model.addKey item
-            { model with items = items }
-    | ToggleRevOrder -> { model with revOrder = not model.revOrder }
-    | SetPage p -> { model with page = p }
+            { model with items = items }, []
+    | ToggleRevOrder -> { model with revOrder = not model.revOrder }, []
+    | SetPage p -> { model with page = p }, []
 
 let viewForm model dispatch =
     div [] [
@@ -148,6 +156,6 @@ type MyApp() =
     inherit ElmishProgramComponent<Model, Message>()
 
     override this.Program =
-        Program.mkSimple initModel update view
+        Program.mkProgram (fun _ -> initModel(), []) (update this.Http) view
         |> Program.withConsoleTrace
         |> Program.withRouter router

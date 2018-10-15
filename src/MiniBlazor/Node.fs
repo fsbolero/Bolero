@@ -19,7 +19,7 @@ type Node =
     /// A single Blazor component.
     | Component of Type * info: ComponentInfo * attrs: list<Attr> * children: list<Node>
 
-    static member BlazorComponent<'T when 'T :> IComponent>(attrs, children) =
+    static member BlazorComponent(ty, attrs, children) =
         let rec nodeLength = function
             | Empty -> 0
             | Text _ -> 1
@@ -28,6 +28,9 @@ type Node =
                 1 + List.length attrs + List.sumBy nodeLength children
             | Component (_, i, _, _) -> i.length
         let length = 1 + List.length attrs + List.sumBy nodeLength children
-        Node.Component(typeof<'T>, { length = length }, attrs, children)
+        Node.Component(ty, { length = length }, attrs, children)
+
+    static member BlazorComponent<'T when 'T :> IComponent>(attrs, children) =
+        Node.BlazorComponent(typeof<'T>, attrs, children)
 
 and [<Struct>] ComponentInfo = { length: int }
