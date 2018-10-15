@@ -3,7 +3,7 @@
 param ([string] $env = "local")
 
 $msg = 'gh-pages.ps1: tests/client/wwwroot -> gh-pages'
-$gitURL = "https://github.com/tarmil/MiniBlazor"
+$gitURL = "https://github.com/intellifactory/MiniBlazor"
 
 write-host -foregroundColor "green" "=====> $msg"
 
@@ -22,7 +22,7 @@ if ($env -eq "appveyor") {
   $d = pwd
   [System.IO.File]::WriteAllText("$pwd/.git/credentials", $cred)
   git config user.name "AppVeyor"
-  git config user.email "loic+appveyor@denuziere.net"
+  git config user.email "websharper-support@intellifactory.com"
 } else {
   clearDir
   cd build
