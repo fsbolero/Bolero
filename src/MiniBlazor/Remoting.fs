@@ -44,43 +44,32 @@ type RemotingExtensions =
     [<Extension>]
     static member Remote<'T>(this: IElmishProgramComponent, baseUri: string) =
         let ty = typeof<'T>
+        let baseUri = baseUri + (if baseUri.EndsWith "/" then "" else "/")
         if not (FSharpType.IsRecord ty) then
             failwithf "Remote type must be a record: %s" ty.FullName
         let fields = FSharpType.GetRecordFields(ty, true)
         let ctor = FSharpValue.PreComputeRecordConstructor(ty, true)
         fields
         |> Array.map (fun field ->
-            let rec getArgs pty =
-                if FSharpType.IsFunction pty then
-                    let domain, codomain = FSharpType.GetFunctionElements(pty)
-                    let restDomain, finalCodomain = getArgs codomain
-                    domain :: restDomain, finalCodomain
-                else
-                    [], pty
-            match getArgs field.PropertyType with
-            | [], _ -> failwithf "Remote type field must be a function: %s.%s" ty.FullName field.Name
-            | args, res ->
-                if not (res.IsGenericType && res.GetGenericTypeDefinition() = typedefof<Async<_>>) then
-                    failwithf "Remote function must return Async<_>: %s.%s" ty.FullName field.Name
-                let post =
-                    typeof<RemotingExtensions>.GetMethod("RemotePost").MakeGenericMethod([|res|])
-                let uri =
-                    baseUri +
-                    (if baseUri.EndsWith "/" then "" else "/") +
-                    field.Name
-                let rec buildFunc acc = function
-                    | [_argTy] ->
-                        fun arg ->
-                            let args =
-                                arg :: acc
-                                |> Array.ofList
-                                |> Array.rev
-                            post.Invoke(null, [|this.Http; uri; args|])
-                    | _argTy :: argsTy ->
-                        fun arg ->
-                            box (buildFunc (arg :: acc) argsTy)
-                    | [] -> failwith "Impossible"
-                box (buildFunc args)
+            let fnErr fmt = failwithf fmt ty.FullName field.Name
+
+            if not (FSharpType.IsFunction field.PropertyType) then
+                fnErr "Remote type field must be an F# function: %s.%s"
+            let _, resTy = FSharpType.GetFunctionElements(field.PropertyType)
+            if FSharpType.IsFunction resTy then
+                fnErr "Remote type field must be an F# function with only one argument: %s.%s. Use a tuple if needed"
+            if not (resTy.IsGenericType && resTy.GetGenericTypeDefinition() = typedefof<Async<_>>) then
+                fnErr "Remote function must return Async<_>: %s.%s"
+
+            let resValueTy = resTy.GetGenericArguments().[0]
+            let post =
+                typeof<RemotingExtensions>.GetMethod("RemotePost")
+                    .MakeGenericMethod([|resValueTy|])
+
+            let uri = baseUri + field.Name
+            FSharpValue.MakeFunction(field.PropertyType, fun arg ->
+                post.Invoke(null, [|this.Http; uri; arg|])
+            )
         )
         |> ctor
         :?> 'T

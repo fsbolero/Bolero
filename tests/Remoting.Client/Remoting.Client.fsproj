@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <MiniBlazorTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\src\MiniBlazor.Build\bin\$(Configuration)\netstandard2.0\MiniBlazor.Build.dll</MiniBlazorTaskAssemblyPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+  <Import Project="..\..\src\MiniBlazor.Build\MiniBlazor.Build.targets" />
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>
