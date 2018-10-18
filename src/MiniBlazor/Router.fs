@@ -89,7 +89,15 @@ module Router =
         |> Option.defaultWith (fun () -> case.Name)
 
     let private makeFragmentsParser (case: UnionCaseInfo) =
-        let fields = case.GetFields()
+        let fields =
+            case.GetFields()
+            |> Array.map (fun field ->
+                match baseTypes.TryGetValue field.PropertyType with
+                | true, f -> f
+                | false, _ ->
+                    failwithf "Router.Infer: unsupported union field type: %s in %s"
+                        field.PropertyType.FullName case.Name
+            )
         let ctor = FSharpValue.PreComputeUnionConstructor case
         fun (fragments: ArraySegment<string>) ->
             if fragments.Count <> fields.Length then None else
@@ -98,14 +106,11 @@ module Router =
                 if i = fields.Length then
                     Some (ctor args)
                 else
-                    match baseTypes.TryGetValue fields.[i].PropertyType with
-                    | true, f ->
-                        match f fragments.[i] with
-                        | Some x ->
-                            args.[i] <- x
-                            go (i + 1)
-                        | None -> None
-                    | false, _ -> None
+                    match fields.[i] fragments.[i] with
+                    | Some x ->
+                        args.[i] <- x
+                        go (i + 1)
+                    | None -> None
             go 0
 
     let private makeFragmentsWriter (path: string) (case: UnionCaseInfo) =
