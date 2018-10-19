@@ -1089,6 +1089,9 @@ let encodeDateTime (ta: TAttrs) =
     let fmt = defaultArg ta.DateTimeFormat "o"
     fun (d: DateTime) -> String (d.ToString(fmt, culture))
 
+let encodeDateTimeOffset =
+    fun (d: DateTimeOffset) -> String (d.ToString("o", culture))
+
 let objectEncoder dE (ta: TAttrs) =
     let t = ta.Type
     if t = typeof<DateTime> then
@@ -1099,11 +1102,7 @@ let objectEncoder dE (ta: TAttrs) =
     elif t = typeof<DateTimeOffset> then
         fun (x: obj) ->
             match x with
-            | :? DateTimeOffset as t -> 
-                Object [|
-                    "d", encodeDateTime ta t.UtcDateTime
-                    "o", Number (string t.Offset.TotalMinutes)
-                |]
+            | :? DateTimeOffset as t -> encodeDateTimeOffset t
             | _ -> raise EncoderException
     elif t = typeof<unit> then
         fun _ -> Null
@@ -1158,6 +1157,18 @@ let decodeDateTime (ta: TAttrs) =
         | false, _ -> None
     | _ -> None
 
+let decodeDateTimeOffset =
+    // "o" only accepts 7 digits after the seconds,
+    // but JavaScript's Date.toISOString() only outputs 3.
+    // So we add a custom format to accept that too.
+    let fmt = [|"o"; @"yyyy-MM-dd\THH:mm:ss.fff\Z"|]
+    function
+    | String s ->
+        match DateTimeOffset.TryParseExact(s, fmt, culture, dtstyle) with
+        | true, x -> Some x
+        | false, _ -> None
+    | _ -> None
+
 let makeFlatDictionary<'T> (dD: Value -> obj) = function
     | Object vs ->
         let d = Dictionary<string, 'T>()
@@ -1201,29 +1212,12 @@ let objectDecoder dD (ta: TAttrs) =
         fun (x: Value) ->
             match decodeDateTime ta x with
             | Some d -> box d
-            | None -> 
-                // try to decode from serialized form of a DateTimeOffset too
-                match x with
-                | Object [| "d", d; "o", Number _ |] ->
-                    match decodeDateTime ta d with
-                    | Some d -> box d 
-                    | _ -> raise (DecoderException(x, typeof<DateTime>))
-                | _ -> raise (DecoderException(x, typeof<DateTime>))
+            | None -> raise (DecoderException(x, typeof<DateTime>))
     elif t = typeof<DateTimeOffset> then
         fun (x: Value) ->
-            match x with
-            | Object [| "d", d; "o", Number o |] ->
-                match decodeDateTime ta d, Int32.TryParse o with
-                | Some d, (true, o) -> 
-                    let offset = TimeSpan.FromMinutes (float o)
-                    box (new DateTimeOffset(d.Add(offset).Ticks, offset))
-                | _ -> raise (DecoderException(x, typeof<DateTimeOffset>))
-            | _ -> 
-                // try to decode from an ISO string too
-                match decodeDateTime ta x with
-                | Some d -> 
-                    box (new DateTimeOffset(d.Ticks, TimeSpan.Zero))
-                | None -> raise (DecoderException(x, typeof<DateTimeOffset>))
+            match decodeDateTimeOffset x with
+            | Some d -> box d
+            | None -> raise (DecoderException(x, typeof<DateTime>))
     elif t = typeof<unit> then
         function
         | Null -> box ()

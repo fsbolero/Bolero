@@ -13,16 +13,19 @@ type NameAttribute =
 
 /// Defines the format used to de/serialize a DateTime field or union case argument.
 /// The default is "o" (ISO 8601 round-trip format).
+/// Note: this cannot be used on DateTimeOffset; it always uses "o" format.
 [<Sealed>]
 type DateTimeFormatAttribute =
     inherit Attribute
 
     /// Defines the format used to de/serialize a DateTime record or object field.
     /// The default is "o" (ISO 8601 round-trip format).
+    /// Note: this cannot be used on DateTimeOffset; it always uses "o" format.
     new : format: string -> DateTimeFormatAttribute
 
     /// Defines the format used to de/serialize a DateTime union case argument.
     /// The default is "o" (ISO 8601 round-trip format).
+    /// Note: this cannot be used on DateTimeOffset; it always uses "o" format.
     new : argumentName: string * format: string -> DateTimeFormatAttribute
 
 /// Declares that when de/serializing this union,

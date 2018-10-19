@@ -1,5 +1,6 @@
 namespace MiniBlazor.Tests
 
+open System
 open System.Collections.Generic
 open NUnit.Framework
 open FsCheck.NUnit
@@ -185,6 +186,24 @@ module Json =
         J.Decode<Dictionary<int, int>>
             (J.Array [| for KeyValue(k, v) in l -> J.Array [| J.Encode k; J.Encode v |] |])
         |> Seq.forall (fun (KeyValue(k, v)) -> l.[k] = v)
+
+    [<Property>]
+    let ``Serialize UTC DateTime`` (d: DateTime) =
+        let d = d.ToUniversalTime()
+        J.Encode d = J.String (d.ToString("o"))
+
+    [<Property>]
+    let ``Deserialize UTC DateTime`` (d: DateTime) =
+        let d = d.ToUniversalTime()
+        J.Decode (J.String (d.ToString("o"))) = d
+
+    [<Property>]
+    let ``Serialize DateTimeOffset`` (d: DateTimeOffset) =
+        J.Encode d = J.String (d.ToString("o"))
+
+    [<Property>]
+    let ``Deserialize DateTimeOffset`` (d: DateTimeOffset) =
+        J.Decode (J.String (d.ToString("o"))) = d
 
 
     /// For some reason dotnet test won't run if there are only `[<Property>]`s
