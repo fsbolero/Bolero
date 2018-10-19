@@ -64,8 +64,8 @@ type Value =
     | False
     | Number of string
     | String of string
-    | Array of list<Value>
-    | Object of list<string * Value>
+    | Array of Value[]
+    | Object of (string * Value)[]
 
 /// Plain JSON serialization and deserialization from and to Value.
 module Raw =

@@ -44,8 +44,8 @@ type Value =
     | False
     | Number of string
     | String of string
-    | Array  of list<Value>
-    | Object of list<string * Value>
+    | Array  of Value[]
+    | Object of (string * Value)[]
 
 module Raw =
 
@@ -216,7 +216,7 @@ module Raw =
             match peek () with
             | 125 ->
                 skip ()
-                Object []
+                Object [||]
             | _ ->
                 let readPair () =
                     let n = readIdent w tr
@@ -228,34 +228,38 @@ module Raw =
                     readSpace tr
                     (n, j)
                 let p = readPair ()
-                let rec loop acc =
+                let acc = ResizeArray([|p|])
+                let rec loop () =
                     match read () with
-                    | 125 -> List.rev acc
+                    | 125 -> acc.ToArray()
                     | 44 ->
                         readSpace tr
-                        loop (readPair () :: acc)
+                        acc.Add(readPair ())
+                        loop ()
                     | _ -> raise ReadException
-                Object (loop [p])
+                Object (loop ())
         | 91 ->
             skip ()
             readSpace tr
             match peek () with
             | 93 ->
                 skip ()
-                Array []
+                Array [||]
             | _ ->
                 let j = readJson w tr
                 readSpace tr
-                let rec loop acc =
+                let acc = ResizeArray([|j|])
+                let rec loop () =
                     readSpace tr
                     match read () with
                     | 44 ->
                         let j = readJson w tr
                         readSpace tr
-                        loop (j :: acc)
-                    | 93 -> List.rev acc
+                        acc.Add(j)
+                        loop ()
+                    | 93 -> acc.ToArray()
                     | _ -> raise ReadException
-                Array (loop [j])
+                Array (loop ())
         | _ ->
             raise ReadException
 
@@ -269,13 +273,13 @@ module Raw =
         let wJ x = Write writer x
         let wA x =
             match x with
-            | [] -> s "[]"
-            | x :: xs ->
+            | [||] -> s "[]"
+            | xs ->
                 c '['
-                wJ x
-                for x in xs do
+                wJ xs.[0]
+                for i = 1 to xs.Length-1 do
                     c ','
-                    wJ x
+                    wJ xs.[i]
                 c ']'
         let wN (x: string) =
             if x <> null && numberPattern.IsMatch x then
@@ -303,17 +307,17 @@ module Raw =
             c '"'
         let wO x =
             match x with
-            | [] -> s "{}"
-            | x :: xs ->
+            | [||] -> s "{}"
+            | xs ->
                 let pair (n, x) =
                     wS n
                     c ':'
                     wJ x
                 c '{'
-                pair x
-                for x in xs do
+                pair xs.[0]
+                for i in 1..xs.Length-1 do
                     c ','
-                    pair x
+                    pair xs.[i]
                 c '}'
         match value with
         | Null -> s "null"
@@ -537,7 +541,7 @@ let tupleEncoder dE (ta: TAttrs) =
         | null ->
             raise EncoderException
         | o when o.GetType() = ta.Type ->
-            Array (Array.toList (Array.map2 (fun e x -> e x) e (r o)))
+            Array (Array.map2 (fun e x -> e x) e (r o))
         | _ ->
             raise EncoderException
 
@@ -547,7 +551,6 @@ let tupleDecoder dD (ta: TAttrs) =
     fun (x: Value) ->
         match x with
         | Array xs ->
-            let xs = List.toArray xs
             if xs.Length = e.Length then
                 c (Array.map2 (fun e x -> e x) e xs)
             else
@@ -565,7 +568,7 @@ let arrayEncoder dE (ta: TAttrs) =
             let o = o :?> Array
             Seq.cast o
             |> Seq.map e
-            |> Seq.toList
+            |> Seq.toArray
             |> Array
         | _ ->
             raise EncoderException
@@ -578,9 +581,7 @@ let arrayDecoder dD (ta: TAttrs) =
         | Null ->
             null
         | Array xs ->
-            let data =
-                Seq.map e xs
-                |> Seq.toArray
+            let data = Array.map e xs
             let k = data.Length
             let r = Array.CreateInstance(eT, k)
             Array.Copy(data, r, k)
@@ -821,10 +822,10 @@ let encodeUnionTag t =
         fun tag -> Some (n, tags.[tag])
 
 let unmakeList<'T> (dV: obj -> Value) (x: obj) =
-    Array [
+    Array [|
         for v in unbox<list<'T>> x ->
             dV (box v)
-    ]
+    |]
 
 let unionEncoder dE (ta: TAttrs) =
     let t = ta.Type
@@ -874,14 +875,13 @@ let unionEncoder dE (ta: TAttrs) =
             | Choice1Of2 constant -> constant
             | Choice2Of2 (r, fs) ->
                 let data =
-                    [
+                    [|
+                        match encodeTag tag with
+                        | Some kv -> yield kv
+                        | None -> ()
                         for f, d in Array.map2 (fun (f, e) x -> (f, e x)) fs (r o) do
                             if d.IsSome then yield f, d.Value
-                    ]
-                let data =
-                    match encodeTag tag with
-                    | Some kv -> kv :: data
-                    | None -> data
+                    |]
                 Object data
         | x ->
             raise EncoderException
@@ -916,7 +916,7 @@ let getUnionTag = fun t ->
             get n |> Option.bind names.TryFind
 
 let makeList<'T> (dV: Value -> obj) = function
-    | Array vs -> vs |> List.map (unbox<'T> << dV) |> box
+    | Array vs -> vs |> Array.map (unbox<'T> << dV) |> List.ofArray |> box
     | x -> raise (DecoderException(x, typeof<list<'T>>))
 
 let unionDecoder dD (ta: TAttrs) =
@@ -1042,7 +1042,6 @@ let recordEncoder dE (ta: TAttrs) =
             fs
             |> Array.choose (fun (n, r, enc) ->
                 enc (r o) |> Option.map (fun e -> (n, e)))
-            |> Array.toList
             |> Object
         | _ ->
             raise EncoderException
@@ -1072,16 +1071,16 @@ exception NoEncodingException of Type with
 type FS = Runtime.Serialization.FormatterServices
 
 let unmakeFlatDictionary<'T> (dE: obj -> Value) (x: obj) =
-    Object [
+    Object [|
         for KeyValue(k, v) in unbox<Dictionary<string, 'T>> x ->
             k, dE (box v)
-    ]
+    |]
 
 let unmakeArrayDictionary<'K, 'V when 'K : equality> (dK: obj -> Value) (dV: obj -> Value) (x: obj) =
-    Array [
+    Array [|
         for KeyValue(k, v) in unbox<Dictionary<'K, 'V>> x ->
-            Array [dK (box k); dV (box v)]
-    ]
+            Array [|dK (box k); dV (box v)|]
+    |]
 
 let culture = Globalization.CultureInfo.InvariantCulture
 let dtstyle = Globalization.DateTimeStyles.AdjustToUniversal ||| Globalization.DateTimeStyles.AssumeUniversal
@@ -1101,10 +1100,10 @@ let objectEncoder dE (ta: TAttrs) =
         fun (x: obj) ->
             match x with
             | :? DateTimeOffset as t -> 
-                Object [
+                Object [|
                     "d", encodeDateTime ta t.UtcDateTime
                     "o", Number (string t.Offset.TotalMinutes)
-                ]
+                |]
             | _ -> raise EncoderException
     elif t = typeof<unit> then
         fun _ -> Null
@@ -1140,7 +1139,6 @@ let objectEncoder dE (ta: TAttrs) =
             ||> Array.map2 (fun x (name, enc) ->
                 enc x |> Option.map (fun e -> (name, e)))
             |> Array.choose id
-            |> Array.toList
             |> Object
         | _ ->
             raise EncoderException
@@ -1172,7 +1170,7 @@ let makeArrayDictionary<'K, 'V when 'K : equality> (dK: Value -> obj) (dV: Value
         let d = Dictionary<'K, 'V>()
         for e in vs do
             match e with
-            | Array [k; v] -> d.Add(unbox<'K>(dK k), unbox<'V>(dV v))
+            | Array [|k; v|] -> d.Add(unbox<'K>(dK k), unbox<'V>(dV v))
             | x -> raise (DecoderException(x, typeof<Dictionary<'K,'V>>))
         box d
     | x -> raise (DecoderException(x, typeof<Dictionary<'K,'V>>))
@@ -1206,7 +1204,7 @@ let objectDecoder dD (ta: TAttrs) =
             | None -> 
                 // try to decode from serialized form of a DateTimeOffset too
                 match x with
-                | Object [ "d", d; "o", Number _ ] ->
+                | Object [| "d", d; "o", Number _ |] ->
                     match decodeDateTime ta d with
                     | Some d -> box d 
                     | _ -> raise (DecoderException(x, typeof<DateTime>))
@@ -1214,7 +1212,7 @@ let objectDecoder dD (ta: TAttrs) =
     elif t = typeof<DateTimeOffset> then
         fun (x: Value) ->
             match x with
-            | Object [ "d", d; "o", Number o ] ->
+            | Object [| "d", d; "o", Number o |] ->
                 match decodeDateTime ta d, Int32.TryParse o with
                 | Some d, (true, o) -> 
                     let offset = TimeSpan.FromMinutes (float o)
@@ -1286,26 +1284,17 @@ let objectDecoder dD (ta: TAttrs) =
         | x ->
             raise (DecoderException(x, ta.Type))
 
-let btree node left right height count = 
-    Object [
-        match left with Some l -> yield "Left", l | None -> ()
-        match right with Some r -> yield "Right", r | None -> ()
-        yield "Node", node
-        yield "Height", Number height
-        yield "Count", Number count  
-    ]
-
 let unmakeFlatMap<'T> (dV: obj -> Value)  (x: obj) =
-    Object [
+    Object [|
         for KeyValue(k, v) in unbox<Map<string, 'T>> x ->
             k, dV (box v)
-    ]
+    |]
 
 let unmakeArrayMap<'K, 'T when 'K : comparison> (dK: obj -> Value) (dV: obj -> Value) (x: obj) =
-    Array [
+    Array [|
         for KeyValue(k, v) in unbox<Map<'K, 'T>> x ->
-            Array [ dK (box k); dV (box v) ]
-    ]
+            Array [| dK (box k); dV (box v) |]
+    |]
 
 let mapEncoder dE (ta: TAttrs) =
     let t = ta.Type
@@ -1319,8 +1308,8 @@ let mapEncoder dE (ta: TAttrs) =
 /// Decode a Map<string, _> from { key: value, ... } JSON object
 let makeFlatMap<'T> (dV: Value -> obj) = function
     | Object vs ->
-        Map.ofList<string, 'T>(
-            vs |> List.map (fun (k, v) -> k, unbox<'T> (dV v))
+        Map.ofArray<string, 'T>(
+            vs |> Array.map (fun (k, v) -> k, unbox<'T> (dV v))
         )
         |> box
     | x -> raise (DecoderException(x, typeof<Map<string, 'T>>))
@@ -1328,9 +1317,9 @@ let makeFlatMap<'T> (dV: Value -> obj) = function
 /// Decode a Map<_, _> from [ [key, value], ... ] JSON object
 let makeArrayMap<'K, 'V when 'K : comparison> (dK: Value -> obj) (dV: Value -> obj) = function
     | Array vs ->
-        Map.ofList<'K, 'V>(
-            vs |> List.map (function
-            | Array [k; v] -> unbox<'K> (dK k), unbox<'V> (dV v)
+        Map.ofArray<'K, 'V>(
+            vs |> Array.map (function
+            | Array [|k; v|] -> unbox<'K> (dK k), unbox<'V> (dV v)
             | x -> raise (DecoderException(x, typeof<Map<'K, 'V>>)))
         )
         |> box
@@ -1345,7 +1334,7 @@ let mapDecoder dD (ta: TAttrs) =
         callGeneric2 <@ makeArrayMap @> dD ta tg.[0] tg.[1]
 
 let unmakeSet<'T when 'T : comparison> (dV: obj -> Value) (x: obj) =
-    Array [for v in unbox<Set<'T>> x -> dV v]
+    Array [|for v in unbox<Set<'T>> x -> dV v|]
 
 let setEncoder dE (ta: TAttrs) =
     let t = ta.Type
@@ -1354,7 +1343,7 @@ let setEncoder dE (ta: TAttrs) =
     callGeneric <@ unmakeSet @> dE ta tg.[0]
 
 let unmakeResizeArray<'T when 'T : comparison> (dV: obj -> Value) (x: obj) =
-    Array [for v in unbox<ResizeArray<'T>> x -> dV v]
+    Array [|for v in unbox<ResizeArray<'T>> x -> dV v|]
 
 let resizeArrayEncoder dE (ta: TAttrs) =
     let t = ta.Type
@@ -1363,7 +1352,7 @@ let resizeArrayEncoder dE (ta: TAttrs) =
     callGeneric <@ unmakeResizeArray @> dE ta tg.[0]
 
 let unmakeQueue<'T when 'T : comparison> (dV: obj -> Value) (x: obj) =
-    Array [for v in unbox<Queue<'T>> x -> dV v]
+    Array [|for v in unbox<Queue<'T>> x -> dV v|]
 
 let queueEncoder dE (ta: TAttrs) =
     let t = ta.Type
@@ -1372,7 +1361,7 @@ let queueEncoder dE (ta: TAttrs) =
     callGeneric <@ unmakeQueue @> dE ta tg.[0]
 
 let unmakeStack<'T when 'T : comparison> (dV: obj -> Value) (x: obj) =
-    Array [for v in unbox<Stack<'T>> x -> dV v]
+    Array [|for v in unbox<Stack<'T>> x -> dV v|]
 
 let stackEncoder dE (ta: TAttrs) =
     let t = ta.Type
@@ -1381,7 +1370,7 @@ let stackEncoder dE (ta: TAttrs) =
     callGeneric <@ unmakeStack @> dE ta tg.[0]
 
 let unmakeLinkedList<'T when 'T : comparison> (dV: obj -> Value) (x: obj) =
-    Array [for v in unbox<LinkedList<'T>> x -> dV v]
+    Array [|for v in unbox<LinkedList<'T>> x -> dV v|]
 
 let linkedListEncoder dE (ta: TAttrs) =
     let t = ta.Type
@@ -1400,7 +1389,7 @@ let nbleEncoder dE (ta: TAttrs) =
 
 let makeSet<'T when 'T : comparison> (dV: Value -> obj) = function
     | Array vs ->
-        Set.ofList<'T>(vs |> List.map (unbox<'T> << dV))
+        Set.ofArray<'T>(vs |> Array.map (unbox<'T> << dV))
         |> box
     | x -> raise (DecoderException(x, typeof<Set<'T>>))
 
@@ -1440,7 +1429,7 @@ let queueDecoder dD (ta: TAttrs) =
 
 let makeStack<'T when 'T : comparison> (dV: Value -> obj) = function
     | Array vs ->
-        Stack(vs |> List.map (unbox<'T> << dV) |> List.rev)
+        Stack(vs |> Array.map (unbox<'T> << dV) |> Array.rev)
         |> box
     | x -> raise (DecoderException(x, typeof<Stack<'T>>))
 
