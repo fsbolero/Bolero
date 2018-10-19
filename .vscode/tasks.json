@@ -24,38 +24,48 @@
             }
         }
     },
+    "presentation": {
+        "reveal": "always"
+    },
     "tasks": [
         {
-            "label": "build",
+            "label": "Build",
             "command": "build",
             "args": ["-c", "Debug"],
             "type": "shell",
             "group": "build",
-            "presentation": {
-                "reveal": "silent"
-            },
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "runclient",
+            "label": "Run Client",
             "command": "runclient",
             "args": ["-c", "Debug"],
             "type": "shell",
             "group": "test",
-            "presentation": {
-                "reveal": "silent"
-            },
             "problemMatcher": "$msCompile"
         },
         {
-            "label": "runserver",
+            "label": "Run Server",
             "command": "runserver",
             "args": ["-c", "Debug"],
             "type": "shell",
             "group": "test",
-            "presentation": {
-                "reveal": "silent"
-            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Unit Tests",
+            "command": "test",
+            "args": ["-c", "Debug"],
+            "type": "shell",
+            "group": "test",
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Unit Tests (debug)",
+            "command": "test-debug",
+            "args": ["-c", "Debug"],
+            "type": "shell",
+            "group": "test",
             "problemMatcher": "$msCompile"
         }
     ]

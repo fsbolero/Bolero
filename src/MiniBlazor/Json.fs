@@ -1664,11 +1664,11 @@ let GetDecoder (t: Type) : Decoder<obj> =
 let GetEncoder (t: Type) : Encoder<obj> =
     getEncoder (getBaseTAttrs t)
 
-let Decoder<'T> : Decoder<'T> =
+let Decode<'T> : Decoder<'T> =
     let d = GetDecoder typeof<'T>
     fun x -> d x :?> 'T
 
-let Encoder<'T> : Encoder<'T> =
+let Encode<'T> : Encoder<'T> =
     let e = GetEncoder typeof<'T>
     fun x -> e (box x)
 
@@ -1679,13 +1679,13 @@ let BuildDefaultValue<'T>() =
     BuildDefaultValueFor typeof<'T> :?> 'T
 
 let Read<'T> (tr: TextReader) =
-    Raw.Read tr |> Decoder<'T>
+    Raw.Read tr |> Decode<'T>
 
 let Deserialize<'T> (s: string) =
-    Raw.Parse s |> Decoder<'T>
+    Raw.Parse s |> Decode<'T>
 
 let Write<'T> (tr: TextWriter) (value: 'T) =
-    Raw.Write tr <| Encoder<'T> value
+    Raw.Write tr <| Encode<'T> value
 
 let Serialize<'T> (value: 'T) =
-    Raw.Stringify <| Encoder<'T> value
+    Raw.Stringify <| Encode<'T> value

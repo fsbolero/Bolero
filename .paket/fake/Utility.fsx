@@ -7,12 +7,16 @@ open Fake.DotNet
 
 let slnDir = Path.Combine(__SOURCE_DIRECTORY__, "..", "..")
 
-let dotnet' dir cmd args =
+let dotnet' dir env cmd args =
     Printf.kprintf (fun args ->
+        let env =
+            (Process.createEnvironmentMap(), env)
+            ||> List.fold (fun map (k, v) -> Map.add k v map)
         let r =
-            DotNet.exec (fun o ->
-                { o with WorkingDirectory = dir }
-            ) cmd args
+            DotNet.exec
+                (DotNet.Options.withWorkingDirectory dir
+                >> DotNet.Options.withEnvironment env)
+                cmd args
         for msg in r.Results do
             eprintfn "%s" msg.Message
         if not r.OK then
@@ -20,7 +24,7 @@ let dotnet' dir cmd args =
     ) args
 
 let dotnet cmd args =
-    dotnet' slnDir cmd args
+    dotnet' slnDir [] cmd args
 
 let getArg (o: TargetParameter) prefix ``default`` =
     let rec go = function

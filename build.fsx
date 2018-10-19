@@ -79,11 +79,19 @@ Target.create "pack" (fun o ->
 )
 
 Target.create "runclient" (fun _ ->
-    dotnet' "tests/client" "blazor" "serve"
+    dotnet' "tests/Client" [] "blazor" "serve"
 )
 
 Target.create "runserver" (fun _ ->
-    dotnet' "tests/server" "run" ""
+    dotnet' "tests/Server" [] "run" ""
+)
+
+Target.create "test" (fun _ ->
+    dotnet' "tests/Unit" [] "test" ""
+)
+
+Target.create "test-debug" (fun _ ->
+    dotnet' "tests/Unit" ["VSTEST_HOST_DEBUG", "1"] "test" ""
 )
 
 "corebuild"
@@ -92,5 +100,7 @@ Target.create "runserver" (fun _ ->
 
 "build" ==> "runclient"
 "build" ==> "runserver"
+"build" ==> "test"
+"build" ==> "test-debug"
 
 Target.runOrDefaultWithArguments "build"

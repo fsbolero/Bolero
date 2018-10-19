@@ -123,3 +123,9 @@ val GetDecoder : Type -> Decoder<obj>
 
 /// Get the encoder for a type.
 val GetEncoder : Type -> Encoder<obj>
+
+/// Decode a value from JSON Value.
+val Decode<'T> : Decoder<'T>
+
+/// Encode a value to JSON Value.
+val Encode<'T> : Encoder<'T>

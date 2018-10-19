@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "server",
+            "name": "Server",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -33,7 +33,7 @@
             }
         },
         {
-            "name": "remoting",
+            "name": "Remoting",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
@@ -59,6 +59,12 @@
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
             }
+        },
+        {
+            "name": "Attach",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
         }
     ]
 }
