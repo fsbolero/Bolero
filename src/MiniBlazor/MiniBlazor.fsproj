@@ -7,7 +7,9 @@
     <Compile Include="Render.fs" />
     <Compile Include="Router.fs" />
     <Compile Include="Components.fs" />
-    <Compile Include="Remoting.fs" />
+    <Compile Include="Json.fsi" />
+    <Compile Include="Json.fs" />
+    <Compile Include="Remoting.Client.fs" />
     <Compile Include="Program.fs" />
     <Compile Include="Html.fs" />
   </ItemGroup>
