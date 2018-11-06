@@ -4,12 +4,13 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": "Server",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/tests/server/bin/Debug/netcoreapp2.0/server.dll",
+            "preLaunchTask": "Build",
+            "program": "${workspaceFolder}/tests/server/bin/Debug/netcoreapp2.1/server.dll",
             "args": [],
             "cwd": "${workspaceFolder}/tests/server",
             "stopAtEntry": false,
@@ -36,8 +37,8 @@
             "name": "Remoting",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/tests/Remoting.Server/bin/Debug/netcoreapp2.0/Remoting.Server.dll",
+            "preLaunchTask": "Build",
+            "program": "${workspaceFolder}/tests/Remoting.Server/bin/Debug/netcoreapp2.1/Remoting.Server.dll",
             "args": [],
             "cwd": "${workspaceFolder}/tests/Remoting.Server",
             "stopAtEntry": false,

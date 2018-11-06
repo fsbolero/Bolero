@@ -53,6 +53,14 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "Run Remoting",
+            "command": "run-remoting",
+            "args": ["-c", "Debug"],
+            "type": "shell",
+            "group": "test",
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "Unit Tests",
             "command": "test",
             "args": ["-c", "Debug"],

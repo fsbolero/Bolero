@@ -78,12 +78,16 @@ Target.create "pack" (fun o ->
     )
 )
 
-Target.create "runclient" (fun _ ->
+Target.create "run-client" (fun _ ->
     dotnet' "tests/Client" [] "blazor" "serve"
 )
 
-Target.create "runserver" (fun _ ->
+Target.create "run-server" (fun _ ->
     dotnet' "tests/Server" [] "run" ""
+)
+
+Target.create "run-remoting" (fun _ ->
+    dotnet' "tests/Remoting.Server" [] "run" ""
 )
 
 Target.create "test" (fun _ ->
@@ -98,8 +102,9 @@ Target.create "test-debug" (fun _ ->
     ==> "build"
     ==> "pack"
 
-"build" ==> "runclient"
-"build" ==> "runserver"
+"build" ==> "run-client"
+"build" ==> "run-server"
+"build" ==> "run-remoting"
 "build" ==> "test"
 "build" ==> "test-debug"
 

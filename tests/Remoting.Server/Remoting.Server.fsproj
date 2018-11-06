@@ -12,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />
     <ProjectReference Include="..\Remoting.Client\Remoting.Client.fsproj" />
+    <ProjectReference Include="..\..\src\MiniBlazor.Server\MiniBlazor.Server.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
