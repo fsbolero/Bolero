@@ -211,13 +211,16 @@ module Json =
             FieldBool : bool
         }
 
+        static member Enc r =
+            J.Object [|"FieldInt", J.Encode r.FieldInt; "FieldBool", J.Encode r.FieldBool|]
+
     [<Property>]
     let ``Serialize simple record`` (r: SimpleRecord) =
-        J.Encode r .=. J.Object [|"FieldInt", J.Encode r.FieldInt; "FieldBool", J.Encode r.FieldBool|]
+        J.Encode r .=. SimpleRecord.Enc r
 
     [<Property>]
     let ``Deserialize simple record`` (r: SimpleRecord) =
-        J.Decode (J.Object [|"FieldInt", J.Encode r.FieldInt; "FieldBool", J.Encode r.FieldBool|]) .=. r
+        J.Decode (SimpleRecord.Enc r) .=. r
 
     type RecordWithOption =
         {
@@ -225,23 +228,21 @@ module Json =
             FieldOption : option<SimpleRecord>
         }
 
+        static member Enc r =
+            J.Object [|
+                yield "FieldInt2", J.Encode r.FieldInt2
+                match r.FieldOption with
+                | None -> ()
+                | Some o -> yield "FieldOption", J.Encode o
+            |]
+
     [<Property>]
     let ``Serialize record with option field`` (r: RecordWithOption) =
-        J.Encode r .=. J.Object [|
-            yield "FieldInt2", J.Encode r.FieldInt2
-            match r.FieldOption with
-            | None -> ()
-            | Some o -> yield "FieldOption", J.Encode o
-        |]
+        J.Encode r .=. RecordWithOption.Enc r
 
     [<Property>]
     let ``Deserialize record with option field`` (r: RecordWithOption) =
-        J.Decode (J.Object [|
-            yield "FieldInt2", J.Encode r.FieldInt2
-            match r.FieldOption with
-            | None -> ()
-            | Some o -> yield "FieldOption", J.Encode o
-        |]) .=. r
+        J.Decode (RecordWithOption.Enc r) .=. r
 
     type RecordWithNamedFields =
         {
@@ -252,37 +253,48 @@ module Json =
             FieldOption3: option<int>
         }
 
+        static member Enc r =
+            J.Object [|
+                yield "NotFieldInt3", J.Encode r.FieldInt3
+                yield "FieldBool3", J.Encode r.FieldBool3
+                match r.FieldOption3 with
+                | None -> ()
+                | Some o -> yield "NotFieldOption3", J.Encode o
+            |]
+
     [<Property>]
     let ``Serialize record with named fields`` (r: RecordWithNamedFields) =
-        J.Encode r .=. J.Object [|
-            yield "NotFieldInt3", J.Encode r.FieldInt3
-            yield "FieldBool3", J.Encode r.FieldBool3
-            match r.FieldOption3 with
-            | None -> ()
-            | Some o -> yield "NotFieldOption3", J.Encode o
-        |]
+        J.Encode r .=. RecordWithNamedFields.Enc r
 
     [<Property>]
     let ``Deserialize record with named fields`` (r: RecordWithNamedFields) =
-        J.Decode (J.Object [|
-            yield "NotFieldInt3", J.Encode r.FieldInt3
-            yield "FieldBool3", J.Encode r.FieldBool3
-            match r.FieldOption3 with
-            | None -> ()
-            | Some o -> yield "NotFieldOption3", J.Encode o
-        |]) .=. r
+        J.Decode (RecordWithNamedFields.Enc r) .=. r
 
-    [<CompilationRepresentation(CompilationRepresentationFlags.UseNullAsTrueValue)>]
     type SimpleUnion =
-        | Empty
+        | Nullary
         | Something of x: int
         | Recursive of y: string * r: SimpleUnion
+        | ImmediateSimpleRecord of SimpleRecord
+        | ImmediateRecordWithOption of RecordWithOption
+        | ImmediateRecordWithNamedFields of RecordWithNamedFields
 
         static member Enc u =
             match u with
-            | Empty -> J.Null
+            | Nullary -> J.Object [|"$", J.Number "0"|]
             | Something i -> J.Object [|"$", J.Number "1"; "x", J.Encode i|]
             | Recursive(s, u) -> J.Object [|"$", J.Number "2"; "y", J.Encode s; "r", SimpleUnion.Enc u|]
+            | ImmediateSimpleRecord r ->
+                match SimpleRecord.Enc r with
+                | J.Object o -> J.Object (Array.append [|"$", J.Number "3"|] o)
+                | _ -> failwith "Incorrect SimpleRecord.Enc"
+            | ImmediateRecordWithOption r ->
+                match RecordWithOption.Enc r with
+                | J.Object o -> J.Object (Array.append [|"$", J.Number "4"|] o)
+                | _ -> failwith "Incorrect RecordWithOption.Enc"
+            | ImmediateRecordWithNamedFields r ->
+                match RecordWithNamedFields.Enc r with
+                | J.Object o -> J.Object (Array.append [|"$", J.Number "5"|] o)
+                | _ -> failwith "Incorrect RecordWithNamedFields.Enc"
 
     [<Property>]
     let ``Serialize simple union`` (u: SimpleUnion) =
