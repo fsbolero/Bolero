@@ -1,6 +1,6 @@
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: netstandard2.0, netcoreapp2.0
+framework: netstandard2.0, netcoreapp2.1
 
 nuget FsCheck.NUnit ~> 2.12
 nuget FSharp.Core >= 4.5.0
@@ -12,7 +12,7 @@ nuget Microsoft.JSInterop ~> 0.6.0
 nuget Microsoft.NET.Test.Sdk 15.8.0
 nuget Mono.WebAssembly.Interop ~> 0.6.0
 clitool dotnet-fake ~> 5.0
-nuget Microsoft.AspNetCore.All ~> 2.0.0
+nuget Microsoft.AspNetCore.App ~> 2.1.0
 nuget Elmish >= 2.0
 nuget Microsoft.Build.Utilities.Core ~> 15.0 storage: packages
 nuget Mono.Cecil ~> 0.10.0 storage: packages

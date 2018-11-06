@@ -38,7 +38,7 @@
         },
         {
             "label": "Run Client",
-            "command": "runclient",
+            "command": "run-client",
             "args": ["-c", "Debug"],
             "type": "shell",
             "group": "test",
@@ -46,7 +46,7 @@
         },
         {
             "label": "Run Server",
-            "command": "runserver",
+            "command": "run-server",
             "args": ["-c", "Debug"],
             "type": "shell",
             "group": "test",
