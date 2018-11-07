@@ -10,6 +10,15 @@ open Microsoft.Extensions.DependencyInjection
 open MiniBlazor
 open System.Reflection
 
+type IRemoteHandler =
+    abstract Handler : IRemoteService
+
+[<AbstractClass>]
+type RemoteHandler<'T when 'T :> IRemoteService>() =
+    abstract Handler : 'T
+    interface IRemoteHandler with
+        member this.Handler = this.Handler :> IRemoteService
+
 type internal RemotingService(basePath: PathString, ty: System.Type, handler: obj) =
 
     let flags = BindingFlags.Public ||| BindingFlags.NonPublic
@@ -38,6 +47,9 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
                 [| for e in errors -> exn e |])
         | Ok methods ->
             dict [for m in methods -> m.Name, makeHandler m]
+
+    static member Make<'T when 'T :> IRemoteService>(handler: 'T) =
+        RemotingService(PathString handler.BasePath, typeof<'T>, handler)
 
     static member Output<'Out>(ctx: HttpContext, encoder: Json.Encoder<obj>, a: Async<'Out>) : Task =
         async {
@@ -74,6 +86,13 @@ type RemotingExtensions =
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: 'T) =
         this.AddRemoting(handler.BasePath, handler)
+
+    [<Extension>]
+    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteHandler>(this: IServiceCollection) =
+        this.AddSingleton<'T>()
+            .AddSingleton<RemotingService>(fun services ->
+                let handler = services.GetRequiredService<'T>().Handler
+                RemotingService(PathString handler.BasePath, handler.GetType(), handler))
 
     [<Extension>]
     static member UseRemoting(this: IApplicationBuilder) =
