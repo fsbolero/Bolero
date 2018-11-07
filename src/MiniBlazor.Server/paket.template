@@ -4,3 +4,4 @@ description
     A set of tools and libraries to run F# applications in WebAssembly using Blazor
 authors
     Loic Denuziere
+include-referenced-projects true
