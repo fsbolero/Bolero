@@ -1,4 +1,4 @@
-namespace MiniBlazor.Server
+namespace MiniBlazor.Remoting
 
 open System
 open System.IO
@@ -61,6 +61,10 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
         |> Async.StartAsTask
         :> _
 
+    member this.ServiceType = ty
+
+    member this.Service = handler
+
     member this.TryHandle(ctx: HttpContext) : option<Task> =
         if ctx.Request.Method = "POST" && ctx.Request.Path.StartsWithSegments(basePath) then
             let reqPath = ctx.Request.Path.ToString()
@@ -72,12 +76,35 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
         else
             None
 
+/// Provides remote service implementations when running in Server-side Blazor.
+type internal ServerRemoteProvider(services: seq<RemotingService>) =
+
+    member this.GetService<'T>() =
+        services
+        |> Seq.tryPick (fun s ->
+            if s.ServiceType = typeof<'T> then
+                Some (s.Service :?> 'T)
+            else
+                None
+        )
+        |> Option.defaultWith (fun () ->
+            failwithf "Remote service not registered: %s" typeof<'T>.FullName)
+
+    interface IRemoteProvider with
+
+        member this.GetService<'T>(_basePath: string) =
+            this.GetService<'T>()
+
+        member this.GetService<'T when 'T :> IRemoteService>() =
+            this.GetService<'T>()
+
 [<Extension>]
-type RemotingExtensions =
+type ServerRemotingExtensions =
 
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: 'T) =
         this.AddSingleton<RemotingService>(RemotingService(basePath, typeof<'T>, handler))
+            .AddSingleton<IRemoteProvider, ServerRemoteProvider>()
 
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: 'T) =
@@ -93,6 +120,7 @@ type RemotingExtensions =
             .AddSingleton<RemotingService>(fun services ->
                 let handler = services.GetRequiredService<'T>().Handler
                 RemotingService(PathString handler.BasePath, handler.GetType(), handler))
+            .AddSingleton<IRemoteProvider, ServerRemoteProvider>()
 
     [<Extension>]
     static member UseRemoting(this: IApplicationBuilder) =

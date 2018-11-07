@@ -5,6 +5,7 @@ open System.Net.Http
 open Microsoft.AspNetCore.Blazor
 open Microsoft.AspNetCore.Blazor.Components
 open Microsoft.AspNetCore.Blazor.Services
+open Microsoft.Extensions.DependencyInjection
 open Elmish
 open MiniBlazor.Render
 
@@ -55,7 +56,7 @@ type ElmishComponent<'model, 'msg>() =
         this.View this.Model this.Dispatch
 
 type IElmishProgramComponent =
-    abstract Http : HttpClient
+    abstract Services : System.IServiceProvider
 
 /// A component that runs an Elmish program.
 [<AbstractClass>]
@@ -67,7 +68,7 @@ type ElmishProgramComponent<'model, 'msg>() =
     [<Inject>]
     member val UriHelper = Unchecked.defaultof<IUriHelper> with get, set
     [<Inject>]
-    member val Http = Unchecked.defaultof<HttpClient> with get, set
+    member val Services = Unchecked.defaultof<System.IServiceProvider> with get, set
     member val private View = Empty with get, set
     member val private Dispatch = ignore with get, set
     member val private BaseUri = "/" with get, set
@@ -77,7 +78,7 @@ type ElmishProgramComponent<'model, 'msg>() =
     abstract Program : Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>
 
     interface IElmishProgramComponent with
-        member this.Http = this.Http
+        member this.Services = this.Services
 
     member private this.OnLocationChanged (_: obj) (uri: string) =
         this.Router |> Option.iter (fun router ->

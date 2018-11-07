@@ -61,7 +61,7 @@ type MyRemoting =
         greet: string -> Async<string>
     }
 
-let update (http: HttpClient) message model =
+let update message model =
     match message with
     | SetInput text -> { model with input = text }, []
     | Submit -> { model with submitted = Some model.input }, []
@@ -156,6 +156,6 @@ type MyApp() =
     inherit ElmishProgramComponent<Model, Message>()
 
     override this.Program =
-        Program.mkProgram (fun _ -> initModel(), []) (update this.Http) view
+        Program.mkProgram (fun _ -> initModel(), []) update view
         |> Program.withConsoleTrace
         |> Program.withRouter router

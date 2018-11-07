@@ -1,8 +1,10 @@
 module MiniBlazor.Tests.Remoting.Client
 
 open System.Collections.Generic
+open Microsoft.AspNetCore.Blazor.Components
 open MiniBlazor
 open MiniBlazor.Html
+open MiniBlazor.Remoting
 open Elmish
 
 type MyApi =
@@ -115,7 +117,8 @@ open Microsoft.AspNetCore.Blazor.Hosting
 type Startup() =
 
     member __.ConfigureServices(services: IServiceCollection) =
-        ()
+        services.AddRemoting()
+        |> ignore
 
     member __.Configure(app: IBlazorApplicationBuilder) =
         app.AddComponent<MyApp>("#main")
