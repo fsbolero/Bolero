@@ -25,7 +25,7 @@ type Startup() =
 
         services
             .AddServerSideBlazor<Client.Startup>()
-            .AddRemoting("/myapi", remotingClient)
+            .AddRemoting(remotingClient)
         |> ignore
 
     member this.Configure(app: IApplicationBuilder) =

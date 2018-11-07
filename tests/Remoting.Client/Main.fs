@@ -12,6 +12,9 @@ type MyApi =
         removeItem : int -> Async<unit>
     }
 
+    interface IRemoteService with
+        member this.BasePath = "/myapi"
+
 type Model =
     {
         currentKey: int
@@ -99,7 +102,7 @@ type MyApp() =
     inherit ElmishProgramComponent<Model, Message>()
 
     override this.Program =
-        let myApi = this.Remote<MyApi>("/myapi")
+        let myApi = this.Remote<MyApi>()
         Program.mkProgram (fun _ -> InitModel, Cmd.ofMsg RefreshItems) (Update myApi) Display
         |> Program.withConsoleTrace
 

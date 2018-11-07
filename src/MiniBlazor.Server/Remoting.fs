@@ -8,15 +8,21 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open MiniBlazor
+open System.Reflection
 
-type RemotingHandler(basePath: PathString, ty: System.Type, handler: obj) =
+type internal RemotingService(basePath: PathString, ty: System.Type, handler: obj) =
+
+    let flags = BindingFlags.Public ||| BindingFlags.NonPublic
+    let staticFlags = flags ||| BindingFlags.Static
+    let instanceFlags = flags ||| BindingFlags.Instance
 
     let makeHandler (method: RemoteMethodDefinition) =
         let decoder = Json.GetDecoder method.ArgumentType
         let encoder = Json.GetEncoder method.ReturnType
         let meth = ty.GetProperty(method.Name).GetGetMethod().Invoke(handler, [||])
-        let callMeth = method.FunctionType.GetMethod("Invoke")
-        let output = typeof<RemotingHandler>.GetMethod("Output").MakeGenericMethod(method.ReturnType)
+        let callMeth = method.FunctionType.GetMethod("Invoke", instanceFlags)
+        let output = typeof<RemotingService>.GetMethod("Output", staticFlags)
+        let output = output.MakeGenericMethod(method.ReturnType)
         fun (ctx: HttpContext) ->
             let arg =
                 using (new StreamReader(ctx.Request.Body)) Json.Raw.Read
@@ -59,16 +65,20 @@ type RemotingExtensions =
 
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: 'T) =
-        this.AddSingleton<RemotingHandler>(RemotingHandler(basePath, typeof<'T>, handler))
+        this.AddSingleton<RemotingService>(RemotingService(basePath, typeof<'T>, handler))
 
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: 'T) =
         this.AddRemoting(PathString.op_Implicit basePath, handler)
 
     [<Extension>]
+    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: 'T) =
+        this.AddRemoting(handler.BasePath, handler)
+
+    [<Extension>]
     static member UseRemoting(this: IApplicationBuilder) =
         let handlers =
-            this.ApplicationServices.GetServices<RemotingHandler>()
+            this.ApplicationServices.GetServices<RemotingService>()
             |> Array.ofSeq
         this.Use(fun ctx next ->
             handlers

@@ -7,6 +7,9 @@ open System.Runtime.CompilerServices
 open System.Text
 open FSharp.Reflection
 
+type IRemoteService =
+    abstract BasePath : string
+
 type RemoteMethodDefinition =
     {
         Name: string
@@ -72,10 +75,7 @@ type RemotingExtensions =
         return Json.Read<'T> reader
     }
 
-    [<Extension>]
-    static member Remote<'T>(this: IElmishProgramComponent, baseUri: string) =
-        let ty = typeof<'T>
-        let baseUri = baseUri + (if baseUri.EndsWith "/" then "" else "/")
+    static member MakeRemoteProxy(ty: Type, http: HttpClient, baseUri: string ref) =
         match RemotingExtensions.ExtractRemoteMethods(ty) with
         | Error errors ->
             raise <| AggregateException(
@@ -88,10 +88,24 @@ type RemotingExtensions =
                 let post =
                     typeof<RemotingExtensions>.GetMethod("SendAndParse")
                         .MakeGenericMethod([|method.ReturnType|])
-                let uri = baseUri + method.Name
                 FSharpValue.MakeFunction(method.FunctionType, fun arg ->
-                    post.Invoke(null, [|this.Http; HttpMethod.Post; uri; arg|])
+                    let uri = !baseUri + method.Name
+                    post.Invoke(null, [|http; HttpMethod.Post; uri; arg|])
                 )
             )
             |> ctor
-            :?> 'T
+
+    static member NormalizeBasePath(basePath: string) =
+        basePath + (if basePath.EndsWith "/" then "" else "/")
+
+    [<Extension>]
+    static member Remote<'T>(this: IElmishProgramComponent, basePath: string) =
+        let basePath = RemotingExtensions.NormalizeBasePath(basePath)
+        RemotingExtensions.MakeRemoteProxy(typeof<'T>, this.Http, ref basePath) :?> 'T
+
+    [<Extension>]
+    static member Remote<'T when 'T :> IRemoteService>(this: IElmishProgramComponent) =
+        let basePath = ref ""
+        let proxy = RemotingExtensions.MakeRemoteProxy(typeof<'T>, this.Http, basePath) :?> 'T
+        basePath := RemotingExtensions.NormalizeBasePath proxy.BasePath
+        proxy
