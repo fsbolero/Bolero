@@ -79,6 +79,7 @@ module Router =
         typeof<UInt64>, tryParseBaseType<UInt64>()
         typeof<single>, tryParseBaseType<single>()
         typeof<float>, tryParseBaseType<float>()
+        typeof<decimal>, tryParseBaseType<decimal>()
     ]
 
     let private parseEndPointCasePath (case: UnionCaseInfo) =
