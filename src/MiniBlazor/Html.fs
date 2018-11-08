@@ -5,6 +5,9 @@ open Microsoft.AspNetCore.Blazor
 /// Create an HTML text node.
 let text str = Text str
 
+/// Create an HTML text node using formatting.
+let textf format = Printf.kprintf text format
+
 /// Create an HTML element.
 let elt name attrs children = Node.Elt(name, attrs, children)
 

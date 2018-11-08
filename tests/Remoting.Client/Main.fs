@@ -69,7 +69,7 @@ type Item() =
 
     override __.View (KeyValue (k, v)) dispatch =
         li [] [
-            text (sprintf "%i => %s" k v)
+            textf "%i => %s" k v
             button [on.click (fun _ -> dispatch (RemoveItem k))] [text "Remove"]
         ]
 
