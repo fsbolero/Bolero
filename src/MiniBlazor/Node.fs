@@ -18,6 +18,8 @@ type Node =
     | Elt of name: string * attrs: list<Attr> * children: list<Node>
     /// A single HTML text node.
     | Text of text: string
+    /// A raw HTML fragment.
+    | RawHtml of html: string
 #if !IS_DESIGNTIME
     /// A single Blazor component.
     | Component of Type * info: ComponentInfo * attrs: list<Attr> * children: list<Node>
@@ -26,6 +28,7 @@ type Node =
         let rec nodeLength = function
             | Empty -> 0
             | Text _ -> 1
+            | RawHtml _ -> 1
             | Concat nodes -> List.sumBy nodeLength nodes
             | Elt (_, attrs, children) ->
                 1 + List.length attrs + List.sumBy nodeLength children

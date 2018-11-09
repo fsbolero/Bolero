@@ -87,7 +87,6 @@ let viewForm model dispatch =
         | Some s ->
             concat [
                 if s.Contains "secret" then
-                    // yield div [] [text "You typed the secret password!"]
                     yield SecretPw().Elt()
 
                 if s.Contains "super" then
@@ -142,7 +141,10 @@ type ViewItemPage() =
 
 let view model dispatch =
     concat [
-        style [] [text ".active { background: lightblue; }"]
+        RawHtml """
+            <div style="color:gray">The links below should have blue background based on the current page.</div>
+            <style>.active { background: lightblue; }</style>
+        """
         p [] [
             navLink NavLinkMatch.All [router.HRef Form] [text "Form"]
             text " "

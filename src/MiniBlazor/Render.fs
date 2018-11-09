@@ -10,6 +10,9 @@ let rec renderNode (builder: RenderTreeBuilder) sequence node =
     | Text text ->
         builder.AddContent(sequence, text)
         sequence + 1
+    | RawHtml html ->
+        builder.AddMarkupContent(sequence, html)
+        sequence + 1
     | Concat nodes ->
         List.fold (renderNode builder) sequence nodes
     | Elt (name, attrs, children) ->
