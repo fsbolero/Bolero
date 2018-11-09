@@ -77,6 +77,7 @@ let update message model =
     | ToggleRevOrder -> { model with revOrder = not model.revOrder }, []
     | SetPage p -> { model with page = p }, []
 
+type SecretPw = Template<"<div>You typed the secret password!</div>">
 let viewForm model dispatch =
     div [] [
         input [attr.value model.input; on.change (fun e -> dispatch (SetInput (unbox e.Value)))]
@@ -86,7 +87,8 @@ let viewForm model dispatch =
         | Some s ->
             concat [
                 if s.Contains "secret" then
-                    yield div [] [text "You typed the secret password!"]
+                    // yield div [] [text "You typed the secret password!"]
+                    yield SecretPw().Elt()
 
                 if s.Contains "super" then
                     yield div [] [text "You typed the super secret password!"]

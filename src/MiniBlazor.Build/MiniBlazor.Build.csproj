@@ -2,13 +2,7 @@
   <Import Project="..\..\tools\Common.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
-  <Target Name="_CopyLocal" AfterTargets="Compile">
-    <ItemGroup>
-      <_CopyLocal Include="../../packages/Mono.Cecil/lib/netstandard1.3/Mono.Cecil.dll" />
-      <_CopyLocal Include="../../packages/Microsoft.Build.Utilities.Core/lib/netstandard2.0/Microsoft.Build.Utilities.Core.dll" />
-    </ItemGroup>
-    <Copy SourceFiles="@(_CopyLocal)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
-  </Target>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

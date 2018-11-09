@@ -5,5 +5,5 @@ description
 authors
     Loic Denuziere
 files
-    MiniBlazor.Build.targets ==> build/MiniBlazor.Build.targets
-    bin/Release/netstandard2.0/*.dll ==> tools
+    MiniBlazor.Build/MiniBlazor.Build.targets ==> build/MiniBlazor.Build.targets
+    MiniBlazor.Build/bin/Release/netstandard2.0/*.dll ==> tools

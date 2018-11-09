@@ -1,7 +1,9 @@
 namespace MiniBlazor
 
 open System
+#if !IS_DESIGNTIME
 open Microsoft.AspNetCore.Blazor.Components
+#endif
 
 /// HTML attribute or Blazor component parameter.
 type Attr = string * obj
@@ -16,6 +18,7 @@ type Node =
     | Elt of name: string * attrs: list<Attr> * children: list<Node>
     /// A single HTML text node.
     | Text of text: string
+#if !IS_DESIGNTIME
     /// A single Blazor component.
     | Component of Type * info: ComponentInfo * attrs: list<Attr> * children: list<Node>
 
@@ -32,5 +35,6 @@ type Node =
 
     static member BlazorComponent<'T when 'T :> IComponent>(attrs, children) =
         Node.BlazorComponent(typeof<'T>, attrs, children)
+#endif
 
 and [<Struct>] ComponentInfo = { length: int }

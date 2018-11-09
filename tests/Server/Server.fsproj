@@ -9,13 +9,11 @@
   <ItemGroup>
     <Compile Include="Startup.fs" />
   </ItemGroup>
-  <!-- <ItemGroup>
-    <!-\- illink can't find System.Buffers.dll, because it's not copied locally by default nor present in mono's standard assemblies.
-          https://github.com/aspnet/Blazor/issues/1504 -\->
-    <ReferenceCopyLocalPaths Include="$(NuGetPackageRoot)system.buffers/4.5.0/lib/netstandard2.0/System.Buffers.dll" />
-  </ItemGroup> -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />
+    <ProjectReference Include="..\..\src\MiniBlazor.Templating\MiniBlazor.Templating.fsproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
     <ProjectReference Include="..\Client\Client.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
