@@ -9,8 +9,8 @@ files
     ../build/Release/netstandard2.0/MiniBlazor.xml ==> lib/netstandard2.0
     ../build/Release/netstandard2.0/MiniBlazor.Server.dll ==> lib/netstandard2.0
     ../build/Release/netstandard2.0/MiniBlazor.Server.xml ==> lib/netstandard2.0
-    ../build/Release/netstandard2.0/MiniBlazor.Templating.dll ==> typeproviders/fsharp45/netstandard2.0
-    ../build/Release/netstandard2.0/MiniBlazor.Templating.xml ==> typeproviders/fsharp45/netstandard2.0
+    ../build/Release/typeproviders/fsharp41/netstandard2.0/MiniBlazor.Templating.dll ==> typeproviders/fsharp41/netstandard2.0
+    ../build/Release/typeproviders/fsharp41/netstandard2.0/HtmlAgilityPack.dll ==> typeproviders/fsharp41/netstandard2.0
 references
     FSharp.Core >= LOCKED:Minor
     Microsoft.AspNetCore.Blazor.Browser ~> LOCKED:Patch

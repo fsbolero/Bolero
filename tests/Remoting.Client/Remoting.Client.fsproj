@@ -6,9 +6,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />
-    <ProjectReference Include="..\..\src\MiniBlazor.Templating\MiniBlazor.Templating.fsproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.fs" />

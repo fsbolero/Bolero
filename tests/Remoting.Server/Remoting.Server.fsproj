@@ -11,9 +11,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />
-    <ProjectReference Include="..\..\src\MiniBlazor.Templating\MiniBlazor.Templating.fsproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
     <ProjectReference Include="..\..\src\MiniBlazor.Server\MiniBlazor.Server.fsproj" />
     <ProjectReference Include="..\Remoting.Client\Remoting.Client.fsproj" />
   </ItemGroup>

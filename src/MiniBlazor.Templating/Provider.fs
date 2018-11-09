@@ -77,7 +77,7 @@ type Template (cfg: TypeProviderConfig) as this =
 
     let thisAssembly = Assembly.GetExecutingAssembly()
     let rootNamespace = "MiniBlazor"
-    let templateTy = ProvidedTypeDefinition(thisAssembly, rootNamespace, "Template", None)
+    let templateTy = ProvidedTypeDefinition(thisAssembly, rootNamespace, "Template", Some typeof<obj>)
 
     do templateTy.DefineStaticParameters(
         [
@@ -85,7 +85,7 @@ type Template (cfg: TypeProviderConfig) as this =
         ], fun typename pars ->
         match pars with
         | [| :? string as pathOrHtml |] ->
-            let ty = ProvidedTypeDefinition(thisAssembly, rootNamespace, typename, None)
+            let ty = ProvidedTypeDefinition(thisAssembly, rootNamespace, typename, Some typeof<obj>)
             Populate ty pathOrHtml
             ty
         | x -> failwithf "Unexpected parameter values: %A" x
