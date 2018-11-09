@@ -16,6 +16,7 @@
     <Compile Include="../MiniBlazor/Node.fs">
       <Link>Node.fs</Link>
     </Compile>
+    <Compile Include="Utilities.fs" />
     <Compile Include="Parsing.fs" />
     <Compile Include="Provider.fs" />
   </ItemGroup>

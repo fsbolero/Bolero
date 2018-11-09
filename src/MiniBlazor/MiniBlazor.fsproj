@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Node.fs" />
+    <Compile Include="Templating.Runtime.fs" />
     <Compile Include="Render.fs" />
     <Compile Include="Router.fs" />
     <Compile Include="Components.fs" />
