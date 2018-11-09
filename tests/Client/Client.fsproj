@@ -14,7 +14,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />
-    <ProjectReference Include="..\..\src\MiniBlazor.Templating\MiniBlazor.Templating.fsproj" />
+    <ProjectReference Include="..\..\src\MiniBlazor.Templating\MiniBlazor.Templating.fsproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="..\..\src\MiniBlazor.Build\MiniBlazor.Build.targets" />
   <Import Project="..\..\.paket\Paket.Restore.targets" />

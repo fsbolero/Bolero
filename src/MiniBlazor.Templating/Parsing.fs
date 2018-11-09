@@ -3,8 +3,7 @@ module MiniBlazor.Templating.Parsing
 open System.IO
 open FSharp.Quotations
 open HtmlAgilityPack
-type Attr = MiniBlazor.Attr
-type Node = MiniBlazor.Node
+open MiniBlazor
 
 let GetDoc (fileOrContent: string) =
     let doc = HtmlDocument()

@@ -5,7 +5,7 @@ open System.Reflection
 open FSharp.Core.CompilerServices
 open ProviderImplementation
 open ProviderImplementation.ProvidedTypes
-type Node = MiniBlazor.Node
+type internal Node = MiniBlazor.Node
 
 [<AutoOpen>]
 module private Impl =
@@ -19,7 +19,9 @@ module private Impl =
 
 [<TypeProvider>]
 type Template (cfg: TypeProviderConfig) as this =
-    inherit TypeProviderForNamespaces(cfg)
+    inherit TypeProviderForNamespaces(cfg,
+        assemblyReplacementMap = ["MiniBlazor.Templating", "MiniBlazor"],
+        addDefaultProbingLocation = true)
 
     let thisAssembly = Assembly.GetExecutingAssembly()
     let rootNamespace = "MiniBlazor"
@@ -37,6 +39,3 @@ type Template (cfg: TypeProviderConfig) as this =
         | x -> failwithf "Unexpected parameter values: %A" x
     )
     do this.AddNamespace(rootNamespace, [templateTy])
-
-[<assembly:FSharp.Core.CompilerServices.TypeProviderAssembly>]
-do ()

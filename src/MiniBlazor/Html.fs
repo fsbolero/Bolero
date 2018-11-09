@@ -1294,3 +1294,6 @@ module on =
         "onscroll" => BindMethods.GetEventHandlerValue callback
 
 // END EVENTS
+
+[<assembly:FSharp.Core.CompilerServices.TypeProviderAssembly "MiniBlazor.Templating">]
+do ()
