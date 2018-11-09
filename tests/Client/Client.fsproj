@@ -6,7 +6,7 @@
     <RunCommand>dotnet</RunCommand>
     <RunArguments>blazor serve</RunArguments>
     <DefineConstants Condition="'$(GhPages)' != ''">$(DefineConstants);GHPAGES</DefineConstants>
-    <MiniBlazorTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\src\MiniBlazor.Build\bin\$(Configuration)\netstandard2.0\MiniBlazor.Build.dll</MiniBlazorTaskAssemblyPath>
+    <MiniBlazorTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\build\task\$(Configuration)\netstandard2.0\MiniBlazor.Build.dll</MiniBlazorTaskAssemblyPath>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Main.fs" />

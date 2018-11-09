@@ -2,7 +2,7 @@
   <Import Project="..\..\tools\Common.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <MiniBlazorTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\src\MiniBlazor.Build\bin\$(Configuration)\netstandard2.0\MiniBlazor.Build.dll</MiniBlazorTaskAssemblyPath>
+    <MiniBlazorTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\build\task\$(Configuration)\netstandard2.0\MiniBlazor.Build.dll</MiniBlazorTaskAssemblyPath>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />
