@@ -41,3 +41,8 @@ type Node =
 #endif
 
 and [<Struct>] ComponentInfo = { length: int }
+
+type TemplateNode() =
+    /// For internal use only.
+    member val Holes : obj[] = null with get, set
+    
