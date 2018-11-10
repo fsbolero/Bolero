@@ -1,3 +1,8 @@
+version: 0.1.{build}
+image: Visual Studio 2017
+build:
+  verbosity: minimal
+
 branches:
   only:
     - master
