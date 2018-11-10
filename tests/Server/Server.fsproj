@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Startup.fs" />
+    <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />

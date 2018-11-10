@@ -11,7 +11,9 @@
   <ItemGroup>
     <Compile Include="Main.fs" />
     <Compile Include="Startup.fs" />
+    <None Include="paket.references" />
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />
   </ItemGroup>

@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Utility.fs" />
     <Compile Include="Json.fs" />
+    <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />
