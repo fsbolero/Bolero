@@ -6,3 +6,4 @@ paket-files/
 packages/
 .fake/
 build/
+TestResults/

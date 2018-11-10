@@ -2,15 +2,36 @@
 #load ".paket/fake/Utility.fsx"
 
 open System.IO
+open System.Net
 open System.Text
 open System.Text.RegularExpressions
 open Fake.Core
 open Fake.Core.TargetOperators
+open Fake.IO.FileSystemOperators
 open Utility
 
+type CommandLineOptions =
+    {
+        Config: string
+        Version: string
+        TestUploadUrl: option<string>
+    }
+let mutable options = None
+type TargetParameter with
+    member this.Options =
+        match options with
+        | Some o -> o
+        | None ->
+            let o = {
+                Config = getArg this "-c" "Release"
+                Version = getArg this "-v" "0.1.0"
+                TestUploadUrl = getArgOpt this "--push-tests"
+            }
+            options <- Some o
+            o
+
 Target.create "corebuild" (fun o ->
-    let config = getArg o "-c" "Release"
-    dotnet "build" "bolero.sln -c %s" config
+    dotnet "build" "bolero.sln -c:%s" o.Options.Config
 )
 
 let [<Literal>] tagsFile = __SOURCE_DIRECTORY__ + "/src/Bolero/tags.csv"
@@ -69,33 +90,42 @@ Target.create "tags" (fun _ ->
 Target.create "build" ignore
 
 Target.create "pack" (fun o ->
-    let version = getArg o "-v" "0.1.0"
+
     Fake.DotNet.Paket.pack (fun p ->
         { p with
             OutputPath = "build"
-            Version = version
+            Version = o.Options.Version
         }
     )
 )
 
-Target.create "run-client" (fun _ ->
-    dotnet' "tests/Client" [] "blazor" "serve"
+Target.create "run-client" (fun o ->
+    dotnet' "tests/Client" [] "run" "-c:%s" o.Options.Config
 )
 
-Target.create "run-server" (fun _ ->
-    dotnet' "tests/Server" [] "run" ""
+Target.create "run-server" (fun o ->
+    dotnet' "tests/Server" [] "run" "-c:%s" o.Options.Config
 )
 
-Target.create "run-remoting" (fun _ ->
-    dotnet' "tests/Remoting.Server" [] "run" ""
+Target.create "run-remoting" (fun o ->
+    dotnet' "tests/Remoting.Server" [] "run" "-c:%s" o.Options.Config
 )
 
-Target.create "test" (fun _ ->
-    dotnet' "tests/Unit" [] "test" ""
+let uploadTests (url: string) =
+    let results =
+        DirectoryInfo(__SOURCE_DIRECTORY__ </> "tests" </> "Unit" </> "TestResults")
+            .EnumerateFiles("*.trx")
+        |> Seq.maxBy (fun f -> f.CreationTime)
+    use c = new WebClient()
+    c.UploadFile(url, results.FullName) |> ignore
+
+Target.create "test" (fun o ->
+    dotnet' "tests/Unit" [] "test" "--logger:trx -c:%s" o.Options.Config
+    Option.iter uploadTests o.Options.TestUploadUrl
 )
 
-Target.create "test-debug" (fun _ ->
-    dotnet' "tests/Unit" ["VSTEST_HOST_DEBUG", "1"] "test" ""
+Target.create "test-debug" (fun o ->
+    dotnet' "tests/Unit" ["VSTEST_HOST_DEBUG", "1"] "test" "-c:%s" o.Options.Config
 )
 
 "corebuild"

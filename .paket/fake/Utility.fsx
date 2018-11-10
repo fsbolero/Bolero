@@ -26,12 +26,16 @@ let dotnet' dir env cmd args =
 let dotnet cmd args =
     dotnet' slnDir [] cmd args
 
-let getArg (o: TargetParameter) prefix ``default`` =
+let getArgOpt (o: TargetParameter) prefix =
     let rec go = function
-        | s :: m :: _ when s = prefix -> m
+        | s :: m :: _ when s = prefix -> Some m
         | _ :: rest -> go rest
-        | [] -> ``default``
+        | [] -> None
     go o.Context.Arguments
+
+let getArg o prefix ``default`` =
+    getArgOpt o prefix
+    |> Option.defaultValue ``default``
 
 // Manage the fact that we run fake from the .paket/fake directory
 let origDir = Directory.GetCurrentDirectory()
