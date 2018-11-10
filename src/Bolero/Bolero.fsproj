@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\tools\Common.props" />
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <BaseOutputPath>..\..\build</BaseOutputPath>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Node.fs" />
+    <Compile Include="Render.fs" />
+    <Compile Include="Router.fs" />
+    <Compile Include="Components.fs" />
+    <Compile Include="Json.fsi" />
+    <Compile Include="Json.fs" />
+    <Compile Include="Remoting.fs" />
+    <Compile Include="Remoting.Client.fs" />
+    <Compile Include="Program.fs" />
+    <Compile Include="Html.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Bolero.Build\Bolero.Build.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\Bolero.Templating\Bolero.Templating.fsproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

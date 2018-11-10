@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup Condition="'$(BoleroTaskAssemblyPath)' == ''">
+    <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\tools\Bolero.Build.dll</BoleroTaskAssemblyPath>
+  </PropertyGroup>
+  <UsingTask AssemblyFile="$(BoleroTaskAssemblyPath)" TaskName="Bolero.Build.BoleroTask"
+    Condition="'$(BoleroStripAssemblies)' != 'False'" />
+  <Target Name="StripFSharp" BeforeTargets="_BlazorCopyFilesToOutputDirectory"
+    Condition="'$(BoleroStripAssemblies)' != 'False'">
+    <ItemGroup>
+      <BoleroStripAssemblies Include="@(BlazorItemOutput->WithMetadataValue('Extension', '.dll'))" />
+    </ItemGroup>
+    <BoleroTask Assemblies="@(BoleroStripAssemblies)" />
+  </Target>
+</Project>

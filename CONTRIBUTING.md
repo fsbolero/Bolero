@@ -1,4 +1,4 @@
-# Contributing to MiniBlazor
+# Contributing to Bolero
 
 ## Working with this repository
 

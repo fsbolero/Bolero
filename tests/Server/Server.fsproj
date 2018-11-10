@@ -10,7 +10,7 @@
     <Compile Include="Startup.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />
+    <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />
     <ProjectReference Include="..\Client\Client.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

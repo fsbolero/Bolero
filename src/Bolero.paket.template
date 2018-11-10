@@ -1,0 +1,17 @@
+type file
+id Bolero
+description
+    A set of tools and libraries to run F# applications in WebAssembly using Blazor
+authors
+    Loic Denuziere
+files
+    ../build/Release/netstandard2.0/Bolero.dll ==> lib/netstandard2.0
+    ../build/Release/netstandard2.0/Bolero.xml ==> lib/netstandard2.0
+    ../build/Release/netstandard2.0/Bolero.Server.dll ==> lib/netstandard2.0
+    ../build/Release/netstandard2.0/Bolero.Server.xml ==> lib/netstandard2.0
+    ../build/Release/typeproviders/fsharp41/netstandard2.0/Bolero.Templating.dll ==> typeproviders/fsharp41/netstandard2.0
+    ../build/Release/typeproviders/fsharp41/netstandard2.0/HtmlAgilityPack.dll ==> typeproviders/fsharp41/netstandard2.0
+references
+    FSharp.Core >= LOCKED:Minor
+    Microsoft.AspNetCore.Blazor.Browser ~> LOCKED:Patch
+    Elmish ~> LOCKED:Patch

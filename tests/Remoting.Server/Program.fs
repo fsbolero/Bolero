@@ -1,11 +1,11 @@
-﻿namespace MiniBlazor.Tests.Remoting
+﻿namespace Bolero.Tests.Remoting
 
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
-open MiniBlazor.Remoting
+open Bolero.Remoting
 
 type MyApiHandler(log: ILogger<MyApiHandler>) =
     inherit RemoteHandler<Client.MyApi>()

@@ -1,10 +1,10 @@
-module MiniBlazor.Tests.Remoting.Client
+module Bolero.Tests.Remoting.Client
 
 open System.Collections.Generic
 open Microsoft.AspNetCore.Blazor.Components
-open MiniBlazor
-open MiniBlazor.Html
-open MiniBlazor.Remoting
+open Bolero
+open Bolero.Html
+open Bolero.Remoting
 open Elmish
 
 type MyApi =

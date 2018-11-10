@@ -3,7 +3,7 @@
 param ([string] $env = "local")
 
 $msg = 'gh-pages.ps1: tests/client/wwwroot -> gh-pages'
-$gitURL = "https://github.com/intellifactory/MiniBlazor"
+$gitURL = "https://github.com/intellifactory/Bolero"
 
 write-host -foregroundColor "green" "=====> $msg"
 
@@ -33,7 +33,7 @@ if ($env -eq "appveyor") {
 git checkout gh-pages
 git rm -rf *
 cp -r -force ../../tests/client/wwwroot/* .
-(get-content '.\index.html').replace('<base href="/"', '<base href="/MiniBlazor/"') | set-content '.\index.html'
+(get-content '.\index.html').replace('<base href="/"', '<base href="/Bolero/"') | set-content '.\index.html'
 cp -r -force ../../tests/client/bin/Release/netstandard2.0/dist/_framework .
 cp -r -force ../../tests/client/bin/Release/netstandard2.0/dist/_content .
 git add . 2>git.log

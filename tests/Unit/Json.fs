@@ -1,11 +1,11 @@
-namespace MiniBlazor.Tests
+namespace Bolero.Tests
 
 open System
 open System.Collections.Generic
 open NUnit.Framework
 open FsCheck.NUnit
 open FsCheck
-module J = MiniBlazor.Json
+module J = Bolero.Json
 
 module Json =
 

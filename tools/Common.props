@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <!-- UseSharedCompilation=true causes problems with locked MiniBlazor.Build.dll -->
+    <!-- UseSharedCompilation=true causes problems with locked Bolero.Build.dll -->
     <UseSharedCompilation>false</UseSharedCompilation>
   </PropertyGroup>
 </Project>

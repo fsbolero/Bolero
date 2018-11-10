@@ -2,14 +2,14 @@
   <Import Project="..\..\tools\Common.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <MiniBlazorTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\build\task\$(Configuration)\netstandard2.0\MiniBlazor.Build.dll</MiniBlazorTaskAssemblyPath>
+    <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\build\task\$(Configuration)\netstandard2.0\Bolero.Build.dll</BoleroTaskAssemblyPath>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MiniBlazor\MiniBlazor.fsproj" />
+    <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.fs" />
   </ItemGroup>
-  <Import Project="..\..\src\MiniBlazor.Build\MiniBlazor.Build.targets" />
+  <Import Project="..\..\src\Bolero.Build\Bolero.Build.targets" />
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

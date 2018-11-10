@@ -1,9 +1,9 @@
-module MiniBlazor.Test.Client.Main
+module Bolero.Test.Client.Main
 
 open Microsoft.AspNetCore.Blazor.Routing
 open Elmish
-open MiniBlazor
-open MiniBlazor.Html
+open Bolero
+open Bolero.Html
 open System.Net.Http
 
 type Page =

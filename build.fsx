@@ -10,19 +10,19 @@ open Utility
 
 Target.create "corebuild" (fun o ->
     let config = getArg o "-c" "Release"
-    dotnet "build" "miniblazor.sln -c %s" config
+    dotnet "build" "bolero.sln -c %s" config
 )
 
-let [<Literal>] tagsFile = __SOURCE_DIRECTORY__ + "/src/MiniBlazor/tags.csv"
+let [<Literal>] tagsFile = __SOURCE_DIRECTORY__ + "/src/Bolero/tags.csv"
 type Tags = FSharp.Data.CsvProvider<tagsFile>
-let [<Literal>] attrsFile = __SOURCE_DIRECTORY__ + "/src/MiniBlazor/attrs.csv"
+let [<Literal>] attrsFile = __SOURCE_DIRECTORY__ + "/src/Bolero/attrs.csv"
 type Attrs = FSharp.Data.CsvProvider<attrsFile>
-let [<Literal>] eventsFile = __SOURCE_DIRECTORY__ + "/src/MiniBlazor/events.csv"
+let [<Literal>] eventsFile = __SOURCE_DIRECTORY__ + "/src/Bolero/events.csv"
 type Events = FSharp.Data.CsvProvider<eventsFile>
 
 // Generate HTML tags and attributes from CSV
 Target.create "tags" (fun _ ->
-    let file = "src/MiniBlazor/Html.fs"
+    let file = "src/Bolero/Html.fs"
     let input = File.ReadAllText(file)
     let escapeDashes s =
         Regex("-(.)").Replace(s, fun (m: Match) ->

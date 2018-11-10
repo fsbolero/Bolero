@@ -1,4 +1,4 @@
-namespace MiniBlazor.Tests
+namespace Bolero.Tests
 
 open FsCheck
 

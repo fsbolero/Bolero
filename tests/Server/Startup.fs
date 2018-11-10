@@ -1,10 +1,10 @@
-namespace MiniBlazor.Test.Server
+namespace Bolero.Test.Server
 
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
-open MiniBlazor.Test
+open Bolero.Test
 
 type Startup() =
 

@@ -1,4 +1,4 @@
-namespace MiniBlazor.Test.Client
+namespace Bolero.Test.Client
 
 open Microsoft.AspNetCore.Blazor.Hosting
 open Microsoft.Extensions.DependencyInjection

@@ -1,2 +1,0 @@
-﻿module MiniBlazor.Templating.Runtime
-
