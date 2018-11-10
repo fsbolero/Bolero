@@ -17,6 +17,7 @@
     </Compile>
     <Compile Include="Utilities.fs" />
     <Compile Include="Parsing.fs" />
+    <Compile Include="CodeGen.fs" />
     <Compile Include="Provider.fs" />
     <None Include="paket.references" />
   </ItemGroup>

@@ -1,4 +1,4 @@
-module internal Bolero.Templating.Parsing
+module Bolero.Templating.Parsing
 
 open System.Text.RegularExpressions
 open FSharp.Quotations
