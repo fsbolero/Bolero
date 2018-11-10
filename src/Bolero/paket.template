@@ -13,5 +13,6 @@ files
     ../../build/Release/typeproviders/fsharp41/netstandard2.0/HtmlAgilityPack.dll ==> typeproviders/fsharp41/netstandard2.0
 dependencies
     FSharp.Core >= LOCKED:Minor
-    Microsoft.AspNetCore.Blazor.Browser ~> LOCKED:Patch
-    Elmish ~> LOCKED:Patch
+    Microsoft.AspNetCore.Blazor.Browser >= LOCKED:Minor
+    Elmish >= LOCKED:Minor
+    Microsoft.AspNetCore.Http.Abstractions >= LOCKED:Minor
