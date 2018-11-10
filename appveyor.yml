@@ -14,10 +14,8 @@ init:
 build_script:
 - cmd: .\build.cmd -t pack -c Release -v %APPVEYOR_BUILD_VERSION% /p:GhPages=true
 
-test:
-  assemblies:
-    only:
-    - tests\Unit\bin\Release\netcoreapp2.1\Unit.dll
+test_script:
+- ps: dotnet test tests\Unit
 
 artifacts:
 - path: 'build\*.nupkg'
