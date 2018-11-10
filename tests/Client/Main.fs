@@ -18,7 +18,7 @@ type Item =
     }
 
 type Model =
-    { 
+    {
         input: string
         submitted: option<string>
         addKey: int
@@ -77,7 +77,11 @@ let update message model =
     | ToggleRevOrder -> { model with revOrder = not model.revOrder }, []
     | SetPage p -> { model with page = p }, []
 
-type SecretPw = Template<"<div>You typed the ${Kind} password!</div>">
+type SecretPw = Template<"""<div>
+                                You typed the ${Kind} password!
+                                <button onclick="${Clear}">Clear</button>
+                            </div>""">
+
 let viewForm model dispatch =
     div [] [
         input [attr.value model.input; on.change (fun e -> dispatch (SetInput (unbox e.Value)))]
@@ -87,10 +91,10 @@ let viewForm model dispatch =
         | Some s ->
             concat [
                 if s.Contains "secret" then
-                    yield SecretPw().Kind(b [] [text "secret"]).Elt()
+                    yield SecretPw().Kind(b [] [text "secret"]).Clear(fun _ -> dispatch (SetInput "")).Elt()
 
                 if s.Contains "super" then
-                    yield SecretPw().Kind("super secret").Elt()
+                    yield SecretPw().Kind("super secret").Clear(fun _ -> dispatch (SetInput "")).Elt()
             ]
         | None -> empty)
     ]

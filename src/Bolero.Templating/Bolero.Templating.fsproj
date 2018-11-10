@@ -6,15 +6,14 @@
     <DefineConstants>IS_DESIGNTIME</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../paket-files/fsprojects/FSharp.TypeProviders.SDK/src/ProvidedTypes.fsi">
-      <Link>ProvidedTypes.fsi</Link>
-    </Compile>
-    <Compile Include="../../paket-files/fsprojects/FSharp.TypeProviders.SDK/src/ProvidedTypes.fs">
-      <Link>ProvidedTypes.fs</Link>
-    </Compile>
-    <Compile Include="../Bolero/Node.fs">
-      <Link>Node.fs</Link>
-    </Compile>
+    <Compile Include="../../paket-files/fsprojects/FSharp.TypeProviders.SDK/src/ProvidedTypes.fsi"
+             Link="ProvidedTypes.fsi" />
+    <Compile Include="../../paket-files/fsprojects/FSharp.TypeProviders.SDK/src/ProvidedTypes.fs"
+             Link="ProvidedTypes.fs" />
+    <Compile Include="../Bolero/Node.fs"
+             Link="Node.fs" />
+    <Compile Include="..\Bolero\TemplatingInternals.fs"
+             Link="TemplatingInternals.fs" />
     <Compile Include="Utilities.fs" />
     <Compile Include="Parsing.fs" />
     <Compile Include="CodeGen.fs" />

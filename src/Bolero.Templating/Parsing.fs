@@ -1,7 +1,10 @@
 module Bolero.Templating.Parsing
 
+open System
 open System.Text.RegularExpressions
 open FSharp.Quotations
+open Microsoft.AspNetCore.Blazor
+open Microsoft.AspNetCore.Blazor.Components
 open HtmlAgilityPack
 open Bolero
 
@@ -21,7 +24,7 @@ module HoleType =
     let TypeOf = function
         | String -> typeof<string>
         | Html -> typeof<Node>
-        | Event -> typeof<unit -> unit> // TODO arg type
+        | Event -> typeof<Action<UIEventArgs>>
 
     let Wrap (innerType: HoleType) (outerType: HoleType) (expr: Expr) =
         if innerType = outerType then expr else
@@ -95,6 +98,10 @@ type TextPart =
     | Plain of string
     | Hole of Hole
 
+let MakeHole holeName holeType =
+    let var = Var(holeName, HoleType.TypeOf holeType)
+    { Type = holeType; Var = var }
+
 let ParseText (t: string) (holeType: HoleType) : Holes * TextPart[] =
     let parse = HoleNameRE.Matches(t) |> Seq.cast<Match> |> Array.ofSeq
     if Array.isEmpty parse then Map.empty, [|Plain t|] else
@@ -105,8 +112,7 @@ let ParseText (t: string) (holeType: HoleType) : Holes * TextPart[] =
         match Map.tryFind holeName holes with
         | Some hole -> hole
         | None ->
-            let var = Var(holeName, HoleType.TypeOf holeType)
-            let hole = { Type = holeType; Var = var }
+            let hole = MakeHole holeName holeType
             holes <- Map.add holeName hole holes
             hole
     for p in parse do
@@ -118,17 +124,26 @@ let ParseText (t: string) (holeType: HoleType) : Holes * TextPart[] =
     if lastHoleEnd < t.Length then
         parts.Add(Plain t.[lastHoleEnd..t.Length - 1])
     holes, parts.ToArray()
-
+    
 let ParseAttribute (attr: HtmlAttribute) : Parsed<Attr> =
-    let holes, parts = ParseText attr.Value HoleType.String
     let name = attr.Name
-    let value = Expr.TypedArray<string> [
-        for part in parts do
-            match part with
-            | Plain t -> yield <@ t @>
-            | Hole h -> yield Expr.Var h.Var |> Expr.Cast
-    ]
-    { Holes = holes; Expr = <@ Attr(name, String.concat "" %value) @> }
+    match ParseText attr.Value HoleType.String with
+    | holes, [|Hole _|] when name.StartsWith "on" ->
+        // Event handler
+        let holeName = (Seq.head holes).Key
+        let hole = MakeHole holeName HoleType.Event
+        let holes = Map [holeName, hole]
+        let value : Expr<Action<UIEventArgs>> = Expr.Var hole.Var |> Expr.Cast
+        { Holes = holes; Expr = <@ Attr(name, %value) @> }
+    | holes, parts ->
+        // String attribute
+        let value = Expr.TypedArray<string> [
+            for part in parts do
+                match part with
+                | Plain t -> yield <@ t @>
+                | Hole h -> yield Expr.Var h.Var |> Expr.Cast
+        ]
+        { Holes = holes; Expr = <@ Attr(name, String.concat "" %value) @> }
 
 let EmptyNode : Parsed<Node> =
     { Holes = Map.empty; Expr = <@ Node.Empty @> }

@@ -8,6 +8,8 @@ open Microsoft.AspNetCore.Blazor.Components
 /// HTML attribute or Blazor component parameter.
 type Attr = string * obj
 
+type BlazorEventHandler<'T> = delegate of 'T -> unit
+
 /// HTML fragment.
 type Node =
     /// An empty HTML fragment.
@@ -20,7 +22,6 @@ type Node =
     | Text of text: string
     /// A raw HTML fragment.
     | RawHtml of html: string
-#if !IS_DESIGNTIME
     /// A single Blazor component.
     | Component of Type * info: ComponentInfo * attrs: list<Attr> * children: list<Node>
 
@@ -36,13 +37,13 @@ type Node =
         let length = 1 + List.length attrs + List.sumBy nodeLength children
         Node.Component(ty, { length = length }, attrs, children)
 
+// The type provider includes this file.
+// TPs fail if the TPDTC references an external type in a signature,
+// so the following needs to be excluded from the TP.
+// See https://github.com/fsprojects/FSharp.TypeProviders.SDK/issues/274
+#if !IS_DESIGNTIME
     static member BlazorComponent<'T when 'T :> IComponent>(attrs, children) =
         Node.BlazorComponent(typeof<'T>, attrs, children)
 #endif
 
 and [<Struct>] ComponentInfo = { length: int }
-
-type TemplateNode() =
-    /// For internal use only.
-    member val Holes : obj[] = null with get, set
-    

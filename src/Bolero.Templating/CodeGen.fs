@@ -1,9 +1,11 @@
 module Bolero.Templating.CodeGen
 
-open System.Reflection
+open System
 open FSharp.Quotations
+open Microsoft.AspNetCore.Blazor
 open ProviderImplementation.ProvidedTypes
 open Bolero
+open Bolero.TemplatingInternals
 
 let getThis (args: list<Expr>) : Expr<TemplateNode> =
     Expr.Coerce(args.[0], typeof<TemplateNode>)
@@ -16,7 +18,7 @@ let MakeCtor (holes: Parsing.Holes) (containerTy: ProvidedTypeDefinition) =
                 match hole.Type with
                 | Parsing.HoleType.String -> <@ box "" @>
                 | Parsing.HoleType.Html -> <@ box Node.Empty @>
-                | Parsing.HoleType.Event -> <@ box (ignore : unit -> unit) @>
+                | Parsing.HoleType.Event -> <@ box (NoOp<UIEventArgs>()) @>
         ]
         <@@ (%getThis args).Holes <- %holes @@>)
     |> containerTy.AddMember
@@ -34,7 +36,7 @@ let HoleMethodBodies (holeType: Parsing.HoleType) =
         ]
     | Parsing.HoleType.Event ->
         [
-            typeof<unit -> unit>, fun e -> <@@ box (%%e: unit -> unit) @@>
+            typeof<Action<UIEventArgs>>, fun e -> <@@ box (%%e: Action<UIEventArgs>) @@>
         ]
 
 let MakeHoleMethods (holeName: string) (holeType: Parsing.HoleType) (index: int) (containerTy: ProvidedTypeDefinition) =

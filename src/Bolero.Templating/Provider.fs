@@ -2,7 +2,7 @@ namespace Bolero.Templating
 
 open FSharp.Core.CompilerServices
 open ProviderImplementation.ProvidedTypes
-open Bolero
+open Bolero.TemplatingInternals
 
 [<TypeProvider>]
 type Template (cfg: TypeProviderConfig) as this =
