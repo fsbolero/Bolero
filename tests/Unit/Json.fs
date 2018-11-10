@@ -7,6 +7,7 @@ open FsCheck.NUnit
 open FsCheck
 module J = Bolero.Json
 
+[<Category "JSON">]
 module Json =
 
     let stringLow x = (string x).ToLowerInvariant()
