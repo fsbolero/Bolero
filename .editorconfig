@@ -1,0 +1,18 @@
+[*]
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+charset = utf-8
+trim_trailing_whitespace = true
+
+[*.sln]
+end_of_line = crlf
+
+[*.{fs,fsi,fsx,cs,dependencies,references,template,md}]
+indent_size = 4
+
+[*.{fsproj,csproj,config,targets,props,html,ps1,json,yml,cmd}]
+indent_size = 2
+
+[.vscode/*.json]
+indent_size = 4
