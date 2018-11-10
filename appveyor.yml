@@ -15,7 +15,7 @@ build_script:
 - cmd: .\build.cmd -t pack -c Release -v %APPVEYOR_BUILD_VERSION% /p:GhPages=true
 
 test_script:
-- ps: dotnet test tests\Unit
+- ps: dotnet test tests\Unit -c Release
 
 artifacts:
 - path: 'build\*.nupkg'
