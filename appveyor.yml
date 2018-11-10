@@ -12,7 +12,7 @@ init:
 - git config --global core.autocrlf input
 
 build_script:
-- cmd: .\build.cmd -t pack -c Release /p:GhPages=true
+- cmd: .\build.cmd -t pack -c Release -v %APPVEYOR_BUILD_VERSION% /p:GhPages=true
 
 test:
   assemblies:
@@ -20,7 +20,7 @@ test:
     - tests\Unit\bin\Release\netcoreapp2.1\Unit.dll
 
 artifacts:
-- path: build\*.nupkg
+- path: 'build\*.nupkg'
   name: nuget
 
 on_success:
