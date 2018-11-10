@@ -1,22 +1,30 @@
 version: 0.1.{build}
 image: Visual Studio 2017
+
 build:
   verbosity: minimal
 
 branches:
   only:
-    - master
+  - master
 
 init:
-  - git config --global core.autocrlf input
+- git config --global core.autocrlf input
 
 build_script:
-  - cmd: .\build.cmd -c Release /p:GhPages=true
+- cmd: .\build.cmd -t pack -c Release /p:GhPages=true
 
-test: off
+test:
+  assemblies:
+    only:
+    - tests\Unit\bin\Release\netcoreapp2.1\Unit.dll
+
+artifacts:
+- path: build\*.nupkg
+  name: nuget
 
 on_success:
-  - ps: .\tools\gh-pages.ps1 -env appveyor
+- ps: .\tools\gh-pages.ps1 -env appveyor
 
 environment:
   GH_TOKEN:
