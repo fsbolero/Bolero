@@ -1,3 +1,4 @@
+version 5.186.3
 source https://api.nuget.org/v3/index.json
 storage: none
 framework: netstandard2.0, netcoreapp2.1
@@ -13,7 +14,7 @@ nuget Microsoft.JSInterop ~> 0.6.0
 nuget Microsoft.NET.Test.Sdk 15.8.0
 nuget Mono.WebAssembly.Interop ~> 0.6.0
 clitool dotnet-fake ~> 5.0
-nuget Microsoft.AspNetCore.App ~> 2.1.0
+nuget Microsoft.AspNetCore ~> 2.1.0
 nuget Elmish >= 2.0
 nuget Microsoft.Build.Utilities.Core ~> 15.0
 nuget Mono.Cecil ~> 0.10.0
