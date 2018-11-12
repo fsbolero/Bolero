@@ -6,7 +6,7 @@ indent_size = 2
 charset = utf-8
 trim_trailing_whitespace = true
 
-[*.{sln,fsproj,csproj,dependencies,lock}]
+[*.{sln,fsproj,csproj,dependencies,lock,fs,fsi,fsx}]
 end_of_line = crlf
 
 [*.{fs,fsi,fsx,cs,dependencies,references,template,md}]
