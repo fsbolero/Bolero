@@ -11,26 +11,89 @@ open Bolero
 type HoleType =
     | String
     | Html
-    | Event
+    | Event of argType: Type
 
 module HoleType =
+    open ProviderImplementation.ProvidedTypes
 
     let Merge name t1 t2 =
         if t1 = t2 then t1 else
         match t1, t2 with
         | String, Html | Html, String -> String
+        | Event _, Event _ -> Event typeof<UIEventArgs>
         | _ -> failwithf "Hole name used multiple times with incompatible types: %s" name
+
+    let EventHandlerOf argType =
+        ProvidedTypeBuilder.MakeGenericType(typedefof<Action<_>>, [argType])
 
     let TypeOf = function
         | String -> typeof<string>
         | Html -> typeof<Node>
-        | Event -> typeof<Action<UIEventArgs>>
+        | Event argType -> EventHandlerOf argType
 
     let Wrap (innerType: HoleType) (outerType: HoleType) (expr: Expr) =
         if innerType = outerType then expr else
         match innerType, outerType with
         | Html, String -> <@@ Node.Text %%expr @@>
+        | Event argTy, Event _ -> Expr.Coerce(expr, EventHandlerOf argTy)
         | a, b -> failwithf "Hole name used multiple times with incompatible types (%A, %A)" a b
+
+    let EventArg name =
+        match name with
+// BEGIN EVENTS
+        | "onfocus" -> typeof<UIFocusEventArgs>
+        | "onblur" -> typeof<UIFocusEventArgs>
+        | "onfocusin" -> typeof<UIFocusEventArgs>
+        | "onfocusout" -> typeof<UIFocusEventArgs>
+        | "onmouseover" -> typeof<UIMouseEventArgs>
+        | "onmouseout" -> typeof<UIMouseEventArgs>
+        | "onmousemove" -> typeof<UIMouseEventArgs>
+        | "onmousedown" -> typeof<UIMouseEventArgs>
+        | "onmouseup" -> typeof<UIMouseEventArgs>
+        | "onclick" -> typeof<UIMouseEventArgs>
+        | "ondblclick" -> typeof<UIMouseEventArgs>
+        | "onwheel" -> typeof<UIMouseEventArgs>
+        | "onmousewheel" -> typeof<UIMouseEventArgs>
+        | "oncontextmenu" -> typeof<UIMouseEventArgs>
+        | "ondrag" -> typeof<UIDragEventArgs>
+        | "ondragend" -> typeof<UIDragEventArgs>
+        | "ondragenter" -> typeof<UIDragEventArgs>
+        | "ondragleave" -> typeof<UIDragEventArgs>
+        | "ondragover" -> typeof<UIDragEventArgs>
+        | "ondragstart" -> typeof<UIDragEventArgs>
+        | "ondrop" -> typeof<UIDragEventArgs>
+        | "onkeydown" -> typeof<UIKeyboardEventArgs>
+        | "onkeyup" -> typeof<UIKeyboardEventArgs>
+        | "onkeypress" -> typeof<UIKeyboardEventArgs>
+        | "onchange" -> typeof<UIChangeEventArgs>
+        | "oncopy" -> typeof<UIClipboardEventArgs>
+        | "oncut" -> typeof<UIClipboardEventArgs>
+        | "onpaste" -> typeof<UIClipboardEventArgs>
+        | "ontouchcancel" -> typeof<UITouchEventArgs>
+        | "ontouchend" -> typeof<UITouchEventArgs>
+        | "ontouchmove" -> typeof<UITouchEventArgs>
+        | "ontouchstart" -> typeof<UITouchEventArgs>
+        | "ontouchenter" -> typeof<UITouchEventArgs>
+        | "ontouchleave" -> typeof<UITouchEventArgs>
+        | "onpointercapture" -> typeof<UIPointerEventArgs>
+        | "onlostpointercapture" -> typeof<UIPointerEventArgs>
+        | "onpointercancel" -> typeof<UIPointerEventArgs>
+        | "onpointerdown" -> typeof<UIPointerEventArgs>
+        | "onpointerenter" -> typeof<UIPointerEventArgs>
+        | "onpointerleave" -> typeof<UIPointerEventArgs>
+        | "onpointermove" -> typeof<UIPointerEventArgs>
+        | "onpointerout" -> typeof<UIPointerEventArgs>
+        | "onpointerover" -> typeof<UIPointerEventArgs>
+        | "onpointerup" -> typeof<UIPointerEventArgs>
+        | "onloadstart" -> typeof<UIProgressEventArgs>
+        | "ontimeout" -> typeof<UIProgressEventArgs>
+        | "onabort" -> typeof<UIProgressEventArgs>
+        | "onload" -> typeof<UIProgressEventArgs>
+        | "onloadend" -> typeof<UIProgressEventArgs>
+        | "onprogress" -> typeof<UIProgressEventArgs>
+        | "onerror" -> typeof<UIProgressEventArgs>
+// END EVENTS
+        | _ -> typeof<UIEventArgs>
 
 type Hole =
     {
@@ -38,7 +101,31 @@ type Hole =
         Type: HoleType
     }
 
+module Hole =
+
+    let Merge (key: string) (hole1: Hole) (hole2: Hole) =
+        let ty = HoleType.Merge key hole1.Type hole2.Type
+        let var =
+            if ty = hole1.Type then hole1.Var
+            elif ty = hole2.Type then hole2.Var
+            else Var(key, HoleType.TypeOf ty)
+        { Var = var; Type = ty }
+
 type Holes = Map<string, Hole>
+
+module Holes =
+
+    let Merge (holes1: Holes) (holes2: Holes) =
+        (holes1, holes2) ||> Map.fold (fun map key hole ->
+            let hole =
+                match Map.tryFind key map with
+                | None -> hole
+                | Some hole2 -> Hole.Merge key hole hole2
+            Map.add key hole map
+        )
+
+    let MergeMany (holes: seq<Holes>) =
+        Seq.fold Merge Map.empty holes
 
 type Parsed<'T> =
     {
@@ -48,23 +135,8 @@ type Parsed<'T> =
 
 module Parsed =
 
-    let MergeHoles (holes1: Holes) (holes2: Holes) =
-        (holes1, holes2) ||> Map.fold (fun map key hole ->
-            let hole =
-                match Map.tryFind key map with
-                | None -> hole
-                | Some hole2 ->
-                    let ty = HoleType.Merge key hole.Type hole2.Type
-                    let var = if ty = hole.Type then hole.Var else hole2.Var
-                    { Var = var; Type = ty }
-            Map.add key hole map
-        )
-
-    let MergeManyHoles (holes: seq<Holes>) =
-        Seq.fold MergeHoles Map.empty holes
-    
     let Concat (p: seq<Parsed<'T>>) : Parsed<'T[]> =
-        let finalHoles = MergeManyHoles [ for p in p -> p.Holes ]
+        let finalHoles = Holes.MergeMany [ for p in p -> p.Holes ]
         let exprs = p |> Seq.map (fun p ->
             (p.Expr, p.Holes) ||> Map.fold (fun e k v ->
                 // Map var names for holes used multiple times
@@ -88,7 +160,7 @@ module Parsed =
 
     let Map2 (f: Expr<'T> -> Expr<'U> -> Expr<'V>) (p1: Parsed<'T>) (p2: Parsed<'U>) : Parsed<'V> =
         {
-            Holes = MergeHoles p1.Holes p2.Holes
+            Holes = Holes.Merge p1.Holes p2.Holes
             Expr = f p1.Expr p2.Expr
         }
 
@@ -131,10 +203,11 @@ let ParseAttribute (attr: HtmlAttribute) : Parsed<Attr> =
     | holes, [|Hole _|] when name.StartsWith "on" ->
         // Event handler
         let holeName = (Seq.head holes).Key
-        let hole = MakeHole holeName HoleType.Event
+        let argType = HoleType.EventArg name
+        let hole = MakeHole holeName (HoleType.Event argType)
         let holes = Map [holeName, hole]
-        let value : Expr<Action<UIEventArgs>> = Expr.Var hole.Var |> Expr.Cast
-        { Holes = holes; Expr = <@ Attr(name, %value) @> }
+        let value = Expr.Coerce(Expr.Var hole.Var, typeof<obj>)
+        { Holes = holes; Expr = <@ Attr(name, %%value) @> }
     | holes, parts ->
         // String attribute
         let value = Expr.TypedArray<string> [

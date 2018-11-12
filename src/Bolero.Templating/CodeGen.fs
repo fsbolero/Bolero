@@ -18,7 +18,7 @@ let MakeCtor (holes: Parsing.Holes) (containerTy: ProvidedTypeDefinition) =
                 match hole.Type with
                 | Parsing.HoleType.String -> <@ box "" @>
                 | Parsing.HoleType.Html -> <@ box Node.Empty @>
-                | Parsing.HoleType.Event -> <@ box (NoOp<UIEventArgs>()) @>
+                | Parsing.HoleType.Event _ -> <@ box (NoOp<UIEventArgs>()) @>
         ]
         <@@ (%getThis args).Holes <- %holes @@>)
     |> containerTy.AddMember
@@ -34,9 +34,9 @@ let HoleMethodBodies (holeType: Parsing.HoleType) =
             typeof<string>, fun e -> <@@ box (Node.Text (%%e: string)) @@>
             typeof<Node>, fun e -> <@@ box (%%e: Node) @@>
         ]
-    | Parsing.HoleType.Event ->
+    | Parsing.HoleType.Event argTy ->
         [
-            typeof<Action<UIEventArgs>>, fun e -> <@@ box (%%e: Action<UIEventArgs>) @@>
+            Parsing.HoleType.EventHandlerOf argTy, fun e -> Expr.Coerce(e, typeof<obj>)
         ]
 
 let MakeHoleMethods (holeName: string) (holeType: Parsing.HoleType) (index: int) (containerTy: ProvidedTypeDefinition) =

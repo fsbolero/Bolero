@@ -41,25 +41,30 @@ type Attrs = FSharp.Data.CsvProvider<attrsFile>
 let [<Literal>] eventsFile = __SOURCE_DIRECTORY__ + "/src/Bolero/events.csv"
 type Events = FSharp.Data.CsvProvider<eventsFile>
 
+let escapeDashes s =
+    Regex("-(.)").Replace(s, fun (m: Match) ->
+        m.Groups.[1].Value.ToUpperInvariant())
+
+let replace rows marker writeItem input =
+    Regex(sprintf """(?<=// BEGIN %s\r?\n)(?:\w|\W)*(?=// END %s)""" marker marker,
+        RegexOptions.Multiline)
+        .Replace(input, fun _ ->
+            let s = new StringBuilder()
+            for tag in rows do
+                writeItem s tag |> ignore
+            s.ToString()
+        )
+
+let runTags filename apply =
+    let input = File.ReadAllText(filename)
+    let output = apply input
+    if input <> output then
+        File.WriteAllText(filename, output)
+
 // Generate HTML tags and attributes from CSV
 Target.create "tags" (fun _ ->
-    let file = "src/Bolero/Html.fs"
-    let input = File.ReadAllText(file)
-    let escapeDashes s =
-        Regex("-(.)").Replace(s, fun (m: Match) ->
-            m.Groups.[1].Value.ToUpperInvariant())
-    let replace rows marker writeItem input =
-        Regex(sprintf """(?<=// BEGIN %s\r\n)(?:\w|\W)*(?=// END %s)""" marker marker,
-            RegexOptions.Multiline)
-            .Replace(input, fun _ ->
-                let s = new StringBuilder()
-                for tag in rows do
-                    writeItem s tag |> ignore
-                s.ToString()
-            )
-    let output =
-        input
-        |> replace (Tags.GetSample().Rows) "TAGS" (fun s tag ->
+    runTags "src/Bolero/Html.fs" (
+        replace (Tags.GetSample().Rows) "TAGS" (fun s tag ->
             let esc = escapeDashes tag.Name
             let ident = if tag.NeedsEscape then "``" + esc + "``" else esc
             let childrenArg = if tag.CanHaveChildren then " (children: list<Node>)" else ""
@@ -69,22 +74,29 @@ Target.create "tags" (fun _ ->
              .AppendLine(sprintf """    elt "%s" attrs %s""" tag.Name childrenVal)
              .AppendLine()
         )
-        |> replace (Attrs.GetSample().Rows) "ATTRS" (fun s attr ->
+        >> replace (Attrs.GetSample().Rows) "ATTRS" (fun s attr ->
             let esc = escapeDashes attr.Name
             let ident = if attr.NeedsEscape then "``" + esc + "``" else esc
             s.AppendLine(sprintf """    /// Create an HTML `%s` attribute.""" attr.Name)
              .AppendLine(sprintf """    let %s (v: obj) : Attr = "%s" => v""" ident attr.Name)
              .AppendLine()
         )
-        |> replace (Events.GetSample().Rows) "EVENTS" (fun s event ->
+        >> replace (Events.GetSample().Rows) "EVENTS" (fun s event ->
             let esc = escapeDashes event.Name
             s.AppendLine(sprintf """    /// Create a handler for HTML event `%s`.""" event.Name)
              .AppendLine(sprintf """    let %s (callback: UI%sEventArgs -> unit) : Attr =""" esc event.Type)
              .AppendLine(sprintf """        "on%s" => BindMethods.GetEventHandlerValue callback""" esc)
              .AppendLine()
         )
-    if input <> output then
-        File.WriteAllText(file, output)
+    )
+    runTags "src/Bolero.Templating/Parsing.fs" (
+        replace (Events.GetSample().Rows) "EVENTS" (fun s event ->
+            if event.Type <> "" then
+                s.AppendLine(sprintf """        | "on%s" -> typeof<UI%sEventArgs>""" event.Name event.Type)
+            else
+                s
+        )
+    )
 )
 
 Target.create "build" ignore

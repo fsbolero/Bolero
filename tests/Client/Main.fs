@@ -77,9 +77,12 @@ let update message model =
     | ToggleRevOrder -> { model with revOrder = not model.revOrder }, []
     | SetPage p -> { model with page = p }, []
 
+// ondblclick's handler uses UIMouseEventArgs properties to check that we do generate specific UI*EventArgs.
+// ondblclick isn't handled in the "super" case to check that we correctly generate no-op when an event hole is unfilled.
+// onclick and onkeypress point to the same event to check that different UI*EventArgs are merged as UIEventArgs. -->
 type SecretPw = Template<"""<div>
                                 You typed the ${Kind} password!
-                                <button onclick="${Clear}">Clear</button>
+                                <button onclick="${Clear}" onkeypress="${Clear}" ondblclick="${DblClick}">Clear</button>
                             </div>""">
 
 let viewForm model dispatch =
@@ -91,7 +94,11 @@ let viewForm model dispatch =
         | Some s ->
             concat [
                 if s.Contains "secret" then
-                    yield SecretPw().Kind(b [] [text "secret"]).Clear(fun _ -> dispatch (SetInput "")).Elt()
+                    yield SecretPw()
+                            .Kind(b [] [text "secret"])
+                            .Clear(fun _ -> dispatch (SetInput ""))
+                            .DblClick(fun e -> dispatch (SetInput (sprintf "(%i, %i)" e.ClientX e.ClientY)))
+                            .Elt()
 
                 if s.Contains "super" then
                     yield SecretPw().Kind("super secret").Clear(fun _ -> dispatch (SetInput "")).Elt()

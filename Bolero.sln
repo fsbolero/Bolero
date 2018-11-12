@@ -10,7 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{E6F0FD
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8BE98B06-91C5-4948-B5AA-F80C67849031}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Bolero", "src\Bolero\Bolero.fsproj", "{97CF7319-42C6-4FCB-BFC9-D872D0E58309}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Bolero", "src\Bolero\Bolero.fsproj", "{97CF7319-42C6-4FCB-BFC9-D872D0E58309}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7EB0C3D3-0BD4-4D72-8ACF-A30B71F7C8E8}"
 EndProject
@@ -18,17 +18,22 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Client", "tests\Client\Clie
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Server", "tests\Server\Server.fsproj", "{218DBE0B-66C5-4C90-9892-113F4B233E79}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bolero.Build", "src\Bolero.Build\Bolero.Build.csproj", "{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bolero.Build", "src\Bolero.Build\Bolero.Build.csproj", "{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Remoting.Server", "tests\Remoting.Server\Remoting.Server.fsproj", "{E38CA762-40D2-4ED5-A989-F67D87010503}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Remoting.Client", "tests\Remoting.Client\Remoting.Client.fsproj", "{2FE23B2C-3310-4783-8CCE-A8B44099DEFE}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Unit", "tests\Unit\Unit.fsproj", "{D3E139A8-A6FA-49A3-B982-BC57D1BB0B2B}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Unit", "tests\Unit\Unit.fsproj", "{D3E139A8-A6FA-49A3-B982-BC57D1BB0B2B}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Bolero.Server", "src\Bolero.Server\Bolero.Server.fsproj", "{328CE686-3CB0-4AC7-9779-866ABE310DF6}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Bolero.Server", "src\Bolero.Server\Bolero.Server.fsproj", "{328CE686-3CB0-4AC7-9779-866ABE310DF6}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Bolero.Templating", "src\Bolero.Templating\Bolero.Templating.fsproj", "{35F2204C-123D-4399-B5F1-5DEAF1F30C24}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Bolero.Templating", "src\Bolero.Templating\Bolero.Templating.fsproj", "{35F2204C-123D-4399-B5F1-5DEAF1F30C24}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B2AD96BA-4DC4-4C14-BB2A-BCBADD0E7527}"
+	ProjectSection(SolutionItems) = preProject
+		build.fsx = build.fsx
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,9 +43,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{97CF7319-42C6-4FCB-BFC9-D872D0E58309}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -152,6 +154,9 @@ Global
 		{35F2204C-123D-4399-B5F1-5DEAF1F30C24}.Release|x86.ActiveCfg = Release|Any CPU
 		{35F2204C-123D-4399-B5F1-5DEAF1F30C24}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{97CF7319-42C6-4FCB-BFC9-D872D0E58309} = {8BE98B06-91C5-4948-B5AA-F80C67849031}
 		{F873CC90-1EC6-467C-A396-808D593B05E3} = {7EB0C3D3-0BD4-4D72-8ACF-A30B71F7C8E8}
@@ -162,5 +167,8 @@ Global
 		{D3E139A8-A6FA-49A3-B982-BC57D1BB0B2B} = {7EB0C3D3-0BD4-4D72-8ACF-A30B71F7C8E8}
 		{328CE686-3CB0-4AC7-9779-866ABE310DF6} = {8BE98B06-91C5-4948-B5AA-F80C67849031}
 		{35F2204C-123D-4399-B5F1-5DEAF1F30C24} = {8BE98B06-91C5-4948-B5AA-F80C67849031}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5493A436-6524-48E0-874D-CD70C1615AAF}
 	EndGlobalSection
 EndGlobal
