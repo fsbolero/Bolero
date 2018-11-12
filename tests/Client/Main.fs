@@ -83,6 +83,7 @@ let update message model =
 type SecretPw = Template<"""<div>
                                 You typed the ${Kind} password!
                                 <button onclick="${Clear}" onkeypress="${Clear}" ondblclick="${DblClick}">Clear</button>
+                                <input value="(default value)" bind="${Input}" /> <- You typed: ${Input}
                             </div>""">
 
 let viewForm model dispatch =
@@ -98,6 +99,7 @@ let viewForm model dispatch =
                             .Kind(b [] [text "secret"])
                             .Clear(fun _ -> dispatch (SetInput ""))
                             .DblClick(fun e -> dispatch (SetInput (sprintf "(%i, %i)" e.ClientX e.ClientY)))
+                            .Input(model.input, fun s -> dispatch (SetInput s))
                             .Elt()
 
                 if s.Contains "super" then
@@ -173,4 +175,5 @@ type MyApp() =
     override this.Program =
         Program.mkProgram (fun _ -> initModel(), []) update view
         |> Program.withConsoleTrace
+        |> Program.withErrorHandler (fun (msg, exn) -> printfn "%s: %A" msg exn)
         |> Program.withRouter router

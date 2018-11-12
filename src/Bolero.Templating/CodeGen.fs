@@ -18,32 +18,43 @@ let MakeCtor (holes: Parsing.Holes) (containerTy: ProvidedTypeDefinition) =
                 match hole.Type with
                 | Parsing.HoleType.String -> <@ box "" @>
                 | Parsing.HoleType.Html -> <@ box Node.Empty @>
-                | Parsing.HoleType.Event _ -> <@ box (NoOp<UIEventArgs>()) @>
+                | Parsing.HoleType.Event _ -> <@ box (Events.NoOp<UIEventArgs>()) @>
+                | Parsing.HoleType.DataBinding -> <@ box ((null: string), Events.NoOp<string>()) @>
         ]
         <@@ (%getThis args).Holes <- %holes @@>)
     |> containerTy.AddMember
 
-let HoleMethodBodies (holeType: Parsing.HoleType) =
+let HoleMethodBodies (holeType: Parsing.HoleType) : (ProvidedParameter list * (Expr list -> Expr)) list =
+    let (=>) name ty = ProvidedParameter(name, ty)
     match holeType with
     | Parsing.HoleType.String ->
         [
-            typeof<string>, fun e -> <@@ box (%%e: string) @@>
+            ["value" => typeof<string>], fun args ->
+                <@@ box (%%args.[1]: string) @@>
         ]
     | Parsing.HoleType.Html ->
         [
-            typeof<string>, fun e -> <@@ box (Node.Text (%%e: string)) @@>
-            typeof<Node>, fun e -> <@@ box (%%e: Node) @@>
+            ["value" => typeof<string>], fun args ->
+                <@@ box (Node.Text (%%args.[1]: string)) @@>
+            ["value" => typeof<Node>], fun args ->
+                <@@ box (%%args.[1]: Node) @@>
         ]
     | Parsing.HoleType.Event argTy ->
         [
-            Parsing.HoleType.EventHandlerOf argTy, fun e -> Expr.Coerce(e, typeof<obj>)
+            ["value" => Parsing.HoleType.EventHandlerOf argTy], fun args ->
+                Expr.Coerce(args.[1], typeof<obj>)
+        ]
+    | Parsing.HoleType.DataBinding ->
+        [
+            ["value" => typeof<string>; "set" => typeof<Action<string>>], fun args ->
+                <@@ box ((%%args.[1]: string), (%%args.[2]: Action<string>)) @@>
         ]
 
 let MakeHoleMethods (holeName: string) (holeType: Parsing.HoleType) (index: int) (containerTy: ProvidedTypeDefinition) =
-    for argTy, value in HoleMethodBodies holeType do
-        ProvidedMethod(holeName, [ProvidedParameter("value", argTy)], containerTy, fun args ->
+    for args, value in HoleMethodBodies holeType do
+        ProvidedMethod(holeName, args, containerTy, fun args ->
             let this = getThis args
-            <@@ (%this).Holes.[index] <- %%(value args.[1])
+            <@@ (%this).Holes.[index] <- %%(value args)
                 %this @@>)
         |> containerTy.AddMember
 
