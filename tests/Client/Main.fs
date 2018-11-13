@@ -81,7 +81,8 @@ let update message model =
 // ondblclick isn't handled in the "super" case to check that we correctly generate no-op when an event hole is unfilled.
 // onclick and onkeypress point to the same event to check that different UI*EventArgs are merged as UIEventArgs. -->
 type SecretPw = Template<"""<div>
-                                You typed the ${Kind} password!
+                                You typed the ${Kind} <i>pass<span>word</span></i>&excl;
+                                <!-- Testing a comment -->
                                 <button onclick="${Clear}" onkeypress="${Clear}" ondblclick="${DblClick}">Clear</button>
                                 <input value="(default value)" bind="${Input}" /> <- You typed: ${Input}
                             </div>""">

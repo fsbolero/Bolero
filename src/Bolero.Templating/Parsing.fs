@@ -1,6 +1,7 @@
 module Bolero.Templating.Parsing
 
 open System
+open System.Text
 open System.Text.RegularExpressions
 open FSharp.Quotations
 open Microsoft.AspNetCore.Blazor
@@ -258,10 +259,35 @@ let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : list<Parsed<Att
     | holes, parts ->
         MakeStringAttribute name holes parts
 
-let EmptyNode : Parsed<Node> =
-    { Holes = Map.empty; Expr = <@ Node.Empty @> }
+type ParsedNode =
+    | PlainHtml of string
+    | WithHoles of Parsed<Node>
 
-let rec ParseNode (node: HtmlNode) : Parsed<Node> =
+module ParsedNode =
+
+    /// Convert to seq<Parsed<Node>> while merging consecutive plain HTML nodes
+    let ManyToParsed (s: seq<ParsedNode>) : seq<Parsed<Node>> =
+        let currentHtml = StringBuilder()
+        let res = ResizeArray()
+        let pushHtml() =
+            let s = currentHtml.ToString()
+            if s <> "" then
+                res.Add({ Holes = Map.empty; Expr = <@ Node.RawHtml s @> })
+            currentHtml.Clear() |> ignore
+        for n in s do
+            match n with
+            | PlainHtml s -> currentHtml.Append(s) |> ignore
+            | WithHoles h ->
+                pushHtml()
+                res.Add(h)
+        pushHtml()
+        res :> _
+
+    let HasHoles = function
+        | PlainHtml _ -> false
+        | WithHoles h -> not (Map.isEmpty h.Holes)
+
+let rec ParseNode (node: HtmlNode) : list<ParsedNode> =
     match node.NodeType with
     | HtmlNodeType.Element ->
         let name = node.Name
@@ -271,32 +297,45 @@ let rec ParseNode (node: HtmlNode) : Parsed<Node> =
             |> Parsed.Concat
         let children =
             node.ChildNodes
-            |> Seq.map ParseNode
-            |> Parsed.Concat
-        (attrs, children)
-        ||> Parsed.Map2 (fun attrs children ->
-            <@ Node.Elt(name, List.ofArray %attrs, List.ofArray %children) @>
-        ) 
+            |> Seq.collect ParseNode
+        if Map.isEmpty attrs.Holes && not (Seq.exists ParsedNode.HasHoles children) then
+            let rec removeComments (n: HtmlNode) =
+                if isNull n then () else
+                let nxt = n.NextSibling
+                match n.NodeType with
+                | HtmlNodeType.Text | HtmlNodeType.Element -> ()
+                | _ -> n.Remove()
+                removeComments nxt
+            [PlainHtml node.OuterHtml]
+        else
+            let children =
+                children
+                |> ParsedNode.ManyToParsed
+                |> Parsed.Concat
+            (attrs, children)
+            ||> Parsed.Map2 (fun attrs children ->
+                <@ Node.Elt(name, List.ofArray %attrs, List.ofArray %children) @>
+            )
+            |> WithHoles
+            |> List.singleton
     | HtmlNodeType.Text ->
-        let holes, parts = ParseText (node :?> HtmlTextNode).Text HoleType.Html
-        let text = [
+        // Using .InnerHtml and RawHtml to properly interpret HTML entities.
+        match ParseText (node :?> HtmlTextNode).InnerHtml HoleType.Html with
+        | _, [|Plain t|] -> [PlainHtml t]
+        | holes, parts ->
+        [
             for part in parts do
                 match part with
-                | Plain t -> yield <@ Node.Text t @>
-                | Hole h -> yield Expr.Var h.Var |> Expr.Cast
+                | Plain t -> yield PlainHtml t
+                | Hole h -> yield WithHoles { Holes = holes; Expr = Expr.Var h.Var |> Expr.Cast }
         ]
-        let expr =
-            match text with
-            | [] -> <@ Node.Empty @>
-            | [x] -> x
-            | xs -> <@ Node.Concat(List.ofArray %(Expr.TypedArray<Node> xs)) @>
-        { Holes = holes; Expr = expr }
     | _ ->
-        EmptyNode
+        []
 
 let ParseDoc (doc: HtmlDocument) =
     doc.DocumentNode.ChildNodes
-    |> Seq.map ParseNode
+    |> Seq.collect ParseNode
+    |> ParsedNode.ManyToParsed
     |> Parsed.Concat
     |> Parsed.Map (fun e -> <@ Node.Concat (List.ofArray %e) @>)
 
