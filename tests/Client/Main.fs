@@ -94,16 +94,19 @@ let viewForm model dispatch =
         (match model.submitted with
         | Some s ->
             concat [
-                if s.Contains "secret" then
-                    yield SecretPw()
+                cond (s.Contains "secret")
+                    (fun () ->
+                        SecretPw()
                             .Kind(b [] [text "secret"])
                             .Clear(fun _ -> dispatch (SetInput ""))
                             .DblClick(fun e -> dispatch (SetInput (sprintf "(%i, %i)" e.ClientX e.ClientY)))
                             .Input(model.input, fun s -> dispatch (SetInput s))
-                            .Elt()
+                            .Elt())
+                    (fun () -> empty)
 
-                if s.Contains "super" then
-                    yield SecretPw().Kind("super secret").Clear(fun _ -> dispatch (SetInput "")).Elt()
+                cond (s.Contains "super")
+                    (fun () -> SecretPw().Kind("super secret").Clear(fun _ -> dispatch (SetInput "")).Elt())
+                    (fun () -> empty)
             ]
         | None -> empty)
     ]

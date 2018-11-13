@@ -24,6 +24,8 @@ type Node =
     | RawHtml of html: string
     /// A single Blazor component.
     | Component of Type * info: ComponentInfo * attrs: list<Attr> * children: list<Node>
+    /// A conditional component.
+    | Cond of bool * Node
 
     static member BlazorComponent(ty, attrs, children) =
         let rec nodeLength = function
@@ -34,7 +36,12 @@ type Node =
             | Elt (_, attrs, children) ->
                 1 + List.length attrs + List.sumBy nodeLength children
             | Component (_, i, _, _) -> i.length
-        let length = 1 + List.length attrs + List.sumBy nodeLength children
+            | Cond _ -> 2
+        let childrenLength =
+            match children with
+            | [] -> 0
+            | l -> 1 + List.sumBy nodeLength l
+        let length = 1 + List.length attrs + childrenLength
         Node.Component(ty, { length = length }, attrs, children)
 
 // The type provider includes this file.

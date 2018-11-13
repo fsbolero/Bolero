@@ -20,6 +20,10 @@ let concat nodes = Concat nodes
 /// Create an HTML attribute.
 let (=>) name value = (name, box value)
 
+/// Create a conditional fragment.
+let cond cond ifTrue ifFalse =
+    Node.Cond(cond, if cond then ifTrue() else ifFalse())
+
 /// Create a fragment from a Blazor component.
 let comp<'T when 'T :> Components.IComponent> attrs children =
     Node.BlazorComponent<'T>(attrs, children)
