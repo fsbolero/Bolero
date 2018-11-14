@@ -23,26 +23,11 @@ type Node =
     /// A raw HTML fragment.
     | RawHtml of html: string
     /// A single Blazor component.
-    | Component of Type * info: ComponentInfo * attrs: list<Attr> * children: list<Node>
-    /// A conditional component.
+    | Component of Type * attrs: list<Attr> * children: list<Node>
+    /// A conditional "if" component.
     | Cond of bool * Node
-
-    static member BlazorComponent(ty, attrs, children) =
-        let rec nodeLength = function
-            | Empty -> 0
-            | Text _ -> 1
-            | RawHtml _ -> 1
-            | Concat nodes -> List.sumBy nodeLength nodes
-            | Elt (_, attrs, children) ->
-                1 + List.length attrs + List.sumBy nodeLength children
-            | Component (_, i, _, _) -> i.length
-            | Cond _ -> 2
-        let childrenLength =
-            match children with
-            | [] -> 0
-            | l -> 1 + List.sumBy nodeLength l
-        let length = 1 + List.length attrs + childrenLength
-        Node.Component(ty, { length = length }, attrs, children)
+    /// A conditional "match" component.
+    | Match of unionType: Type * value: obj * node: Node
 
 // The type provider includes this file.
 // TPs fail if the TPDTC references an external type in a signature,
@@ -50,7 +35,5 @@ type Node =
 // See https://github.com/fsprojects/FSharp.TypeProviders.SDK/issues/274
 #if !IS_DESIGNTIME
     static member BlazorComponent<'T when 'T :> IComponent>(attrs, children) =
-        Node.BlazorComponent(typeof<'T>, attrs, children)
+        Node.Component(typeof<'T>, attrs, children)
 #endif
-
-and [<Struct>] ComponentInfo = { length: int }

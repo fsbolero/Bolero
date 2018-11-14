@@ -1,7 +1,7 @@
 namespace Bolero
 
 open System
-open System.Net.Http
+open System.Collections.Generic
 open Microsoft.AspNetCore.Blazor
 open Microsoft.AspNetCore.Blazor.Components
 open Microsoft.AspNetCore.Blazor.Services
@@ -14,11 +14,12 @@ open Bolero.Render
 type Component() =
     inherit BlazorComponent()
 
+    let matchCache = Dictionary()
+
     override this.BuildRenderTree(builder) =
         base.BuildRenderTree(builder)
         this.Render()
-        |> renderNode builder 0
-        |> ignore
+        |> RenderNode builder matchCache
 
     /// The rendered contents of the component.
     abstract Render : unit -> Node

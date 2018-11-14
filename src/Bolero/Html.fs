@@ -1,5 +1,6 @@
 module rec Bolero.Html
 
+open FSharp.Reflection
 open Microsoft.AspNetCore.Blazor
 
 /// Create an HTML text node.
@@ -20,9 +21,13 @@ let concat nodes = Concat nodes
 /// Create an HTML attribute.
 let (=>) name value = (name, box value)
 
-/// Create a conditional fragment.
-let cond cond ifTrue ifFalse =
-    Node.Cond(cond, if cond then ifTrue() else ifFalse())
+/// Create a conditional fragment. `matching` must be either a boolean or an F# union.
+/// If it's a union, `mkNode` must only match on the case.
+let cond<'T> (matching: 'T) (mkNode: 'T -> Node) =
+    if typeof<'T> = typeof<bool> then
+        Node.Cond(unbox<bool> matching, mkNode matching)
+    else
+        Node.Match(typeof<'T>, matching, mkNode matching)
 
 /// Create a fragment from a Blazor component.
 let comp<'T when 'T :> Components.IComponent> attrs children =
