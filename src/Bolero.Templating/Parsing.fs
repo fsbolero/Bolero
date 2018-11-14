@@ -4,28 +4,48 @@ open System
 open System.Text
 open System.Text.RegularExpressions
 open FSharp.Quotations
+open FSharp.Reflection
 open Microsoft.AspNetCore.Blazor
 open Microsoft.AspNetCore.Blazor.Components
 open HtmlAgilityPack
 open Bolero
 open Bolero.TemplatingInternals
+open ProviderImplementation.ProvidedTypes
+
+type BindingType =
+    | String
+    | Number
+    | Bool
 
 type HoleType =
     | String
     | Html
     | Event of argType: Type
-    | DataBinding
+    | DataBinding of BindingType
+
+module Binding =
+
+    let ToString valType expr : Expr<string> =
+        if valType = typeof<string> then
+            Expr.Cast expr
+        elif valType = typeof<bool> then
+            <@ string (%%expr: bool) @>
+        elif valType = typeof<int> then
+            <@ string (%%expr: int) @>
+        elif valType = typeof<float> then
+            <@ string (%%expr: float) @>
+        else
+            failwithf "Unknown binding value type %s" valType.FullName
 
 module HoleType =
-    open ProviderImplementation.ProvidedTypes
 
     let Merge name t1 t2 =
         if t1 = t2 then t1 else
         match t1, t2 with
         | String, Html | Html, String -> String
         | Event _, Event _ -> Event typeof<UIEventArgs>
-        | DataBinding, String | String, DataBinding
-        | DataBinding, Html | Html, DataBinding -> DataBinding
+        | DataBinding valType, String | String, DataBinding valType
+        | DataBinding valType, Html | Html, DataBinding valType -> DataBinding valType
         | _ -> failwithf "Hole name used multiple times with incompatible types: %s" name
 
     let EventHandlerOf argType =
@@ -35,15 +55,15 @@ module HoleType =
         | String -> typeof<string>
         | Html -> typeof<Node>
         | Event argType -> EventHandlerOf argType
-        | DataBinding -> typeof<string * Action<string>>
+        | DataBinding _ -> typeof<string * Action<UIChangeEventArgs>>
 
     let Wrap (innerType: HoleType) (outerType: HoleType) (expr: Expr) =
         if innerType = outerType then None else
         match innerType, outerType with
         | Html, String -> Some <@@ Node.Text %%expr @@>
         | Event argTy, Event _ -> Some <| Expr.Coerce(expr, EventHandlerOf argTy)
-        | String, DataBinding -> Some <@@ fst (%%expr: string * Action<string>) @@>
-        | Html, DataBinding -> Some <@@ Node.Text (fst (%%expr: string * Action<string>)) @@>
+        | String, DataBinding _ -> Some <@@ fst (%%expr: string * Action<UIChangeEventArgs>) @@>
+        | Html, DataBinding _ -> Some <@@ Node.Text (fst (%%expr: string * Action<UIChangeEventArgs>)) @@>
         | a, b -> failwithf "Hole name used multiple times with incompatible types (%A, %A)" a b
 
     let EventArg name =
@@ -165,7 +185,7 @@ module Parsed =
         )
         {
             Holes = finalHoles
-            Expr = Expr.TypedArray<'T> exprs
+            Expr = TExpr.Array<'T> exprs
         }
 
     let Map (f: Expr<'T> -> Expr<'U>) (p: Parsed<'T>) : Parsed<'U> =
@@ -185,6 +205,20 @@ let HoleNameRE = Regex(@"\${(\w+)}", RegexOptions.Compiled)
 type TextPart =
     | Plain of string
     | Hole of Hole
+
+module TextPart =
+
+    let ToStringExpr = function
+        | Plain s -> <@ s @>
+        | Hole h -> Expr.Var h.Var |> Binding.ToString h.Var.Type
+
+    let ManyToStringExpr = function
+        | [||] -> <@ "" @>
+        | [|p|] -> ToStringExpr p
+        | [|p1;p2|] -> <@ %(ToStringExpr p1) + %(ToStringExpr p2) @>
+        | parts ->
+            let arr = TExpr.Array<string> (Seq.map ToStringExpr parts)
+            <@ String.concat "" %arr @>
 
 let MakeHole holeName holeType =
     let var = Var(holeName, HoleType.TypeOf holeType)
@@ -212,40 +246,37 @@ let ParseText (t: string) (holeType: HoleType) : Holes * TextPart[] =
     if lastHoleEnd < t.Length then
         parts.Add(Plain t.[lastHoleEnd..t.Length - 1])
     holes, parts.ToArray()
-
-let IsDataBinding (ownerNode: HtmlNode) (attrName: string) =
-    attrName = "bind" &&
-    List.contains ownerNode.Name [
-        "input"
-        "textarea"
-        "select"
-    ]
+    
+let GetDataBindingType (ownerNode: HtmlNode) (attrName: string) =
+    if attrName <> "bind" then None else
+    let nodeName = ownerNode.Name
+    if nodeName = "textarea" || nodeName = "select" then Some BindingType.String else
+    if nodeName = "input" then
+        match ownerNode.GetAttributeValue("type", "text") with
+        | "number" -> Some BindingType.Number
+        | "checkbox" -> Some BindingType.Bool
+        | _ -> Some BindingType.String
+    else None
 
 let MakeEventHandler (attrName: string) (holeName: string) : list<Parsed<Attr>> =
     let argType = HoleType.EventArg attrName
     let hole = MakeHole holeName (HoleType.Event argType)
     let holes = Map [holeName, hole]
-    let value = Expr.Coerce(Expr.Var hole.Var, typeof<obj>)
-    [{ Holes = holes; Expr = <@ Attr(attrName, %%value) @> }]
+    let value = TExpr.Coerce<obj>(Expr.Var hole.Var)
+    [{ Holes = holes; Expr = <@ Attr(attrName, %value) @> }]
 
-let MakeDataBinding holeName : list<Parsed<Attr>> =
-    let hole = MakeHole holeName (HoleType.DataBinding)
-    let expr1 : Expr<string * Action<string>> = Expr.Var hole.Var |> Expr.Cast
-    let expr2 : Expr<string * Action<string>> = Expr.Var hole.Var |> Expr.Cast
+let MakeDataBinding holeName valType : list<Parsed<Attr>> =
+    let hole = MakeHole holeName (HoleType.DataBinding valType)
+    let holeVar() : Expr<string * Action<UIChangeEventArgs>> = Expr.Var hole.Var |> Expr.Cast
     let holes = Map [holeName, hole]
     [
-        { Holes = holes; Expr = <@ Attr("onchange", Events.OnChange(snd %expr1)) @> }
-        { Holes = holes; Expr = <@ Attr("value", fst %expr2) @> }
+        { Holes = holes; Expr = <@ Attr("value", fst (%holeVar())) @> }
+        { Holes = holes; Expr = <@ Attr("onchange", snd (%holeVar())) @> }
     ]
 
 let MakeStringAttribute (attrName: string) holes parts : list<Parsed<Attr>> =
-    let value = Expr.TypedArray<string> [
-        for part in parts do
-            match part with
-            | Plain t -> yield <@ t @>
-            | Hole h -> yield Expr.Var h.Var |> Expr.Cast
-    ]
-    [{ Holes = holes; Expr = <@ Attr(attrName, String.concat "" %value) @> }]
+    let value = TextPart.ManyToStringExpr parts
+    [{ Holes = holes; Expr = <@ Attr(attrName, %value) @> }]
 
 let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : list<Parsed<Attr>> =
     let name = attr.Name
@@ -253,9 +284,13 @@ let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : list<Parsed<Att
     | holes, [|Hole _|] when name.StartsWith "on" ->
         let (KeyValue(holeName, _)) = Seq.head holes
         MakeEventHandler name holeName
-    | holes, [|Hole _|] when IsDataBinding ownerNode name ->
-        let (KeyValue(holeName, _)) = Seq.head holes
-        MakeDataBinding holeName
+    | holes, ([|Hole _|] as parts) ->
+        match GetDataBindingType ownerNode name with
+        | Some valType ->
+            let (KeyValue(holeName, _)) = Seq.head holes
+            MakeDataBinding holeName valType
+        | None ->
+            MakeStringAttribute name holes parts
     | holes, parts ->
         MakeStringAttribute name holes parts
 

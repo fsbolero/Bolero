@@ -85,6 +85,7 @@ type SecretPw = Template<"""<div>
                                 <!-- Testing a comment -->
                                 <button onclick="${Clear}" onkeypress="${Clear}" ondblclick="${DblClick}">Clear</button>
                                 <input value="(default value)" bind="${Input}" /> <- You typed: ${Input}
+                                <input type="number" bind="${Value}" />
                             </div>""">
 
 let viewForm model dispatch =
@@ -102,11 +103,16 @@ let viewForm model dispatch =
                             .Clear(fun _ -> dispatch (SetInput ""))
                             .DblClick(fun e -> dispatch (SetInput (sprintf "(%i, %i)" e.ClientX e.ClientY)))
                             .Input(model.input, fun s -> dispatch (SetInput s))
+                            .Value(model.addKey, fun k -> dispatch (SetAddKey k))
                             .Elt())
                     (fun () -> empty)
 
                 cond (s.Contains "super")
-                    (fun () -> SecretPw().Kind("super secret").Clear(fun _ -> dispatch (SetInput "")).Elt())
+                    (fun () ->
+                        SecretPw()
+                            .Kind("super secret")
+                            .Clear(fun _ -> dispatch (SetInput ""))
+                            .Elt())
                     (fun () -> empty)
             ]
         | None -> empty)
@@ -167,10 +173,18 @@ let view model dispatch =
             text " "
             navLink NavLinkMatch.Prefix [router.HRef Collection] [text "Collection"]
         ]
-        (match model.page with
-        | Form -> viewForm model dispatch
-        | Collection -> viewCollection model dispatch
-        | Item k -> ecomp<ViewItemPage,_,_> (k, model.items.[k]) dispatch)
+        cond (model.page = Form)
+            (fun () -> viewForm model dispatch)
+            (fun () ->
+                cond (model.page = Collection)
+                    (fun () -> viewCollection model dispatch)
+                    (fun () ->
+                        let (Item k) = model.page
+                        ecomp<ViewItemPage,_,_> (k, model.items.[k]) dispatch))
+        // (match model.page with
+        // | Form -> viewForm model dispatch
+        // | Collection -> viewCollection model dispatch
+        // | Item k -> ecomp<ViewItemPage,_,_> (k, model.items.[k]) dispatch)
     ]
 
 type MyApp() =

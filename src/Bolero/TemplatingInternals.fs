@@ -11,8 +11,31 @@ type Events =
     static member NoOp<'T>() =
         Action<'T>(ignore)
 
-    static member OnChange (f: Action<string>) =
-        Action<UIChangeEventArgs>(fun e -> f.Invoke(unbox e.Value))
+    static member OnChange(f: Action<string>) =
+        Action<UIChangeEventArgs>(fun e ->
+            f.Invoke(unbox<string> e.Value)
+        )
+
+    static member OnChangeInt(f: Action<int>) =
+        Events.OnChange(fun s ->
+            match Int32.TryParse(s) with
+            | true, x -> f.Invoke(x)
+            | false, _ -> ()
+        )
+
+    static member OnChangeFloat(f: Action<float>) =
+        Events.OnChange(fun s ->
+            match Double.TryParse(s) with
+            | true, x -> f.Invoke(x)
+            | false, _ -> ()
+        )
+
+    static member OnChangeBool(f: Action<bool>) =
+        Events.OnChange(fun s ->
+            match Boolean.TryParse(s) with
+            | true, x -> f.Invoke(x)
+            | false, _ -> ()
+        )
 
 type TemplateNode() =
     /// For internal use only.

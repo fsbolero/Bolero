@@ -6,23 +6,22 @@ open Microsoft.AspNetCore.Blazor
 open ProviderImplementation.ProvidedTypes
 open Bolero
 open Bolero.TemplatingInternals
+open System.Reflection
 
 let getThis (args: list<Expr>) : Expr<TemplateNode> =
-    Expr.Coerce(args.[0], typeof<TemplateNode>)
-    |> Expr.Cast
+    TExpr.Coerce<TemplateNode>(args.[0])
 
 let MakeCtor (holes: Parsing.Holes) (containerTy: ProvidedTypeDefinition) =
     ProvidedConstructor([], fun args ->
-        let holes = Expr.TypedArray<obj> [
+        let holes = TExpr.Array<obj> [
             for KeyValue(_, hole) in holes ->
                 match hole.Type with
                 | Parsing.HoleType.String -> <@ box "" @>
                 | Parsing.HoleType.Html -> <@ box Node.Empty @>
                 | Parsing.HoleType.Event _ -> <@ box (Events.NoOp<UIEventArgs>()) @>
-                | Parsing.HoleType.DataBinding -> <@ box ((null: string), Events.NoOp<string>()) @>
+                | Parsing.HoleType.DataBinding _ -> <@ box ("", Events.NoOp<UIChangeEventArgs>()) @>
         ]
         <@@ (%getThis args).Holes <- %holes @@>)
-    |> containerTy.AddMember
 
 let HoleMethodBodies (holeType: Parsing.HoleType) : (ProvidedParameter list * (Expr list -> Expr)) list =
     let (=>) name ty = ProvidedParameter(name, ty)
@@ -44,19 +43,32 @@ let HoleMethodBodies (holeType: Parsing.HoleType) : (ProvidedParameter list * (E
             ["value" => Parsing.HoleType.EventHandlerOf argTy], fun args ->
                 Expr.Coerce(args.[1], typeof<obj>)
         ]
-    | Parsing.HoleType.DataBinding ->
+    | Parsing.HoleType.DataBinding Parsing.BindingType.String ->
         [
             ["value" => typeof<string>; "set" => typeof<Action<string>>], fun args ->
-                <@@ box ((%%args.[1]: string), (%%args.[2]: Action<string>)) @@>
+                <@@ box ((%%args.[1]: string), Events.OnChange(%%args.[2])) @@>
+        ]
+    | Parsing.HoleType.DataBinding Parsing.BindingType.Number ->
+        [
+            ["value" => typeof<int>; "set" => Parsing.HoleType.EventHandlerOf typeof<int>], fun args ->
+                <@@ box (string (%%args.[1]: int), Events.OnChangeInt(%%args.[2])) @@>
+            ["value" => typeof<float>; "set" => typeof<Action<float>>], fun args ->
+                <@@ box (string (%%args.[1]: float), Events.OnChangeFloat(%%args.[2])) @@>
+        ]
+    | Parsing.HoleType.DataBinding Parsing.BindingType.Bool ->
+        [
+            ["value" => typeof<bool>; "set" => typeof<Action<bool>>], fun args ->
+                <@@ box (string (%%args.[1]: bool), Events.OnChangeBool(%%args.[2])) @@>
         ]
 
 let MakeHoleMethods (holeName: string) (holeType: Parsing.HoleType) (index: int) (containerTy: ProvidedTypeDefinition) =
-    for args, value in HoleMethodBodies holeType do
-        ProvidedMethod(holeName, args, containerTy, fun args ->
-            let this = getThis args
-            <@@ (%this).Holes.[index] <- %%(value args)
-                %this @@>)
-        |> containerTy.AddMember
+    [
+        for args, value in HoleMethodBodies holeType do
+            yield ProvidedMethod(holeName, args, containerTy, fun args ->
+                let this = getThis args
+                <@@ (%this).Holes.[index] <- %%(value args)
+                    %this @@>) :> MemberInfo
+    ]
 
 let MakeFinalMethod (content: Parsing.Parsed<Node>) (containerTy: ProvidedTypeDefinition) =
     ProvidedMethod("Elt", [], typeof<Node>, fun args ->
@@ -69,12 +81,13 @@ let MakeFinalMethod (content: Parsing.Parsed<Node>) (containerTy: ProvidedTypeDe
         )
         |> snd
     )
-    |> containerTy.AddMember
 
 let Populate (ty: ProvidedTypeDefinition) (pathOrHtml: string) =
     let content = Parsing.ParseFileOrContent pathOrHtml
-    MakeCtor content.Holes ty
-    content.Holes |> Seq.iteri (fun i (KeyValue(name, hole)) ->
-        MakeHoleMethods name hole.Type i ty
-    )
-    MakeFinalMethod content ty
+    [
+        yield MakeCtor content.Holes ty :> MemberInfo
+        yield! content.Holes |> Seq.mapi (fun i (KeyValue(name, hole)) ->
+            MakeHoleMethods name hole.Type i ty
+        ) |> Seq.concat
+        yield MakeFinalMethod content ty :> MemberInfo
+    ]
