@@ -91,7 +91,11 @@ type SecretPw = Template<"""<div>
 let viewForm model dispatch =
     div [] [
         input [attr.value model.input; on.change (fun e -> dispatch (SetInput (unbox e.Value)))]
-        input [attr.``type`` "submit"; on.click (fun _ -> dispatch Submit)]
+        input [
+            attr.``type`` "submit"
+            on.click (fun _ -> dispatch Submit)
+            attr.style (if model.input = "" then "color:gray;" else null)
+        ]
         div [] [text (defaultArg model.submitted "")]
         (match model.submitted with
         | Some s ->
