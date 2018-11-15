@@ -180,7 +180,7 @@ let view model dispatch =
     ]
 
 type MyApp() =
-    inherit ElmishProgramComponent<Model, Message>()
+    inherit ProgramComponent<Model, Message>()
 
     override this.Program =
         Program.mkProgram (fun _ -> initModel(), []) update view

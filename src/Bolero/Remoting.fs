@@ -27,17 +27,17 @@ type RemoteMethodDefinition =
 type RemotingExtensions =
 
     [<Extension>]
-    static member RemoteProvider(this: IElmishProgramComponent) =
+    static member RemoteProvider(this: IProgramComponent) =
         this.Services.GetRequiredService<IRemoteProvider>()
 
     /// Get an instance of the given remote service, whose URL has the given base path.
     [<Extension>]
-    static member Remote<'T>(this: IElmishProgramComponent, basePath: string) =
+    static member Remote<'T>(this: IProgramComponent, basePath: string) =
         this.RemoteProvider().GetService<'T>(basePath)
 
     /// Get an instance of the given remote service.
     [<Extension>]
-    static member Remote<'T when 'T :> IRemoteService>(this: IElmishProgramComponent) =
+    static member Remote<'T when 'T :> IRemoteService>(this: IProgramComponent) =
         this.RemoteProvider().GetService<'T>()
 
     static member ExtractRemoteMethods(ty: Type) : Result<RemoteMethodDefinition[], list<string>> =

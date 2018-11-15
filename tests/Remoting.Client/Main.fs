@@ -101,7 +101,7 @@ let Display model dispatch =
     ]
 
 type MyApp() =
-    inherit ElmishProgramComponent<Model, Message>()
+    inherit ProgramComponent<Model, Message>()
 
     override this.Program =
         let myApi = this.Remote<MyApi>()

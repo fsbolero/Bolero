@@ -72,7 +72,7 @@ type ClientRemoteProvider(http: HttpClient) =
 [<Extension>]
 type ClientRemotingExtensions =
 
-    /// Enable support for remoting in ElmishProgramComponent.
+    /// Enable support for remoting in ProgramComponent.
     [<Extension>]
     static member AddRemoting(services: IServiceCollection) =
         services.TryAddSingleton<IRemoteProvider, ClientRemoteProvider>()

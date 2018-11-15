@@ -56,12 +56,12 @@ type ElmishComponent<'model, 'msg>() =
         oldModel <- this.Model
         this.View this.Model this.Dispatch
 
-type IElmishProgramComponent =
+type IProgramComponent =
     abstract Services : System.IServiceProvider
 
 /// A component that runs an Elmish program.
 [<AbstractClass>]
-type ElmishProgramComponent<'model, 'msg>() =
+type ProgramComponent<'model, 'msg>() =
     inherit Component()
 
     let mutable oldModel = Unchecked.defaultof<'model>
@@ -76,9 +76,9 @@ type ElmishProgramComponent<'model, 'msg>() =
     member val private Router = None : option<IRouter<'model, 'msg>> with get, set
 
     /// The Elmish program to run.
-    abstract Program : Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>
+    abstract Program : Program<ProgramComponent<'model, 'msg>, 'model, 'msg, Node>
 
-    interface IElmishProgramComponent with
+    interface IProgramComponent with
         member this.Services = this.Services
 
     member private this.OnLocationChanged (_: obj) (uri: string) =
@@ -115,7 +115,7 @@ type ElmishProgramComponent<'model, 'msg>() =
     member internal this.InitRouter
         (
             r: IRouter<'model, 'msg>,
-            program: Program<ElmishProgramComponent<'model, 'msg>, 'model, 'msg, Node>,
+            program: Program<ProgramComponent<'model, 'msg>, 'model, 'msg, Node>,
             initModel: 'model
         ) =
         this.Router <- Some r
