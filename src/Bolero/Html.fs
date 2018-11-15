@@ -29,6 +29,10 @@ let cond<'T> (matching: 'T) (mkNode: 'T -> Node) =
     else
         Node.Match(typeof<'T>, matching, mkNode matching)
 
+/// Create a fragment that concatenates nodes for each item in a sequence.
+let forEach<'T> (items: seq<'T>) (mkNode: 'T -> Node) =
+    Node.ForEach [for n in items -> mkNode n]
+
 /// Create a fragment from a Blazor component.
 let comp<'T when 'T :> Components.IComponent> attrs children =
     Node.BlazorComponent<'T>(attrs, children)

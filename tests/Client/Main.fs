@@ -148,7 +148,8 @@ let viewCollection model dispatch =
         br []
         button [on.click (fun _ -> dispatch ToggleRevOrder)] [text "Toggle order"]
         ul [] [
-            for KeyValue(k, v) in items -> ecomp<ViewItem,_,_> (k, v) dispatch
+            forEach items <| fun (KeyValue(k, v)) ->
+                ecomp<ViewItem,_,_> (k, v) dispatch
         ]
     ]
 

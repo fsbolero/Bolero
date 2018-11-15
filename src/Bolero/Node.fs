@@ -28,6 +28,8 @@ type Node =
     | Cond of bool * Node
     /// A conditional "match" component.
     | Match of unionType: Type * value: obj * node: Node
+    /// A list of similarly structured fragments.
+    | ForEach of list<Node>
 
 // The type provider includes this file.
 // TPs fail if the TPDTC references an external type in a signature,

@@ -28,6 +28,10 @@ let rec renderNode (builder: RenderTreeBuilder) (matchCache: Type -> int * (obj 
         builder.AddContent(sequence + matchedCase,
             RenderFragment(fun tb -> renderNode tb matchCache 0 node |> ignore))
         sequence + caseCount
+    | ForEach nodes ->
+        builder.AddContent(sequence,
+            RenderFragment(fun tb -> List.iter (renderNode tb matchCache 0 >> ignore) nodes))
+        sequence + 1
     | Elt (name, attrs, children) ->
         builder.OpenElement(sequence, name)
         let sequence = sequence + 1
