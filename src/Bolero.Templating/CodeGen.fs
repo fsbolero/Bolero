@@ -70,7 +70,7 @@ let MakeHoleMethods (holeName: string) (holeType: Parsing.HoleType) (index: int)
                     %this @@>) :> MemberInfo
     ]
 
-let MakeFinalMethod (content: Parsing.Parsed<Node>) (containerTy: ProvidedTypeDefinition) =
+let MakeFinalMethod (content: Parsing.Parsed<Node>) =
     ProvidedMethod("Elt", [], typeof<Node>, fun args ->
         let this = getThis args
         ((0, content.Expr :> Expr), content.Holes)
@@ -82,12 +82,21 @@ let MakeFinalMethod (content: Parsing.Parsed<Node>) (containerTy: ProvidedTypeDe
         |> snd
     )
 
-let Populate (ty: ProvidedTypeDefinition) (pathOrHtml: string) =
-    let content = Parsing.ParseFileOrContent pathOrHtml
-    [
+let PopulateOne (ty: ProvidedTypeDefinition) (content: Parsing.Parsed<Node>) =
+    ty.AddMembers [
         yield MakeCtor content.Holes ty :> MemberInfo
         yield! content.Holes |> Seq.mapi (fun i (KeyValue(name, hole)) ->
             MakeHoleMethods name hole.Type i ty
         ) |> Seq.concat
-        yield MakeFinalMethod content ty :> MemberInfo
+        yield MakeFinalMethod content :> MemberInfo
     ]
+
+let Populate (mainTy: ProvidedTypeDefinition) (pathOrHtml: string) =
+    let content = Parsing.ParseFileOrContent pathOrHtml
+    PopulateOne mainTy content.Main
+    for KeyValue(name, content) in content.Nested do
+        let ty = ProvidedTypeDefinition(name, Some typeof<TemplateNode>,
+                    isErased = false,
+                    hideObjectMethods = true)
+        mainTy.AddMember ty
+        PopulateOne ty content

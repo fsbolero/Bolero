@@ -122,13 +122,13 @@ let viewForm model dispatch =
         | None -> empty)
     ]
 
-type ItemTemplate = Template<"item.html">
+type CollectionTemplate = Template<"collection.html">
 
 type ViewItem() =
     inherit ElmishComponent<int * string, Message>()
 
     override this.View ((k, v)) dispatch =
-        ItemTemplate()
+        CollectionTemplate.Item()
             .Value(v)
             .SetKey(fun _ -> dispatch (SetKeyOf k))
             .Remove(fun _ -> dispatch (RemoveItem k))
@@ -141,20 +141,13 @@ let viewCollection model dispatch =
             Seq.rev model.items
         else
             model.items :> _
-    div [] [
-        input [
-            attr.``type`` "number"
-            attr.value (string model.addKey)
-            on.change (fun e -> dispatch (SetAddKey (int (unbox<string> e.Value))))
-        ]
-        button [on.click (fun _ -> dispatch AddKey)] [text "Add"]
-        br []
-        button [on.click (fun _ -> dispatch ToggleRevOrder)] [text "Toggle order"]
-        ul [] [
-            forEach items <| fun (KeyValue(k, v)) ->
-                ecomp<ViewItem,_,_> (k, v) dispatch
-        ]
-    ]
+    CollectionTemplate()
+        .AddKeyValue(model.addKey, fun i -> dispatch (SetAddKey i))
+        .AddKey(fun _ -> dispatch AddKey)
+        .Toggle(fun _ -> dispatch ToggleRevOrder)
+        .Items(forEach items <| fun (KeyValue(k, v)) ->
+            ecomp<ViewItem,_,_> (k, v) dispatch)
+        .Elt()
 
 type ViewItemPage() =
     inherit ElmishComponent<int * string, Message>()

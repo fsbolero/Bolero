@@ -367,12 +367,36 @@ let rec ParseNode (node: HtmlNode) : list<ParsedNode> =
     | _ ->
         []
 
-let ParseDoc (doc: HtmlDocument) =
-    doc.DocumentNode.ChildNodes
+let ParseOneTemplate (nodes: HtmlNodeCollection) =
+    nodes
     |> Seq.collect ParseNode
     |> ParsedNode.ManyToParsed
     |> Parsed.Concat
     |> Parsed.Map (fun e -> <@ Node.Concat (List.ofArray %e) @>)
+
+type ParsedTemplates =
+    {
+        Main: Parsed<Node>
+        Nested: Map<string, Parsed<Node>>
+    }
+
+let ParseDoc (doc: HtmlDocument) =
+    let nested =
+        match doc.DocumentNode.SelectNodes("//template") with
+        | null -> [||]
+        | nodes -> Array.ofSeq nodes
+        |> Seq.map (fun n ->
+            match n.GetAttributeValue("id", null) with
+            | null ->
+                failwithf "Nested template must have an id" // at %i:%i" n.Line n.LinePosition
+            | id ->
+                let parsed = ParseOneTemplate n.ChildNodes
+                n.Remove()
+                (id, parsed)
+        )
+        |> Map.ofSeq
+    let main = ParseOneTemplate doc.DocumentNode.ChildNodes
+    { Main = main; Nested = nested }
 
 let GetDoc (fileOrContent: string) =
     let doc = HtmlDocument()

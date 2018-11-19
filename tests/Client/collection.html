@@ -1,0 +1,17 @@
+<div>
+  <input type="number" bind="${AddKeyValue}">
+  <button onclick="${AddKey}">Add</button>
+  <br>
+  <button onclick="${Toggle}">Toggle order</button>
+  <ul>${Items}</ul>
+</div>
+
+<template id="Item">
+  <li>${Value}</li>
+  <li>
+    <input>
+    <button onclick="${SetKey}">Set key from Add field</button>
+    <button onclick="${Remove}">Remove</button>
+    <a href="${Url}">Go to page</a>
+  </li>
+</template>
