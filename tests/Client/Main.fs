@@ -122,19 +122,18 @@ let viewForm model dispatch =
         | None -> empty)
     ]
 
+type ItemTemplate = Template<"item.html">
+
 type ViewItem() =
     inherit ElmishComponent<int * string, Message>()
 
     override this.View ((k, v)) dispatch =
-        concat [
-            li [] [text v]
-            li [] [
-                input []
-                button [on.click (fun _ -> dispatch (SetKeyOf k))] [text "Set key from Add field"]
-                button [on.click (fun _ -> dispatch (RemoveItem k))] [text "Remove"]
-                a [router.HRef (Item k)] [text "Go to page"]
-            ]
-        ]
+        ItemTemplate()
+            .Value(v)
+            .SetKey(fun _ -> dispatch (SetKeyOf k))
+            .Remove(fun _ -> dispatch (RemoveItem k))
+            .Url(router.Link (Item k))
+            .Elt()
 
 let viewCollection model dispatch =
     let items =

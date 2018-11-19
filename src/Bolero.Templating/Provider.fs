@@ -1,5 +1,6 @@
 namespace Bolero.Templating
 
+open System.Reflection
 open FSharp.Core.CompilerServices
 open ProviderImplementation.ProvidedTypes
 open Bolero.TemplatingInternals
@@ -10,15 +11,16 @@ type Template (cfg: TypeProviderConfig) as this =
         assemblyReplacementMap = ["Bolero.Templating", "Bolero"],
         addDefaultProbingLocation = true)
 
-    let asm = ProvidedAssembly()
+    let thisAssembly = Assembly.GetExecutingAssembly()
     let rootNamespace = "Bolero"
 
     do try
-        let templateTy = ProvidedTypeDefinition(asm, rootNamespace, "Template", None, isErased = false)
+        let templateTy = ProvidedTypeDefinition(thisAssembly, rootNamespace, "Template", None, isErased = false)
         templateTy.DefineStaticParameters(
             [
                 ProvidedStaticParameter("pathOrHtml", typeof<string>)
             ], fun typename pars ->
+            let asm = ProvidedAssembly()
             match pars with
             | [| :? string as pathOrHtml |] ->
                 let ty = ProvidedTypeDefinition(asm, rootNamespace, typename, Some typeof<TemplateNode>,
