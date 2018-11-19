@@ -1,6 +1,7 @@
 module Bolero.Templating.Parsing
 
 open System
+open System.IO
 open System.Text
 open System.Text.RegularExpressions
 open FSharp.Quotations
@@ -398,15 +399,14 @@ let ParseDoc (doc: HtmlDocument) =
     let main = ParseOneTemplate doc.DocumentNode.ChildNodes
     { Main = main; Nested = nested }
 
-let GetDoc (fileOrContent: string) =
+let GetDoc (fileOrContent: string) (rootFolder: string) =
     let doc = HtmlDocument()
     if fileOrContent.StartsWith("<") then
         doc.LoadHtml(fileOrContent)
     else
-        doc.Load(fileOrContent)
+        doc.Load(Path.Combine(rootFolder, fileOrContent))
     doc
 
-let ParseFileOrContent (fileOrContent: string) =
-    fileOrContent
-    |> GetDoc
+let ParseFileOrContent (fileOrContent: string) (rootFolder: string) =
+    GetDoc fileOrContent rootFolder
     |> ParseDoc

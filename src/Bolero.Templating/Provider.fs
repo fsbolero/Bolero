@@ -26,7 +26,7 @@ type Template (cfg: TypeProviderConfig) as this =
                 let ty = ProvidedTypeDefinition(asm, rootNamespace, typename, Some typeof<TemplateNode>,
                             isErased = false,
                             hideObjectMethods = true)
-                CodeGen.Populate ty pathOrHtml
+                CodeGen.Populate ty pathOrHtml cfg.ResolutionFolder
                 asm.AddTypes([ty])
                 ty
             | x -> failwithf "Unexpected parameter values: %A" x

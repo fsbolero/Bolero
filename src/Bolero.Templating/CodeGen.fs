@@ -91,8 +91,8 @@ let PopulateOne (ty: ProvidedTypeDefinition) (content: Parsing.Parsed<Node>) =
         yield MakeFinalMethod content :> MemberInfo
     ]
 
-let Populate (mainTy: ProvidedTypeDefinition) (pathOrHtml: string) =
-    let content = Parsing.ParseFileOrContent pathOrHtml
+let Populate (mainTy: ProvidedTypeDefinition) (pathOrHtml: string) (rootFolder: string) =
+    let content = Parsing.ParseFileOrContent pathOrHtml rootFolder
     PopulateOne mainTy content.Main
     for KeyValue(name, content) in content.Nested do
         let ty = ProvidedTypeDefinition(name, Some typeof<TemplateNode>,
