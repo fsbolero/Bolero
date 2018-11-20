@@ -2,7 +2,10 @@
   <input type="number" bind="${AddKeyValue}">
   <button onclick="${AddKey}">Add</button>
   <br>
-  <button onclick="${Toggle}">Toggle order</button>
+  <label>
+    <input type="checkbox" bind="${RevOrder}">
+    Toggle order
+  </label>
   <ul>${Items}</ul>
 </div>
 

@@ -31,10 +31,8 @@ type Events =
         )
 
     static member OnChangeBool(f: Action<bool>) =
-        Events.OnChange(fun s ->
-            match Boolean.TryParse(s) with
-            | true, x -> f.Invoke(x)
-            | false, _ -> ()
+        Action<UIChangeEventArgs>(fun e ->
+            f.Invoke(unbox<bool> e.Value)
         )
 
 type TemplateNode() =

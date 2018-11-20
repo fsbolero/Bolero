@@ -35,7 +35,7 @@ type Message =
     | SetAddKey of key: int
     | SetKeyOf of key: int
     | AddKey
-    | ToggleRevOrder
+    | SetRevOrder of rev: bool
     | SetPage of Page
 
 let initModel _ =
@@ -74,7 +74,7 @@ let update message model =
         | Some item ->
             let items = model.items |> Map.remove k |> Map.add model.addKey item
             { model with items = items }, []
-    | ToggleRevOrder -> { model with revOrder = not model.revOrder }, []
+    | SetRevOrder rev -> { model with revOrder = rev }, []
     | SetPage p -> { model with page = p }, []
 
 // ondblclick's handler uses UIMouseEventArgs properties to check that we do generate specific UI*EventArgs.
@@ -144,7 +144,7 @@ let viewCollection model dispatch =
     CollectionTemplate()
         .AddKeyValue(model.addKey, fun i -> dispatch (SetAddKey i))
         .AddKey(fun _ -> dispatch AddKey)
-        .Toggle(fun _ -> dispatch ToggleRevOrder)
+        .RevOrder(model.revOrder, fun rev -> dispatch (SetRevOrder rev))
         .Items(forEach items <| fun (KeyValue(k, v)) ->
             ecomp<ViewItem,_,_> (k, v) dispatch)
         .Elt()
