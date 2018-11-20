@@ -57,7 +57,7 @@ module HoleType =
         | String -> typeof<string>
         | Html -> typeof<Node>
         | Event argType -> EventHandlerOf argType
-        | DataBinding _ -> typeof<string * Action<UIChangeEventArgs>>
+        | DataBinding _ -> typeof<obj * Action<UIChangeEventArgs>>
         | Attribute -> typeof<Attr>
 
     let Wrap (innerType: HoleType) (outerType: HoleType) (expr: Expr) =
@@ -65,8 +65,8 @@ module HoleType =
         match innerType, outerType with
         | Html, String -> Some <@@ Node.Text %%expr @@>
         | Event argTy, Event _ -> Some <| Expr.Coerce(expr, EventHandlerOf argTy)
-        | String, DataBinding _ -> Some <@@ fst (%%expr: string * Action<UIChangeEventArgs>) @@>
-        | Html, DataBinding _ -> Some <@@ Node.Text (fst (%%expr: string * Action<UIChangeEventArgs>)) @@>
+        | String, DataBinding _ -> Some <@@ fst (%%expr: obj * Action<UIChangeEventArgs>) @@>
+        | Html, DataBinding _ -> Some <@@ Node.Text (string (fst (%%expr: obj * Action<UIChangeEventArgs>))) @@>
         | a, b -> failwithf "Hole name used multiple times with incompatible types (%A, %A)" a b
 
     let EventArg name =
@@ -276,10 +276,14 @@ let MakeAttrAttribute (holeName: string) : list<Parsed<Attr>> =
 
 let MakeDataBinding holeName valType : list<Parsed<Attr>> =
     let hole = MakeHole holeName (HoleType.DataBinding valType)
-    let holeVar() : Expr<string * Action<UIChangeEventArgs>> = Expr.Var hole.Var |> Expr.Cast
+    let holeVar() : Expr<obj * Action<UIChangeEventArgs>> = Expr.Var hole.Var |> Expr.Cast
     let holes = Map [holeName, hole]
+    let valueAttrName =
+        match valType with
+        | BindingType.Number | BindingType.String -> "value"
+        | BindingType.Bool -> "checked"
     [
-        { Holes = holes; Expr = <@ Attr("value", fst (%holeVar())) @> }
+        { Holes = holes; Expr = <@ Attr(valueAttrName, fst (%holeVar())) @> }
         { Holes = holes; Expr = <@ Attr("onchange", snd (%holeVar())) @> }
     ]
 
