@@ -23,6 +23,7 @@ type HoleType =
     | Html
     | Event of argType: Type
     | DataBinding of BindingType
+    | Attribute
 
 module Binding =
 
@@ -57,6 +58,7 @@ module HoleType =
         | Html -> typeof<Node>
         | Event argType -> EventHandlerOf argType
         | DataBinding _ -> typeof<string * Action<UIChangeEventArgs>>
+        | Attribute -> typeof<Attr>
 
     let Wrap (innerType: HoleType) (outerType: HoleType) (expr: Expr) =
         if innerType = outerType then None else
@@ -266,6 +268,12 @@ let MakeEventHandler (attrName: string) (holeName: string) : list<Parsed<Attr>> 
     let value = TExpr.Coerce<obj>(Expr.Var hole.Var)
     [{ Holes = holes; Expr = <@ Attr(attrName, %value) @> }]
 
+let MakeAttrAttribute (holeName: string) : list<Parsed<Attr>> =
+    let hole = MakeHole holeName HoleType.Attribute
+    let holes = Map [holeName, hole]
+    let value = TExpr.Coerce<Attr>(Expr.Var hole.Var)
+    [{ Holes = holes; Expr = value }]
+
 let MakeDataBinding holeName valType : list<Parsed<Attr>> =
     let hole = MakeHole holeName (HoleType.DataBinding valType)
     let holeVar() : Expr<string * Action<UIChangeEventArgs>> = Expr.Var hole.Var |> Expr.Cast
@@ -285,6 +293,9 @@ let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : list<Parsed<Att
     | holes, [|Hole _|] when name.StartsWith "on" ->
         let (KeyValue(holeName, _)) = Seq.head holes
         MakeEventHandler name holeName
+    | holes, [|Hole _|] when name = "attr" ->
+        let (KeyValue(holeName, _)) = Seq.head holes
+        MakeAttrAttribute holeName
     | holes, ([|Hole _|] as parts) ->
         match GetDataBindingType ownerNode name with
         | Some valType ->

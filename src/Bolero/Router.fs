@@ -175,4 +175,4 @@ type RouterExtensions =
 
     [<Extension>]
     static member HRef(this: Router<'ep, _, _>, endpoint: 'ep) : Attr =
-        "href", box (this.Link endpoint)
+        Attr("href", this.Link endpoint)

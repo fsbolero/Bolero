@@ -6,7 +6,9 @@ open Microsoft.AspNetCore.Blazor.Components
 #endif
 
 /// HTML attribute or Blazor component parameter.
-type Attr = string * obj
+type Attr =
+    | Attr of string * obj
+    | Attrs of list<Attr>
 
 type BlazorEventHandler<'T> = delegate of 'T -> unit
 

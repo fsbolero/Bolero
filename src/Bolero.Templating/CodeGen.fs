@@ -20,6 +20,7 @@ let MakeCtor (holes: Parsing.Holes) (containerTy: ProvidedTypeDefinition) =
                 | Parsing.HoleType.Html -> <@ box Node.Empty @>
                 | Parsing.HoleType.Event _ -> <@ box (Events.NoOp<UIEventArgs>()) @>
                 | Parsing.HoleType.DataBinding _ -> <@ box ("", Events.NoOp<UIChangeEventArgs>()) @>
+                | Parsing.HoleType.Attribute -> <@ box (Attrs []) @>
         ]
         <@@ (%getThis args).Holes <- %holes @@>)
 
@@ -59,6 +60,13 @@ let HoleMethodBodies (holeType: Parsing.HoleType) : (ProvidedParameter list * (E
         [
             ["value" => typeof<bool>; "set" => typeof<Action<bool>>], fun args ->
                 <@@ box (string (%%args.[1]: bool), Events.OnChangeBool(%%args.[2])) @@>
+        ]
+    | Parsing.HoleType.Attribute ->
+        [
+            ["value" => typeof<Attr>], fun args ->
+                <@@ box (%%args.[1]: Attr) @@>
+            ["value" => typeof<list<Attr>>], fun args ->
+                <@@ box (Attrs(%%args.[1]: list<Attr>)) @@>
         ]
 
 let MakeHoleMethods (holeName: string) (holeType: Parsing.HoleType) (index: int) (containerTy: ProvidedTypeDefinition) =

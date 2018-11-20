@@ -19,7 +19,7 @@ let empty = Empty
 let concat nodes = Concat nodes
 
 /// Create an HTML attribute.
-let (=>) name value = (name, box value)
+let (=>) name value = Attr(name, box value)
 
 /// Create a conditional fragment. `matching` must be either a boolean or an F# union.
 /// If it's a union, `mkNode` must only match on the case.

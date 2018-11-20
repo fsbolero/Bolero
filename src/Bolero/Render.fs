@@ -128,9 +128,12 @@ let rec renderNode (builder: RenderTreeBuilder) (matchCache: Type -> int * (obj 
         sequence + (if hasChildren then 2 else 0)
 
 /// Render an attribute with `name` and `value` into `builder` at `sequence` number.
-and renderAttr builder sequence (name, value) =
-    builder.AddAttribute(sequence, name, value)
-    sequence + 1
+and renderAttr builder sequence = function
+    | Attr (name, value) ->
+        builder.AddAttribute(sequence, name, value)
+        sequence + 1
+    | Attrs attrs ->
+        List.fold (renderAttr builder) sequence attrs
 
 let RenderNode builder (matchCache: Dictionary<Type, _>) node =
     let getMatchParams (ty: Type) =
