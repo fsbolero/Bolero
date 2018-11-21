@@ -250,7 +250,7 @@ let ParseText (t: string) (holeType: HoleType) : Holes * TextPart[] =
     if lastHoleEnd < t.Length then
         parts.Add(Plain t.[lastHoleEnd..t.Length - 1])
     holes, parts.ToArray()
-    
+
 let GetDataBindingType (ownerNode: HtmlNode) (attrName: string) =
     if attrName <> "bind" then None else
     let nodeName = ownerNode.Name
@@ -283,9 +283,13 @@ let MakeDataBinding holeName valType : list<Parsed<Attr>> =
         match valType with
         | BindingType.Number | BindingType.String -> "value"
         | BindingType.Bool -> "checked"
+    let eventName =
+        match valType with
+        | BindingType.Number | BindingType.String -> "oninput"
+        | BindingType.Bool -> "onchange"
     [
         { Holes = holes; Expr = <@ Attr(valueAttrName, fst (%holeVar())) @> }
-        { Holes = holes; Expr = <@ Attr("onchange", snd (%holeVar())) @> }
+        { Holes = holes; Expr = <@ Attr(eventName, snd (%holeVar())) @> }
     ]
 
 let MakeStringAttribute (attrName: string) holes parts : list<Parsed<Attr>> =
