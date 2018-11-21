@@ -26,16 +26,28 @@ let dotnet' dir env cmd args =
 let dotnet cmd args =
     dotnet' slnDir [] cmd args
 
-let getArgOpt (o: TargetParameter) prefix =
+/// `cache f x` returns `f x` the first time,
+/// and re-returns the first result on subsequent calls.
+let cache f =
+    let res = ref None
+    fun x ->
+        match !res with
+        | Some y -> y
+        | None ->
+            let y = f x
+            res := Some y
+            y
+
+let getArgOpt prefix = cache <| fun (o: TargetParameter) ->
     let rec go = function
         | s :: m :: _ when s = prefix -> Some m
         | _ :: rest -> go rest
         | [] -> None
     go o.Context.Arguments
 
-let getArg o prefix ``default`` =
-    getArgOpt o prefix
-    |> Option.defaultValue ``default``
+let getArg prefix ``default`` =
+    getArgOpt prefix
+    >> Option.defaultValue ``default``
 
 // Manage the fact that we run fake from the .paket/fake directory
 let origDir = Directory.GetCurrentDirectory()
