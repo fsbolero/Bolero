@@ -1047,7 +1047,7 @@ module on =
         "onchange" => BindMethods.GetEventHandlerValue callback
 
     /// Create a handler for HTML event `input`.
-    let input (callback: UIEventArgs -> unit) : Attr =
+    let input (callback: UIChangeEventArgs -> unit) : Attr =
         "oninput" => BindMethods.GetEventHandlerValue callback
 
     /// Create a handler for HTML event `invalid`.

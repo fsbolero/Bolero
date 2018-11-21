@@ -24,7 +24,7 @@ keydown,Keyboard
 keyup,Keyboard
 keypress,Keyboard
 change,Change
-input,
+input,Change
 invalid,
 reset,
 select,

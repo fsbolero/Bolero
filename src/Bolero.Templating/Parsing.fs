@@ -97,6 +97,7 @@ module HoleType =
         | "onkeyup" -> typeof<UIKeyboardEventArgs>
         | "onkeypress" -> typeof<UIKeyboardEventArgs>
         | "onchange" -> typeof<UIChangeEventArgs>
+        | "oninput" -> typeof<UIChangeEventArgs>
         | "oncopy" -> typeof<UIClipboardEventArgs>
         | "oncut" -> typeof<UIClipboardEventArgs>
         | "onpaste" -> typeof<UIClipboardEventArgs>
