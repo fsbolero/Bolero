@@ -7,6 +7,7 @@ open System.Text
 open System.Text.RegularExpressions
 open Fake.Core
 open Fake.Core.TargetOperators
+open Fake.DotNet
 open Fake.IO.FileSystemOperators
 open Utility
 
@@ -18,11 +19,11 @@ Target.create "corebuild" (fun o ->
     dotnet "build" "bolero.sln -c:%s" (config o)
 )
 
-let [<Literal>] tagsFile = __SOURCE_DIRECTORY__ + "/src/Bolero/tags.csv"
+let [<Literal>] tagsFile = slnDir + "/src/Bolero/tags.csv"
 type Tags = FSharp.Data.CsvProvider<tagsFile>
-let [<Literal>] attrsFile = __SOURCE_DIRECTORY__ + "/src/Bolero/attrs.csv"
+let [<Literal>] attrsFile = slnDir + "/src/Bolero/attrs.csv"
 type Attrs = FSharp.Data.CsvProvider<attrsFile>
-let [<Literal>] eventsFile = __SOURCE_DIRECTORY__ + "/src/Bolero/events.csv"
+let [<Literal>] eventsFile = slnDir + "/src/Bolero/events.csv"
 type Events = FSharp.Data.CsvProvider<eventsFile>
 
 let escapeDashes s =
@@ -83,6 +84,23 @@ Target.create "tags" (fun _ ->
     )
 )
 
+Target.create "assemblyinfo" (fun o ->
+    let fullVersion = version o
+    let baseVersion =
+        let v = System.Version(fullVersion)
+        sprintf "%i.%i.0.0" v.Major v.Minor
+    let attributes =
+        [
+            AssemblyInfo.Company "IntelliFactory"
+            AssemblyInfo.FileVersion fullVersion
+            AssemblyInfo.Version baseVersion
+        ]
+    unchangedIfIdentical (slnDir </> "build" </> "AssemblyInfo.fs") <| fun f ->
+        AssemblyInfoFile.createFSharp f attributes
+    unchangedIfIdentical (slnDir </> "build" </> "AssemblyInfo.cs") <| fun f ->
+        AssemblyInfoFile.createCSharp f attributes
+)
+
 Target.create "build" ignore
 
 Target.create "pack" (fun o ->
@@ -109,7 +127,7 @@ Target.create "run-remoting" (fun o ->
 
 let uploadTests (url: string) =
     let results =
-        DirectoryInfo(__SOURCE_DIRECTORY__ </> "tests" </> "Unit" </> "TestResults")
+        DirectoryInfo(slnDir </> "tests" </> "Unit" </> "TestResults")
             .EnumerateFiles("*.trx")
         |> Seq.maxBy (fun f -> f.CreationTime)
     use c = new WebClient()
@@ -124,7 +142,8 @@ Target.create "test-debug" (fun o ->
     dotnet' "tests/Unit" ["VSTEST_HOST_DEBUG", "1"] "test" "-c:%s" (config o)
 )
 
-"corebuild"
+"assemblyinfo"
+    ==> "corebuild"
     ==> "build"
     ==> "pack"
 

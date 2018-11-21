@@ -4,8 +4,9 @@ module Utility
 open System.IO
 open Fake.Core
 open Fake.DotNet
+open Fake.IO
 
-let slnDir = Path.Combine(__SOURCE_DIRECTORY__, "..", "..")
+let [<Literal>] slnDir = __SOURCE_DIRECTORY__ + "/../.."
 
 let dotnet' dir env cmd args =
     Printf.kprintf (fun args ->
@@ -48,6 +49,20 @@ let getArgOpt prefix = cache <| fun (o: TargetParameter) ->
 let getArg prefix ``default`` =
     getArgOpt prefix
     >> Option.defaultValue ``default``
+
+/// Generate a file at the given location, but leave it unchanged
+/// if the generated contents are identical to the existing file.
+/// `generate` receives the actual filename it should write to,
+/// which may be a temp file.
+let unchangedIfIdentical filename generate =
+    if File.Exists(filename) then
+        let tempFilename = Path.GetTempFileName()
+        generate tempFilename
+        if not (Shell.compareFiles true filename tempFilename) then
+            File.Delete(filename)
+            File.Move(tempFilename, filename)
+    else
+        generate filename
 
 // Manage the fact that we run fake from the .paket/fake directory
 let origDir = Directory.GetCurrentDirectory()

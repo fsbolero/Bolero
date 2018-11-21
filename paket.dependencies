@@ -26,9 +26,11 @@ github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 group fake
 source https://api.nuget.org/v3/index.json
 storage: none
+framework: netstandard2.0
 
 nuget Fake.Core.Target
 nuget Fake.IO.FileSystem
+nuget Fake.DotNet.AssemblyInfoFile
 nuget Fake.DotNet.Cli
 nuget Fake.DotNet.Paket
 nuget FSharp.Data ~> 3.0-beta
