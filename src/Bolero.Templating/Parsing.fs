@@ -251,15 +251,28 @@ let ParseText (t: string) (holeType: HoleType) : Holes * TextPart[] =
         parts.Add(Plain t.[lastHoleEnd..t.Length - 1])
     holes, parts.ToArray()
 
+/// None if this is not a data binding.
+/// Some None if this is a data binding without specified event.
+/// Some (Some "onxyz") if this is a data binding with a specified event.
+let GetDataBindingEvent = function
+    | "bind-oninput" -> Some (Some "oninput")
+    | "bind-onchange" -> Some (Some "onchange")
+    | "bind" -> Some None
+    | _ -> None
+
+
 let GetDataBindingType (ownerNode: HtmlNode) (attrName: string) =
-    if attrName <> "bind" then None else
+    match GetDataBindingEvent attrName with
+    | None -> None
+    | Some ev ->
     let nodeName = ownerNode.Name
-    if nodeName = "textarea" || nodeName = "select" then Some BindingType.String else
-    if nodeName = "input" then
+    if nodeName = "textarea" || nodeName = "select" then
+        Some (BindingType.String, ev)
+    elif nodeName = "input" then
         match ownerNode.GetAttributeValue("type", "text") with
-        | "number" -> Some BindingType.Number
-        | "checkbox" -> Some BindingType.Bool
-        | _ -> Some BindingType.String
+        | "number" -> Some (BindingType.Number, ev)
+        | "checkbox" -> Some (BindingType.Bool, ev)
+        | _ -> Some (BindingType.String, ev)
     else None
 
 let MakeEventHandler (attrName: string) (holeName: string) : list<Parsed<Attr>> =
@@ -275,7 +288,7 @@ let MakeAttrAttribute (holeName: string) : list<Parsed<Attr>> =
     let value = TExpr.Coerce<Attr>(Expr.Var hole.Var)
     [{ Holes = holes; Expr = value }]
 
-let MakeDataBinding holeName valType : list<Parsed<Attr>> =
+let MakeDataBinding holeName valType eventName : list<Parsed<Attr>> =
     let hole = MakeHole holeName (HoleType.DataBinding valType)
     let holeVar() : Expr<obj * Action<UIChangeEventArgs>> = Expr.Var hole.Var |> Expr.Cast
     let holes = Map [holeName, hole]
@@ -283,10 +296,10 @@ let MakeDataBinding holeName valType : list<Parsed<Attr>> =
         match valType with
         | BindingType.Number | BindingType.String -> "value"
         | BindingType.Bool -> "checked"
-    let eventName =
+    let eventName = eventName |> Option.defaultWith (fun () ->
         match valType with
         | BindingType.Number | BindingType.String -> "oninput"
-        | BindingType.Bool -> "onchange"
+        | BindingType.Bool -> "onchange")
     [
         { Holes = holes; Expr = <@ Attr(valueAttrName, fst (%holeVar())) @> }
         { Holes = holes; Expr = <@ Attr(eventName, snd (%holeVar())) @> }
@@ -307,9 +320,9 @@ let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : list<Parsed<Att
         MakeAttrAttribute holeName
     | holes, ([|Hole _|] as parts) ->
         match GetDataBindingType ownerNode name with
-        | Some valType ->
+        | Some (valType, eventName) ->
             let (KeyValue(holeName, _)) = Seq.head holes
-            MakeDataBinding holeName valType
+            MakeDataBinding holeName valType eventName
         | None ->
             MakeStringAttribute name holes parts
     | holes, parts ->
