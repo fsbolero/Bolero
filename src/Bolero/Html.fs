@@ -575,6 +575,10 @@ let wbr (attrs: list<Attr>) : Node =
 // END TAGS
 
 module attr =
+    /// Create an HTML `class` attribute containing the given class names.
+    let classes (classes: list<string>) : Attr =
+        "class" => String.concat " " classes
+
 // BEGIN ATTRS
     /// Create an HTML `accept` attribute.
     let accept (v: obj) : Attr = "accept" => v
