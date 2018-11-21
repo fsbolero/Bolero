@@ -11,10 +11,11 @@ open Fake.DotNet
 open Fake.IO.FileSystemOperators
 open Utility
 
-let config = getArg "-c" "Release"
+let config = getArg "-c" "Debug"
 let version = getArg "-v" "0.1.0"
 let testUploadUrl = getArgOpt "--push-tests"
 
+Target.description "Run the compilation phase proper"
 Target.create "corebuild" (fun o ->
     dotnet "build" "bolero.sln -c:%s" (config o)
 )
@@ -46,7 +47,7 @@ let runTags filename apply =
     if input <> output then
         File.WriteAllText(filename, output)
 
-// Generate HTML tags and attributes from CSV
+Target.description "Generate HTML tags and attributes from CSV"
 Target.create "tags" (fun _ ->
     runTags "src/Bolero/Html.fs" (
         replace (Tags.GetSample().Rows) "TAGS" (fun s tag ->
@@ -84,6 +85,7 @@ Target.create "tags" (fun _ ->
     )
 )
 
+Target.description "Generate AssemblyInfo.fs and .cs"
 Target.create "assemblyinfo" (fun o ->
     let fullVersion = version o
     let baseVersion =
@@ -101,8 +103,10 @@ Target.create "assemblyinfo" (fun o ->
         AssemblyInfoFile.createCSharp f attributes
 )
 
+Target.description "Run a full compilation"
 Target.create "build" ignore
 
+Target.description "Create the NuGet packages"
 Target.create "pack" (fun o ->
 
     Fake.DotNet.Paket.pack (fun p ->
@@ -113,14 +117,17 @@ Target.create "pack" (fun o ->
     )
 )
 
+Target.description "Run the Client test project"
 Target.create "run-client" (fun o ->
     dotnet' "tests/Client" [] "run" "-c:%s" (config o)
 )
 
+Target.description "Run the Server test project"
 Target.create "run-server" (fun o ->
     dotnet' "tests/Server" [] "run" "-c:%s" (config o)
 )
 
+Target.description "Run the Remoting test project"
 Target.create "run-remoting" (fun o ->
     dotnet' "tests/Remoting.Server" [] "run" "-c:%s" (config o)
 )
@@ -133,11 +140,13 @@ let uploadTests (url: string) =
     use c = new WebClient()
     c.UploadFile(url, results.FullName) |> ignore
 
+Target.description "Run the unit tests"
 Target.create "test" (fun o ->
     dotnet' "tests/Unit" [] "test" "--logger:trx -c:%s" (config o)
     Option.iter uploadTests (testUploadUrl o)
 )
 
+Target.description "Run the unit tests waiting for a debugger to connect"
 Target.create "test-debug" (fun o ->
     dotnet' "tests/Unit" ["VSTEST_HOST_DEBUG", "1"] "test" "-c:%s" (config o)
 )
