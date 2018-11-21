@@ -266,13 +266,15 @@ let GetDataBindingType (ownerNode: HtmlNode) (attrName: string) =
     | None -> None
     | Some ev ->
     let nodeName = ownerNode.Name
-    if nodeName = "textarea" || nodeName = "select" then
-        Some (BindingType.String, ev)
+    if nodeName = "textarea" then
+        Some (BindingType.String, defaultArg ev "oninput")
+    elif nodeName = "select" then
+        Some (BindingType.String, defaultArg ev "onchange")
     elif nodeName = "input" then
         match ownerNode.GetAttributeValue("type", "text") with
-        | "number" -> Some (BindingType.Number, ev)
-        | "checkbox" -> Some (BindingType.Bool, ev)
-        | _ -> Some (BindingType.String, ev)
+        | "number" -> Some (BindingType.Number, defaultArg ev "oninput")
+        | "checkbox" -> Some (BindingType.Bool, defaultArg ev "onchange")
+        | _ -> Some (BindingType.String, defaultArg ev "oninput")
     else None
 
 let MakeEventHandler (attrName: string) (holeName: string) : list<Parsed<Attr>> =
@@ -296,10 +298,6 @@ let MakeDataBinding holeName valType eventName : list<Parsed<Attr>> =
         match valType with
         | BindingType.Number | BindingType.String -> "value"
         | BindingType.Bool -> "checked"
-    let eventName = eventName |> Option.defaultWith (fun () ->
-        match valType with
-        | BindingType.Number | BindingType.String -> "oninput"
-        | BindingType.Bool -> "onchange")
     [
         { Holes = holes; Expr = <@ Attr(valueAttrName, fst (%holeVar())) @> }
         { Holes = holes; Expr = <@ Attr(eventName, snd (%holeVar())) @> }
