@@ -14,10 +14,15 @@ open Utility
 let config = getArg "-c" "Debug"
 let version = getArg "-v" "0.1.0"
 let testUploadUrl = getArgOpt "--push-tests"
+let verbosity = getFlag "--verbose" >> function
+    | true -> "n"
+    | false -> "m"
+let buildArgs o =
+    sprintf "-c:%s -v:%s" (config o) (verbosity o)
 
 Target.description "Run the compilation phase proper"
 Target.create "corebuild" (fun o ->
-    dotnet "build" "bolero.sln -c:%s" (config o)
+    dotnet "build" "bolero.sln %s" (buildArgs o)
 )
 
 let [<Literal>] tagsFile = slnDir + "/src/Bolero/tags.csv"
@@ -119,17 +124,17 @@ Target.create "pack" (fun o ->
 
 Target.description "Run the Client test project"
 Target.create "run-client" (fun o ->
-    dotnet' "tests/Client" [] "run" "-c:%s" (config o)
+    dotnet' "tests/Client" [] "run" "%s" (buildArgs o)
 )
 
 Target.description "Run the Server test project"
 Target.create "run-server" (fun o ->
-    dotnet' "tests/Server" [] "run" "-c:%s" (config o)
+    dotnet' "tests/Server" [] "run" "%s" (buildArgs o)
 )
 
 Target.description "Run the Remoting test project"
 Target.create "run-remoting" (fun o ->
-    dotnet' "tests/Remoting.Server" [] "run" "-c:%s" (config o)
+    dotnet' "tests/Remoting.Server" [] "run" "%s" (buildArgs o)
 )
 
 let uploadTests (url: string) =
@@ -142,13 +147,13 @@ let uploadTests (url: string) =
 
 Target.description "Run the unit tests"
 Target.create "test" (fun o ->
-    dotnet' "tests/Unit" [] "test" "--logger:trx -c:%s" (config o)
+    dotnet' "tests/Unit" [] "test" "--logger:trx %s" (buildArgs o)
     Option.iter uploadTests (testUploadUrl o)
 )
 
 Target.description "Run the unit tests waiting for a debugger to connect"
 Target.create "test-debug" (fun o ->
-    dotnet' "tests/Unit" ["VSTEST_HOST_DEBUG", "1"] "test" "-c:%s" (config o)
+    dotnet' "tests/Unit" ["VSTEST_HOST_DEBUG", "1"] "test" "%s" (buildArgs o)
 )
 
 "assemblyinfo"
@@ -159,7 +164,10 @@ Target.create "test-debug" (fun o ->
 "build" ==> "run-client"
 "build" ==> "run-server"
 "build" ==> "run-remoting"
-"build" ==> "test"
-"build" ==> "test-debug"
+
+"assemblyinfo" ==> "test"
+"build" ?=> "test"
+"assemblyinfo" ==> "test-debug"
+"build" ?=> "test-debug"
 
 Target.runOrDefaultWithArguments "build"

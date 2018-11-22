@@ -50,6 +50,9 @@ let getArg prefix ``default`` =
     getArgOpt prefix
     >> Option.defaultValue ``default``
 
+let getFlag flag = cache <| fun (o: TargetParameter) ->
+    List.contains flag o.Context.Arguments
+
 /// Generate a file at the given location, but leave it unchanged
 /// if the generated contents are identical to the existing file.
 /// `generate` receives the actual filename it should write to,
