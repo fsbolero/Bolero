@@ -45,7 +45,7 @@ NUGET
       System.Reflection.TypeExtensions (>= 4.3)
       System.Runtime.Loader (>= 4.0)
       System.Security.Cryptography.Algorithms (>= 4.3)
-    FSharp.Core (4.5.2)
+    FSharp.Core (4.5.3)
     HtmlAgilityPack (1.8.10)
       System.Net.Http (>= 4.3.2)
       System.Xml.XmlDocument (>= 4.3)
@@ -369,11 +369,11 @@ NUGET
     Microsoft.AspNetCore.WebUtilities (2.1.1)
       Microsoft.Net.Http.Headers (>= 2.1.1)
       System.Text.Encodings.Web (>= 4.5)
-    Microsoft.Build.Framework (15.8.166)
+    Microsoft.Build.Framework (15.9.20)
       System.Runtime.Serialization.Primitives (>= 4.1.1)
       System.Threading.Thread (>= 4.0)
-    Microsoft.Build.Utilities.Core (15.8.166)
-      Microsoft.Build.Framework (>= 15.8.166)
+    Microsoft.Build.Utilities.Core (15.9.20)
+      Microsoft.Build.Framework (>= 15.9.20)
       Microsoft.Win32.Registry (>= 4.3)
       System.Collections.Immutable (>= 1.5)
       System.Runtime.InteropServices.RuntimeInformation (>= 4.3)
@@ -598,7 +598,7 @@ NUGET
       Newtonsoft.Json (>= 10.0.1)
     NUnit (3.11)
       NETStandard.Library (>= 2.0)
-    NUnit3TestAdapter (3.11)
+    NUnit3TestAdapter (3.11.2)
       Microsoft.DotNet.InternalAbstractions (>= 1.0) - restriction: || (== netcoreapp2.1) (&& (== netstandard2.0) (>= netcoreapp1.0))
       System.ComponentModel.EventBasedAsync (>= 4.3) - restriction: || (== netcoreapp2.1) (&& (== netstandard2.0) (>= netcoreapp1.0))
       System.ComponentModel.TypeConverter (>= 4.3) - restriction: || (== netcoreapp2.1) (&& (== netstandard2.0) (>= netcoreapp1.0))
@@ -657,6 +657,9 @@ NUGET
     runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl (4.3.3)
     runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl (4.3.3)
     runtime.ubuntu.18.04-x64.runtime.native.System.Security.Cryptography.OpenSsl (4.3.3)
+    Selenium.WebDriver (3.141)
+      Newtonsoft.Json (>= 10.0.3)
+    Selenium.WebDriver.ChromeDriver (2.44)
     System.AppContext (4.3)
       System.Runtime (>= 4.3)
     System.Buffers (4.5)
@@ -1273,8 +1276,8 @@ NUGET
       System.Xml.XPath (>= 4.3)
 GITHUB
   remote: fsprojects/FSharp.TypeProviders.SDK
-    src/ProvidedTypes.fs (2f2f138ba7e70d3cb77a2fe041e0f69ee47bf0e8)
-    src/ProvidedTypes.fsi (2f2f138ba7e70d3cb77a2fe041e0f69ee47bf0e8)
+    src/ProvidedTypes.fs (6c4a5d3d0abf96aa208324093b3cc3c9cdc20b10)
+    src/ProvidedTypes.fsi (6c4a5d3d0abf96aa208324093b3cc3c9cdc20b10)
 GROUP fake
 STORAGE: NONE
 RESTRICTION: == netstandard2.0
