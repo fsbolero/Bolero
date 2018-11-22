@@ -20,6 +20,8 @@ type WebFixture() =
 
     static let mutable driver = Unchecked.defaultof<RemoteWebDriver>
 
+    static let mutable root = Unchecked.defaultof<IWebElement>
+
     static let url = "http://localhost:51608"
 
     [<OneTimeSetUp>]
@@ -31,8 +33,6 @@ type WebFixture() =
                     let options = ChromeOptions()
                     options.AddArguments ["headless"; "disable-gpu"]
                     driver <- new ChromeDriver(System.Environment.CurrentDirectory, options)
-                    driver.Manage().Logs.AvailableLogTypes
-                    |> Seq.iter (eprintfn "LOG TYPE: %s")
                 }
                 async {
                     server <- WebHost.CreateDefaultBuilder()
@@ -45,9 +45,8 @@ type WebFixture() =
 
             // Once both are started, browse and wait for the page to render.
             driver.Navigate().GoToUrl(url)
-            WebDriverWait(driver, TimeSpan.FromMilliseconds(5000.))
+            root <- WebDriverWait(driver, TimeSpan.FromMilliseconds(5000.))
                 .Until(fun d -> try d.FindElement(By.Id "test-fixture") with _ -> null)
-            |> ignore
         }
         |> Async.StartImmediateAsTask
         :> Task
@@ -71,3 +70,4 @@ type WebFixture() =
     static member Server = server
     static member Driver = driver
     static member Url = url
+    static member Root = root

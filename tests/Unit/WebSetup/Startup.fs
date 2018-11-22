@@ -11,7 +11,7 @@ type BlazorStartup() =
         ()
 
     member this.Configure(app: IBlazorApplicationBuilder) =
-        app.AddComponent<WebApp.RootComponent>("#app")
+        app.AddComponent<App.Tests>("#app")
 
 type Startup() =
 

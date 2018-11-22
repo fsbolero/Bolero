@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="Utility.fs" />
     <Compile Include="Json.fs" />
+    <Compile Include="WebSetup\App.Html.fs" />
     <Compile Include="WebSetup/App.fs" />
     <Compile Include="WebSetup/Startup.fs" />
     <Compile Include="WebSetup/Fixture.fs" />
