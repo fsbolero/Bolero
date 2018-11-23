@@ -45,7 +45,7 @@ type WebFixture() =
 
             // Once both are started, browse and wait for the page to render.
             driver.Navigate().GoToUrl(url)
-            root <- WebDriverWait(driver, TimeSpan.FromMilliseconds(5000.))
+            root <- WebDriverWait(driver, TimeSpan.FromSeconds(5.))
                 .Until(fun d -> try d.FindElement(By.Id "test-fixture") with _ -> null)
         }
         |> Async.StartImmediateAsTask
@@ -71,3 +71,28 @@ type WebFixture() =
     static member Driver = driver
     static member Url = url
     static member Root = root
+
+and NodeFixture() =
+
+    member val Root: IWebElement = null with get, set
+
+    /// Initialize this node fixture.
+    /// Must be called after WebFixture initialization.
+    member this.Init(id) =
+        this.Root <- WebFixture.Root.FindElement(By.Id id)
+
+    /// Get child element by id.
+    member this.ById(x) =
+        try this.Root.FindElement(By.Id x)
+        with :? NoSuchElementException -> null
+
+    /// Get child element by class.
+    member this.ByClass(x) =
+        try this.Root.FindElement(By.ClassName x)
+        with :? NoSuchElementException -> null
+
+    /// Wait for the given callback to return a non-false non-null value.
+    member this.Wait(cond, ?timeout) =
+        WebDriverWait(WebFixture.Driver,
+            timeout |> Option.defaultWith (fun () -> TimeSpan.FromSeconds(5.)))
+            .Until(fun _ -> cond())

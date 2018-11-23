@@ -90,7 +90,7 @@ The project in this repository are structure as follows.
 
 * `tests`: The test projects and unit test suite.
 
-    * `Unit/`: The unit tests suite.  
+    * `Unit/`: The automated tests suite.  
         Can be run using `build -t test`.
 
     * `Client/`: A test client-side application.  
@@ -104,3 +104,31 @@ The project in this repository are structure as follows.
 
     * `Remoting.Server/`: An ASP.NET Core application that serves `Remoting.Client` as its client side and contains a server implementation for its remoting API.  
         Can be run using `build -t run-remoting`.
+
+## Automated tests
+
+The automated tests are located in the `tests/Unit/` project. They use the following tools:
+
+* [NUnit](https://nunit.org/) as the testing framework.
+
+* [FsCheck](https://fscheck.github.io/FsCheck/) for property checking.
+
+* [Selenium](https://docs.seleniumhq.org/) to run and automate a headless browser.
+
+UI tests are run as follows:
+
+* A web application is defined in the `Web` folder, using Blazor in server mode.
+
+    * Test components are defined in `Web/App.*.fs`, one file per category.
+
+    * Rendered components for each category are added to the root component in `Web/App.fs`.
+
+* This application and the browser are started during NUnit setup in `Web/Fixture.fs`.
+
+* Corresponding NUnit tests are defined in the `Tests` folder. They must be defined in the namespace `Bolero.Tests.Web` for NUnit setup to work properly. They can use `WebFixture.GetFixture` during NUnit setup to query elements. See for example the `SetUp` function in `Html.fs`.
+
+So, in summary, a UI test category `Foo` consists of:
+
+* A Bolero component defined in `Web/App.Foo.fs` and added to `Web/App.fs`;
+
+* NUnit tests defined in `Tests/Foo.fs`, using `WebFixture` to query and interact with the component.

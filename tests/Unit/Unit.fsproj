@@ -8,12 +8,12 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Utility.fs" />
-    <Compile Include="Json.fs" />
-    <Compile Include="WebSetup\App.Html.fs" />
-    <Compile Include="WebSetup/App.fs" />
-    <Compile Include="WebSetup/Startup.fs" />
-    <Compile Include="WebSetup/Fixture.fs" />
-    <Compile Include="Html.fs" />
+    <Compile Include="Web\App.Html.fs" />
+    <Compile Include="Web\App.fs" />
+    <Compile Include="Web\Startup.fs" />
+    <Compile Include="Web\Fixture.fs" />
+    <Compile Include="Tests\Json.fs" />
+    <Compile Include="Tests\Html.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
