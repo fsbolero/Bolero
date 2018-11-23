@@ -96,3 +96,12 @@ and NodeFixture() =
         WebDriverWait(WebFixture.Driver,
             timeout |> Option.defaultWith (fun () -> TimeSpan.FromSeconds(5.)))
             .Until(fun _ -> cond())
+
+    /// NUnit assertion that the given condition eventually becomes true.
+    member this.AssertEventually(cond, ?message, ?timeout) =
+        let run() =
+            (this.Wait(cond, ?timeout = timeout): bool)
+            |> ignore
+        match message with
+        | None -> Assert.DoesNotThrow(TestDelegate run)
+        | Some m -> Assert.DoesNotThrow(TestDelegate run, m)

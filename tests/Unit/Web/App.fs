@@ -10,5 +10,6 @@ type Tests() =
     override this.Render() =
         div [attr.id "test-fixture"] [
             Html.Tests()
+            Elmish.Tests()
             // insert tests here
         ]

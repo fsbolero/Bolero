@@ -9,11 +9,13 @@
   <ItemGroup>
     <Compile Include="Utility.fs" />
     <Compile Include="Web\App.Html.fs" />
+    <Compile Include="Web\App.Elmish.fs" />
     <Compile Include="Web\App.fs" />
     <Compile Include="Web\Startup.fs" />
     <Compile Include="Web\Fixture.fs" />
     <Compile Include="Tests\Json.fs" />
     <Compile Include="Tests\Html.fs" />
+    <Compile Include="Tests\Elmish.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
