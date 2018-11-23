@@ -11,5 +11,6 @@ type Tests() =
         div [attr.id "test-fixture"] [
             Html.Tests()
             Elmish.Tests()
+            Routing.Tests()
             // insert tests here
         ]
