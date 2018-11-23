@@ -97,11 +97,12 @@ and NodeFixture() =
             timeout |> Option.defaultWith (fun () -> TimeSpan.FromSeconds(5.)))
             .Until(fun _ -> cond())
 
-    /// NUnit assertion that the given condition eventually becomes true.
+    /// NUnit assertion that the given condition eventually becomes non-null non-false.
     member this.AssertEventually(cond, ?message, ?timeout) =
         let run() =
-            (this.Wait(cond, ?timeout = timeout): bool)
-            |> ignore
+            match this.Wait(cond, ?timeout = timeout) |> box with
+            | :? bool as b -> Assert.IsTrue(b)
+            | x -> Assert.IsNotNull(x)
         match message with
         | None -> Assert.DoesNotThrow(TestDelegate run)
         | Some m -> Assert.DoesNotThrow(TestDelegate run, m)

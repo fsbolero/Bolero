@@ -46,3 +46,50 @@ module Html =
     [<Test>]
     let ``Bolero Component``() =
         Assert.AreEqual("Component content", elt.ById("bolero-component").Text)
+
+    [<Test>]
+    let ``Boolean cond reacts to events``() =
+        let inp = elt.ByClass("condBoolInput")
+        for i = 0 to 10 do inp.SendKeys("\b")
+        inp.SendKeys("ab")
+        elt.AssertEventually(fun () ->
+            elt.ByClass("condBoolIs2"))
+        Assert.IsNull(elt.ByClass("condBoolIsNot2"))
+        inp.SendKeys("c")
+        elt.AssertEventually(fun () ->
+            elt.ByClass("condBoolIsNot2"))
+        Assert.IsNull(elt.ByClass("condBoolIs2"))
+
+    [<Test>]
+    let ``Union cond reacts to events``() =
+        let inp = elt.ByClass("condUnionInput")
+        for i = 0 to 10 do inp.SendKeys("\b")
+        elt.AssertEventually(fun () ->
+            elt.ByClass("condUnionIsEmpty"))
+        Assert.IsNull(elt.ByClass("condUnionIsOne"))
+        Assert.IsNull(elt.ByClass("condUnionIsMany"))
+        inp.SendKeys("a")
+        elt.AssertEventually(fun () ->
+            elt.ByClass("condUnionIsOne"))
+        Assert.IsNull(elt.ByClass("condUnionIsEmpty"))
+        Assert.IsNull(elt.ByClass("condUnionIsMany"))
+        inp.SendKeys("b")
+        elt.AssertEventually(fun () ->
+            elt.ByClass("condUnionIsMany"))
+        Assert.IsNull(elt.ByClass("condUnionIsOne"))
+        Assert.IsNull(elt.ByClass("condUnionIsEmpty"))
+
+    [<Test>]
+    let ``Render many forEach items``() =
+        let inp = elt.ByClass("forEachInput")
+        for i = 0 to 10 do inp.SendKeys("\b")
+        inp.SendKeys("ABC")
+        elt.AssertEventually(fun () ->
+            elt.ByClass("forEachIsA"))
+        Assert.IsNotNull(elt.ByClass("forEachIsB"))
+        Assert.IsNotNull(elt.ByClass("forEachIsC"))
+        inp.SendKeys("\b")
+        elt.AssertEventually(fun () ->
+            isNull <| elt.ByClass("forEachIsC"))
+        Assert.IsNotNull(elt.ByClass("forEachIsA"))
+        Assert.IsNotNull(elt.ByClass("forEachIsB"))
