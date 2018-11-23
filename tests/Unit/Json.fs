@@ -346,9 +346,3 @@ module Json =
     [<Property>]
     let ``Deserialize union with NamedUnionCases`` (u: ExplicitDiscrUnion) =
         J.Decode (ExplicitDiscrUnion.Enc u) .=. u
-
-
-
-    /// For some reason dotnet test won't run if there are only `[<Property>]`s
-    /// and not at lest one `[<Test>]`...
-    [<Test>] let Dummy() = ()
