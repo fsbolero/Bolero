@@ -12,5 +12,6 @@ type Tests() =
             Html.Tests()
             Elmish.Tests()
             Routing.Tests()
+            Remoting.Tests()
             // insert tests here
         ]

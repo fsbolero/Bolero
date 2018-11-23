@@ -4,11 +4,26 @@ namespace Bolero.Tests.Web
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Blazor.Builder
+open Bolero.Remoting
 
 type BlazorStartup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
-        ()
+        services.AddRemoting(
+            let mutable items = Map.empty
+            {
+                getValue = fun k -> async {
+                    return Map.tryFind k items
+                }
+                setValue = fun (k, v) -> async {
+                    items <- Map.add k v items
+                }
+                removeValue = fun k -> async {
+                    items <- Map.remove k items
+                }
+            } : App.Remoting.RemoteApi
+        )
+        |> ignore
 
     member this.Configure(app: IBlazorApplicationBuilder) =
         app.AddComponent<App.Tests>("#app")

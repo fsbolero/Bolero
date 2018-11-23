@@ -34,8 +34,7 @@ module Elmish =
     [<Test>]
     let ``ElmishComponent dispatches message``() =
         let el = elt.ByClass("intValue-input")
-        el.SendKeys("\b")
-        el.SendKeys("\b")
+        el.Clear()
         el.SendKeys("35")
         elt.AssertEventually((fun () ->
             elt.ByClass("intValue-repeat").Text = "35"))
