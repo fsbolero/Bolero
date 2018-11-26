@@ -40,10 +40,10 @@ let links =
     ]
 
 let matchPage = function
-    | Home -> "Home", ""
-    | NoArg -> "NoArg", ""
-    | WithArg x -> "WithArg", x
-    | WithArgs(x, y) -> "WithArgs", sprintf "%s %i" x y
+    | Home -> "Home", "home"
+    | NoArg -> "NoArg", "noarg"
+    | WithArg x -> "WithArg", sprintf "witharg %s" x
+    | WithArgs(x, y) -> "WithArgs", sprintf "withargs %s %i" x y
 
 let view model dispatch =
     concat [
