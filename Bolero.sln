@@ -14,15 +14,15 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Bolero", "src\Bolero\Bolero
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{7EB0C3D3-0BD4-4D72-8ACF-A30B71F7C8E8}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Client", "tests\Client\Client.fsproj", "{F873CC90-1EC6-467C-A396-808D593B05E3}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Client", "tests\Client\Client.fsproj", "{F873CC90-1EC6-467C-A396-808D593B05E3}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Server", "tests\Server\Server.fsproj", "{218DBE0B-66C5-4C90-9892-113F4B233E79}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Server", "tests\Server\Server.fsproj", "{218DBE0B-66C5-4C90-9892-113F4B233E79}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bolero.Build", "src\Bolero.Build\Bolero.Build.csproj", "{930E2AD9-B712-4BA3-BEC5-E294A7446DF6}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Remoting.Server", "tests\Remoting.Server\Remoting.Server.fsproj", "{E38CA762-40D2-4ED5-A989-F67D87010503}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Remoting.Server", "tests\Remoting.Server\Remoting.Server.fsproj", "{E38CA762-40D2-4ED5-A989-F67D87010503}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Remoting.Client", "tests\Remoting.Client\Remoting.Client.fsproj", "{2FE23B2C-3310-4783-8CCE-A8B44099DEFE}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Remoting.Client", "tests\Remoting.Client\Remoting.Client.fsproj", "{2FE23B2C-3310-4783-8CCE-A8B44099DEFE}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Unit", "tests\Unit\Unit.fsproj", "{D3E139A8-A6FA-49A3-B982-BC57D1BB0B2B}"
 EndProject

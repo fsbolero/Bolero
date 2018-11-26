@@ -125,10 +125,10 @@ UI tests are run as follows:
 
 * This application and the browser are started during NUnit setup in `Web/Fixture.fs`.
 
-* Corresponding NUnit tests are defined in the `Tests` folder. They must be defined in the namespace `Bolero.Tests.Web` for NUnit setup to work properly. They can use `WebFixture.GetFixture` during NUnit setup to query elements. See for example the `SetUp` function in `Html.fs`.
+* Corresponding NUnit tests are defined in the `Tests` folder. They must be defined in the namespace `Bolero.Tests.Web` for NUnit setup to work properly. They can use `NodeFixture` to query elements. It must be initialized during NUnit setup. See for example the `SetUp` function in `Tests/Html.fs`.
 
 So, in summary, a UI test category `Foo` consists of:
 
 * A Bolero component defined in `Web/App.Foo.fs` and added to `Web/App.fs`;
 
-* NUnit tests defined in `Tests/Foo.fs`, using `WebFixture` to query and interact with the component.
+* NUnit tests defined in `Tests/Foo.fs`, using `NodeFixture` to query and interact with the component.
