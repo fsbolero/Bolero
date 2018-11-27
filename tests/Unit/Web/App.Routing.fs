@@ -14,6 +14,8 @@ type Page =
     | [<EndPoint "/with-nested-union">] WithNestedUnion of Page
     | [<EndPoint "/with-tuple">] WithTuple of (int * string * bool)
     | [<EndPoint "/with-record">] WithRecord of Record
+    | [<EndPoint "/with-list">] WithList of list<int * string>
+    | [<EndPoint "/with-array">] WithArray of (int * string)[]
 
     member this.ExpectedUrl'(isInitial: bool) =
         match this with
@@ -26,6 +28,10 @@ type Page =
         | WithNestedUnion u -> sprintf "/with-nested-union%s" (u.ExpectedUrl' false)
         | WithTuple((i, s, b)) -> sprintf "/with-tuple/%i/%s/%b" i s b
         | WithRecord { x = x; y = y; z = z } -> sprintf "/with-record/%i%s/%b" x y.ExpectedUrl z
+        | WithList l -> sprintf "/with-list/%i%s" l.Length
+                        <| String.concat "" [for i, s in l -> sprintf "/%i/%s" i s]
+        | WithArray a -> sprintf "/with-array/%i%s" a.Length
+                        <| String.concat "" [for i, s in a -> sprintf "/%i/%s" i s]
 
     member this.ExpectedUrl = this.ExpectedUrl'(true)
 
@@ -93,6 +99,10 @@ let baseLinks =
             //"withargs3", WithArgs("", 3)
             "withtuple1", WithTuple(42, "hi", true)
             //"withtuple2", WithTuple(324, "", false)
+            "withlist1", WithList [2, "a"; 34, "b"]
+            //"withlist2", WithList [2, ""; 34, "b"]
+            "witharray1", WithArray [|2, "a"; 34, "b"|]
+            //"witharray2", WithArray [|2, ""; 34, "b"|]
         ]
         for cls, page in innerlinks true do
             yield "inner" + cls, WithUnion page
@@ -122,6 +132,8 @@ let rec matchPage = function
     | WithNestedUnion u -> sprintf "withnested-%s" (matchPage u)
     | WithTuple(x, y, z) -> sprintf "withtuple-%i-%s-%b" x y z
     | WithRecord { x = x; y = y; z = z } -> sprintf "withrecord-%i-%s-%b" x (matchInnerPage y) z
+    | WithList l -> sprintf "withlist-%s" (String.concat "-" [for i, s in l -> sprintf "%i-%s" i s])
+    | WithArray a -> sprintf "witharray-%s" (String.concat "-" [for i, s in a -> sprintf "%i-%s" i s])
 
 let view model dispatch =
     concat [

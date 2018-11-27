@@ -118,6 +118,68 @@ module Router =
         typeof<decimal>, baseTypeSegment<decimal>()
     ]
 
+    let private sequenceSegment getSegment (ty: Type) revAndConvert toListAndLength : Segment =
+        let itemSegment = getSegment ty
+        let rec parse acc remainingLength fragments =
+            if remainingLength = 0 then
+                ok (revAndConvert acc, fragments)
+            else
+                itemSegment.parse fragments
+                |> Seq.collect (fun (x, rest) ->
+                    parse (x :: acc) (remainingLength - 1) rest)
+        {
+            parse = function
+                | x :: rest ->
+                    match Int32.TryParse(x) with
+                    | true, length -> parse [] length rest
+                    | false, _ -> fail
+                | _ -> fail
+            write = fun x ->
+                let list, (length: int) = toListAndLength x
+                string length :: List.collect itemSegment.write list
+        }
+
+    let [<Literal>] private FLAGS_STATIC =
+        Reflection.BindingFlags.Static |||
+        Reflection.BindingFlags.Public |||
+        Reflection.BindingFlags.NonPublic
+
+    let private arrayRevAndUnbox<'T> (l: list<obj>) : 'T[] =
+        let a = [|for x in l -> unbox<'T> x|]
+        Array.Reverse(a)
+        a
+
+    let private arrayLengthAndBox<'T> (a: array<'T>) : list<obj> * int =
+        [for x in a -> box x], a.Length
+
+    let private arraySegment getSegment ty : Segment =
+        let arrayRevAndUnbox =
+            typeof<Segment>.DeclaringType.GetMethod("arrayRevAndUnbox", FLAGS_STATIC)
+                .MakeGenericMethod([|ty|])
+        let arrayLengthAndBox =
+            typeof<Segment>.DeclaringType.GetMethod("arrayLengthAndBox", FLAGS_STATIC)
+                .MakeGenericMethod([|ty|])
+        sequenceSegment getSegment ty
+            (fun l -> arrayRevAndUnbox.Invoke(null, [|l|]))
+            (fun l -> arrayLengthAndBox.Invoke(null, [|l|]) :?> _)
+
+    let private listRevAndUnbox<'T> (l: list<obj>) : list<'T> =
+        List.map unbox<'T> l |> List.rev
+
+    let private listLengthAndBox<'T> (l: list<'T>) : list<obj> * int =
+        List.mapFold (fun l e -> box e, l + 1) 0 l
+
+    let private listSegment getSegment ty : Segment =
+        let listRevAndUnbox =
+            typeof<Segment>.DeclaringType.GetMethod("listRevAndUnbox", FLAGS_STATIC)
+                .MakeGenericMethod([|ty|])
+        let listLengthAndBox =
+            typeof<Segment>.DeclaringType.GetMethod("listLengthAndBox", FLAGS_STATIC)
+                .MakeGenericMethod([|ty|])
+        sequenceSegment getSegment ty
+            (fun l -> listRevAndUnbox.Invoke(null, [|l|]))
+            (fun l -> listLengthAndBox.Invoke(null, [|l|]) :?> _)
+
     let private parseEndPointCasePath (case: UnionCaseInfo) =
         case.GetCustomAttributes()
         |> Array.tryPick (function
@@ -216,7 +278,11 @@ module Router =
             cache.[ty] <- !segment
             let getSegment = getSegment cache
             segment :=
-                if FSharpType.IsUnion(ty, true) then
+                if ty.IsArray && ty.GetArrayRank() = 1 then
+                    arraySegment getSegment (ty.GetElementType())
+                elif ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<list<_>> then
+                    listSegment getSegment (ty.GetGenericArguments().[0])
+                elif FSharpType.IsUnion(ty, true) then
                     unionSegment getSegment ty
                 elif FSharpType.IsTuple(ty) then
                     tupleSegment getSegment ty
