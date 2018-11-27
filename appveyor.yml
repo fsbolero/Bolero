@@ -24,6 +24,9 @@ environment:
   GH_TOKEN:
     secure: dhFy1eZoqG4QPkKTuLFxix7QQMxaIyIpYjkvTU3CukYZz1CEOJeHfBSaT8tkPsGL
 
+nuget:
+  disable_publish_on_pr: true
+
 for:
 - branches:
     only:
