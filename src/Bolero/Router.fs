@@ -58,6 +58,14 @@ module Router =
     type ArraySegment<'T> with
         member this.Item with get(i) = this.Array.[this.Offset + i]
 
+    type private SegmentParser = list<string> -> option<obj * list<string>>
+    type private SegmentWriter = obj -> list<string>
+    type private Segment =
+        {
+            parse: SegmentParser
+            write: SegmentWriter
+        }
+
     let inline private tryParseBaseType<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
         fun s ->
             let mutable out = Unchecked.defaultof<'T>
@@ -66,20 +74,35 @@ module Router =
             else
                 None
 
-    let private baseTypes : IDictionary<Type, string -> option<obj>> = dict [
-        typeof<string>, box >> Some
-        typeof<bool>, tryParseBaseType<bool>()
-        typeof<Byte>, tryParseBaseType<Byte>()
-        typeof<SByte>, tryParseBaseType<SByte>()
-        typeof<Int16>, tryParseBaseType<Int16>()
-        typeof<UInt16>, tryParseBaseType<UInt16>()
-        typeof<Int32>, tryParseBaseType<Int32>()
-        typeof<UInt32>, tryParseBaseType<UInt32>()
-        typeof<Int64>, tryParseBaseType<Int64>()
-        typeof<UInt64>, tryParseBaseType<UInt64>()
-        typeof<single>, tryParseBaseType<single>()
-        typeof<float>, tryParseBaseType<float>()
-        typeof<decimal>, tryParseBaseType<decimal>()
+    let inline private baseTypeSegment<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
+        {
+            parse = function
+                | [] -> None
+                | x :: rest ->
+                    tryParseBaseType<'T>() x
+                    |> Option.map (fun x -> box x, rest)
+            write = fun x -> [string x]
+        }
+
+    let private baseTypes : IDictionary<Type, Segment> = dict [
+        typeof<string>, {
+            parse = function
+                | [] -> None
+                | x :: rest -> Some (box x, rest)
+            write = unbox<string> >> List.singleton
+        }
+        typeof<bool>, baseTypeSegment<bool>()
+        typeof<Byte>, baseTypeSegment<Byte>()
+        typeof<SByte>, baseTypeSegment<SByte>()
+        typeof<Int16>, baseTypeSegment<Int16>()
+        typeof<UInt16>, baseTypeSegment<UInt16>()
+        typeof<Int32>, baseTypeSegment<Int32>()
+        typeof<UInt32>, baseTypeSegment<UInt32>()
+        typeof<Int64>, baseTypeSegment<Int64>()
+        typeof<UInt64>, baseTypeSegment<UInt64>()
+        typeof<single>, baseTypeSegment<single>()
+        typeof<float>, baseTypeSegment<float>()
+        typeof<decimal>, baseTypeSegment<decimal>()
     ]
 
     let private parseEndPointCasePath (case: UnionCaseInfo) =
@@ -89,85 +112,88 @@ module Router =
             | _ -> None)
         |> Option.defaultWith (fun () -> case.Name)
 
-    let private makeFragmentsParser (case: UnionCaseInfo) =
-        let fields =
-            case.GetFields()
-            |> Array.map (fun field ->
-                match baseTypes.TryGetValue field.PropertyType with
-                | true, f -> f
-                | false, _ ->
-                    failwithf "Router.Infer: unsupported union field type: %s in %s"
-                        field.PropertyType.FullName case.Name
-            )
+    let private makeUnionCaseArgsParser getSegment (case: UnionCaseInfo) : SegmentParser =
+        let fields = case.GetFields() |> Array.map (fun p -> getSegment p.PropertyType)
         let ctor = FSharpValue.PreComputeUnionConstructor case
-        fun (fragments: ArraySegment<string>) ->
-            if fragments.Count <> fields.Length then None else
+        fun (fragments: list<string>) ->
             let args = Array.zeroCreate fields.Length
-            let rec go i =
+            let rec go i fragments =
                 if i = fields.Length then
-                    Some (ctor args)
+                    Some (ctor args, fragments)
                 else
-                    match fields.[i] fragments.[i] with
-                    | Some x ->
+                    match fields.[i].parse fragments with
+                    | Some (x, rest) ->
                         args.[i] <- x
-                        go (i + 1)
+                        go (i + 1) rest
                     | None -> None
-            go 0
+            go 0 fragments
 
-    let private makeFragmentsWriter (path: string) (case: UnionCaseInfo) =
+    let private makeUnionCaseWriter getSegment (path: string) (case: UnionCaseInfo) =
+        let fields = case.GetFields() |> Array.map (fun p -> (getSegment p.PropertyType).write)
         let reader = FSharpValue.PreComputeUnionReader(case, true)
         fun (r: obj) ->
-            let b = StringBuilder()
-            let args = reader r
-            if path <> "" then
-                b.Append(path) |> ignore
-            args |> Array.iteri (fun i arg ->
-                if i > 0 || path <> "" then
-                    b.Append('/') |> ignore
-                b.Append(arg.ToString()) |> ignore
-            )
-            b.ToString()
+            let args = Array.map2 (<|) fields (reader r) |> List.concat
+            if path <> "" then path :: args else args
+
+    let private getUnionSegment (getSegment: Type -> Segment) (ty: Type) : Segment =
+        let parsers, readers =
+            FSharpType.GetUnionCases(ty, true)
+            |> Array.map (fun case ->
+                let path = parseEndPointCasePath case
+                (path, makeUnionCaseArgsParser getSegment case), makeUnionCaseWriter getSegment path case)
+            |> Array.unzip
+        let parsers = dict parsers
+        let getRoute =
+            let tagReader = FSharpValue.PreComputeUnionTagReader(ty, true)
+            fun r -> readers.[tagReader r] r
+        let unprefixedSetRoute path =
+            match parsers.TryGetValue "" with
+            | true, c -> c path
+            | false, _ -> None
+        let setRoute path =
+            match path with
+            | head :: rest ->
+                match parsers.TryGetValue head with
+                | true, c -> c rest
+                | false, _ -> None
+            | [] -> None
+            |> Option.orElseWith (fun () -> unprefixedSetRoute path)
+        { parse = setRoute; write = getRoute }
+
+    let rec private getSegment (cache: Dictionary<Type, Segment>) (ty: Type) : Segment =
+        let getSegment = getSegment cache
+        match cache.TryGetValue(ty) with
+        | true, x -> unbox x
+        | false, _ ->
+            let segment =
+                if FSharpType.IsUnion(ty, true) then
+                    getUnionSegment getSegment ty
+                else
+                    failwithf "Router.Infer used with %s, which is not an F# union type." ty.FullName
+            cache.[ty] <- segment
+            segment
 
     /// Infer a router constructed around an endpoint type `'ep`.
     /// This type must be an F# union type, and its cases should use `EndPointAttribute`
     /// to declare how they match to a URI.
     let infer<'ep, 'model, 'msg> (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) =
         let ty = typeof<'ep>
-        if not (FSharpType.IsUnion ty) then
-            failwithf "Router.Infer used with %s, which is not an F# union type." ty.FullName
-        let cases =
-            FSharpType.GetUnionCases(ty, true)
-            |> Array.map (fun case ->
-                let path = parseEndPointCasePath case
-                path, makeFragmentsParser case, makeFragmentsWriter path case)
-        let parsers =
-            cases
-            |> Array.map (fun (path, parser, _) -> path, parser)
-            |> dict
-        let getRoute =
-            let tagReader = FSharpValue.PreComputeUnionTagReader(ty, true)
-            fun r ->
-                let _, _, f = cases.[tagReader r]
-                f r
-        let setRoute (s: string) =
-            let fragments = s.Split('/')
-            match parsers.TryGetValue fragments.[0] with
-            | true, c ->
-                ArraySegment(fragments, 1, fragments.Length - 1)
-                |> c
-                |> Option.map (unbox<'ep> >> makeMessage)
-            | false, _ ->
-                match parsers.TryGetValue "" with
-                | true, c ->
-                    ArraySegment(fragments)
-                    |> c
-                    |> Option.map (unbox<'ep> >> makeMessage)
-                | false, _ ->
-                    None
+        let cache = Dictionary()
+        for KeyValue(k, v) in baseTypes do cache.Add(k, v)
+        let frag = getSegment cache ty
         {
             getEndPoint = getEndPoint
-            getRoute = getRoute
-            setRoute = setRoute
+            getRoute = fun ep ->
+                box ep
+                |> frag.write
+                |> String.concat "/"
+            setRoute = fun path ->
+                path.Split('/')
+                |> List.ofArray
+                |> frag.parse
+                |> Option.bind (function
+                    | x, [] -> Some (unbox<'ep> x |> makeMessage)
+                    | _ -> None)
         }
 
 [<Extension>]
