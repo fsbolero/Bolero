@@ -12,6 +12,7 @@ type Page =
     | [<EndPoint "/with-union">] WithUnion of InnerPage
     | [<EndPoint "/with-union2">] WithUnionNotTerminal of InnerPage * string
     | [<EndPoint "/with-tuple">] WithTuple of (int * string * bool)
+    | [<EndPoint "/with-record">] WithRecord of Record
 
     member this.ExpectedUrl =
         match this with
@@ -19,9 +20,10 @@ type Page =
         | NoArg -> "/no-arg"
         | WithArg s -> sprintf "/with-arg/%s" s
         | WithArgs(s, i) -> sprintf "/with-args/%s/%i" s i
-        | WithUnion u -> sprintf "/with-union%s" (u.ExpectedUrl true)
-        | WithUnionNotTerminal(u, s) -> sprintf "/with-union%s/%s" (u.ExpectedUrl false) s
+        | WithUnion u -> sprintf "/with-union%s" u.ExpectedUrl
+        | WithUnionNotTerminal(u, s) -> sprintf "/with-union2%s/%s" u.ExpectedUrl s
         | WithTuple((i, s, b)) -> sprintf "/with-tuple/%i/%s/%b" i s b
+        | WithRecord { x = x; y = y; z = z } -> sprintf "/with-record/%i%s/%b" x y.ExpectedUrl z
 
 and InnerPage =
     | [<EndPoint "/">] InnerHome
@@ -29,12 +31,19 @@ and InnerPage =
     | [<EndPoint "/with-arg">] InnerWithArg of string
     | [<EndPoint "/with-args">] InnerWithArgs of string * int
 
-    member this.ExpectedUrl(isTerminal: bool) =
+    member this.ExpectedUrl =
         match this with
-        | InnerHome -> if isTerminal then "" else "/"
+        | InnerHome -> ""
         | InnerNoArg -> "/no-arg"
         | InnerWithArg s -> sprintf "/with-arg/%s" s
         | InnerWithArgs(s, i) -> sprintf "/with-args/%s/%i" s i
+
+and Record =
+    {
+        x: int
+        y: InnerPage
+        z: bool
+    }
 
 type Model =
     {
@@ -86,6 +95,7 @@ let links =
         for cls, page in innerlinks false do
             yield "innernonterminal1" + cls, WithUnionNotTerminal (page, "foo")
             yield "innernonterminal2" + cls, WithUnionNotTerminal (page, "")
+            yield "withrecord" + cls, WithRecord { x = 1; y = page; z = true }
     ]
 
 let matchInnerPage = function
@@ -102,6 +112,7 @@ let matchPage = function
     | WithUnion u -> "withunion-" + matchInnerPage u
     | WithUnionNotTerminal(u, s) -> sprintf "withunion2-%s-%s" (matchInnerPage u) s
     | WithTuple(x, y, z) -> sprintf "withtuple-%i-%s-%b" x y z
+    | WithRecord { x = x; y = y; z = z } -> sprintf "withrecord-%i-%s-%b" x (matchInnerPage y) z
 
 let view model dispatch =
     concat [

@@ -193,6 +193,15 @@ module Router =
             write = writeConsecutiveTypes getSegment tys dector
         }
 
+    let private recordSegment getSegment ty =
+        let tys = FSharpType.GetRecordFields(ty, true) |> Array.map (fun p -> p.PropertyType)
+        let ctor = FSharpValue.PreComputeRecordConstructor(ty, true)
+        let dector = FSharpValue.PreComputeRecordReader(ty, true)
+        {
+            parse = parseConsecutiveTypes getSegment tys ctor
+            write = writeConsecutiveTypes getSegment tys dector
+        }
+
     let rec private getSegment (cache: Dictionary<Type, Segment>) (ty: Type) : Segment =
         let getSegment = getSegment cache
         match cache.TryGetValue(ty) with
@@ -203,6 +212,8 @@ module Router =
                     unionSegment getSegment ty
                 elif FSharpType.IsTuple(ty) then
                     tupleSegment getSegment ty
+                elif FSharpType.IsRecord(ty, true) then
+                    recordSegment getSegment ty
                 else
                     failwithf "Router.Infer used with %s, which is not an F# union type." ty.FullName
             cache.[ty] <- segment
