@@ -8,7 +8,7 @@ open FsCheck
 open Bolero.Tests
 
 /// Server remote calls.
-[<Category "Remoting">]
+[<Category "Remoting"; NonParallelizable>]
 module Remoting =
 
     let elt = NodeFixture()
@@ -18,7 +18,7 @@ module Remoting =
         elt.Init("test-fixture-remoting")
 
 
-    [<Property(MaxTest = 10)>]
+    [<Property(MaxTest = 10); NonParallelizable>]
     let ``Set and remove key`` (Alphanum k) (Alphanum v) =
         let keyInp = elt.ByClass("key-input")
         let valInp = elt.ByClass("value-input")

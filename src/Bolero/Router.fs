@@ -1,5 +1,7 @@
 namespace Bolero
 
+#nowarn "40" // recursive value `segment` in getSegment
+
 open System
 open System.Collections.Generic
 open System.Runtime.CompilerServices
@@ -58,6 +60,18 @@ module Router =
     type ArraySegment<'T> with
         member this.Item with get(i) = this.Array.[this.Offset + i]
 
+    type private SegmentParserResult = seq<obj * list<string>>
+    type private SegmentParser = list<string> -> SegmentParserResult
+    type private SegmentWriter = obj -> list<string>
+    type private Segment =
+        {
+            parse: SegmentParser
+            write: SegmentWriter
+        }
+
+    let private fail : SegmentParserResult = Seq.empty
+    let private ok x : SegmentParserResult = Seq.singleton x
+
     let inline private tryParseBaseType<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
         fun s ->
             let mutable out = Unchecked.defaultof<'T>
@@ -66,21 +80,105 @@ module Router =
             else
                 None
 
-    let private baseTypes : IDictionary<Type, string -> option<obj>> = dict [
-        typeof<string>, box >> Some
-        typeof<bool>, tryParseBaseType<bool>()
-        typeof<Byte>, tryParseBaseType<Byte>()
-        typeof<SByte>, tryParseBaseType<SByte>()
-        typeof<Int16>, tryParseBaseType<Int16>()
-        typeof<UInt16>, tryParseBaseType<UInt16>()
-        typeof<Int32>, tryParseBaseType<Int32>()
-        typeof<UInt32>, tryParseBaseType<UInt32>()
-        typeof<Int64>, tryParseBaseType<Int64>()
-        typeof<UInt64>, tryParseBaseType<UInt64>()
-        typeof<single>, tryParseBaseType<single>()
-        typeof<float>, tryParseBaseType<float>()
-        typeof<decimal>, tryParseBaseType<decimal>()
+    let inline private defaultBaseTypeParser<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> = function
+        | [] -> fail
+        | x :: rest ->
+            match tryParseBaseType<'T>() x with
+            | Some x -> ok (box x, rest)
+            | None -> fail
+
+    let inline private baseTypeSegment<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
+        {
+            parse = defaultBaseTypeParser<'T>
+            write = fun x -> [string x]
+        }
+
+    let private baseTypes : IDictionary<Type, Segment> = dict [
+        typeof<string>, {
+            parse = function
+                | [] -> fail
+                | x :: rest -> ok (box x, rest)
+            write = unbox<string> >> List.singleton
+        }
+        typeof<bool>, {
+            parse = defaultBaseTypeParser<bool>
+            // `string true` returns capitalized "True", but we want lowercase "true".
+            write = fun x -> [(if unbox x then "true" else "false")]
+        }
+        typeof<Byte>, baseTypeSegment<Byte>()
+        typeof<SByte>, baseTypeSegment<SByte>()
+        typeof<Int16>, baseTypeSegment<Int16>()
+        typeof<UInt16>, baseTypeSegment<UInt16>()
+        typeof<Int32>, baseTypeSegment<Int32>()
+        typeof<UInt32>, baseTypeSegment<UInt32>()
+        typeof<Int64>, baseTypeSegment<Int64>()
+        typeof<UInt64>, baseTypeSegment<UInt64>()
+        typeof<single>, baseTypeSegment<single>()
+        typeof<float>, baseTypeSegment<float>()
+        typeof<decimal>, baseTypeSegment<decimal>()
     ]
+
+    let private sequenceSegment getSegment (ty: Type) revAndConvert toListAndLength : Segment =
+        let itemSegment = getSegment ty
+        let rec parse acc remainingLength fragments =
+            if remainingLength = 0 then
+                ok (revAndConvert acc, fragments)
+            else
+                itemSegment.parse fragments
+                |> Seq.collect (fun (x, rest) ->
+                    parse (x :: acc) (remainingLength - 1) rest)
+        {
+            parse = function
+                | x :: rest ->
+                    match Int32.TryParse(x) with
+                    | true, length -> parse [] length rest
+                    | false, _ -> fail
+                | _ -> fail
+            write = fun x ->
+                let list, (length: int) = toListAndLength x
+                string length :: List.collect itemSegment.write list
+        }
+
+    let [<Literal>] private FLAGS_STATIC =
+        Reflection.BindingFlags.Static |||
+        Reflection.BindingFlags.Public |||
+        Reflection.BindingFlags.NonPublic
+
+    let private arrayRevAndUnbox<'T> (l: list<obj>) : 'T[] =
+        let a = [|for x in l -> unbox<'T> x|]
+        Array.Reverse(a)
+        a
+
+    let private arrayLengthAndBox<'T> (a: array<'T>) : list<obj> * int =
+        [for x in a -> box x], a.Length
+
+    let private arraySegment getSegment ty : Segment =
+        let arrayRevAndUnbox =
+            typeof<Segment>.DeclaringType.GetMethod("arrayRevAndUnbox", FLAGS_STATIC)
+                .MakeGenericMethod([|ty|])
+        let arrayLengthAndBox =
+            typeof<Segment>.DeclaringType.GetMethod("arrayLengthAndBox", FLAGS_STATIC)
+                .MakeGenericMethod([|ty|])
+        sequenceSegment getSegment ty
+            (fun l -> arrayRevAndUnbox.Invoke(null, [|l|]))
+            (fun l -> arrayLengthAndBox.Invoke(null, [|l|]) :?> _)
+
+    let private listRevAndUnbox<'T> (l: list<obj>) : list<'T> =
+        List.map unbox<'T> l |> List.rev
+
+    let private listLengthAndBox<'T> (l: list<'T>) : list<obj> * int =
+        List.mapFold (fun l e -> box e, l + 1) 0 l
+
+    let private listSegment getSegment ty : Segment =
+        let listRevAndUnbox =
+            typeof<Segment>.DeclaringType.GetMethod("listRevAndUnbox", FLAGS_STATIC)
+                .MakeGenericMethod([|ty|])
+        let listLengthAndBox =
+            typeof<Segment>.DeclaringType.GetMethod("listLengthAndBox", FLAGS_STATIC)
+                .MakeGenericMethod([|ty|])
+        sequenceSegment getSegment ty
+            (fun l -> listRevAndUnbox.Invoke(null, [|l|]))
+            (fun l -> listLengthAndBox.Invoke(null, [|l|]) :?> _)
 
     let private parseEndPointCasePath (case: UnionCaseInfo) =
         case.GetCustomAttributes()
@@ -89,85 +187,133 @@ module Router =
             | _ -> None)
         |> Option.defaultWith (fun () -> case.Name)
 
-    let private makeFragmentsParser (case: UnionCaseInfo) =
-        let fields =
-            case.GetFields()
-            |> Array.map (fun field ->
-                match baseTypes.TryGetValue field.PropertyType with
-                | true, f -> f
-                | false, _ ->
-                    failwithf "Router.Infer: unsupported union field type: %s in %s"
-                        field.PropertyType.FullName case.Name
-            )
-        let ctor = FSharpValue.PreComputeUnionConstructor case
-        fun (fragments: ArraySegment<string>) ->
-            if fragments.Count <> fields.Length then None else
+    let private parseConsecutiveTypes getSegment (tys: Type[]) (ctor: obj[] -> obj) : SegmentParser =
+        let fields = Array.map getSegment tys
+        fun (fragments: list<string>) ->
             let args = Array.zeroCreate fields.Length
-            let rec go i =
+            let rec go i fragments =
                 if i = fields.Length then
-                    Some (ctor args)
+                    ok (ctor args, fragments)
                 else
-                    match fields.[i] fragments.[i] with
-                    | Some x ->
+                    fields.[i].parse fragments
+                    |> Seq.collect (fun (x, rest) ->
                         args.[i] <- x
-                        go (i + 1)
-                    | None -> None
-            go 0
+                        go (i + 1) rest
+                    )
+            go 0 fragments
 
-    let private makeFragmentsWriter (path: string) (case: UnionCaseInfo) =
-        let reader = FSharpValue.PreComputeUnionReader(case, true)
+    let private writeConsecutiveTypes getSegment (tys: Type[]) (dector: obj -> obj[]) : SegmentWriter =
+        let fields = tys |> Array.map (fun t -> (getSegment t).write)
         fun (r: obj) ->
-            let b = StringBuilder()
-            let args = reader r
-            if path <> "" then
-                b.Append(path) |> ignore
-            args |> Array.iteri (fun i arg ->
-                if i > 0 || path <> "" then
-                    b.Append('/') |> ignore
-                b.Append(arg.ToString()) |> ignore
-            )
-            b.ToString()
+            Array.map2 (<|) fields (dector r)
+            |> List.concat
+
+    let private parseUnionCaseArgs getSegment (case: UnionCaseInfo) : SegmentParser =
+        let tys = case.GetFields() |> Array.map (fun p -> p.PropertyType)
+        let ctor = FSharpValue.PreComputeUnionConstructor case
+        parseConsecutiveTypes getSegment tys ctor
+
+    let private writeUnionCase getSegment (path: string) (case: UnionCaseInfo) =
+        let tys = case.GetFields() |> Array.map (fun p -> p.PropertyType)
+        let dector = FSharpValue.PreComputeUnionReader(case, true)
+        let write = writeConsecutiveTypes getSegment tys dector
+        match path with
+        | "" -> write
+        | path -> fun r -> path :: write r
+
+    let private unionSegment (getSegment: Type -> Segment) (ty: Type) : Segment =
+        let parsers, readers =
+            FSharpType.GetUnionCases(ty, true)
+            |> Array.map (fun case ->
+                let path = parseEndPointCasePath case
+                (path, parseUnionCaseArgs getSegment case), writeUnionCase getSegment path case)
+            |> Array.unzip
+        let parsers = dict parsers
+        let getRoute =
+            let tagReader = FSharpValue.PreComputeUnionTagReader(ty, true)
+            fun r -> readers.[tagReader r] r
+        let unprefixedSetRoute path =
+            match parsers.TryGetValue "" with
+            | true, c -> c path
+            | false, _ -> fail
+        let setRoute path =
+            seq {
+                match path with
+                | head :: rest ->
+                    match parsers.TryGetValue head with
+                    | true, c -> yield! c rest
+                    | false, _ -> ()
+                | [] -> ()
+                yield! unprefixedSetRoute path
+            }
+        { parse = setRoute; write = getRoute }
+
+    let private tupleSegment getSegment ty =
+        let tys = FSharpType.GetTupleElements ty
+        let ctor = FSharpValue.PreComputeTupleConstructor ty
+        let dector = FSharpValue.PreComputeTupleReader ty
+        {
+            parse = parseConsecutiveTypes getSegment tys ctor
+            write = writeConsecutiveTypes getSegment tys dector
+        }
+
+    let private recordSegment getSegment ty =
+        let tys = FSharpType.GetRecordFields(ty, true) |> Array.map (fun p -> p.PropertyType)
+        let ctor = FSharpValue.PreComputeRecordConstructor(ty, true)
+        let dector = FSharpValue.PreComputeRecordReader(ty, true)
+        {
+            parse = parseConsecutiveTypes getSegment tys ctor
+            write = writeConsecutiveTypes getSegment tys dector
+        }
+
+    let rec private getSegment (cache: Dictionary<Type, Segment>) (ty: Type) : Segment =
+        match cache.TryGetValue(ty) with
+        | true, x -> unbox x
+        | false, _ ->
+            // Add lazy version in case ty is recursive.
+            let rec segment = ref {
+                parse = fun x -> (!segment).parse x
+                write = fun x -> (!segment).write x
+            }
+            cache.[ty] <- !segment
+            let getSegment = getSegment cache
+            segment :=
+                if ty.IsArray && ty.GetArrayRank() = 1 then
+                    arraySegment getSegment (ty.GetElementType())
+                elif ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<list<_>> then
+                    listSegment getSegment (ty.GetGenericArguments().[0])
+                elif FSharpType.IsUnion(ty, true) then
+                    unionSegment getSegment ty
+                elif FSharpType.IsTuple(ty) then
+                    tupleSegment getSegment ty
+                elif FSharpType.IsRecord(ty, true) then
+                    recordSegment getSegment ty
+                else
+                    failwithf "Router.Infer used with type %s, which is not supported." ty.FullName
+            cache.[ty] <- !segment
+            !segment
 
     /// Infer a router constructed around an endpoint type `'ep`.
     /// This type must be an F# union type, and its cases should use `EndPointAttribute`
     /// to declare how they match to a URI.
     let infer<'ep, 'model, 'msg> (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) =
         let ty = typeof<'ep>
-        if not (FSharpType.IsUnion ty) then
-            failwithf "Router.Infer used with %s, which is not an F# union type." ty.FullName
-        let cases =
-            FSharpType.GetUnionCases(ty, true)
-            |> Array.map (fun case ->
-                let path = parseEndPointCasePath case
-                path, makeFragmentsParser case, makeFragmentsWriter path case)
-        let parsers =
-            cases
-            |> Array.map (fun (path, parser, _) -> path, parser)
-            |> dict
-        let getRoute =
-            let tagReader = FSharpValue.PreComputeUnionTagReader(ty, true)
-            fun r ->
-                let _, _, f = cases.[tagReader r]
-                f r
-        let setRoute (s: string) =
-            let fragments = s.Split('/')
-            match parsers.TryGetValue fragments.[0] with
-            | true, c ->
-                ArraySegment(fragments, 1, fragments.Length - 1)
-                |> c
-                |> Option.map (unbox<'ep> >> makeMessage)
-            | false, _ ->
-                match parsers.TryGetValue "" with
-                | true, c ->
-                    ArraySegment(fragments)
-                    |> c
-                    |> Option.map (unbox<'ep> >> makeMessage)
-                | false, _ ->
-                    None
+        let cache = Dictionary()
+        for KeyValue(k, v) in baseTypes do cache.Add(k, v)
+        let frag = getSegment cache ty
         {
             getEndPoint = getEndPoint
-            getRoute = getRoute
-            setRoute = setRoute
+            getRoute = fun ep ->
+                box ep
+                |> frag.write
+                |> String.concat "/"
+            setRoute = fun path ->
+                path.Split('/')
+                |> List.ofArray
+                |> frag.parse
+                |> Seq.tryPick (function
+                    | x, [] -> Some (unbox<'ep> x |> makeMessage)
+                    | _ -> None)
         }
 
 [<Extension>]
