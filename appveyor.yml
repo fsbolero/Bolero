@@ -5,8 +5,8 @@ build:
   verbosity: minimal
 
 branches:
-  only:
-  - master
+  except:
+  - gh-pages
 
 init:
 - git config --global core.autocrlf input
@@ -17,13 +17,17 @@ build_script:
 test_script:
 - ps: .\build.cmd -s -t test -c Release --push-tests "https://ci.appveyor.com/api/testresults/mstest/$env:APPVEYOR_JOB_ID"
 
-artifacts:
-- path: build\*.nupkg
-  name: nuget
-
 on_success:
 - ps: .\tools\gh-pages.ps1 -env appveyor
 
 environment:
   GH_TOKEN:
     secure: dhFy1eZoqG4QPkKTuLFxix7QQMxaIyIpYjkvTU3CukYZz1CEOJeHfBSaT8tkPsGL
+
+for:
+- branches:
+    only:
+    - master
+  artifacts:
+  - path: build\*.nupkg
+    name: nuget
