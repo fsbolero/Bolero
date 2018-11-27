@@ -11,6 +11,7 @@ type Page =
     | [<EndPoint "/with-args">] WithArgs of string * int
     | [<EndPoint "/with-union">] WithUnion of InnerPage
     | [<EndPoint "/with-union2">] WithUnionNotTerminal of InnerPage * string
+    | [<EndPoint "/with-tuple">] WithTuple of (int * string * bool)
 
 and InnerPage =
     | [<EndPoint "/">] InnerHome
@@ -60,6 +61,8 @@ let links =
             "withargs1", WithArgs("foo", 1), "/with-args/foo/1"
             "withargs2", WithArgs("bar", 2), "/with-args/bar/2"
             "withargs3", WithArgs("", 3), "/with-args//3"
+            "withtuple1", WithTuple(42, "hi", true), "/with-tuple/42/hi/True"
+            "withtuple2", WithTuple(324, "", false), "/with-tuple/324//False"
         ]
         for cls, page, url in innerlinks true do
             yield "inner" + cls, WithUnion page, "/with-union" + url
@@ -81,6 +84,7 @@ let matchPage = function
     | WithArgs(x, y) -> sprintf "withargs-%s-%i" x y
     | WithUnion u -> "withunion-" + matchInnerPage u
     | WithUnionNotTerminal(u, s) -> sprintf "withunion2-%s-%s" (matchInnerPage u) s
+    | WithTuple(x, y, z) -> sprintf "withtuple-%i-%s-%b" x y z
 
 let view model dispatch =
     concat [

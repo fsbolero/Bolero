@@ -58,13 +58,17 @@ module Router =
     type ArraySegment<'T> with
         member this.Item with get(i) = this.Array.[this.Offset + i]
 
-    type private SegmentParser = list<string> -> option<obj * list<string>>
+    type private SegmentParserResult = seq<obj * list<string>>
+    type private SegmentParser = list<string> -> SegmentParserResult
     type private SegmentWriter = obj -> list<string>
     type private Segment =
         {
             parse: SegmentParser
             write: SegmentWriter
         }
+
+    let private fail : SegmentParserResult = Seq.empty
+    let private ok x : SegmentParserResult = Seq.singleton x
 
     let inline private tryParseBaseType<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
         fun s ->
@@ -77,18 +81,19 @@ module Router =
     let inline private baseTypeSegment<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
         {
             parse = function
-                | [] -> None
+                | [] -> fail
                 | x :: rest ->
-                    tryParseBaseType<'T>() x
-                    |> Option.map (fun x -> box x, rest)
+                    match tryParseBaseType<'T>() x with
+                    | Some x -> ok (box x, rest)
+                    | None -> fail
             write = fun x -> [string x]
         }
 
     let private baseTypes : IDictionary<Type, Segment> = dict [
         typeof<string>, {
             parse = function
-                | [] -> None
-                | x :: rest -> Some (box x, rest)
+                | [] -> fail
+                | x :: rest -> ok (box x, rest)
             write = unbox<string> >> List.singleton
         }
         typeof<bool>, baseTypeSegment<bool>()
@@ -112,35 +117,46 @@ module Router =
             | _ -> None)
         |> Option.defaultWith (fun () -> case.Name)
 
-    let private makeUnionCaseArgsParser getSegment (case: UnionCaseInfo) : SegmentParser =
-        let fields = case.GetFields() |> Array.map (fun p -> getSegment p.PropertyType)
-        let ctor = FSharpValue.PreComputeUnionConstructor case
+    let private parseConsecutiveTypes getSegment (tys: Type[]) (ctor: obj[] -> obj) : SegmentParser =
+        let fields = Array.map getSegment tys
         fun (fragments: list<string>) ->
             let args = Array.zeroCreate fields.Length
             let rec go i fragments =
                 if i = fields.Length then
-                    Some (ctor args, fragments)
+                    ok (ctor args, fragments)
                 else
-                    match fields.[i].parse fragments with
-                    | Some (x, rest) ->
+                    fields.[i].parse fragments
+                    |> Seq.collect (fun (x, rest) ->
                         args.[i] <- x
                         go (i + 1) rest
-                    | None -> None
+                    )
             go 0 fragments
 
-    let private makeUnionCaseWriter getSegment (path: string) (case: UnionCaseInfo) =
-        let fields = case.GetFields() |> Array.map (fun p -> (getSegment p.PropertyType).write)
-        let reader = FSharpValue.PreComputeUnionReader(case, true)
+    let private writeConsecutiveTypes getSegment (tys: Type[]) (dector: obj -> obj[]) : SegmentWriter =
+        let fields = tys |> Array.map (fun t -> (getSegment t).write)
         fun (r: obj) ->
-            let args = Array.map2 (<|) fields (reader r) |> List.concat
-            if path <> "" then path :: args else args
+            Array.map2 (<|) fields (dector r)
+            |> List.concat
 
-    let private getUnionSegment (getSegment: Type -> Segment) (ty: Type) : Segment =
+    let private parseUnionCaseArgs getSegment (case: UnionCaseInfo) : SegmentParser =
+        let tys = case.GetFields() |> Array.map (fun p -> p.PropertyType)
+        let ctor = FSharpValue.PreComputeUnionConstructor case
+        parseConsecutiveTypes getSegment tys ctor
+
+    let private writeUnionCase getSegment (path: string) (case: UnionCaseInfo) =
+        let tys = case.GetFields() |> Array.map (fun p -> p.PropertyType)
+        let dector = FSharpValue.PreComputeUnionReader(case, true)
+        let write = writeConsecutiveTypes getSegment tys dector
+        match path with
+        | "" -> write
+        | path -> fun r -> path :: write r
+
+    let private unionSegment (getSegment: Type -> Segment) (ty: Type) : Segment =
         let parsers, readers =
             FSharpType.GetUnionCases(ty, true)
             |> Array.map (fun case ->
                 let path = parseEndPointCasePath case
-                (path, makeUnionCaseArgsParser getSegment case), makeUnionCaseWriter getSegment path case)
+                (path, parseUnionCaseArgs getSegment case), writeUnionCase getSegment path case)
             |> Array.unzip
         let parsers = dict parsers
         let getRoute =
@@ -149,16 +165,27 @@ module Router =
         let unprefixedSetRoute path =
             match parsers.TryGetValue "" with
             | true, c -> c path
-            | false, _ -> None
+            | false, _ -> fail
         let setRoute path =
-            match path with
-            | head :: rest ->
-                match parsers.TryGetValue head with
-                | true, c -> c rest
-                | false, _ -> None
-            | [] -> None
-            |> Option.orElseWith (fun () -> unprefixedSetRoute path)
+            seq {
+                match path with
+                | head :: rest ->
+                    match parsers.TryGetValue head with
+                    | true, c -> yield! c rest
+                    | false, _ -> ()
+                | [] -> ()
+                yield! unprefixedSetRoute path
+            }
         { parse = setRoute; write = getRoute }
+
+    let private tupleSegment getSegment ty =
+        let tys = FSharpType.GetTupleElements ty
+        let ctor = FSharpValue.PreComputeTupleConstructor ty
+        let dector = FSharpValue.PreComputeTupleReader ty
+        {
+            parse = parseConsecutiveTypes getSegment tys ctor
+            write = writeConsecutiveTypes getSegment tys dector
+        }
 
     let rec private getSegment (cache: Dictionary<Type, Segment>) (ty: Type) : Segment =
         let getSegment = getSegment cache
@@ -167,7 +194,9 @@ module Router =
         | false, _ ->
             let segment =
                 if FSharpType.IsUnion(ty, true) then
-                    getUnionSegment getSegment ty
+                    unionSegment getSegment ty
+                elif FSharpType.IsTuple(ty) then
+                    tupleSegment getSegment ty
                 else
                     failwithf "Router.Infer used with %s, which is not an F# union type." ty.FullName
             cache.[ty] <- segment
@@ -191,7 +220,7 @@ module Router =
                 path.Split('/')
                 |> List.ofArray
                 |> frag.parse
-                |> Option.bind (function
+                |> Seq.tryPick (function
                     | x, [] -> Some (unbox<'ep> x |> makeMessage)
                     | _ -> None)
         }
