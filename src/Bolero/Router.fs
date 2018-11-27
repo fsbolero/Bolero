@@ -78,14 +78,16 @@ module Router =
             else
                 None
 
+    let inline private defaultBaseTypeParser<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> = function
+        | [] -> fail
+        | x :: rest ->
+            match tryParseBaseType<'T>() x with
+            | Some x -> ok (box x, rest)
+            | None -> fail
+
     let inline private baseTypeSegment<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
         {
-            parse = function
-                | [] -> fail
-                | x :: rest ->
-                    match tryParseBaseType<'T>() x with
-                    | Some x -> ok (box x, rest)
-                    | None -> fail
+            parse = defaultBaseTypeParser<'T>
             write = fun x -> [string x]
         }
 
@@ -96,7 +98,11 @@ module Router =
                 | x :: rest -> ok (box x, rest)
             write = unbox<string> >> List.singleton
         }
-        typeof<bool>, baseTypeSegment<bool>()
+        typeof<bool>, {
+            parse = defaultBaseTypeParser<bool>
+            // `string true` returns capitalized "True", but we want lowercase "true".
+            write = fun x -> [(if unbox x then "true" else "false")]
+        }
         typeof<Byte>, baseTypeSegment<Byte>()
         typeof<SByte>, baseTypeSegment<SByte>()
         typeof<Int16>, baseTypeSegment<Int16>()

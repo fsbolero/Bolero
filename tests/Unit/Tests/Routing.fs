@@ -18,7 +18,8 @@ module Routing =
         |> List.map TestCaseData
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
-    let ``Click link``(linkCls, page, url) =
+    let ``Click link``(linkCls, page: App.Routing.Page) =
+        let url = page.ExpectedUrl
         elt.ByClass("link-" + linkCls).Click()
         let resCls = App.Routing.matchPage page
         let res = elt.Wait(fun () -> elt.ByClass(resCls))
@@ -26,7 +27,8 @@ module Routing =
         Assert.AreEqual(WebFixture.Url + url, WebFixture.Driver.Url)
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
-    let ``Set by model``(linkCls, page, url) =
+    let ``Set by model``(linkCls, page: App.Routing.Page) =
+        let url = page.ExpectedUrl
         elt.ByClass("btn-" + linkCls).Click()
         let resCls = App.Routing.matchPage page
         let res = elt.Wait(fun () -> elt.ByClass(resCls))

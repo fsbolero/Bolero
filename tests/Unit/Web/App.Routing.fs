@@ -13,11 +13,28 @@ type Page =
     | [<EndPoint "/with-union2">] WithUnionNotTerminal of InnerPage * string
     | [<EndPoint "/with-tuple">] WithTuple of (int * string * bool)
 
+    member this.ExpectedUrl =
+        match this with
+        | Home -> "/"
+        | NoArg -> "/no-arg"
+        | WithArg s -> sprintf "/with-arg/%s" s
+        | WithArgs(s, i) -> sprintf "/with-args/%s/%i" s i
+        | WithUnion u -> sprintf "/with-union%s" (u.ExpectedUrl true)
+        | WithUnionNotTerminal(u, s) -> sprintf "/with-union%s/%s" (u.ExpectedUrl false) s
+        | WithTuple((i, s, b)) -> sprintf "/with-tuple/%i/%s/%b" i s b
+
 and InnerPage =
     | [<EndPoint "/">] InnerHome
     | [<EndPoint "/no-arg">] InnerNoArg
     | [<EndPoint "/with-arg">] InnerWithArg of string
     | [<EndPoint "/with-args">] InnerWithArgs of string * int
+
+    member this.ExpectedUrl(isTerminal: bool) =
+        match this with
+        | InnerHome -> if isTerminal then "" else "/"
+        | InnerNoArg -> "/no-arg"
+        | InnerWithArg s -> sprintf "/with-arg/%s" s
+        | InnerWithArgs(s, i) -> sprintf "/with-args/%s/%i" s i
 
 type Model =
     {
@@ -40,35 +57,35 @@ let router = Router.infer SetPage (fun m -> m.page)
 
 let innerlinks isTerminal =
     [
-        "home", InnerHome, ""
-        "noarg", InnerNoArg, "/no-arg"
-        "witharg1", (InnerWithArg "foo"), "/with-arg/foo"
-        "witharg2", (InnerWithArg "bar"), "/with-arg/bar"
-        "witharg3", (InnerWithArg ""), "/with-arg/"
-        "withargs1", (InnerWithArgs("foo", 1)), "/with-args/foo/1"
-        "withargs2", (InnerWithArgs("bar", 2)), "/with-args/bar/2"
-        "withargs3", (InnerWithArgs("", 3)), "/with-args//3"
+        "home", InnerHome
+        "noarg", InnerNoArg
+        "witharg1", InnerWithArg "foo"
+        "witharg2", InnerWithArg "bar"
+        "witharg3", InnerWithArg ""
+        "withargs1", InnerWithArgs("foo", 1)
+        "withargs2", InnerWithArgs("bar", 2)
+        "withargs3", InnerWithArgs("", 3)
     ]
 
 let links =
     [
         yield! [
-            "home", Home, "/"
-            "noarg", NoArg, "/no-arg"
-            "witharg1", WithArg "foo", "/with-arg/foo"
-            "witharg2", WithArg "bar", "/with-arg/bar"
-            "witharg3", WithArg "", "/with-arg/"
-            "withargs1", WithArgs("foo", 1), "/with-args/foo/1"
-            "withargs2", WithArgs("bar", 2), "/with-args/bar/2"
-            "withargs3", WithArgs("", 3), "/with-args//3"
-            "withtuple1", WithTuple(42, "hi", true), "/with-tuple/42/hi/True"
-            "withtuple2", WithTuple(324, "", false), "/with-tuple/324//False"
+            "home", Home
+            "noarg", NoArg
+            "witharg1", WithArg "foo"
+            "witharg2", WithArg "bar"
+            "witharg3", WithArg ""
+            "withargs1", WithArgs("foo", 1)
+            "withargs2", WithArgs("bar", 2)
+            "withargs3", WithArgs("", 3)
+            "withtuple1", WithTuple(42, "hi", true)
+            "withtuple2", WithTuple(324, "", false)
         ]
-        for cls, page, url in innerlinks true do
-            yield "inner" + cls, WithUnion page, "/with-union" + url
-        for cls, page, url in innerlinks false do
-            yield "innernonterminal1" + cls, WithUnionNotTerminal (page, "foo"), "/with-union2" + url + "/foo"
-            yield "innernonterminal2" + cls, WithUnionNotTerminal (page, ""), "/with-union2" + url + "/"
+        for cls, page in innerlinks true do
+            yield "inner" + cls, WithUnion page
+        for cls, page in innerlinks false do
+            yield "innernonterminal1" + cls, WithUnionNotTerminal (page, "foo")
+            yield "innernonterminal2" + cls, WithUnionNotTerminal (page, "")
     ]
 
 let matchInnerPage = function
@@ -88,7 +105,8 @@ let matchPage = function
 
 let view model dispatch =
     concat [
-        for cls, page, url in links do
+        for cls, page in links do
+            let url = page.ExpectedUrl
             yield a [attr.classes ["link-" + cls]; router.HRef page] [text url]
             yield button [
                 attr.classes ["btn-" + cls]
