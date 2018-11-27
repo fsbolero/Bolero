@@ -1,5 +1,7 @@
 namespace Bolero
 
+#nowarn "40" // recursive value `segment` in getSegment
+
 open System
 open System.Collections.Generic
 open System.Runtime.CompilerServices
@@ -203,11 +205,17 @@ module Router =
         }
 
     let rec private getSegment (cache: Dictionary<Type, Segment>) (ty: Type) : Segment =
-        let getSegment = getSegment cache
         match cache.TryGetValue(ty) with
         | true, x -> unbox x
         | false, _ ->
-            let segment =
+            // Add lazy version in case ty is recursive.
+            let rec segment = ref {
+                parse = fun x -> (!segment).parse x
+                write = fun x -> (!segment).write x
+            }
+            cache.[ty] <- !segment
+            let getSegment = getSegment cache
+            segment :=
                 if FSharpType.IsUnion(ty, true) then
                     unionSegment getSegment ty
                 elif FSharpType.IsTuple(ty) then
@@ -215,9 +223,9 @@ module Router =
                 elif FSharpType.IsRecord(ty, true) then
                     recordSegment getSegment ty
                 else
-                    failwithf "Router.Infer used with %s, which is not an F# union type." ty.FullName
-            cache.[ty] <- segment
-            segment
+                    failwithf "Router.Infer used with type %s, which is not supported." ty.FullName
+            cache.[ty] <- !segment
+            !segment
 
     /// Infer a router constructed around an endpoint type `'ep`.
     /// This type must be an F# union type, and its cases should use `EndPointAttribute`

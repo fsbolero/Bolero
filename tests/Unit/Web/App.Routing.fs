@@ -11,19 +11,23 @@ type Page =
     | [<EndPoint "/with-args">] WithArgs of string * int
     | [<EndPoint "/with-union">] WithUnion of InnerPage
     | [<EndPoint "/with-union2">] WithUnionNotTerminal of InnerPage * string
+    | [<EndPoint "/with-nested-union">] WithNestedUnion of Page
     | [<EndPoint "/with-tuple">] WithTuple of (int * string * bool)
     | [<EndPoint "/with-record">] WithRecord of Record
 
-    member this.ExpectedUrl =
+    member this.ExpectedUrl'(isInitial: bool) =
         match this with
-        | Home -> "/"
+        | Home -> if isInitial then "/" else ""
         | NoArg -> "/no-arg"
         | WithArg s -> sprintf "/with-arg/%s" s
         | WithArgs(s, i) -> sprintf "/with-args/%s/%i" s i
         | WithUnion u -> sprintf "/with-union%s" u.ExpectedUrl
         | WithUnionNotTerminal(u, s) -> sprintf "/with-union2%s/%s" u.ExpectedUrl s
+        | WithNestedUnion u -> sprintf "/with-nested-union%s" (u.ExpectedUrl' false)
         | WithTuple((i, s, b)) -> sprintf "/with-tuple/%i/%s/%b" i s b
         | WithRecord { x = x; y = y; z = z } -> sprintf "/with-record/%i%s/%b" x y.ExpectedUrl z
+
+    member this.ExpectedUrl = this.ExpectedUrl'(true)
 
 and InnerPage =
     | [<EndPoint "/">] InnerHome
@@ -70,33 +74,37 @@ let innerlinks isTerminal =
         "noarg", InnerNoArg
         "witharg1", InnerWithArg "foo"
         "witharg2", InnerWithArg "bar"
-        "witharg3", InnerWithArg ""
+        //"witharg3", InnerWithArg ""
         "withargs1", InnerWithArgs("foo", 1)
         "withargs2", InnerWithArgs("bar", 2)
-        "withargs3", InnerWithArgs("", 3)
+        //"withargs3", InnerWithArgs("", 3)
     ]
 
-let links =
+let baseLinks =
     [
         yield! [
             "home", Home
             "noarg", NoArg
             "witharg1", WithArg "foo"
             "witharg2", WithArg "bar"
-            "witharg3", WithArg ""
+            //"witharg3", WithArg ""
             "withargs1", WithArgs("foo", 1)
             "withargs2", WithArgs("bar", 2)
-            "withargs3", WithArgs("", 3)
+            //"withargs3", WithArgs("", 3)
             "withtuple1", WithTuple(42, "hi", true)
-            "withtuple2", WithTuple(324, "", false)
+            //"withtuple2", WithTuple(324, "", false)
         ]
         for cls, page in innerlinks true do
             yield "inner" + cls, WithUnion page
         for cls, page in innerlinks false do
             yield "innernonterminal1" + cls, WithUnionNotTerminal (page, "foo")
-            yield "innernonterminal2" + cls, WithUnionNotTerminal (page, "")
+            //yield "innernonterminal2" + cls, WithUnionNotTerminal (page, "")
             yield "withrecord" + cls, WithRecord { x = 1; y = page; z = true }
     ]
+
+let links =
+    baseLinks @
+    List.map (fun (cls, page) -> "withnested" + cls, WithNestedUnion page) baseLinks
 
 let matchInnerPage = function
     | InnerHome -> "home"
@@ -104,13 +112,14 @@ let matchInnerPage = function
     | InnerWithArg x -> sprintf "witharg-%s" x
     | InnerWithArgs(x, y) -> sprintf "withargs-%s-%i" x y
 
-let matchPage = function
+let rec matchPage = function
     | Home -> "home"
     | NoArg -> "noarg"
     | WithArg x -> sprintf "witharg-%s" x
     | WithArgs(x, y) -> sprintf "withargs-%s-%i" x y
     | WithUnion u -> "withunion-" + matchInnerPage u
     | WithUnionNotTerminal(u, s) -> sprintf "withunion2-%s-%s" (matchInnerPage u) s
+    | WithNestedUnion u -> sprintf "withnested-%s" (matchPage u)
     | WithTuple(x, y, z) -> sprintf "withtuple-%i-%s-%b" x y z
     | WithRecord { x = x; y = y; z = z } -> sprintf "withrecord-%i-%s-%b" x (matchInnerPage y) z
 
