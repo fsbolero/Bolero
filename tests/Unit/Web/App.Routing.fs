@@ -80,10 +80,10 @@ let innerlinks isTerminal =
         "noarg", InnerNoArg
         "witharg1", InnerWithArg "foo"
         "witharg2", InnerWithArg "bar"
-        //"witharg3", InnerWithArg ""
+        "witharg3", InnerWithArg ""
         "withargs1", InnerWithArgs("foo", 1)
         "withargs2", InnerWithArgs("bar", 2)
-        //"withargs3", InnerWithArgs("", 3)
+        "withargs3", InnerWithArgs("", 3)
     ]
 
 let baseLinks =
@@ -93,22 +93,22 @@ let baseLinks =
             "noarg", NoArg
             "witharg1", WithArg "foo"
             "witharg2", WithArg "bar"
-            //"witharg3", WithArg ""
+            "witharg3", WithArg ""
             "withargs1", WithArgs("foo", 1)
             "withargs2", WithArgs("bar", 2)
-            //"withargs3", WithArgs("", 3)
+            "withargs3", WithArgs("", 3)
             "withtuple1", WithTuple(42, "hi", true)
-            //"withtuple2", WithTuple(324, "", false)
+            "withtuple2", WithTuple(324, "", false)
             "withlist1", WithList [2, "a"; 34, "b"]
-            //"withlist2", WithList [2, ""; 34, "b"]
+            "withlist2", WithList [2, ""; 34, "b"]
             "witharray1", WithArray [|2, "a"; 34, "b"|]
-            //"witharray2", WithArray [|2, ""; 34, "b"|]
+            "witharray2", WithArray [|2, ""; 34, "b"|]
         ]
         for cls, page in innerlinks true do
             yield "inner" + cls, WithUnion page
         for cls, page in innerlinks false do
             yield "innernonterminal1" + cls, WithUnionNotTerminal (page, "foo")
-            //yield "innernonterminal2" + cls, WithUnionNotTerminal (page, "")
+            yield "innernonterminal2" + cls, WithUnionNotTerminal (page, "")
             yield "withrecord" + cls, WithRecord { x = 1; y = page; z = true }
     ]
 

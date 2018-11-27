@@ -1,5 +1,6 @@
 namespace Bolero.Tests.Web
 
+open System.Threading
 open NUnit.Framework
 open OpenQA.Selenium
 
@@ -30,6 +31,7 @@ module Routing =
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
     let ``Set by model``(linkCls, page: App.Routing.Page) =
+        Thread.Sleep(500) // Some cases fail without this, mainly ones with empty strings. TODO: investigate
         let url = page.ExpectedUrl
         elt.ByClass("btn-" + linkCls).Click()
         let resCls = App.Routing.matchPage page
