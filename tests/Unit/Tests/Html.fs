@@ -1,6 +1,7 @@
 namespace Bolero.Tests.Web
 
 open NUnit.Framework
+open OpenQA.Selenium
 
 /// Basic HTML functionality: node and attribute functions, Blazor components.
 [<Category "HTML">]
@@ -50,7 +51,7 @@ module Html =
     [<Test>]
     let ``Boolean cond reacts to events``() =
         let inp = elt.ByClass("condBoolInput")
-        for i = 0 to 10 do inp.SendKeys("\b")
+        inp.Clear()
         inp.SendKeys("ab")
         elt.AssertEventually(fun () ->
             elt.ByClass("condBoolIs2"))
@@ -63,7 +64,7 @@ module Html =
     [<Test>]
     let ``Union cond reacts to events``() =
         let inp = elt.ByClass("condUnionInput")
-        for i = 0 to 10 do inp.SendKeys("\b")
+        inp.Clear()
         elt.AssertEventually(fun () ->
             elt.ByClass("condUnionIsEmpty"))
         Assert.IsNull(elt.ByClass("condUnionIsOne"))
@@ -82,13 +83,13 @@ module Html =
     [<Test>]
     let ``Render many forEach items``() =
         let inp = elt.ByClass("forEachInput")
-        for i = 0 to 10 do inp.SendKeys("\b")
+        inp.Clear()
         inp.SendKeys("ABC")
         elt.AssertEventually(fun () ->
             elt.ByClass("forEachIsA"))
         Assert.IsNotNull(elt.ByClass("forEachIsB"))
         Assert.IsNotNull(elt.ByClass("forEachIsC"))
-        inp.SendKeys("\b")
+        inp.SendKeys(Keys.Backspace)
         elt.AssertEventually(fun () ->
             isNull <| elt.ByClass("forEachIsC"))
         Assert.IsNotNull(elt.ByClass("forEachIsA"))

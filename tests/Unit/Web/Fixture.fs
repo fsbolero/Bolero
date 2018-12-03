@@ -7,6 +7,7 @@ open Microsoft.AspNetCore.Hosting
 open NUnit.Framework
 open OpenQA.Selenium
 open OpenQA.Selenium.Chrome
+open OpenQA.Selenium.Firefox
 open OpenQA.Selenium.Remote
 open OpenQA.Selenium.Support.UI
 
@@ -24,16 +25,29 @@ type WebFixture() =
 
     static let url = "http://localhost:51608"
 
+    static let startChrome() =
+        async {
+            let options = ChromeOptions()
+            options.AddArguments ["headless"; "disable-gpu"]
+            driver <- new ChromeDriver(Environment.CurrentDirectory, options)
+        }
+
+    static let startFirefox() =
+        async {
+            let options = FirefoxOptions()
+            options.AddArgument "-headless"
+            driver <- new FirefoxDriver(System.Environment.CurrentDirectory, options)
+        }
+
+    static member MkWait(timeout) =
+        WebDriverWait(SystemClock(), driver, timeout, TimeSpan.FromMilliseconds(500.))
+
     [<OneTimeSetUp>]
     member this.SetUp() =
         async {
             // Start Selenium and ASP.NET Core in parallel
             let! _ = Async.Parallel [
-                async {
-                    let options = ChromeOptions()
-                    options.AddArguments ["headless"; "disable-gpu"]
-                    driver <- new ChromeDriver(System.Environment.CurrentDirectory, options)
-                }
+                startChrome()
                 async {
                     server <- WebHost.CreateDefaultBuilder()
                         .UseStartup<Startup>()
@@ -45,7 +59,7 @@ type WebFixture() =
 
             // Once both are started, browse and wait for the page to render.
             driver.Navigate().GoToUrl(url)
-            root <- WebDriverWait(driver, TimeSpan.FromSeconds(5.))
+            root <- WebFixture.MkWait(TimeSpan.FromSeconds(5.))
                 .Until(fun d -> try d.FindElement(By.Id "test-fixture") with _ -> null)
         }
         |> Async.StartImmediateAsTask
@@ -81,6 +95,11 @@ and NodeFixture() =
     member this.Init(id) =
         this.Root <- WebFixture.Root.FindElement(By.Id id)
 
+    /// Get a node fixture nested in the root of this one.
+    /// The returned fixture doesn't need to be `Init()`ed.
+    member this.Inner(by) =
+        new NodeFixture(Root = this.Root.FindElement(by))
+
     /// Get child element by id.
     member this.ById(x) =
         try this.Root.FindElement(By.Id x)
@@ -93,7 +112,7 @@ and NodeFixture() =
 
     /// Wait for the given callback to return a non-false non-null value.
     member this.Wait(cond, ?timeout) =
-        WebDriverWait(WebFixture.Driver,
+        WebFixture.MkWait(
             timeout |> Option.defaultWith (fun () -> TimeSpan.FromSeconds(5.)))
             .Until(fun _ -> cond())
 
@@ -106,3 +125,27 @@ and NodeFixture() =
         match message with
         | None -> Assert.DoesNotThrow(TestDelegate run)
         | Some m -> Assert.DoesNotThrow(TestDelegate run, m)
+
+    /// NUnit assertion that the actual value eventually becomes equal to the expected value.
+    member this.AssertAreEqualEventually(expected, getActual, ?message: string, ?timeout) =
+        let mutable actual = Unchecked.defaultof<_>
+        try this.Wait(
+                (fun () ->
+                    actual <- getActual()
+                    expected = actual),
+                ?timeout = timeout) |> ignore
+        with :? WebDriverTimeoutException -> ()
+        match message with
+        | None -> Assert.AreEqual(expected, actual)
+        | Some m -> Assert.AreEqual(expected, actual, m)
+
+[<AutoOpen>]
+module Extensions =
+
+    type IWebElement with
+        member this.ByClass(cls) =
+            this.FindElement(By.ClassName cls)
+
+        member this.SendIndividualKeys(s: string) =
+            for c in s do
+                this.SendKeys(string c)

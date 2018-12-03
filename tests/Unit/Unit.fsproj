@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="Utility.fs" />
     <Compile Include="Web\App.Html.fs" />
+    <Compile Include="Web\App.Templating.fs" />
     <Compile Include="Web\App.Elmish.fs" />
     <Compile Include="Web\App.Routing.fs" />
     <Compile Include="Web\App.Remoting.fs" />
@@ -17,6 +18,7 @@
     <Compile Include="Web\Fixture.fs" />
     <Compile Include="Tests\Json.fs" />
     <Compile Include="Tests\Html.fs" />
+    <Compile Include="Tests\Templating.fs" />
     <Compile Include="Tests\Elmish.fs" />
     <Compile Include="Tests\Routing.fs" />
     <Compile Include="Tests\Remoting.fs" />

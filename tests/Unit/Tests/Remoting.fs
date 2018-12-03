@@ -2,7 +2,7 @@ namespace Bolero.Tests.Web
 
 open System.Threading.Tasks
 open NUnit.Framework
-open OpenQA.Selenium.Support.UI
+open OpenQA.Selenium
 open FsCheck.NUnit
 open FsCheck
 open Bolero.Tests
@@ -25,11 +25,11 @@ module Remoting =
         let addBtn = elt.ByClass("add-btn")
         let remBtn = elt.ByClass("rem-btn")
         keyInp.Clear()
-        // Add a letter and a backspace so that some input is sent
+        // Add an "End" key so that some input is sent
         // even if the string is empty, to ensure that oninput is triggered
-        keyInp.SendKeys(k + "a\b")
+        keyInp.SendKeys(k + Keys.End)
         valInp.Clear()
-        valInp.SendKeys(v + "a\b")
+        valInp.SendKeys(v + Keys.End)
         sprintf "%s => %s" k v @| [
             "remove" @| (
                 remBtn.Click()

@@ -1,7 +1,7 @@
 namespace Bolero.Tests.Web
 
 open NUnit.Framework
-open OpenQA.Selenium.Support.UI
+open OpenQA.Selenium
 
 /// Elmish program integration.
 [<Category "Elmish">]
@@ -22,7 +22,8 @@ module Elmish =
 
     [<Test>]
     let ``Input event handler dispatches message``() =
-        elt.ByClass("stringValue-input").SendKeys("Changed!\b")
+        let el = elt.ByClass("stringValue-input")
+        el.SendKeys("Changed!" + Keys.Backspace)
         elt.AssertEventually((fun () ->
             elt.ByClass("stringValue-repeat").Text = "stringValueInitChanged"),
             "Element not updated")
