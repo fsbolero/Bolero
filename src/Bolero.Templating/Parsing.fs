@@ -432,7 +432,7 @@ let ParseDoc (doc: HtmlDocument) =
 
 let GetDoc (fileOrContent: string) (rootFolder: string) =
     let doc = HtmlDocument()
-    if fileOrContent.StartsWith("<") then
+    if fileOrContent.Contains("<") then
         doc.LoadHtml(fileOrContent)
     else
         doc.Load(Path.Combine(rootFolder, fileOrContent))
