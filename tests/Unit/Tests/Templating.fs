@@ -25,9 +25,17 @@ module Templating =
         Assert.IsNotNull(elt.ByClass("inline"))
 
     [<Test>]
+    let ``File template is instantiated``() =
+        Assert.IsNotNull(elt.ByClass("file"))
+
+    [<Test>]
     let ``Node hole filled with string``() =
         Assert.AreEqual("NodeHole1 content",
             elt.ByClass("nodehole1").Text)
+
+    [<Test>]
+    let ``File template node hole filled``() =
+        Assert.IsNotNull(elt.ByClass("file").ByClass("file-hole"))
 
     [<Test>]
     let ``Node hole filled with node``() =

@@ -20,6 +20,8 @@ type Inline = Template<"""
     </div>
 """>
 
+type File = Template<"Web/testtemplate.html">
+
 type Events = Template<"""
     <div class="events">
         <button class="btn1" onclick="${Click1}">btn1</button>
@@ -157,6 +159,9 @@ let Tests() =
             .AttrHole1("attrhole1-content")
             .AttrHole2("attrhole2-content")
             .AttrHole3("attrhole3-content")
+            .Elt()
+        File()
+            .SimpleHole(div [attr.classes ["file-hole"]] [])
             .Elt()
         comp<EventTester> [] []
         comp<BindTester> [] []

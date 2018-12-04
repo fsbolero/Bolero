@@ -17,6 +17,7 @@
     <Compile Include="Web\Startup.fs" />
     <Compile Include="Web\Fixture.fs" />
     <Content Include="Web\index.html" />
+    <Content Include="Web\testtemplate.html" />
     <Compile Include="Tests\Json.fs" />
     <Compile Include="Tests\Html.fs" />
     <Compile Include="Tests\Templating.fs" />
