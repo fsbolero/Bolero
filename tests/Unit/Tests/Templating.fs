@@ -189,3 +189,30 @@ module Templating =
         Assert.AreEqual("123.456",
             elt.ByClass(sprintf "input%s3-2" cls).GetAttribute("value"),
             "Propagation to other input")
+
+    [<Test>]
+    let ``Bind checkbox``() =
+        let elt = elt.Inner(By.ClassName "binds")
+        let inp1 = elt.ByClass("input4-1")
+        let inp2 = elt.ByClass("input4-2")
+        let isChecked (inp: IWebElement) =
+            match inp.GetAttribute("checked") with
+            | null -> false
+            | s -> bool.Parse s
+        let initial = false
+        Assert.AreEqual(initial, isChecked inp1)
+        Assert.AreEqual(initial, isChecked inp2)
+        inp1.Click()
+        elt.AssertAreEqualEventually(not initial,
+            (fun () -> isChecked inp1),
+            "Click inp1 toggles checked1")
+        elt.AssertAreEqualEventually(not initial,
+            (fun () -> isChecked inp2),
+            "Click inp1 toggles checked2")
+        inp2.Click()
+        elt.AssertAreEqualEventually(initial,
+            (fun () -> isChecked inp1),
+            "Click inp2 toggles checked1")
+        elt.AssertAreEqualEventually(initial,
+            (fun () -> isChecked inp2),
+            "Click inp2 toggles checked2")

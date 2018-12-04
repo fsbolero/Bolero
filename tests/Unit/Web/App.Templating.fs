@@ -72,6 +72,10 @@ type Binds = Template<"""
         <input type="number" class="input3-2" bind="${Var3}">
         <span class="display3">${Var3}</span>
 
+        <input type="checkbox" class="input4-1" bind="${Var4}">
+        <input type="checkbox" class="input4-2" bind="${Var4}">
+        <span class="display4">${Var4}</span>
+
     <!-- onchange -->
         <input class="input-onchange1-1" bind-onchange="${VarOnchange1}">
         <input class="input-onchange1-2" bind-onchange="${VarOnchange1}">
@@ -99,6 +103,7 @@ type BindTester() =
     let mutable var1 = ""
     let mutable var2 = 0
     let mutable var3 = 0.
+    let mutable var4 = false
     let mutable varOnchange1 = ""
     let mutable varOnchange2 = 0
     let mutable varOnchange3 = 0.
@@ -114,6 +119,10 @@ type BindTester() =
     member this.Var3
         with get() = var3
         and set v = var3 <- v; this.StateHasChanged()
+
+    member this.Var4
+        with get() = var4
+        and set v = var4 <- v; this.StateHasChanged()
 
     member this.VarOnchange1
         with get() = varOnchange1
@@ -132,6 +141,7 @@ type BindTester() =
             .Var1(this.Var1, fun (v: string) -> this.Var1 <- v)
             .Var2(this.Var2, fun (v: int) -> this.Var2 <- v)
             .Var3(this.Var3, fun (v: float) -> this.Var3 <- v)
+            .Var4(this.Var4, fun (v: bool) -> this.Var4 <- v)
             .VarOnchange1(this.VarOnchange1, fun (v: string) -> this.VarOnchange1 <- v)
             .VarOnchange2(this.VarOnchange2, fun (v: int) -> this.VarOnchange2 <- v)
             .VarOnchange3(this.VarOnchange3, fun (v: float) -> this.VarOnchange3 <- v)
