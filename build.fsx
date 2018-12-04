@@ -1,5 +1,5 @@
 #r "paket: groupref fake //"
-#load ".paket/fake/Utility.fsx"
+#load "tools/Utility.fsx"
 
 open System.IO
 open System.Net

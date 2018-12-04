@@ -1,14 +1,13 @@
 @echo off
 
+if not exist .paket\paket.exe dotnet tool install paket --tool-path .paket
+if not exist .paket\fake.exe dotnet tool install fake-cli --tool-path .paket
+
 .paket\paket restore
 if errorlevel 1 exit /b %errorlevel%
-
-cd .paket\fake
 
 dotnet restore
 if errorlevel 1 exit /b %errorlevel%
 
-dotnet fake run ..\..\build.fsx %*
+.paket\fake build %*
 if errorlevel 1 exit /b %errorlevel%
-
-cd ..\..

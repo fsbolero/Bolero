@@ -1,12 +1,10 @@
 #!/bin/bash
 set -e
 
+if ! [ -f .paket/paket.exe ]; then dotnet tool install paket --tool-path .paket; fi
+if ! [ -f .paket/fake.exe ]; then dotnet tool install fake-cli --tool-path .paket; fi
+
 PATH="~/.dotnet:$PATH"
-if [ "$OS" = "Windows_NT" ]; then
-    .paket/paket.exe restore
-else
-    mono .paket/paket.exe restore
-fi
-cd .paket/fake
+.paket/paket restore
 dotnet restore
-dotnet fake run ../../build.fsx "$@"
+.paket/fake build "$@"

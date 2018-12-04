@@ -7,3 +7,4 @@ packages/
 .fake/
 build/
 TestResults/
+.paket/

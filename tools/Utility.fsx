@@ -1,12 +1,12 @@
 module Utility
-#load "../../.fake/build.fsx/intellisense.fsx"
+#load "../.fake/build.fsx/intellisense.fsx"
 
 open System.IO
 open Fake.Core
 open Fake.DotNet
 open Fake.IO
 
-let [<Literal>] slnDir = __SOURCE_DIRECTORY__ + "/../.."
+let [<Literal>] slnDir = __SOURCE_DIRECTORY__ + "/.."
 
 let dotnet' dir env cmd args =
     Printf.kprintf (fun args ->
