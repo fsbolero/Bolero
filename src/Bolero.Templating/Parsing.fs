@@ -414,9 +414,14 @@ type ParsedTemplates =
 
 let ParseDoc (doc: HtmlDocument) =
     let nested =
-        match doc.DocumentNode.SelectNodes("//template") with
-        | null -> [||]
-        | nodes -> Array.ofSeq nodes
+        let templateNodes =
+            match doc.DocumentNode.SelectNodes("//template") with
+            | null -> [||]
+            | nodes -> Array.ofSeq nodes
+        // Remove before processing so that 2-level nested templates don't appear in their parent
+        templateNodes
+        |> Seq.iter (fun n -> n.Remove())
+        templateNodes
         |> Seq.map (fun n ->
             match n.GetAttributeValue("id", null) with
             | null ->
