@@ -5,6 +5,7 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Blazor.Builder
 open Bolero.Remoting
+open Microsoft.Extensions.FileProviders
 
 type BlazorStartup() =
 
@@ -35,19 +36,9 @@ type Startup() =
         |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
-        app.Use(fun ctx next ->
-            if ctx.Request.Path.Value = "/" then
-                use w = new System.IO.StreamWriter(ctx.Response.Body)
-                w.WriteAsync("""<!DOCTYPE html>
-<html>
-    <head><base href="/"></head>
-    <body>
-        <div id="app"></div>
-        <script src="_framework/blazor.server.js"></script>
-    </body>
-</html>"""
-                )
-            else
-                next.Invoke())
+        let fileProvider = new PhysicalFileProvider(__SOURCE_DIRECTORY__)
+        app
+            .UseDefaultFiles(DefaultFilesOptions(FileProvider = fileProvider))
+            .UseStaticFiles(StaticFileOptions(FileProvider = fileProvider))
             .UseServerSideBlazor<BlazorStartup>()
         |> ignore
