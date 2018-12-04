@@ -8,7 +8,6 @@ open OpenQA.Selenium.Support.UI
 /// HTML Templates.
 [<Category "Templating">]
 module Templating =
-    open OpenQA.Selenium.Interactions
 
     let elt = NodeFixture()
 
@@ -120,22 +119,25 @@ module Templating =
             "Propagation to select")
 
     [<Test>]
-    let ``Bind string to textarea``() =
+    [<TestCase("")>]
+    [<TestCase("-onchange")>]
+    let ``Bind string to textarea``(cls: string) =
         let elt = elt.Inner(By.ClassName "binds")
-        let inp = elt.ByClass("textarea1")
+        let inp = elt.ByClass(sprintf"textarea%s1" cls)
         inp.Clear()
         inp.SendKeys("hi textarea")
+        if cls.Contains("onchange") then blur()
         elt.AssertAreEqualEventually("hi textarea",
-            (fun () -> elt.ByClass("display1").Text),
+            (fun () -> elt.ByClass(sprintf "display%s1" cls).Text),
             "Value propagation")
         Assert.AreEqual("hi textarea",
-            elt.ByClass("input1-1").GetAttribute("value"),
+            elt.ByClass(sprintf "input%s1-1" cls).GetAttribute("value"),
             "Propagation to input")
         Assert.AreEqual("hi textarea",
-            elt.ByClass("input1-2").GetAttribute("value"),
+            elt.ByClass(sprintf "input%s1-2" cls).GetAttribute("value"),
             "Propagation to other input")
         Assert.AreEqual("hi textarea",
-            elt.ByClass("select1").GetAttribute("value"),
+            elt.ByClass(sprintf "select%s1" cls).GetAttribute("value"),
             "Propagation to select")
 
     [<Test>]
