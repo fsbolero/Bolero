@@ -163,6 +163,11 @@ let Tests() =
         File()
             .SimpleHole(div [attr.classes ["file-hole"]] [])
             .Elt()
+        File.Nested1()
+            .SimpleHole(div [attr.classes ["nested-hole"]] [])
+            .Elt()
+        File.Nested2()
+            .Elt()
         comp<EventTester> [] []
         comp<BindTester> [] []
     ]

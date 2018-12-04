@@ -224,3 +224,24 @@ module Templating =
         elt.AssertAreEqualEventually(initial,
             (fun () -> isChecked inp2),
             "Click inp2 toggles checked2")
+
+    [<Test>]
+    let ``Nested template is instantiated``() =
+        Assert.IsNotNull(elt.ByClass("nested1"))
+
+    [<Test>]
+    let ``Nested template is removed from its original parent``() =
+        Assert.IsNull(elt.ById("Nested1"))
+
+    [<Test>]
+    let ``Nested template hole filled``() =
+        Assert.IsNotNull(elt.ByClass("nested1").ByClass("nested-hole"))
+        Assert.IsNull(elt.ByClass("nested1").ByClass("file-hole"))
+
+    [<Test>]
+    let ``Recursively nested template is instantiated``() =
+        Assert.IsNotNull(elt.ByClass("nested2"))
+
+    [<Test>]
+    let ``Recursively nested template is removed from its original parent``() =
+        Assert.IsNull(elt.ById("Nested2"))

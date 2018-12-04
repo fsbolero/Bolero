@@ -144,7 +144,8 @@ module Extensions =
 
     type IWebElement with
         member this.ByClass(cls) =
-            this.FindElement(By.ClassName cls)
+            try this.FindElement(By.ClassName cls)
+            with :? NoSuchElementException -> null
 
         member this.SendIndividualKeys(s: string) =
             for c in s do
