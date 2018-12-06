@@ -33,6 +33,9 @@ for:
 - branches:
     only:
     - master
+  matrix:
+    only:
+    - image: Visual Studio 2017
   artifacts:
   - path: build\*.nupkg
     name: nuget
