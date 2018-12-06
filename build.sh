@@ -10,6 +10,4 @@ else
 fi
 
 PATH="~/.dotnet:$PATH"
-.paket/paket restore
-dotnet restore
 .paket/fake build "$@"
