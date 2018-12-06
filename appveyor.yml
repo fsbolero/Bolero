@@ -16,12 +16,12 @@ init:
 build_script:
 - ps: $env:NUGET_PACKAGES = "$env:APPVEYOR_BUILD_FOLDER\.nuget"
 - ps: .\build.cmd -t pack -c Release -v "$env:APPVEYOR_BUILD_VERSION" /p:GhPages=true
-- bash: export NUGET_PACKAGES="$APPVEYOR_BUILD_FOLDER/.nuget"
-- bash: ./build.sh -t pack -c Release -v "$APPVEYOR_BUILD_VERSION" /p:GhPages=true
+- sh: export NUGET_PACKAGES="$APPVEYOR_BUILD_FOLDER/.nuget"
+- sh: ./build.sh -t pack -c Release -v "$APPVEYOR_BUILD_VERSION" /p:GhPages=true
 
 test_script:
 - ps: .\build.cmd -s -t test -c Release --push-tests "https://ci.appveyor.com/api/testresults/mstest/$env:APPVEYOR_JOB_ID"
-- bash: ./build.sh -s -t test -c Release --push-tests "https://ci.appveyor.com/api/testresults/mstest/$APPVEYOR_JOB_ID"
+- sh: ./build.sh -s -t test -c Release --push-tests "https://ci.appveyor.com/api/testresults/mstest/$APPVEYOR_JOB_ID"
 
 environment:
   APPVEYOR_YML_DISABLE_PS_LINUX: true
