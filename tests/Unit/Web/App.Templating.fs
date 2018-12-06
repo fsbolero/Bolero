@@ -149,6 +149,8 @@ type BindTester() =
             .VarOnchange3(this.VarOnchange3, fun (v: float) -> this.VarOnchange3 <- v)
             .Elt()
 
+type ``Regression #11`` = Template<"""<span class="${Hole}">${Hole}</span>""">
+
 let Tests() =
     div [attr.id "test-fixture-templating"] [
         Inline()
@@ -167,6 +169,9 @@ let Tests() =
             .SimpleHole(div [attr.classes ["nested-hole"]] [])
             .Elt()
         File.Nested2()
+            .Elt()
+        ``Regression #11``()
+            .Hole("regression-11")
             .Elt()
         comp<EventTester> [] []
         comp<BindTester> [] []

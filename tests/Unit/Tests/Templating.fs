@@ -245,3 +245,7 @@ module Templating =
     [<Test>]
     let ``Recursively nested template is removed from its original parent``() =
         Assert.IsNull(elt.ById("Nested2"))
+
+    [<Test>]
+    let ``Regression #11: common hole in attrs and children``() =
+        Assert.AreEqual("regression-11", elt.ByClass("regression-11").Text)

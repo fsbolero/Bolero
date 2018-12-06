@@ -167,26 +167,27 @@ type Parsed<'T> =
 
 module Parsed =
 
+    let private substHoles (finalHoles: Holes) (p: Parsed<'T>) =
+        (p.Expr, p.Holes) ||> Map.fold (fun e k v ->
+            // Map var names for holes used multiple times
+            match Map.tryFind k finalHoles with
+            | Some v' when v'.Var <> v.Var ->
+                match Expr.Var v'.Var |> HoleType.Wrap v.Type v'.Type with
+                | None ->
+                    e.Substitute(fun var ->
+                        if var = v.Var
+                        then Some (Expr.Var v'.Var)
+                        else None)
+                | Some value ->
+                    Expr.Let(v.Var, value, e)
+                |> Expr.Cast
+            | Some _ -> e
+            | _ -> e
+        )
+
     let Concat (p: seq<Parsed<'T>>) : Parsed<'T[]> =
         let finalHoles = Holes.MergeMany [ for p in p -> p.Holes ]
-        let exprs = p |> Seq.map (fun p ->
-            (p.Expr, p.Holes) ||> Map.fold (fun e k v ->
-                // Map var names for holes used multiple times
-                match Map.tryFind k finalHoles with
-                | Some v' when v'.Var <> v.Var ->
-                    match Expr.Var v'.Var |> HoleType.Wrap v.Type v'.Type with
-                    | None ->
-                        e.Substitute(fun var ->
-                            if var = v.Var
-                            then Some (Expr.Var v'.Var)
-                            else None)
-                    | Some value ->
-                        Expr.Let(v.Var, value, e)
-                    |> Expr.Cast
-                | Some _ -> e
-                | _ -> e
-            )
-        )
+        let exprs = p |> Seq.map (substHoles finalHoles)
         {
             Holes = finalHoles
             Expr = TExpr.Array<'T> exprs
@@ -199,9 +200,12 @@ module Parsed =
         }
 
     let Map2 (f: Expr<'T> -> Expr<'U> -> Expr<'V>) (p1: Parsed<'T>) (p2: Parsed<'U>) : Parsed<'V> =
+        let finalHoles = Holes.Merge p1.Holes p2.Holes
+        let e1 = substHoles finalHoles p1
+        let e2 = substHoles finalHoles p2
         {
             Holes = Holes.Merge p1.Holes p2.Holes
-            Expr = f p1.Expr p2.Expr
+            Expr = f e1 e2
         }
 
 let HoleNameRE = Regex(@"\${(\w+)}", RegexOptions.Compiled)
