@@ -15,14 +15,14 @@ init:
 
 build_script:
 - ps: .\build.cmd -t pack -c Release -v "$env:APPVEYOR_BUILD_VERSION" /p:GhPages=true
+- bash: ./build.sh -t pack -c Release -v "$APPVEYOR_BUILD_VERSION" /p:GhPages=true
 
 test_script:
 - ps: .\build.cmd -s -t test -c Release --push-tests "https://ci.appveyor.com/api/testresults/mstest/$env:APPVEYOR_JOB_ID"
-
-on_success:
-- ps: .\tools\gh-pages.ps1 -env appveyor
+- bash: ./build.sh -s -t test -c Release --push-tests "https://ci.appveyor.com/api/testresults/mstest/$APPVEYOR_JOB_ID"
 
 environment:
+  APPVEYOR_YML_DISABLE_PS_LINUX: true
   GH_TOKEN:
     secure: dhFy1eZoqG4QPkKTuLFxix7QQMxaIyIpYjkvTU3CukYZz1CEOJeHfBSaT8tkPsGL
 
@@ -30,6 +30,8 @@ nuget:
   disable_publish_on_pr: true
 
 for:
+
+# Publish to NuGet and github.io only from Windows on master
 - branches:
     only:
     - master
@@ -39,3 +41,5 @@ for:
   artifacts:
   - path: build\*.nupkg
     name: nuget
+  on_success:
+  - ps: .\tools\gh-pages.ps1 -env appveyor
