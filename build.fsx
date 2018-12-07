@@ -109,7 +109,9 @@ Target.create "assemblyinfo" (fun o ->
 )
 
 Target.description "Run a full compilation"
-Target.create "build" ignore
+Target.create "build" (fun _ ->
+    dotnet "build-server" "shutdown" // Using this to avoid locking of the output dlls
+)
 
 Target.description "Create the NuGet packages"
 Target.create "pack" (fun o ->
