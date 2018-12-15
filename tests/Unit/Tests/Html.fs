@@ -9,6 +9,11 @@ module Html =
 
     let elt = NodeFixture()
 
+    let blur() =
+        WebFixture.Driver
+            .ExecuteScript("document.activeElement.blur()")
+            |> ignore
+
     [<OneTimeSetUp>]
     let SetUp() =
         elt.Init("test-fixture-html")
@@ -94,3 +99,64 @@ module Html =
             isNull <| elt.ByClass("forEachIsC"))
         Assert.IsNotNull(elt.ByClass("forEachIsA"))
         Assert.IsNotNull(elt.ByClass("forEachIsB"))
+
+    [<Test>]
+    let ``bind.input``() =
+        let inp = elt.ByClass("bind-input")
+        inp.Clear()
+        inp.SendKeys("ABC")
+        elt.AssertEventually(fun () ->
+            elt.ByClass("bind-input-out").Text = "ABC")
+
+    [<Test>]
+    let ``bind.change``() =
+        let inp = elt.ByClass("bind-change")
+        inp.Clear()
+        inp.SendKeys("DEF")
+        blur()
+        elt.AssertEventually(fun () ->
+            elt.ByClass("bind-change-out").Text = "DEF")
+
+    [<Test>]
+    let ``bind.inputInt``() =
+        let inp = elt.ByClass("bind-input-int")
+        inp.Clear()
+        inp.SendKeys("123")
+        elt.AssertEventually(fun () ->
+            elt.ByClass("bind-input-int-out").Text = "123")
+
+    [<Test>]
+    let ``bind.changeInt``() =
+        let inp = elt.ByClass("bind-change-int")
+        inp.Clear()
+        inp.SendKeys("456")
+        blur()
+        elt.AssertEventually(fun () ->
+            elt.ByClass("bind-change-int-out").Text = "456")
+
+    [<Test>]
+    let ``bind.inputFloat``() =
+        let inp = elt.ByClass("bind-input-float")
+        inp.Clear()
+        inp.SendKeys("1234.5")
+        elt.AssertEventually(fun () ->
+            elt.ByClass("bind-input-float-out").Text.TrimEnd('0') = "1234.5")
+
+    [<Test>]
+    let ``bind.changeFloat``() =
+        let inp = elt.ByClass("bind-change-float")
+        inp.Clear()
+        inp.SendKeys("54.321")
+        blur()
+        elt.AssertEventually(fun () ->
+            elt.ByClass("bind-change-float-out").Text.TrimEnd('0') = "54.321")
+
+    [<Test>]
+    let ``bind.checked``() =
+        let inp = elt.ByClass("bind-checked")
+        let out = elt.ByClass("bind-checked-out")
+        Assert.AreEqual(out.Text, "false")
+        inp.Click()
+        elt.AssertEventually(fun () -> out.Text = "true")
+        inp.Click()
+        elt.AssertEventually(fun () -> out.Text = "false")

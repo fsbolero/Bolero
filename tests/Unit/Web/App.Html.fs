@@ -67,6 +67,35 @@ type BoleroComponent() =
                 span [attr.classes ["forEachIs" + s]] []
         ]
 
+type Binds() =
+    inherit Component()
+
+    let inputState = ref ""
+    let changeState = ref ""
+    let inputIntState = ref 0
+    let changeIntState = ref 0
+    let inputFloatState = ref 0.
+    let changeFloatState = ref 0.
+    let checkedState = ref false
+
+    override this.Render() =
+        concat [
+            input [attr.``class`` "bind-input"; bind.input inputState.Value inputState.set_Value]
+            span [attr.``class`` "bind-input-out"] [text inputState.Value]
+            input [attr.``class`` "bind-change"; bind.change changeState.Value changeState.set_Value]
+            span [attr.``class`` "bind-change-out"] [text changeState.Value]
+            input [attr.``type`` "number"; attr.``class`` "bind-input-int"; bind.inputInt inputIntState.Value inputIntState.set_Value]
+            span [attr.``class`` "bind-input-int-out"] [textf "%i" inputIntState.Value]
+            input [attr.``type`` "number"; attr.``class`` "bind-change-int"; bind.changeInt changeIntState.Value changeIntState.set_Value]
+            span [attr.``class`` "bind-change-int-out"] [textf "%i" changeIntState.Value]
+            input [attr.``type`` "number"; attr.``class`` "bind-input-float"; bind.inputFloat inputFloatState.Value inputFloatState.set_Value]
+            span [attr.``class`` "bind-input-float-out"] [textf "%f" inputFloatState.Value]
+            input [attr.``type`` "number"; attr.``class`` "bind-change-float"; bind.changeFloat changeFloatState.Value changeFloatState.set_Value]
+            span [attr.``class`` "bind-change-float-out"] [textf "%f" changeFloatState.Value]
+            input [attr.``type`` "checkbox"; attr.``class`` "bind-checked"; bind.``checked`` checkedState.Value checkedState.set_Value]
+            span [attr.``class`` "bind-checked-out"] [textf "%b" checkedState.Value]
+        ]
+
 let Tests() =
     div [attr.id "test-fixture-html"] [
         p [attr.id "element-with-id"] [text "Contents of element with id"]
@@ -84,4 +113,5 @@ let Tests() =
             "Match" => NavLinkMatch.Prefix
         ] [text "NavLink content"]
         comp<BoleroComponent> ["Ident" => "bolero-component"] []
+        comp<Binds> [] []
     ]

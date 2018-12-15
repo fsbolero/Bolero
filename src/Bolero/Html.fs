@@ -1,6 +1,6 @@
 module rec Bolero.Html
 
-open FSharp.Reflection
+open System
 open Microsoft.AspNetCore.Blazor
 
 /// Create an HTML text node.
@@ -1311,6 +1311,58 @@ module on =
         "onscroll" => BindMethods.GetEventHandlerValue callback
 
 // END EVENTS
+
+/// Two-way binding for HTML input elements.
+module bind =
+    open Microsoft.AspNetCore.Blazor.Components
+
+    let private attr<'T, 'U> (valueName: string) (eventName: string) (value: 'T) (callback: 'U -> unit) =
+        Attrs [
+            valueName => value
+            eventName => BindMethods.GetEventHandlerValue(
+                fun (e: UIChangeEventArgs) -> callback (unbox<'U> e.Value))
+        ]
+
+    let inline private attrParseValue< ^T when ^T : (static member TryParse : string * byref< ^T> -> bool)>
+            (eventName: string) (value: ^T) (callback: ^T -> unit) =
+        attr< ^T, string> "value" eventName value (fun s ->
+            let mutable out = Unchecked.defaultof< ^T>
+            if (^T : (static member TryParse : string * byref< ^T> -> bool)(s, &out))
+            then callback out)
+
+    /// Bind a boolean to the value of a checkbox.
+    let ``checked`` (value: bool) (callback: bool -> unit) =
+        attr<bool, bool> "checked" "onchange" value callback
+
+    /// Bind a string to the value of an input.
+    /// The value is updated on the oninput event.
+    let input (value: string) (callback: string -> unit) =
+        attr<string, string> "value" "oninput" value callback
+
+    /// Bind a string to the value of an input.
+    /// The value is updated on the onchange event.
+    let change (value: string) (callback: string -> unit) =
+        attr<string, string> "value" "onchange" value callback
+
+    /// Bind an integer to the value of an input.
+    /// The value is updated on the oninput event.
+    let inputInt (value: int) (callback: int -> unit) =
+        attrParseValue<int> "oninput" value callback
+
+    /// Bind an integer to the value of an input.
+    /// The value is updated on the onchange event.
+    let changeInt (value: int) (callback: int -> unit) =
+        attrParseValue<int> "onchange" value callback
+
+    /// Bind a float to the value of an input.
+    /// The value is updated on the oninput event.
+    let inputFloat (value: float) (callback: float -> unit) =
+        attrParseValue<float> "oninput" value callback
+
+    /// Bind a float to the value of an input.
+    /// The value is updated on the onchange event.
+    let changeFloat (value: float) (callback: float -> unit) =
+        attrParseValue<float> "onchange" value callback
 
 [<assembly:FSharp.Core.CompilerServices.TypeProviderAssembly "Bolero.Templating">]
 do ()
