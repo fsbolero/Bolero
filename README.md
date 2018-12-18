@@ -21,6 +21,10 @@ To get started, you need the following installed:
 
 * .NET Core SDK 2.1.403 or newer. Download it [here](https://www.microsoft.com/net/download/dotnet-core/2.1).
 
+Then:
+
+* Run `build.cmd`
+
 To learn more, you can check [the documentation](https://github.com/intellifactory/bolero/wiki).
 
 ## Contributing
