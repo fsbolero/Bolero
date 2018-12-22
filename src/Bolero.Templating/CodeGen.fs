@@ -44,6 +44,7 @@ let MakeCtor (holes: Parsing.Holes) (containerTy: ProvidedTypeDefinition) =
         ]
         <@@ (%getThis args).Holes <- %holes @@>)
 
+/// Get the argument lists and bodies for methods that fill a hole of the given type.
 let HoleMethodBodies (holeType: Parsing.HoleType) : (ProvidedParameter list * (Expr list -> Expr)) list =
     let (=>) name ty = ProvidedParameter(name, ty)
     match holeType with
@@ -110,6 +111,7 @@ let MakeFinalMethod (content: Parsing.Parsed<Node>) =
         |> snd
     )
 
+/// Populate the members of the provided type for one template.
 let PopulateOne (ty: ProvidedTypeDefinition) (content: Parsing.Parsed<Node>) =
     ty.AddMembers [
         yield MakeCtor content.Holes ty :> MemberInfo
@@ -119,6 +121,7 @@ let PopulateOne (ty: ProvidedTypeDefinition) (content: Parsing.Parsed<Node>) =
         yield MakeFinalMethod content :> MemberInfo
     ]
 
+/// Populate the members of the provided type for a root template and its nested templates.
 let Populate (mainTy: ProvidedTypeDefinition) (pathOrHtml: string) (rootFolder: string) =
     let content = Parsing.ParseFileOrContent pathOrHtml rootFolder
     PopulateOne mainTy content.Main

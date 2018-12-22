@@ -30,8 +30,6 @@ type Attr =
     | Attr of string * obj
     | Attrs of list<Attr>
 
-type BlazorEventHandler<'T> = delegate of 'T -> unit
-
 /// HTML fragment.
 type Node =
     /// An empty HTML fragment.

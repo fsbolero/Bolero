@@ -33,21 +33,28 @@ open Bolero
 open Bolero.TemplatingInternals
 open ProviderImplementation.ProvidedTypes
 
+/// Available value types for a `bind` attribute.
 type BindingType =
     | String
     | Number
     | Bool
 
+/// Available hole kinds.
 type HoleType =
+    /// A plain string hole (eg an attribute value).
     | String
+    /// An HTML node hole.
     | Html
+    /// An `onXXX` event handler hole.
     | Event of argType: Type
+    /// A `bind` attribute hole.
     | DataBinding of BindingType
+    /// An attribute hole.
     | Attribute
 
 module Binding =
 
-    let ToString valType expr : Expr<string> =
+    let ToString (valType: Type) (expr: Expr) : Expr<string> =
         if valType = typeof<string> then
             Expr.Cast expr
         elif valType = typeof<bool> then
@@ -61,26 +68,32 @@ module Binding =
 
 module HoleType =
 
-    let Merge name t1 t2 =
+    /// Try to find a common supertype for two hole types.
+    let Merge (holeName: string) (t1: HoleType) (t2: HoleType) : HoleType =
         if t1 = t2 then t1 else
         match t1, t2 with
         | String, Html | Html, String -> String
         | Event _, Event _ -> Event typeof<UIEventArgs>
         | DataBinding valType, String | String, DataBinding valType
         | DataBinding valType, Html | Html, DataBinding valType -> DataBinding valType
-        | _ -> failwithf "Hole name used multiple times with incompatible types: %s" name
+        | _ -> failwithf "Hole name used multiple times with incompatible types: %s" holeName
 
-    let EventHandlerOf argType =
+    /// Event handler type whose argument is the given type.
+    let EventHandlerOf (argType: Type) : Type =
         ProvidedTypeBuilder.MakeGenericType(typedefof<Action<_>>, [argType])
 
-    let TypeOf = function
+    /// Get the .NET type corresponding to a hole type.
+    let TypeOf (holeType: HoleType) : Type =
+        match holeType with
         | String -> typeof<string>
         | Html -> typeof<Node>
         | Event argType -> EventHandlerOf argType
         | DataBinding _ -> typeof<obj * Action<UIChangeEventArgs>>
         | Attribute -> typeof<Attr>
 
-    let Wrap (innerType: HoleType) (outerType: HoleType) (expr: Expr) =
+    /// Wrap the filler `expr`, of type `outerType`, to make it fit into a hole of type `innerType`.
+    /// Return `None` if no wrapping is needed.
+    let Wrap (innerType: HoleType) (outerType: HoleType) (expr: Expr) : option<Expr> =
         if innerType = outerType then None else
         match innerType, outerType with
         | Html, String -> Some <@@ Node.Text %%expr @@>
@@ -89,7 +102,8 @@ module HoleType =
         | Html, DataBinding _ -> Some <@@ Node.Text (string (fst (%%expr: obj * Action<UIChangeEventArgs>))) @@>
         | a, b -> failwithf "Hole name used multiple times with incompatible types (%A, %A)" a b
 
-    let EventArg name =
+    /// Get the .NET type of the event handler argument for the given event name.
+    let EventArg (name: string) : Type =
         match name with
 // BEGIN EVENTS
         | "onfocus" -> typeof<UIFocusEventArgs>
@@ -147,6 +161,7 @@ module HoleType =
 // END EVENTS
         | _ -> typeof<UIEventArgs>
 
+/// A template hole.
 type Hole =
     {
         Var: Var
@@ -155,6 +170,8 @@ type Hole =
 
 module Hole =
 
+    /// Figure out a hole that can represent both `hole1` and `hole2`
+    /// because they have the same name.
     let Merge (key: string) (hole1: Hole) (hole2: Hole) =
         let ty = HoleType.Merge key hole1.Type hole2.Type
         let var =
@@ -167,6 +184,7 @@ type Holes = Map<string, Hole>
 
 module Holes =
 
+    /// Merge the holes from two subsets of a template.
     let Merge (holes1: Holes) (holes2: Holes) =
         (holes1, holes2) ||> Map.fold (fun map key hole ->
             let hole =
@@ -176,9 +194,11 @@ module Holes =
             Map.add key hole map
         )
 
+    /// Merge the holes from many subsets of a template.
     let MergeMany (holes: seq<Holes>) =
         Seq.fold Merge Map.empty holes
 
+/// A compiled expression for a subset of a template together with the holes it contains.
 type Parsed<'T> =
     {
         Holes: Holes
@@ -187,6 +207,7 @@ type Parsed<'T> =
 
 module Parsed =
 
+    /// Map the holes in `p`'s expression so that they use vars from `finalHoles`.
     let private substHoles (finalHoles: Holes) (p: Parsed<'T>) =
         (p.Expr, p.Holes) ||> Map.fold (fun e k v ->
             // Map var names for holes used multiple times
@@ -205,6 +226,7 @@ module Parsed =
             | _ -> e
         )
 
+    /// Concatenate parsed expressions, merging their holes.
     let Concat (p: seq<Parsed<'T>>) : Parsed<'T[]> =
         let finalHoles = Holes.MergeMany [ for p in p -> p.Holes ]
         let exprs = p |> Seq.map (substHoles finalHoles)
@@ -213,12 +235,14 @@ module Parsed =
             Expr = TExpr.Array<'T> exprs
         }
 
+    /// Transform a parsed expression.
     let Map (f: Expr<'T> -> Expr<'U>) (p: Parsed<'T>) : Parsed<'U> =
         {
             Holes = p.Holes
             Expr = f p.Expr
         }
 
+    /// Combine two parsed expressions, merging their holes.
     let Map2 (f: Expr<'T> -> Expr<'U> -> Expr<'V>) (p1: Parsed<'T>) (p2: Parsed<'U>) : Parsed<'V> =
         let finalHoles = Holes.Merge p1.Holes p2.Holes
         let e1 = substHoles finalHoles p1
@@ -228,18 +252,23 @@ module Parsed =
             Expr = f e1 e2
         }
 
+/// Matches a ${HoleName} anywhere in a string.
 let HoleNameRE = Regex(@"\${(\w+)}", RegexOptions.Compiled)
 
+/// A piece of text (either HTML text or attribute value) is a sequence of text parts,
+/// which can be plain strings or holes.
 type TextPart =
     | Plain of string
     | Hole of Hole
 
 module TextPart =
 
+    /// Get a string expression for a text part.
     let ToStringExpr = function
         | Plain s -> <@ s @>
         | Hole h -> Expr.Var h.Var |> Binding.ToString h.Var.Type
 
+    /// Get a string expression for a piece of text, represented as a sequence of text parts.
     let ManyToStringExpr = function
         | [||] -> <@ "" @>
         | [|p|] -> ToStringExpr p
@@ -248,10 +277,11 @@ module TextPart =
             let arr = TExpr.Array<string> (Seq.map ToStringExpr parts)
             <@ String.concat "" %arr @>
 
-let MakeHole holeName holeType =
+let MakeHole (holeName: string) (holeType: HoleType) : Hole =
     let var = Var(holeName, HoleType.TypeOf holeType)
     { Type = holeType; Var = var }
 
+/// Parse a piece of text into a sequence of text parts.
 let ParseText (t: string) (holeType: HoleType) : Holes * TextPart[] =
     let parse = HoleNameRE.Matches(t) |> Seq.cast<Match> |> Array.ofSeq
     if Array.isEmpty parse then Map.empty, [|Plain t|] else
@@ -284,8 +314,8 @@ let GetDataBindingEvent = function
     | "bind" -> Some None
     | _ -> None
 
-
-let GetDataBindingType (ownerNode: HtmlNode) (attrName: string) =
+/// Figure out if this is a data binding attribute, and if so, what value type and event it binds.
+let GetDataBindingType (ownerNode: HtmlNode) (attrName: string) : option<BindingType * string> =
     match GetDataBindingEvent attrName with
     | None -> None
     | Some ev ->
@@ -314,7 +344,7 @@ let MakeAttrAttribute (holeName: string) : list<Parsed<Attr>> =
     let value = TExpr.Coerce<Attr>(Expr.Var hole.Var)
     [{ Holes = holes; Expr = value }]
 
-let MakeDataBinding holeName valType eventName : list<Parsed<Attr>> =
+let MakeDataBinding (holeName: string) (valType: BindingType) (eventName: string) : list<Parsed<Attr>> =
     let hole = MakeHole holeName (HoleType.DataBinding valType)
     let holeVar() : Expr<obj * Action<UIChangeEventArgs>> = Expr.Var hole.Var |> Expr.Cast
     let holes = Map [holeName, hole]
@@ -327,7 +357,7 @@ let MakeDataBinding holeName valType eventName : list<Parsed<Attr>> =
         { Holes = holes; Expr = <@ Attr(eventName, snd (%holeVar())) @> }
     ]
 
-let MakeStringAttribute (attrName: string) holes parts : list<Parsed<Attr>> =
+let MakeStringAttribute (attrName: string) (holes: Holes) (parts: TextPart[]) : list<Parsed<Attr>> =
     let value = TextPart.ManyToStringExpr parts
     [{ Holes = holes; Expr = <@ Attr(attrName, %value) @> }]
 
@@ -350,6 +380,7 @@ let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : list<Parsed<Att
     | holes, parts ->
         MakeStringAttribute name holes parts
 
+/// If a node doesn't contain any holes, we represent it as a plain HTML string for performance.
 type ParsedNode =
     | PlainHtml of string
     | WithHoles of Parsed<Node>
@@ -423,7 +454,7 @@ let rec ParseNode (node: HtmlNode) : list<ParsedNode> =
     | _ ->
         []
 
-let ParseOneTemplate (nodes: HtmlNodeCollection) =
+let ParseOneTemplate (nodes: HtmlNodeCollection) : Parsed<Node> =
     nodes
     |> Seq.collect ParseNode
     |> ParsedNode.ManyToParsed
@@ -436,7 +467,7 @@ type ParsedTemplates =
         Nested: Map<string, Parsed<Node>>
     }
 
-let ParseDoc (doc: HtmlDocument) =
+let ParseDoc (doc: HtmlDocument) : ParsedTemplates =
     let nested =
         let templateNodes =
             match doc.DocumentNode.SelectNodes("//template") with
@@ -459,7 +490,8 @@ let ParseDoc (doc: HtmlDocument) =
     let main = ParseOneTemplate doc.DocumentNode.ChildNodes
     { Main = main; Nested = nested }
 
-let GetDoc (fileOrContent: string) (rootFolder: string) =
+/// Get the HTML document for the given type provider argument, either inline or from a file.
+let GetDoc (fileOrContent: string) (rootFolder: string) : HtmlDocument =
     let doc = HtmlDocument()
     if fileOrContent.Contains("<") then
         doc.LoadHtml(fileOrContent)
@@ -467,6 +499,7 @@ let GetDoc (fileOrContent: string) (rootFolder: string) =
         doc.Load(Path.Combine(rootFolder, fileOrContent))
     doc
 
-let ParseFileOrContent (fileOrContent: string) (rootFolder: string) =
+/// Parse a type provider argument into a set of templates.
+let ParseFileOrContent (fileOrContent: string) (rootFolder: string) : ParsedTemplates =
     GetDoc fileOrContent rootFolder
     |> ParseDoc
