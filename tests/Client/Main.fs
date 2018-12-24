@@ -21,6 +21,7 @@
 module Bolero.Test.Client.Main
 
 open Microsoft.AspNetCore.Blazor.Routing
+open Microsoft.JSInterop
 open Elmish
 open Bolero
 open Bolero.Html
@@ -108,12 +109,18 @@ type SecretPw = Template<"""<div>
                                 <input type="number" bind="${Value}" />
                             </div>""">
 
+let btnRef = ElementRefBinder()
+
 let viewForm model dispatch =
     div [] [
         input [attr.value model.input; on.change (fun e -> dispatch (SetInput (unbox e.Value)))]
         input [
+            attr.bindRef btnRef
             attr.``type`` "submit"
-            on.click (fun _ -> dispatch Submit)
+            on.click (fun _ ->
+                JSRuntime.Current.InvokeAsync("console.log", btnRef.Ref) |> ignore
+                dispatch Submit
+            )
             attr.style (if model.input = "" then "color:gray;" else null)
         ]
         div [] [text (defaultArg model.submitted "")]

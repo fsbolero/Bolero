@@ -599,6 +599,14 @@ module attr =
     let classes (classes: list<string>) : Attr =
         "class" => String.concat " " classes
 
+    /// Bind an element reference.
+    let inline ref (f: ElementRef -> unit) =
+        Attr.Ref (Action<ElementRef>(f))
+
+    /// Bind an element reference.
+    let bindRef (refBinder: ElementRefBinder) =
+        ref refBinder.SetRef
+
 // BEGIN ATTRS
     /// Create an HTML `accept` attribute.
     let accept (v: obj) : Attr = "accept" => v

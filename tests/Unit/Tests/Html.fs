@@ -160,3 +160,18 @@ module Html =
         elt.AssertEventually(fun () -> out.Text = "true")
         inp.Click()
         elt.AssertEventually(fun () -> out.Text = "false")
+
+    [<Test>]
+    let ElementRefBinder() =
+        let btn = elt.ByClass("element-ref")
+        Assert.IsNotNull(btn)
+        btn.Click()
+        elt.AssertEventually(
+            (fun () -> btn.Text = "ElementRef 1 is bound"),
+            "attr.ref")
+        let btn = elt.ByClass("element-ref-binder")
+        Assert.IsNotNull(btn)
+        btn.Click()
+        elt.AssertEventually(
+            (fun () -> btn.Text = "ElementRef 2 is bound"),
+            "attr.bindRef")

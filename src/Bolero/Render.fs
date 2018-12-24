@@ -129,31 +129,46 @@ let rec renderNode (builder: RenderTreeBuilder) (matchCache: Type -> int * (obj 
     | Elt (name, attrs, children) ->
         builder.OpenElement(sequence, name)
         let sequence = sequence + 1
-        let sequence = Seq.fold (renderAttr builder) sequence attrs
+        let sequence = renderAttrs builder sequence attrs
         let sequence = List.fold (renderNode builder matchCache) sequence children
         builder.CloseElement()
         sequence
     | Component (comp, attrs, children) ->
         builder.OpenComponent(sequence, comp)
         let sequence = sequence + 1
-        let sequence = Seq.fold (renderAttr builder) sequence attrs
+        let sequence = renderAttrs builder sequence attrs
         let hasChildren = not (List.isEmpty children)
         if hasChildren then
             let frag = RenderFragment(fun builder ->
                 builder.AddContent(sequence + 1, RenderFragment(fun builder ->
-                    Seq.fold (renderNode builder matchCache) 0 children
+                    List.fold (renderNode builder matchCache) 0 children
                     |> ignore)))
             builder.AddAttribute(sequence, "ChildContent", frag)
         builder.CloseComponent()
         sequence + (if hasChildren then 2 else 0)
 
-/// Render an attribute with `name` and `value` into `builder` at `sequence` number.
-and renderAttr builder sequence = function
-    | Attr (name, value) ->
-        builder.AddAttribute(sequence, name, value)
+/// Render a list of attributes into `builder` at `sequence` number.
+and renderAttrs builder sequence attrs =
+    // AddAttribute calls want to be just after the OpenElement/OpenComponent call,
+    // so we make sure that AddElementReferenceCapture is called last.
+    let rec run attrs =
+        ((sequence, None), attrs)
+        ||> List.fold (fun (sequence, ref) attr ->
+            match attr with
+            | Attr (name, value) ->
+                builder.AddAttribute(sequence, name, value)
+                (sequence + 1, ref)
+            | Attrs attrs ->
+                run attrs
+            | Ref ref ->
+                (sequence, Some ref)
+        )
+    match run attrs with
+    | sequence, Some r ->
+        builder.AddElementReferenceCapture(sequence, r)
         sequence + 1
-    | Attrs attrs ->
-        List.fold (renderAttr builder) sequence attrs
+    | sequence, None ->
+        sequence
 
 let RenderNode builder (matchCache: Dictionary<Type, _>) node =
     let getMatchParams (ty: Type) =

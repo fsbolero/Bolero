@@ -22,6 +22,7 @@ namespace Bolero
 
 open System
 #if !IS_DESIGNTIME
+open Microsoft.AspNetCore.Blazor
 open Microsoft.AspNetCore.Blazor.Components
 #endif
 
@@ -29,6 +30,9 @@ open Microsoft.AspNetCore.Blazor.Components
 type Attr =
     | Attr of string * obj
     | Attrs of list<Attr>
+#if !IS_DESIGNTIME
+    | Ref of Action<ElementRef>
+#endif
 
 /// HTML fragment.
 type Node =

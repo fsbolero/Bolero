@@ -22,8 +22,10 @@ module Bolero.Tests.Web.App.Html
 
 open Bolero
 open Bolero.Html
+open Microsoft.AspNetCore.Blazor
 open Microsoft.AspNetCore.Blazor.Routing
 open Microsoft.AspNetCore.Blazor.Components
+open Microsoft.JSInterop
 
 type SomeUnion =
     | Empty
@@ -116,6 +118,32 @@ type Binds() =
             span [attr.``class`` "bind-checked-out"] [textf "%b" checkedState.Value]
         ]
 
+type BindElementRef() =
+    inherit Component()
+
+    let mutable elt1 = Unchecked.defaultof<ElementRef>
+    let elt2 = ElementRefBinder()
+
+    override this.Render() =
+        concat [
+            button [
+                attr.``class`` "element-ref"
+                attr.ref (fun r -> elt1 <- r)
+                on.click (fun _ ->
+                    JSRuntime.Current.InvokeAsync("setContent", elt1, "ElementRef 1 is bound")
+                    |> ignore
+                )
+            ] [text "Click me"]
+            button [
+                attr.``class`` "element-ref-binder"
+                attr.bindRef elt2
+                on.click (fun _ ->
+                    JSRuntime.Current.InvokeAsync("setContent", elt2.Ref, "ElementRef 2 is bound")
+                    |> ignore
+                )
+            ] [text "Click me"]
+        ]
+
 let Tests() =
     div [attr.id "test-fixture-html"] [
         p [attr.id "element-with-id"] [text "Contents of element with id"]
@@ -134,4 +162,5 @@ let Tests() =
         ] [text "NavLink content"]
         comp<BoleroComponent> ["Ident" => "bolero-component"] []
         comp<Binds> [] []
+        comp<BindElementRef> [] []
     ]

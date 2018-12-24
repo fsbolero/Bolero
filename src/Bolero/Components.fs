@@ -158,3 +158,11 @@ type ProgramComponent<'model, 'msg>() =
         member this.Dispose() =
             System.EventHandler<string> this.OnLocationChanged
             |> this.UriHelper.OnLocationChanged.RemoveHandler
+
+type ElementRefBinder() =
+
+    let mutable ref = Unchecked.defaultof<ElementRef>
+
+    member this.Ref = ref
+
+    member internal this.SetRef(r) = ref <- r
