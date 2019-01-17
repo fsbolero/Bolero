@@ -37,23 +37,21 @@ type Page =
     | [<EndPoint "/with-list">] WithList of list<int * string>
     | [<EndPoint "/with-array">] WithArray of (int * string)[]
 
-    member this.ExpectedUrl'(isInitial: bool) =
+    member this.ExpectedUrl =
         match this with
-        | Home -> if isInitial then "/" else ""
+        | Home -> "/"
         | NoArg -> "/no-arg"
         | WithArg s -> sprintf "/with-arg/%s" s
         | WithArgs(s, i) -> sprintf "/with-args/%s/%i" s i
         | WithUnion u -> sprintf "/with-union%s" u.ExpectedUrl
         | WithUnionNotTerminal(u, s) -> sprintf "/with-union2%s/%s" u.ExpectedUrl s
-        | WithNestedUnion u -> sprintf "/with-nested-union%s" (u.ExpectedUrl' false)
+        | WithNestedUnion u -> sprintf "/with-nested-union%s" u.ExpectedUrl
         | WithTuple((i, s, b)) -> sprintf "/with-tuple/%i/%s/%b" i s b
         | WithRecord { x = x; y = y; z = z } -> sprintf "/with-record/%i%s/%b" x y.ExpectedUrl z
         | WithList l -> sprintf "/with-list/%i%s" l.Length
                         <| String.concat "" [for i, s in l -> sprintf "/%i/%s" i s]
         | WithArray a -> sprintf "/with-array/%i%s" a.Length
                         <| String.concat "" [for i, s in a -> sprintf "/%i/%s" i s]
-
-    member this.ExpectedUrl = this.ExpectedUrl'(true)
 
 and InnerPage =
     | [<EndPoint "/">] InnerHome
@@ -63,7 +61,7 @@ and InnerPage =
 
     member this.ExpectedUrl =
         match this with
-        | InnerHome -> ""
+        | InnerHome -> "/"
         | InnerNoArg -> "/no-arg"
         | InnerWithArg s -> sprintf "/with-arg/%s" s
         | InnerWithArgs(s, i) -> sprintf "/with-args/%s/%i" s i

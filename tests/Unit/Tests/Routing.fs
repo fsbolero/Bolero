@@ -16,7 +16,12 @@ module Routing =
 
     let links =
         App.Routing.links
-        |> List.map TestCaseData
+        |> List.map (fun (cls, page) ->
+            TestCaseData(cls, page).SetArgDisplayNames(
+                (string page)
+                    // Replace parentheses with unicode ones for nicer display in VS test explorer
+                    .Replace("(", "❨")
+                    .Replace(")", "❩")))
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
     let ``Click link``(linkCls, page: App.Routing.Page) =

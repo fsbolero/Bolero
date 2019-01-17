@@ -27,6 +27,7 @@ open System.Collections.Generic
 open System.Runtime.CompilerServices
 open System.Text
 open FSharp.Reflection
+open System.Runtime.InteropServices
 
 /// A router that binds page navigation with Elmish.
 type IRouter<'model, 'msg> =
@@ -69,30 +70,40 @@ type Router<'ep, 'model, 'msg> =
 type EndPointAttribute(endpoint: string) =
     inherit Attribute()
 
-    let endpoint = endpoint.Trim('/')
+    let endpoint = endpoint.Trim('/').Split('/')
 
-    /// The root path fragment that this endpoint recognizes.
-    member this.Root = endpoint
+    /// The path that this endpoint recognizes.
+    member this.Path = endpoint
 
-/// Functions for building Routers that bind page navigation with Elmish.
-module Router =
+/// Declare that the given field of an F# union case matches the entire
+/// remainder of the URL path.
+/// If field is unspecified, this applies to the last field of the case.
+[<AttributeUsage(AttributeTargets.Property, AllowMultiple = false)>]
+type WildcardAttribute([<Optional>] field: string) =
+    inherit Attribute()
+
+    member this.Field = field
+
+[<AutoOpen>]
+module private RouterImpl =
+    open System.Text.RegularExpressions
 
     type ArraySegment<'T> with
         member this.Item with get(i) = this.Array.[this.Offset + i]
 
-    type private SegmentParserResult = seq<obj * list<string>>
-    type private SegmentParser = list<string> -> SegmentParserResult
-    type private SegmentWriter = obj -> list<string>
-    type private Segment =
+    type SegmentParserResult = option<obj * list<string>>
+    type SegmentParser = list<string> -> SegmentParserResult
+    type SegmentWriter = obj -> list<string>
+    type Segment =
         {
             parse: SegmentParser
             write: SegmentWriter
         }
 
-    let private fail : SegmentParserResult = Seq.empty
-    let private ok x : SegmentParserResult = Seq.singleton x
+    let fail : SegmentParserResult = None
+    let ok x : SegmentParserResult = Some x
 
-    let inline private tryParseBaseType<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
+    let inline tryParseBaseType<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
         fun s ->
             let mutable out = Unchecked.defaultof<'T>
             if (^T : (static member TryParse : string * byref<'T> -> bool) (s, &out)) then
@@ -100,20 +111,20 @@ module Router =
             else
                 None
 
-    let inline private defaultBaseTypeParser<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> = function
+    let inline defaultBaseTypeParser<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> = function
         | [] -> fail
         | x :: rest ->
             match tryParseBaseType<'T>() x with
             | Some x -> ok (box x, rest)
             | None -> fail
 
-    let inline private baseTypeSegment<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
+    let inline baseTypeSegment<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
         {
             parse = defaultBaseTypeParser<'T>
             write = fun x -> [string x]
         }
 
-    let private baseTypes : IDictionary<Type, Segment> = dict [
+    let baseTypes : IDictionary<Type, Segment> = dict [
         typeof<string>, {
             parse = function
                 | [] -> fail
@@ -138,15 +149,16 @@ module Router =
         typeof<decimal>, baseTypeSegment<decimal>()
     ]
 
-    let private sequenceSegment getSegment (ty: Type) revAndConvert toListAndLength : Segment =
+    let sequenceSegment getSegment (ty: Type) revAndConvert toListAndLength : Segment =
         let itemSegment = getSegment ty
         let rec parse acc remainingLength fragments =
             if remainingLength = 0 then
                 ok (revAndConvert acc, fragments)
             else
-                itemSegment.parse fragments
-                |> Seq.collect (fun (x, rest) ->
-                    parse (x :: acc) (remainingLength - 1) rest)
+                match itemSegment.parse fragments with
+                | None -> None
+                | Some (x, rest) ->
+                    parse (x :: acc) (remainingLength - 1) rest
         {
             parse = function
                 | x :: rest ->
@@ -159,20 +171,20 @@ module Router =
                 string length :: List.collect itemSegment.write list
         }
 
-    let [<Literal>] private FLAGS_STATIC =
+    let [<Literal>] FLAGS_STATIC =
         Reflection.BindingFlags.Static |||
         Reflection.BindingFlags.Public |||
         Reflection.BindingFlags.NonPublic
 
-    let private arrayRevAndUnbox<'T> (l: list<obj>) : 'T[] =
+    let arrayRevAndUnbox<'T> (l: list<obj>) : 'T[] =
         let a = [|for x in l -> unbox<'T> x|]
         Array.Reverse(a)
         a
 
-    let private arrayLengthAndBox<'T> (a: array<'T>) : list<obj> * int =
+    let arrayLengthAndBox<'T> (a: array<'T>) : list<obj> * int =
         [for x in a -> box x], a.Length
 
-    let private arraySegment getSegment ty : Segment =
+    let arraySegment getSegment ty : Segment =
         let arrayRevAndUnbox =
             typeof<Segment>.DeclaringType.GetMethod("arrayRevAndUnbox", FLAGS_STATIC)
                 .MakeGenericMethod([|ty|])
@@ -183,13 +195,13 @@ module Router =
             (fun l -> arrayRevAndUnbox.Invoke(null, [|l|]))
             (fun l -> arrayLengthAndBox.Invoke(null, [|l|]) :?> _)
 
-    let private listRevAndUnbox<'T> (l: list<obj>) : list<'T> =
+    let listRevAndUnbox<'T> (l: list<obj>) : list<'T> =
         List.map unbox<'T> l |> List.rev
 
-    let private listLengthAndBox<'T> (l: list<'T>) : list<obj> * int =
+    let listLengthAndBox<'T> (l: list<'T>) : list<obj> * int =
         List.mapFold (fun l e -> box e, l + 1) 0 l
 
-    let private listSegment getSegment ty : Segment =
+    let listSegment getSegment ty : Segment =
         let listRevAndUnbox =
             typeof<Segment>.DeclaringType.GetMethod("listRevAndUnbox", FLAGS_STATIC)
                 .MakeGenericMethod([|ty|])
@@ -200,14 +212,157 @@ module Router =
             (fun l -> listRevAndUnbox.Invoke(null, [|l|]))
             (fun l -> listLengthAndBox.Invoke(null, [|l|]) :?> _)
 
-    let private parseEndPointCasePath (case: UnionCaseInfo) =
+    type UnionParserSegment =
+        | Constant of string
+        | Parameter of string * Type * Segment
+
+    type UnionParser =
+        {
+            /// Parser for the first segment.
+            head: UnionParserSegment
+            /// Parsers for the remaining segments, each item in the list for a different union case.
+            tails: list<UnionParser>
+            /// If Some, there is a case for which this is the final segment, and this is its constructor.
+            finalize: option<Dictionary<string, obj> -> obj>
+        }
+
+    let parseEndPointCasePath (case: UnionCaseInfo) =
         case.GetCustomAttributes()
         |> Array.tryPick (function
-            | :? EndPointAttribute as e -> Some e.Root
+            | :? EndPointAttribute as e -> Some (List.ofSeq e.Path)
             | _ -> None)
-        |> Option.defaultWith (fun () -> case.Name)
+        |> Option.defaultWith (fun () -> [case.Name])
 
-    let private parseConsecutiveTypes getSegment (tys: Type[]) (ctor: obj[] -> obj) : SegmentParser =
+    let isConstantFragment (s: string) =
+        not (s.Contains("{"))
+
+    let fragmentParameterRE = Regex(@"^\{([a-zA-Z0-9_]+)\}$", RegexOptions.Compiled)
+
+    let parseEndPointCase getSegment (case: UnionCaseInfo) =
+        let fields = case.GetFields()
+        let defaultFrags() =
+            fields
+            |> Array.mapi (fun i p ->
+                let ty = p.PropertyType
+                Parameter(p.Name, ty, getSegment ty))
+            |> List.ofSeq
+        match parseEndPointCasePath case with
+        // EndPoint "/"
+        | [] -> defaultFrags()
+        // EndPoint "/const"
+        | [root] when isConstantFragment root -> Constant root :: defaultFrags()
+        // EndPoint <complex_path>
+        | frags ->
+            let unboundFields = HashSet(fields |> Array.map (fun f -> f.Name))
+            let res =
+                frags
+                |> List.map (fun frag ->
+                    if isConstantFragment frag then
+                        Constant frag
+                    else
+                        let m = fragmentParameterRE.Match(frag)
+                        if m.Success then
+                            let fieldName = m.Groups.[1].Value
+                            match fields |> Array.tryFind (fun p -> p.Name = fieldName) with
+                            | Some p ->
+                                if unboundFields.Remove(fieldName) then
+                                    let ty = p.PropertyType
+                                    Parameter(p.Name, ty, getSegment ty)
+                                else
+                                    failwithf "Union case %s.%s has endpoint definition with duplicate field %s"
+                                        case.DeclaringType.FullName case.Name fieldName
+                            | None -> failwithf "Union case %s.%s has endpoint definition with undefined field %s"
+                                        case.DeclaringType.FullName case.Name fieldName
+                        else failwithf "Union case %s.%s has endpoint definition with invalid path fragment '%s'"
+                                case.DeclaringType.FullName case.Name frag
+                )
+            if unboundFields.Count > 0 then
+                failwithf "Union case %s.%s has endpoint definition with some but not all of its fields"
+                    case.DeclaringType.FullName case.Name
+            res
+
+    let caseCtor (case: UnionCaseInfo) : Dictionary<string, obj> -> obj =
+        let ctor = FSharpValue.PreComputeUnionConstructor(case, true)
+        let fields = case.GetFields() |> Array.map (fun p -> p.Name)
+        fun d ->
+            let arr = Array.zeroCreate fields.Length
+            fields |> Array.iteri (fun i n -> arr.[i] <- d.[n])
+            ctor arr
+
+    let rec mergeEndPointCaseFragments (cases: seq<UnionCaseInfo * list<UnionParserSegment>>) : list<UnionParser> * option<Dictionary<string, obj> -> obj> =
+        let constants = Dictionary<string, _>()
+        let mutable parameter = None
+        let mutable final = None
+        cases |> Seq.iter (fun (case, p) ->
+            match p with
+            | Constant s :: rest ->
+                let existing =
+                    match constants.TryGetValue(s) with
+                    | true, x -> x
+                    | false, _ -> []
+                constants.[s] <- (case, rest) :: existing
+            | Parameter(n, ty, seg) :: rest ->
+                match parameter with
+                | Some (n', ty', seg, ps) ->
+                    if n <> n' then
+                        failwithf "Union %s has cases with conflicting endpoint definitions" case.DeclaringType.FullName
+                    elif ty = ty' then
+                        failwithf "Union %s has cases with conflicting endpoint definitions" case.DeclaringType.FullName
+                    else
+                        parameter <- Some (n, ty, seg, (case, rest) :: ps)
+                | None ->
+                    parameter <- Some (n, ty, seg, [case, rest])
+            | [] ->
+                match final with
+                | Some _ ->
+                    failwithf "Union %s has cases with conflicting endpoint definitions" case.DeclaringType.FullName
+                | None ->
+                    final <- Some (caseCtor case)
+        )
+        [
+            for KeyValue(s, cases) in constants do
+                let tails, final = mergeEndPointCaseFragments cases
+                yield {
+                    head = Constant s
+                    tails = tails
+                    finalize = final
+                }
+            match parameter with
+            | None -> ()
+            | Some (n, ty, seg, cases) ->
+                let tails, final = mergeEndPointCaseFragments cases
+                yield {
+                    head = Parameter(n, ty, seg)
+                    tails = tails
+                    finalize = final
+                }
+        ], final
+
+    let parseUnion cases : SegmentParser =
+        let parsers, final = mergeEndPointCaseFragments cases
+        fun l ->
+            let d = Dictionary()
+            let rec run parsers final l =
+                parsers
+                |> Seq.tryPick (fun p ->
+                    match p.head, l with
+                    | Constant s, s' :: rest when s = s' ->
+                        run p.tails p.finalize rest
+                    | Constant _, _ ->
+                        None
+                    | Parameter(n, _, seg), l ->
+                        match seg.parse l with
+                        | None -> None
+                        | Some (o, rest) ->
+                            d.[n] <- o
+                            run p.tails p.finalize rest
+                )
+                |> Option.orElseWith (fun () ->
+                    final |> Option.map (fun f -> f d, l)
+                )
+            run parsers final l
+
+    let parseConsecutiveTypes getSegment (tys: Type[]) (ctor: obj[] -> obj) : SegmentParser =
         let fields = Array.map getSegment tys
         fun (fragments: list<string>) ->
             let args = Array.zeroCreate fields.Length
@@ -215,60 +370,49 @@ module Router =
                 if i = fields.Length then
                     ok (ctor args, fragments)
                 else
-                    fields.[i].parse fragments
-                    |> Seq.collect (fun (x, rest) ->
+                    match fields.[i].parse fragments with
+                    | None -> fail
+                    | Some (x, rest) ->
                         args.[i] <- x
                         go (i + 1) rest
-                    )
             go 0 fragments
 
-    let private writeConsecutiveTypes getSegment (tys: Type[]) (dector: obj -> obj[]) : SegmentWriter =
+    let writeConsecutiveTypes getSegment (tys: Type[]) (dector: obj -> obj[]) : SegmentWriter =
         let fields = tys |> Array.map (fun t -> (getSegment t).write)
         fun (r: obj) ->
             Array.map2 (<|) fields (dector r)
             |> List.concat
 
-    let private parseUnionCaseArgs getSegment (case: UnionCaseInfo) : SegmentParser =
-        let tys = case.GetFields() |> Array.map (fun p -> p.PropertyType)
-        let ctor = FSharpValue.PreComputeUnionConstructor case
-        parseConsecutiveTypes getSegment tys ctor
-
-    let private writeUnionCase getSegment (path: string) (case: UnionCaseInfo) =
-        let tys = case.GetFields() |> Array.map (fun p -> p.PropertyType)
+    let caseDector (case: UnionCaseInfo) : obj -> Dictionary<string, obj> =
         let dector = FSharpValue.PreComputeUnionReader(case, true)
-        let write = writeConsecutiveTypes getSegment tys dector
-        match path with
-        | "" -> write
-        | path -> fun r -> path :: write r
+        let fields = case.GetFields() |> Array.map (fun p -> p.Name)
+        fun o ->
+            let d = Dictionary()
+            (dector o, fields)
+            ||> Array.iter2 (fun v n -> d.[n] <- v)
+            d
 
-    let private unionSegment (getSegment: Type -> Segment) (ty: Type) : Segment =
-        let parsers, readers =
+    let writeUnionCase (case: UnionCaseInfo, path: list<UnionParserSegment>) =
+        let dector = caseDector case
+        fun o ->
+            let vals = dector o
+            path |> List.collect (function
+                | Constant s -> [s]
+                | Parameter(n, _, seg) -> seg.write vals.[n]
+            )
+
+    let unionSegment (getSegment: Type -> Segment) (ty: Type) : Segment =
+        let cases =
             FSharpType.GetUnionCases(ty, true)
-            |> Array.map (fun case ->
-                let path = parseEndPointCasePath case
-                (path, parseUnionCaseArgs getSegment case), writeUnionCase getSegment path case)
-            |> Array.unzip
-        let parsers = dict parsers
-        let getRoute =
+            |> Array.map (fun c -> c, parseEndPointCase getSegment c)
+        let write =
+            let writers = Array.map writeUnionCase cases
             let tagReader = FSharpValue.PreComputeUnionTagReader(ty, true)
-            fun r -> readers.[tagReader r] r
-        let unprefixedSetRoute path =
-            match parsers.TryGetValue "" with
-            | true, c -> c path
-            | false, _ -> fail
-        let setRoute path =
-            seq {
-                match path with
-                | head :: rest ->
-                    match parsers.TryGetValue head with
-                    | true, c -> yield! c rest
-                    | false, _ -> ()
-                | [] -> ()
-                yield! unprefixedSetRoute path
-            }
-        { parse = setRoute; write = getRoute }
+            fun r -> writers.[tagReader r] r
+        let parse = parseUnion cases
+        { parse = parse; write = write }
 
-    let private tupleSegment getSegment ty =
+    let tupleSegment getSegment ty =
         let tys = FSharpType.GetTupleElements ty
         let ctor = FSharpValue.PreComputeTupleConstructor ty
         let dector = FSharpValue.PreComputeTupleReader ty
@@ -277,7 +421,7 @@ module Router =
             write = writeConsecutiveTypes getSegment tys dector
         }
 
-    let private recordSegment getSegment ty =
+    let recordSegment getSegment ty =
         let tys = FSharpType.GetRecordFields(ty, true) |> Array.map (fun p -> p.PropertyType)
         let ctor = FSharpValue.PreComputeRecordConstructor(ty, true)
         let dector = FSharpValue.PreComputeRecordReader(ty, true)
@@ -286,7 +430,7 @@ module Router =
             write = writeConsecutiveTypes getSegment tys dector
         }
 
-    let rec private getSegment (cache: Dictionary<Type, Segment>) (ty: Type) : Segment =
+    let rec getSegment (cache: Dictionary<Type, Segment>) (ty: Type) : Segment =
         match cache.TryGetValue(ty) with
         | true, x -> unbox x
         | false, _ ->
@@ -313,6 +457,9 @@ module Router =
             cache.[ty] <- !segment
             !segment
 
+/// Functions for building Routers that bind page navigation with Elmish.
+module Router =
+
     /// Infer a router constructed around an endpoint type `'ep`.
     /// This type must be an F# union type, and its cases should use `EndPointAttribute`
     /// to declare how they match to a URI.
@@ -331,7 +478,7 @@ module Router =
                 path.Split('/')
                 |> List.ofArray
                 |> frag.parse
-                |> Seq.tryPick (function
+                |> Option.bind (function
                     | x, [] -> Some (unbox<'ep> x |> makeMessage)
                     | _ -> None)
         }
