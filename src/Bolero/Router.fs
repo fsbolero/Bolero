@@ -214,7 +214,9 @@ module private RouterImpl =
 
     type UnionParserSegment =
         | Constant of string
-        | Parameter of string * Type * Segment
+        /// A UnionParserSegment can be common among multiple union cases.
+        /// fieldIndex lists these cases, and for each of them, its total number of fields and the index of the field for this segment.
+        | Parameter of fieldIndex: list<UnionCaseInfo * int * int> * fieldType: Type * fieldSegment: Segment
 
     type UnionParser =
         {
@@ -223,7 +225,7 @@ module private RouterImpl =
             /// Parsers for the remaining segments, each item in the list for a different union case.
             tails: list<UnionParser>
             /// If Some, there is a case for which this is the final segment, and this is its constructor.
-            finalize: option<Dictionary<string, obj> -> obj>
+            finalize: option<UnionCaseInfo * (obj[] -> obj)>
         }
 
     let parseEndPointCasePath (case: UnionCaseInfo) =
@@ -244,7 +246,7 @@ module private RouterImpl =
             fields
             |> Array.mapi (fun i p ->
                 let ty = p.PropertyType
-                Parameter(p.Name, ty, getSegment ty))
+                Parameter([case, fields.Length, i], ty, getSegment ty))
             |> List.ofSeq
         match parseEndPointCasePath case with
         // EndPoint "/"
@@ -263,11 +265,12 @@ module private RouterImpl =
                         let m = fragmentParameterRE.Match(frag)
                         if m.Success then
                             let fieldName = m.Groups.[1].Value
-                            match fields |> Array.tryFind (fun p -> p.Name = fieldName) with
-                            | Some p ->
+                            match fields |> Array.tryFindIndex (fun p -> p.Name = fieldName) with
+                            | Some i ->
+                                let p = fields.[i]
                                 if unboundFields.Remove(fieldName) then
                                     let ty = p.PropertyType
-                                    Parameter(p.Name, ty, getSegment ty)
+                                    Parameter([case, fields.Length, i], ty, getSegment ty)
                                 else
                                     failwithf "Union case %s.%s has endpoint definition with duplicate field %s"
                                         case.DeclaringType.FullName case.Name fieldName
@@ -281,15 +284,10 @@ module private RouterImpl =
                     case.DeclaringType.FullName case.Name
             res
 
-    let caseCtor (case: UnionCaseInfo) : Dictionary<string, obj> -> obj =
-        let ctor = FSharpValue.PreComputeUnionConstructor(case, true)
-        let fields = case.GetFields() |> Array.map (fun p -> p.Name)
-        fun d ->
-            let arr = Array.zeroCreate fields.Length
-            fields |> Array.iteri (fun i n -> arr.[i] <- d.[n])
-            ctor arr
+    let caseCtor (case: UnionCaseInfo) : UnionCaseInfo * (obj[] -> obj) =
+        case, FSharpValue.PreComputeUnionConstructor(case, true)
 
-    let rec mergeEndPointCaseFragments (cases: seq<UnionCaseInfo * list<UnionParserSegment>>) : list<UnionParser> * option<Dictionary<string, obj> -> obj> =
+    let rec mergeEndPointCaseFragments (cases: seq<UnionCaseInfo * list<UnionParserSegment>>) : list<UnionParser> * option<UnionCaseInfo * (obj[] -> obj)> =
         let constants = Dictionary<string, _>()
         let mutable parameter = None
         let mutable final = None
@@ -304,18 +302,16 @@ module private RouterImpl =
             | Parameter(n, ty, seg) :: rest ->
                 match parameter with
                 | Some (n', ty', seg, ps) ->
-                    if n <> n' then
-                        failwithf "Union %s has cases with conflicting endpoint definitions" case.DeclaringType.FullName
-                    elif ty = ty' then
-                        failwithf "Union %s has cases with conflicting endpoint definitions" case.DeclaringType.FullName
+                    if ty <> ty' then
+                        failwithf "[2] Union %s has cases with conflicting endpoint definitions" case.DeclaringType.FullName
                     else
-                        parameter <- Some (n, ty, seg, (case, rest) :: ps)
+                        parameter <- Some (n @ n', ty, seg, (case, rest) :: ps)
                 | None ->
                     parameter <- Some (n, ty, seg, [case, rest])
             | [] ->
                 match final with
                 | Some _ ->
-                    failwithf "Union %s has cases with conflicting endpoint definitions" case.DeclaringType.FullName
+                    failwithf "[3] Union %s has cases with conflicting endpoint definitions" case.DeclaringType.FullName
                 | None ->
                     final <- Some (caseCtor case)
         )
@@ -341,7 +337,7 @@ module private RouterImpl =
     let parseUnion cases : SegmentParser =
         let parsers, final = mergeEndPointCaseFragments cases
         fun l ->
-            let d = Dictionary()
+            let d = Dictionary<UnionCaseInfo, obj[]>()
             let rec run parsers final l =
                 parsers
                 |> Seq.tryPick (fun p ->
@@ -354,11 +350,25 @@ module private RouterImpl =
                         match seg.parse l with
                         | None -> None
                         | Some (o, rest) ->
-                            d.[n] <- o
+                            for (case, fieldCount, i) in n do
+                                let a =
+                                    match d.TryGetValue(case) with
+                                    | true, a -> a
+                                    | false, _ ->
+                                        let a = Array.zeroCreate fieldCount
+                                        d.[case] <- a
+                                        a
+                                a.[i] <- o
                             run p.tails p.finalize rest
                 )
                 |> Option.orElseWith (fun () ->
-                    final |> Option.map (fun f -> f d, l)
+                    final |> Option.map (fun (ty, ctor) ->
+                        let args =
+                            match d.TryGetValue(ty) with
+                            | true, args -> args
+                            | false, _ -> [||]
+                        ctor args, l
+                    )
                 )
             run parsers final l
 
@@ -383,14 +393,8 @@ module private RouterImpl =
             Array.map2 (<|) fields (dector r)
             |> List.concat
 
-    let caseDector (case: UnionCaseInfo) : obj -> Dictionary<string, obj> =
-        let dector = FSharpValue.PreComputeUnionReader(case, true)
-        let fields = case.GetFields() |> Array.map (fun p -> p.Name)
-        fun o ->
-            let d = Dictionary()
-            (dector o, fields)
-            ||> Array.iter2 (fun v n -> d.[n] <- v)
-            d
+    let caseDector (case: UnionCaseInfo) : obj -> obj[] =
+        FSharpValue.PreComputeUnionReader(case, true)
 
     let writeUnionCase (case: UnionCaseInfo, path: list<UnionParserSegment>) =
         let dector = caseDector case
@@ -398,7 +402,9 @@ module private RouterImpl =
             let vals = dector o
             path |> List.collect (function
                 | Constant s -> [s]
-                | Parameter(n, _, seg) -> seg.write vals.[n]
+                | Parameter(n, _, seg) ->
+                    let (_, _, i) = n |> List.find (fun (case', _, _) -> case' = case)
+                    seg.write vals.[i]
             )
 
     let unionSegment (getSegment: Type -> Segment) (ty: Type) : Segment =
