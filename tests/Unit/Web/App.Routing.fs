@@ -36,6 +36,12 @@ type Page =
     | [<EndPoint "/with-record">] WithRecord of Record
     | [<EndPoint "/with-list">] WithList of list<int * string>
     | [<EndPoint "/with-array">] WithArray of (int * string)[]
+    | [<EndPoint "/with-path/{arg}">] WithPath of arg: string
+    | [<EndPoint "/with-path/{arg}/and-suffix">] WithPathAndSuffix of arg: string
+    | [<EndPoint "/with-path/{arg}/and-suffix/{arg2}">] WithPathAndSuffix2 of arg: string * arg2: int
+    | [<EndPoint "/with-path/{arg}/other-suffix">] WithPathAndSuffix3 of arg: string
+    | [<EndPoint "/with-path/and/constant">] WithPathConstant
+    | [<EndPoint "/with-path-record/{arg}">] WithPathRecord of arg: Record
 
     member this.ExpectedUrl =
         match this with
@@ -52,6 +58,12 @@ type Page =
                         <| String.concat "" [for i, s in l -> sprintf "/%i/%s" i s]
         | WithArray a -> sprintf "/with-array/%i%s" a.Length
                         <| String.concat "" [for i, s in a -> sprintf "/%i/%s" i s]
+        | WithPath s -> sprintf "/with-path/%s" s
+        | WithPathAndSuffix s -> sprintf "/with-path/%s/and-suffix" s
+        | WithPathAndSuffix2(s, i) -> sprintf "/with-path/%s/and-suffix/%i" s i
+        | WithPathAndSuffix3 s -> sprintf "/with-path/%s/other-suffix" s
+        | WithPathConstant -> "/with-path/and/constant"
+        | WithPathRecord { x = x; y = y; z = z } -> sprintf "/with-path-record/%i%s/%b" x y.ExpectedUrl z
 
 and InnerPage =
     | [<EndPoint "/">] InnerHome
@@ -90,49 +102,11 @@ let update msg model =
     match msg with
     | SetPage p -> { model with page = p }
 
-let router = Router.infer SetPage (fun m -> m.page)
-
-let innerlinks isTerminal =
-    [
-        "home", InnerHome
-        "noarg", InnerNoArg
-        "witharg1", InnerWithArg "foo"
-        "witharg2", InnerWithArg "bar"
-        "witharg3", InnerWithArg ""
-        "withargs1", InnerWithArgs("foo", 1)
-        "withargs2", InnerWithArgs("bar", 2)
-        "withargs3", InnerWithArgs("", 3)
-    ]
-
-let baseLinks =
-    [
-        yield! [
-            "home", Home
-            "noarg", NoArg
-            "witharg1", WithArg "foo"
-            "witharg2", WithArg "bar"
-            "witharg3", WithArg ""
-            "withargs1", WithArgs("foo", 1)
-            "withargs2", WithArgs("bar", 2)
-            "withargs3", WithArgs("", 3)
-            "withtuple1", WithTuple(42, "hi", true)
-            "withtuple2", WithTuple(324, "", false)
-            "withlist1", WithList [2, "a"; 34, "b"]
-            "withlist2", WithList [2, ""; 34, "b"]
-            "witharray1", WithArray [|2, "a"; 34, "b"|]
-            "witharray2", WithArray [|2, ""; 34, "b"|]
-        ]
-        for cls, page in innerlinks true do
-            yield "inner" + cls, WithUnion page
-        for cls, page in innerlinks false do
-            yield "innernonterminal1" + cls, WithUnionNotTerminal (page, "foo")
-            yield "innernonterminal2" + cls, WithUnionNotTerminal (page, "")
-            yield "withrecord" + cls, WithRecord { x = 1; y = page; z = true }
-    ]
-
-let links =
-    baseLinks @
-    List.map (fun (cls, page) -> "withnested" + cls, WithNestedUnion page) baseLinks
+let router =
+    try Router.infer SetPage (fun m -> m.page)
+    with e ->
+        eprintfn "ROUTER ERROR: %A" e
+        reraise()
 
 let matchInnerPage = function
     | InnerHome -> "home"
@@ -140,23 +114,81 @@ let matchInnerPage = function
     | InnerWithArg x -> sprintf "witharg-%s" x
     | InnerWithArgs(x, y) -> sprintf "withargs-%s-%i" x y
 
-let rec matchPage = function
+let rec pageClass = function
     | Home -> "home"
     | NoArg -> "noarg"
     | WithArg x -> sprintf "witharg-%s" x
     | WithArgs(x, y) -> sprintf "withargs-%s-%i" x y
     | WithUnion u -> "withunion-" + matchInnerPage u
     | WithUnionNotTerminal(u, s) -> sprintf "withunion2-%s-%s" (matchInnerPage u) s
-    | WithNestedUnion u -> sprintf "withnested-%s" (matchPage u)
+    | WithNestedUnion u -> sprintf "withnested-%s" (pageClass u)
     | WithTuple(x, y, z) -> sprintf "withtuple-%i-%s-%b" x y z
     | WithRecord { x = x; y = y; z = z } -> sprintf "withrecord-%i-%s-%b" x (matchInnerPage y) z
     | WithList l -> sprintf "withlist-%s" (String.concat "-" [for i, s in l -> sprintf "%i-%s" i s])
     | WithArray a -> sprintf "witharray-%s" (String.concat "-" [for i, s in a -> sprintf "%i-%s" i s])
+    | WithPath s -> sprintf "withpath-%s" s
+    | WithPathAndSuffix s -> sprintf "withpathsuffix-%s" s
+    | WithPathAndSuffix2(s, i) -> sprintf "withpathsuffix2-%s-%i" s i
+    | WithPathAndSuffix3 s -> sprintf "withpathsuffix3-%s" s
+    | WithPathConstant -> "withpathconstant"
+    | WithPathRecord { x = x; y = y; z = z } -> sprintf "withpathrecord-%i-%s-%b" x (matchInnerPage y) z
+
+let innerlinks =
+    [
+        InnerHome
+        InnerNoArg
+        InnerWithArg "foo"
+        InnerWithArg "bar"
+        InnerWithArg ""
+        InnerWithArgs("foo", 1)
+        InnerWithArgs("bar", 2)
+        InnerWithArgs("", 3)
+    ]
+
+let baseLinks =
+    [
+        yield! [
+            Home
+            NoArg
+            WithArg "foo"
+            WithArg "bar"
+            WithArg ""
+            WithArgs("foo", 1)
+            WithArgs("bar", 2)
+            WithArgs("", 3)
+            WithTuple(42, "hi", true)
+            WithTuple(324, "", false)
+            WithList [2, "a"; 34, "b"]
+            WithList [2, ""; 34, "b"]
+            WithArray [|2, "a"; 34, "b"|]
+            WithArray [|2, ""; 34, "b"|]
+            WithPath "abc"
+            WithPath ""
+            WithPathAndSuffix "abc"
+            WithPathAndSuffix ""
+            WithPathAndSuffix2("abc", 123)
+            WithPathAndSuffix2("", 123)
+            WithPathAndSuffix3 "abc"
+            WithPathAndSuffix3 ""
+            WithPathConstant
+        ]
+        for page in innerlinks do
+            yield WithUnion page
+            yield WithUnionNotTerminal (page, "foo")
+            yield WithUnionNotTerminal (page, "")
+            yield WithRecord { x = 1; y = page; z = true }
+            yield WithPathRecord { x = 3; y = page; z = false }
+    ]
+
+let links =
+    baseLinks @
+    List.map WithNestedUnion baseLinks
 
 let view model dispatch =
     concat [
-        for cls, page in links do
+        for page in links do
             let url = page.ExpectedUrl
+            let cls = pageClass page
             yield a [attr.classes ["link-" + cls]; router.HRef page] [text url]
             yield button [
                 attr.classes ["btn-" + cls]
@@ -164,7 +196,7 @@ let view model dispatch =
                 on.click (fun _ -> dispatch (SetPage page))
             ] [text url]
         yield cond model.page <| fun x ->
-            let cls = matchPage x
+            let cls = pageClass x
             span [attr.classes [cls]] [text cls]
     ]
 

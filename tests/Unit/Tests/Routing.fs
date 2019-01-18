@@ -16,7 +16,8 @@ module Routing =
 
     let links =
         App.Routing.links
-        |> List.map (fun (cls, page) ->
+        |> List.map (fun page ->
+            let cls = App.Routing.pageClass page
             TestCaseData(cls, page).SetArgDisplayNames(
                 (string page)
                     // Replace parentheses with unicode ones for nicer display in VS test explorer
@@ -27,7 +28,7 @@ module Routing =
     let ``Click link``(linkCls, page: App.Routing.Page) =
         let url = page.ExpectedUrl
         elt.ByClass("link-" + linkCls).Click()
-        let resCls = App.Routing.matchPage page
+        let resCls = App.Routing.pageClass page
         let res =
             try Some <| elt.Wait(fun () -> elt.ByClass(resCls))
             with :? WebDriverTimeoutException -> None
@@ -39,7 +40,7 @@ module Routing =
         Thread.Sleep(500) // Some cases fail without this, mainly ones with empty strings. TODO: investigate
         let url = page.ExpectedUrl
         elt.ByClass("btn-" + linkCls).Click()
-        let resCls = App.Routing.matchPage page
+        let resCls = App.Routing.pageClass page
         let res =
             try Some <| elt.Wait(fun () -> elt.ByClass(resCls))
             with :? WebDriverTimeoutException -> None
