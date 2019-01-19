@@ -135,11 +135,11 @@ Target.create "build" (fun _ ->
 
 Target.description "Create the NuGet packages"
 Target.create "pack" (fun o ->
-
     Fake.DotNet.Paket.pack (fun p ->
         { p with
             OutputPath = "build"
             Version = version o
+            ToolPath = ".paket/paket"
         }
     )
 )
