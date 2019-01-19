@@ -103,18 +103,17 @@ module private RouterImpl =
     let fail : SegmentParserResult = None
     let ok x : SegmentParserResult = Some x
 
-    let inline tryParseBaseType<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
-        fun s ->
-            let mutable out = Unchecked.defaultof<'T>
-            if (^T : (static member TryParse : string * byref<'T> -> bool) (s, &out)) then
-                Some (box out)
-            else
-                None
+    let inline tryParseBaseType<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> s =
+        let mutable out = Unchecked.defaultof<'T>
+        if (^T : (static member TryParse : string * byref<'T> -> bool) (s, &out)) then
+            Some (box out)
+        else
+            None
 
     let inline defaultBaseTypeParser<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> = function
         | [] -> fail
         | x :: rest ->
-            match tryParseBaseType<'T>() x with
+            match tryParseBaseType<'T> x with
             | Some x -> ok (box x, rest)
             | None -> fail
 
@@ -214,9 +213,12 @@ module private RouterImpl =
 
     [<CustomEquality; NoComparison>]
     type ParameterModifier =
+        /// No modifier: "/{parameter}"
         | Basic
-        //| Optional
+        /// Rest of the path: "/{*parameter}"
         | Rest of (seq<obj> -> obj) * (obj -> seq<obj>)
+        /// Optional segment: "/{?parameter}" (TODO)
+        //| Optional
 
         interface IEquatable<ParameterModifier> with
             member this.Equals(that) =
@@ -225,23 +227,34 @@ module private RouterImpl =
                 | Rest _, Rest _ -> true
                 | _ -> false
 
-    type UnionParserSegment =
-        | Constant of string
-        /// A UnionParserSegment can be common among multiple union cases.
-        /// fieldIndex lists these cases, and for each of them, its total number of fields and the index of the field for this segment.
-        | Parameter of fieldIndex: list<UnionCaseInfo * int * int> * fieldType: Type * fieldSegment: Segment * ParameterModifier
+    /// A {parameter} path segment.
+    type Parameter =
+        {
+            /// A parameter can be common among multiple union cases.
+            /// `index` lists these cases, and for each of them, its total number of fields and the index of the field for this segment.
+            index: list<UnionCaseInfo * int * int>
+            ``type``: Type
+            segment: Segment
+            modifier: ParameterModifier
+        }
 
+    /// The parser for a union type at a given point in the path.
     type UnionParser =
         {
-            /// Parser for the first segment.
-            head: UnionParserSegment
-            /// Parsers for the remaining segments, each item in the list for a different union case.
-            tails: list<UnionParser>
-            /// If Some, there is a case for which this is the final segment, and this is its constructor.
+            /// All recognized "/constant" segments, associated with the parser for the rest of the path.
+            constants: IDictionary<string, UnionParser>
+            /// The recognized "/{parameter}" segment, if any.
+            parameter: option<Parameter * UnionParser>
+            /// The union case that parses correctly if the path ends here, if any.
             finalize: option<UnionCaseInfo * (obj[] -> obj)>
         }
 
-    let parseEndPointCasePath (case: UnionCaseInfo) =
+    /// Intermediate representation of a path segment.
+    type UnionParserSegment =
+        | Constant of string
+        | Parameter of Parameter
+
+    let parseEndPointCasePath (case: UnionCaseInfo) : list<string> =
         case.GetCustomAttributes()
         |> Array.tryPick (function
             | :? EndPointAttribute as e -> Some (List.ofSeq e.Path)
@@ -302,7 +315,12 @@ module private RouterImpl =
             fields
             |> Array.mapi (fun i p ->
                 let ty = p.PropertyType
-                Parameter([case, fields.Length, i], ty, getSegment ty, Basic))
+                Parameter {
+                    index = [case, fields.Length, i]
+                    ``type`` = ty
+                    segment = getSegment ty
+                    modifier = Basic
+                })
             |> List.ofSeq
         match parseEndPointCasePath case with
         // EndPoint "/"
@@ -331,7 +349,12 @@ module private RouterImpl =
                                         | "" -> ty, Basic
                                         | "*" -> restModifierFor ty
                                         | s -> failwithf "Invalid parameter modifier: %s" s
-                                    Parameter([case, fields.Length, i], ty, getSegment eltTy, modifier)
+                                    Parameter {
+                                        index = [case, fields.Length, i]
+                                        ``type`` = ty
+                                        segment = getSegment eltTy
+                                        modifier = modifier
+                                    }
                                 else
                                     failwithf "Union case %s.%s has endpoint definition with duplicate field %s"
                                         case.DeclaringType.FullName case.Name fieldName
@@ -348,11 +371,14 @@ module private RouterImpl =
     let caseCtor (case: UnionCaseInfo) : UnionCaseInfo * (obj[] -> obj) =
         case, FSharpValue.PreComputeUnionConstructor(case, true)
 
-    let rec mergeEndPointCaseFragments (cases: seq<UnionCaseInfo * list<UnionParserSegment>>) : list<UnionParser> * option<UnionCaseInfo * (obj[] -> obj)> =
+    let rec mergeEndPointCaseFragments (cases: seq<UnionCaseInfo * list<UnionParserSegment>>) : UnionParser =
         let constants = Dictionary<string, _>()
         let mutable parameter = None
         let mutable final = None
         cases |> Seq.iter (fun (case, p) ->
+            let conflict (case': UnionCaseInfo) s =
+                failwithf "Union %s's cases %s and %s have conflicting endpoint definitions (%s)"
+                    case.DeclaringType.FullName case.Name case'.Name s
             match p with
             | Constant s :: rest ->
                 let existing =
@@ -360,75 +386,57 @@ module private RouterImpl =
                     | true, x -> x
                     | false, _ -> []
                 constants.[s] <- (case, rest) :: existing
-            | Parameter(n, ty, seg, modif) :: rest ->
+            | Parameter param :: rest ->
                 match parameter with
-                | Some (n', ty', seg, ps, modif') ->
-                    if ty <> ty' then
-                        failwithf "[1] Union %s has cases with conflicting endpoint definitions" case.DeclaringType.FullName
-                    elif modif <> modif' then
-                        failwithf "[2] Union %s has cases with conflicting endpoint definitions" case.DeclaringType.FullName
-                    else
-                        parameter <- Some (n @ n', ty, seg, (case, rest) :: ps, modif)
+                | Some (case', param', _) when param.``type`` <> param'.``type`` ->
+                    conflict case' "type mismatch on the same parameter"
+                | Some (case', param', _) when param.modifier <> param'.modifier ->
+                    conflict case' "different modifiers on the same parameter"
+                | Some (case', param', ps) ->
+                    let param = { param with index = param.index @ param'.index }
+                    parameter <- Some (case', param, (case, rest) :: ps)
                 | None ->
-                    parameter <- Some (n, ty, seg, [case, rest], modif)
+                    parameter <- Some (case, param, [case, rest])
             | [] ->
                 match final with
-                | Some _ ->
-                    failwithf "[3] Union %s has cases with conflicting endpoint definitions" case.DeclaringType.FullName
-                | None ->
-                    final <- Some (caseCtor case)
+                | Some (case', _) -> conflict case' "same full path"
+                | None -> final <- Some (case, caseCtor case)
         )
-        [
-            for KeyValue(s, cases) in constants do
-                let tails, final = mergeEndPointCaseFragments cases
-                yield {
-                    head = Constant s
-                    tails = tails
-                    finalize = final
-                }
-            match parameter with
-            | None -> ()
-            | Some (n, ty, seg, cases, modif) ->
-                let tails, final = mergeEndPointCaseFragments cases
-                yield {
-                    head = Parameter(n, ty, seg, modif)
-                    tails = tails
-                    finalize = final
-                }
-        ], final
+        {
+            constants = dict [
+                for KeyValue(s, cases) in constants do
+                    yield s, mergeEndPointCaseFragments cases
+            ]
+            parameter = parameter |> Option.map (fun (_, param, cases) ->
+                param, mergeEndPointCaseFragments cases)
+            finalize = final |> Option.map snd
+        }
 
     let parseUnion cases : SegmentParser =
-        let parsers, final = mergeEndPointCaseFragments cases
+        let parser = mergeEndPointCaseFragments cases
         fun l ->
             let d = Dictionary<UnionCaseInfo, obj[]>()
-            let rec run parsers final l =
-                parsers
-                |> Seq.tryPick (fun p ->
-                    match p.head, l with
-                    | Constant s, s' :: rest when s = s' ->
-                        run p.tails p.finalize rest
-                    | Constant _, _ ->
-                        None
-                    | Parameter(n, _, seg, Basic), l ->
-                        match seg.parse l with
-                        | None -> None
-                        | Some (o, rest) ->
-                            for (case, fieldCount, i) in n do
-                                let a =
-                                    match d.TryGetValue(case) with
-                                    | true, a -> a
-                                    | false, _ ->
-                                        let a = Array.zeroCreate fieldCount
-                                        d.[case] <- a
-                                        a
-                                a.[i] <- o
-                            run p.tails p.finalize rest
-                    | Parameter(n, _, seg, Rest(restBuild, _)), l ->
-                        let restValues = ResizeArray()
-                        let rec parse l =
-                            match seg.parse l, l with
-                            | None, [] ->
-                                for (case, fieldCount, i) in n do
+            let rec run (parser: UnionParser) l =
+                let finalize rest =
+                    parser.finalize |> Option.map (fun (case, ctor) ->
+                        let args =
+                            match d.TryGetValue(case) with
+                            | true, args -> args
+                            | false, _ -> [||]
+                        (ctor args, rest))
+                let mutable constant = Unchecked.defaultof<_>
+                match l with
+                | [] -> finalize []
+                | s :: rest when parser.constants.TryGetValue(s, &constant) ->
+                    run constant rest
+                | l ->
+                    parser.parameter
+                    |> Option.bind (function
+                        | { modifier = Basic } as param, nextParser ->
+                            match param.segment.parse l with
+                            | None -> None
+                            | Some (o, rest) ->
+                                for (case, fieldCount, i) in param.index do
                                     let a =
                                         match d.TryGetValue(case) with
                                         | true, a -> a
@@ -436,24 +444,31 @@ module private RouterImpl =
                                             let a = Array.zeroCreate fieldCount
                                             d.[case] <- a
                                             a
-                                    a.[i] <- restBuild restValues
-                                run p.tails p.finalize []
-                            | None, _::_ -> None
-                            | Some (o, rest), _ ->
-                                restValues.Add(o)
-                                parse rest
-                        parse l
-                )
-                |> Option.orElseWith (fun () ->
-                    final |> Option.map (fun (case, ctor) ->
-                        let args =
-                            match d.TryGetValue(case) with
-                            | true, args -> args
-                            | false, _ -> [||]
-                        ctor args, l
+                                    a.[i] <- o
+                                run nextParser rest
+                        | { modifier = Rest(restBuild, _) } as param, nextParser ->
+                            let restValues = ResizeArray()
+                            let rec parse l =
+                                match param.segment.parse l, l with
+                                | None, [] ->
+                                    for (case, fieldCount, i) in param.index do
+                                        let a =
+                                            match d.TryGetValue(case) with
+                                            | true, a -> a
+                                            | false, _ ->
+                                                let a = Array.zeroCreate fieldCount
+                                                d.[case] <- a
+                                                a
+                                        a.[i] <- restBuild restValues
+                                    run nextParser []
+                                | None, _::_ -> None
+                                | Some (o, rest), _ ->
+                                    restValues.Add(o)
+                                    parse rest
+                            parse l
                     )
-                )
-            run parsers final l
+                |> Option.orElseWith (fun () -> finalize l)
+            run parser l
 
     let parseConsecutiveTypes getSegment (tys: Type[]) (ctor: obj[] -> obj) : SegmentParser =
         let fields = Array.map getSegment tys
@@ -485,12 +500,12 @@ module private RouterImpl =
             let vals = dector o
             path |> List.collect (function
                 | Constant s -> [s]
-                | Parameter(n, _, seg, Basic) ->
-                    let (_, _, i) = n |> List.find (fun (case', _, _) -> case' = case)
-                    seg.write vals.[i]
-                | Parameter(n, _, seg, Rest(_, decons)) ->
-                    let (_, _, i) = n |> List.find (fun (case', _, _) -> case' = case)
-                    [ for x in decons vals.[i] do yield! seg.write x ]
+                | Parameter({ modifier = Basic } as param) ->
+                    let (_, _, i) = param.index |> List.find (fun (case', _, _) -> case' = case)
+                    param.segment.write vals.[i]
+                | Parameter({ modifier = Rest(_, decons) } as param) ->
+                    let (_, _, i) = param.index |> List.find (fun (case', _, _) -> case' = case)
+                    [ for x in decons vals.[i] do yield! param.segment.write x ]
             )
 
     let unionSegment (getSegment: Type -> Segment) (ty: Type) : Segment =

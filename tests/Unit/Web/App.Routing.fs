@@ -108,7 +108,7 @@ let router =
         eprintfn "ROUTER ERROR: %A" e
         reraise()
 
-let matchInnerPage = function
+let innerPageClass = function
     | InnerHome -> "home"
     | InnerNoArg -> "noarg"
     | InnerWithArg x -> sprintf "witharg-%s" x
@@ -119,11 +119,11 @@ let rec pageClass = function
     | NoArg -> "noarg"
     | WithArg x -> sprintf "witharg-%s" x
     | WithArgs(x, y) -> sprintf "withargs-%s-%i" x y
-    | WithUnion u -> "withunion-" + matchInnerPage u
-    | WithUnionNotTerminal(u, s) -> sprintf "withunion2-%s-%s" (matchInnerPage u) s
+    | WithUnion u -> "withunion-" + innerPageClass u
+    | WithUnionNotTerminal(u, s) -> sprintf "withunion2-%s-%s" (innerPageClass u) s
     | WithNestedUnion u -> sprintf "withnested-%s" (pageClass u)
     | WithTuple(x, y, z) -> sprintf "withtuple-%i-%s-%b" x y z
-    | WithRecord { x = x; y = y; z = z } -> sprintf "withrecord-%i-%s-%b" x (matchInnerPage y) z
+    | WithRecord { x = x; y = y; z = z } -> sprintf "withrecord-%i-%s-%b" x (innerPageClass y) z
     | WithList l -> sprintf "withlist-%s" (String.concat "-" [for i, s in l -> sprintf "%i-%s" i s])
     | WithArray a -> sprintf "witharray-%s" (String.concat "-" [for i, s in a -> sprintf "%i-%s" i s])
     | WithPath s -> sprintf "withpath-%s" s
@@ -131,7 +131,7 @@ let rec pageClass = function
     | WithPathAndSuffix2(s, i) -> sprintf "withpathsuffix2-%s-%i" s i
     | WithPathAndSuffix3 s -> sprintf "withpathsuffix3-%s" s
     | WithPathConstant -> "withpathconstant"
-    | WithPathRecord { x = x; y = y; z = z } -> sprintf "withpathrecord-%i-%s-%b" x (matchInnerPage y) z
+    | WithPathRecord { x = x; y = y; z = z } -> sprintf "withpathrecord-%i-%s-%b" x (innerPageClass y) z
 
 let innerlinks =
     [
