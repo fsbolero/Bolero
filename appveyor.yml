@@ -29,9 +29,6 @@ environment:
 nuget:
   disable_publish_on_pr: true
 
-cache:
-- .nuget
-
 for:
 
 # Publish to NuGet and github.io only from Windows on master
@@ -46,3 +43,11 @@ for:
     name: nuget
   on_success:
   - ps: .\tools\gh-pages.ps1 -env appveyor
+
+# Only use cache on Windows build
+# (AV caches for each matrix item separately, and the cache is too large)
+- matrix:
+    only:
+    - image: Visual Studio 2017
+  cache:
+  - .nuget
