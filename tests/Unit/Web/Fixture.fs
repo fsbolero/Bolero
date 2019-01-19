@@ -27,7 +27,7 @@ open Microsoft.AspNetCore.Hosting
 open NUnit.Framework
 open OpenQA.Selenium
 open OpenQA.Selenium.Chrome
-open OpenQA.Selenium.Firefox
+// open OpenQA.Selenium.Firefox
 open OpenQA.Selenium.Remote
 open OpenQA.Selenium.Support.UI
 
@@ -52,12 +52,12 @@ type WebFixture() =
             driver <- new ChromeDriver(Environment.CurrentDirectory, options)
         }
 
-    static let startFirefox() =
-        async {
-            let options = FirefoxOptions()
-            options.AddArgument "-headless"
-            driver <- new FirefoxDriver(System.Environment.CurrentDirectory, options)
-        }
+    // static let startFirefox() =
+    //     async {
+    //         let options = FirefoxOptions()
+    //         options.AddArgument "-headless"
+    //         driver <- new FirefoxDriver(System.Environment.CurrentDirectory, options)
+    //     }
 
     static member MkWait(timeout) =
         WebDriverWait(SystemClock(), driver, timeout, TimeSpan.FromMilliseconds(500.))

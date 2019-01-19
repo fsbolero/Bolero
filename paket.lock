@@ -661,7 +661,6 @@ NUGET
     Selenium.WebDriver (3.141)
       Newtonsoft.Json (>= 10.0.3)
     Selenium.WebDriver.ChromeDriver (2.44)
-    Selenium.WebDriver.GeckoDriver.Win64 (0.23)
     System.AppContext (4.3)
       System.Runtime (>= 4.3)
     System.Buffers (4.5)

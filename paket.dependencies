@@ -23,7 +23,7 @@ nuget NUnit3TestAdapter ~> 3.10
 nuget Selenium.Support
 nuget Selenium.WebDriver
 nuget Selenium.WebDriver.ChromeDriver
-nuget Selenium.WebDriver.GeckoDriver.Win64
+# nuget Selenium.WebDriver.GeckoDriver.Win64
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 
