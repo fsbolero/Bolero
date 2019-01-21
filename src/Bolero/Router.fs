@@ -100,9 +100,6 @@ module private RouterImpl =
             write: SegmentWriter
         }
 
-    let fail : SegmentParserResult = None
-    let ok x : SegmentParserResult = Some x
-
     let inline tryParseBaseType<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> s =
         let mutable out = Unchecked.defaultof<'T>
         if (^T : (static member TryParse : string * byref<'T> -> bool) (s, &out)) then
@@ -111,11 +108,11 @@ module private RouterImpl =
             None
 
     let inline defaultBaseTypeParser<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> = function
-        | [] -> fail
+        | [] -> None
         | x :: rest ->
             match tryParseBaseType<'T> x with
-            | Some x -> ok (box x, rest)
-            | None -> fail
+            | Some x -> Some (box x, rest)
+            | None -> None
 
     let inline baseTypeSegment<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
         {
@@ -126,8 +123,8 @@ module private RouterImpl =
     let baseTypes : IDictionary<Type, Segment> = dict [
         typeof<string>, {
             parse = function
-                | [] -> fail
-                | x :: rest -> ok (box x, rest)
+                | [] -> None
+                | x :: rest -> Some (box x, rest)
             write = unbox<string> >> List.singleton
         }
         typeof<bool>, {
@@ -152,7 +149,7 @@ module private RouterImpl =
         let itemSegment = getSegment ty
         let rec parse acc remainingLength fragments =
             if remainingLength = 0 then
-                ok (revAndConvert acc, fragments)
+                Some (revAndConvert acc, fragments)
             else
                 match itemSegment.parse fragments with
                 | None -> None
@@ -163,8 +160,8 @@ module private RouterImpl =
                 | x :: rest ->
                     match Int32.TryParse(x) with
                     | true, length -> parse [] length rest
-                    | false, _ -> fail
-                | _ -> fail
+                    | false, _ -> None
+                | _ -> None
             write = fun x ->
                 let list, (length: int) = toListAndLength x
                 string length :: List.collect itemSegment.write list
@@ -330,9 +327,10 @@ module private RouterImpl =
         // EndPoint <complex_path>
         | frags ->
             let unboundFields = HashSet(fields |> Array.map (fun f -> f.Name))
+            let fragCount = frags.Length
             let res =
                 frags
-                |> List.map (fun frag ->
+                |> List.mapi (fun fragIx frag ->
                     if isConstantFragment frag then
                         Constant frag
                     else
@@ -347,7 +345,12 @@ module private RouterImpl =
                                     let eltTy, modifier =
                                         match m.Groups.[1].Value with
                                         | "" -> ty, Basic
-                                        | "*" -> restModifierFor ty
+                                        | "*" ->
+                                            if fragIx = fragCount - 1 then
+                                                restModifierFor ty
+                                            else
+                                                failwithf "Union case %s.%s: *rest modifier must be on the last fragment"
+                                                    case.DeclaringType.FullName case.Name
                                         | s -> failwithf "Invalid parameter modifier: %s" s
                                     Parameter {
                                         index = [case, fields.Length, i]
@@ -476,10 +479,10 @@ module private RouterImpl =
             let args = Array.zeroCreate fields.Length
             let rec go i fragments =
                 if i = fields.Length then
-                    ok (ctor args, fragments)
+                    Some (ctor args, fragments)
                 else
                     match fields.[i].parse fragments with
-                    | None -> fail
+                    | None -> None
                     | Some (x, rest) ->
                         args.[i] <- x
                         go (i + 1) rest
