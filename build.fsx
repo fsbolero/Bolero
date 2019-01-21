@@ -169,8 +169,8 @@ let uploadTests (url: string) =
 
 Target.description "Run the unit tests"
 Target.create "test" (fun o ->
-    dotnet' "tests/Unit" [] "test" "--logger:trx %s" (buildArgs o)
-    Option.iter uploadTests (testUploadUrl o)
+    try dotnet' "tests/Unit" [] "test" "--logger:trx %s" (buildArgs o)
+    finally Option.iter uploadTests (testUploadUrl o)
 )
 
 Target.description "Run the unit tests waiting for a debugger to connect"
