@@ -84,6 +84,48 @@ type WildcardAttribute([<Optional>] field: string) =
 
     member this.Field = field
 
+[<RequireQualifiedAccess>]
+type InvalidRouterKind =
+    | UnsupportedType of Type
+    | ParameterSyntax of UnionCaseInfo * string
+    | DuplicateField of UnionCaseInfo * string
+    | UnknownField of UnionCaseInfo * string
+    | MissingField of UnionCaseInfo * string
+    | ParameterTypeMismatch of UnionCaseInfo * string * UnionCaseInfo * string
+    | ModifierMismatch of UnionCaseInfo * string * UnionCaseInfo * string
+    | IdenticalPath of UnionCaseInfo * UnionCaseInfo
+    | RestNotLast of UnionCaseInfo
+    | InvalidRestType of UnionCaseInfo
+
+exception InvalidRouter of kind: InvalidRouterKind with
+    override this.Message =
+        let withCase (case: UnionCaseInfo) =
+            sprintf "Invalid router defined for union case %s.%s: %s"
+                case.DeclaringType.FullName case.Name
+        match this.kind with
+        | InvalidRouterKind.UnsupportedType ty ->
+            "Unsupported route type: " + ty.FullName
+        | InvalidRouterKind.ParameterSyntax(case, field) ->
+            withCase case ("Invalid parameter syntax: " + field)
+        | InvalidRouterKind.DuplicateField(case, field) ->
+            withCase case ("Field duplicated in the path: " + field)
+        | InvalidRouterKind.UnknownField(case, field) ->
+            withCase case ("Unknown field in the path: " + field)
+        | InvalidRouterKind.MissingField(case, field) ->
+            withCase case ("Missing field in the path: " + field)
+        | InvalidRouterKind.ParameterTypeMismatch(case, field, otherCase, otherField) ->
+            withCase case (sprintf "Parameter %s at the same path position as %s's %s but has a different type"
+                field otherCase.Name otherField)
+        | InvalidRouterKind.ModifierMismatch(case, field, otherCase, otherField) ->
+            withCase case (sprintf "Parameter %s at the same path position as %s's %s but has a different modifier"
+                field otherCase.Name otherField)
+        | InvalidRouterKind.IdenticalPath(case, otherCase) ->
+            withCase case ("Matches the exact same path as " + otherCase.Name)
+        | InvalidRouterKind.RestNotLast case ->
+            withCase case "{*rest} parameter must be the last fragment"
+        | InvalidRouterKind.InvalidRestType case ->
+            withCase case "{*rest} parameter must have type string, list or array"
+
 [<AutoOpen>]
 module private RouterImpl =
     open System.Text.RegularExpressions
@@ -99,6 +141,8 @@ module private RouterImpl =
             parse: SegmentParser
             write: SegmentWriter
         }
+
+    let fail kind = raise (InvalidRouter kind)
 
     let inline tryParseBaseType<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> s =
         let mutable out = Unchecked.defaultof<'T>
@@ -233,6 +277,9 @@ module private RouterImpl =
             ``type``: Type
             segment: Segment
             modifier: ParameterModifier
+            /// Note that several cases can have the same parameter with different names.
+            /// In this case, the name field is taken from the first declared case.
+            name: string
         }
 
     /// The parser for a union type at a given point in the path.
@@ -275,7 +322,7 @@ module private RouterImpl =
         static member Array<'T> (l: 'T[]) : seq<obj> =
             Seq.cast l
 
-    let restModifierFor (ty: Type) =
+    let restModifierFor (ty: Type) case =
         if ty = typeof<string> then
             ty, Rest(
                 Seq.cast<string> >> String.concat "/" >> box,
@@ -292,20 +339,16 @@ module private RouterImpl =
                 (fun x -> unboxer.Invoke(null, [|x|])),
                 (fun x -> decons.Invoke(null, [|x|]) :?> _)
             )
-        elif ty.IsGenericType then
-            let tdef = ty.GetGenericTypeDefinition()
-            if tdef = typedefof<list<_>> then
-                let targs = ty.GetGenericArguments()
-                let unboxer = typeof<Unboxer>.GetMethod("List", FLAGS_STATIC).MakeGenericMethod(targs)
-                let decons = typeof<Decons>.GetMethod("List", FLAGS_STATIC).MakeGenericMethod(targs)
-                targs.[0], Rest(
-                    (fun x -> unboxer.Invoke(null, [|x|])),
-                    (fun x -> decons.Invoke(null, [|x|]) :?> _)
-                )
-            else
-                failwithf "Invalid type for *rest parameter: %A" ty
+        elif ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<list<_>> then
+            let targs = ty.GetGenericArguments()
+            let unboxer = typeof<Unboxer>.GetMethod("List", FLAGS_STATIC).MakeGenericMethod(targs)
+            let decons = typeof<Decons>.GetMethod("List", FLAGS_STATIC).MakeGenericMethod(targs)
+            targs.[0], Rest(
+                (fun x -> unboxer.Invoke(null, [|x|])),
+                (fun x -> decons.Invoke(null, [|x|]) :?> _)
+            )
         else
-            failwithf "Invalid type for *rest parameter: %A" ty
+            fail (InvalidRouterKind.InvalidRestType case)
 
     let fragmentParameterRE = Regex(@"^\{([?*]?)([a-zA-Z0-9_]+)\}$", RegexOptions.Compiled)
 
@@ -320,6 +363,7 @@ module private RouterImpl =
                     ``type`` = ty
                     segment = getSegment ty
                     modifier = Basic
+                    name = p.Name
                 })
             |> List.ofSeq
         match parseEndPointCasePath case with
@@ -338,40 +382,33 @@ module private RouterImpl =
                         Constant frag
                     else
                         let m = fragmentParameterRE.Match(frag)
-                        if m.Success then
-                            let fieldName = m.Groups.[2].Value
-                            match fields |> Array.tryFindIndex (fun p -> p.Name = fieldName) with
-                            | Some i ->
-                                let p = fields.[i]
-                                if unboundFields.Remove(fieldName) then
-                                    let ty = p.PropertyType
-                                    let eltTy, modifier =
-                                        match m.Groups.[1].Value with
-                                        | "" -> ty, Basic
-                                        | "*" ->
-                                            if fragIx = fragCount - 1 then
-                                                restModifierFor ty
-                                            else
-                                                failwithf "Union case %s.%s: *rest modifier must be on the last fragment"
-                                                    case.DeclaringType.FullName case.Name
-                                        | s -> failwithf "Invalid parameter modifier: %s" s
-                                    Parameter {
-                                        index = [case, fields.Length, i]
-                                        ``type`` = ty
-                                        segment = getSegment eltTy
-                                        modifier = modifier
-                                    }
-                                else
-                                    failwithf "Union case %s.%s has endpoint definition with duplicate field %s"
-                                        case.DeclaringType.FullName case.Name fieldName
-                            | None -> failwithf "Union case %s.%s has endpoint definition with undefined field %s"
-                                        case.DeclaringType.FullName case.Name fieldName
-                        else failwithf "Union case %s.%s has endpoint definition with invalid path fragment '%s'"
-                                case.DeclaringType.FullName case.Name frag
+                        if not m.Success then fail (InvalidRouterKind.ParameterSyntax(case, frag))
+                        let fieldName = m.Groups.[2].Value
+                        match fields |> Array.tryFindIndex (fun p -> p.Name = fieldName) with
+                        | Some i ->
+                            let p = fields.[i]
+                            if not (unboundFields.Remove(fieldName)) then
+                                fail (InvalidRouterKind.DuplicateField(case, fieldName))
+                            let ty = p.PropertyType
+                            let eltTy, modifier =
+                                match m.Groups.[1].Value with
+                                | "" -> ty, Basic
+                                | "*" ->
+                                    if fragIx <> fragCount - 1 then
+                                        fail (InvalidRouterKind.RestNotLast case)
+                                    restModifierFor ty case
+                                | _ -> fail (InvalidRouterKind.ParameterSyntax(case, frag))
+                            Parameter {
+                                index = [case, fields.Length, i]
+                                ``type`` = ty
+                                segment = getSegment eltTy
+                                modifier = modifier
+                                name = p.Name
+                            }
+                        | None -> fail (InvalidRouterKind.UnknownField(case, fieldName))
                 )
             if unboundFields.Count > 0 then
-                failwithf "Union case %s.%s has endpoint definition with some but not all of its fields"
-                    case.DeclaringType.FullName case.Name
+                fail (InvalidRouterKind.MissingField(case, Seq.head unboundFields))
             res
 
     let caseCtor (case: UnionCaseInfo) : UnionCaseInfo * (obj[] -> obj) =
@@ -382,9 +419,6 @@ module private RouterImpl =
         let mutable parameter = None
         let mutable final = None
         cases |> Seq.iter (fun (case, p) ->
-            let conflict (case': UnionCaseInfo) s =
-                failwithf "Union %s's cases %s and %s have conflicting endpoint definitions (%s)"
-                    case.DeclaringType.FullName case.Name case'.Name s
             match p with
             | Constant s :: rest ->
                 let existing =
@@ -394,18 +428,18 @@ module private RouterImpl =
                 constants.[s] <- (case, rest) :: existing
             | Parameter param :: rest ->
                 match parameter with
-                | Some (case', param', _) when param.``type`` <> param'.``type`` ->
-                    conflict case' "type mismatch on the same parameter"
-                | Some (case', param', _) when param.modifier <> param'.modifier ->
-                    conflict case' "different modifiers on the same parameter"
                 | Some (case', param', ps) ->
+                    if param.``type`` <> param'.``type`` then
+                        fail (InvalidRouterKind.ParameterTypeMismatch(case', param'.name, case, param.name))
+                    if param.modifier <> param'.modifier then
+                        fail (InvalidRouterKind.ModifierMismatch(case', param'.name, case, param.name))
                     let param = { param with index = param.index @ param'.index }
                     parameter <- Some (case', param, (case, rest) :: ps)
                 | None ->
                     parameter <- Some (case, param, [case, rest])
             | [] ->
                 match final with
-                | Some (case', _) -> conflict case' "same full path"
+                | Some (case', _) -> fail (InvalidRouterKind.IdenticalPath(case, case'))
                 | None -> final <- Some (case, caseCtor case)
         )
         {
@@ -566,7 +600,7 @@ module private RouterImpl =
                 elif FSharpType.IsRecord(ty, true) then
                     recordSegment getSegment ty
                 else
-                    failwithf "Router.Infer used with type %s, which is not supported." ty.FullName
+                    fail (InvalidRouterKind.UnsupportedType ty)
             cache.[ty] <- !segment
             !segment
 
