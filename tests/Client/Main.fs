@@ -30,7 +30,7 @@ open System.Net.Http
 type Page =
     | [<EndPoint "/">] Form
     | [<EndPoint "/collection">] Collection
-    | [<EndPoint "/collection-item">] Item of key: int
+    | [<EndPoint "/collection-item/{key}">] Item of key: int
 
 type Item =
     {

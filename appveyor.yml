@@ -1,7 +1,7 @@
 version: 0.1.{build}
 image:
 - Visual Studio 2017
-- Ubuntu
+# - Ubuntu
 
 build:
   verbosity: minimal
@@ -35,9 +35,9 @@ for:
 - branches:
     only:
     - master
-  matrix:
-    only:
-    - image: Visual Studio 2017
+  # matrix:
+  #   only:
+  #   - image: Visual Studio 2017
   artifacts:
   - path: build\*.nupkg
     name: nuget
@@ -46,8 +46,10 @@ for:
 
 # Only use cache on Windows build
 # (AV caches for each matrix item separately, and the cache is too large)
-- matrix:
-    only:
-    - image: Visual Studio 2017
-  cache:
-  - .nuget
+# - matrix:
+#     only:
+#     - image: Visual Studio 2017
+#   cache:
+#   - .nuget
+cache:
+- .nuget

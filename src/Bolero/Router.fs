@@ -27,6 +27,7 @@ open System.Collections.Generic
 open System.Runtime.CompilerServices
 open System.Text
 open FSharp.Reflection
+open System.Runtime.InteropServices
 
 /// A router that binds page navigation with Elmish.
 type IRouter<'model, 'msg> =
@@ -69,55 +70,105 @@ type Router<'ep, 'model, 'msg> =
 type EndPointAttribute(endpoint: string) =
     inherit Attribute()
 
-    let endpoint = endpoint.Trim('/')
+    let endpoint = endpoint.Trim('/').Split('/')
 
-    /// The root path fragment that this endpoint recognizes.
-    member this.Root = endpoint
+    /// The path that this endpoint recognizes.
+    member this.Path = endpoint
 
-/// Functions for building Routers that bind page navigation with Elmish.
-module Router =
+/// Declare that the given field of an F# union case matches the entire
+/// remainder of the URL path.
+/// If field is unspecified, this applies to the last field of the case.
+[<AttributeUsage(AttributeTargets.Property, AllowMultiple = false)>]
+type WildcardAttribute([<Optional>] field: string) =
+    inherit Attribute()
+
+    member this.Field = field
+
+[<RequireQualifiedAccess>]
+type InvalidRouterKind =
+    | UnsupportedType of Type
+    | ParameterSyntax of UnionCaseInfo * string
+    | DuplicateField of UnionCaseInfo * string
+    | UnknownField of UnionCaseInfo * string
+    | MissingField of UnionCaseInfo * string
+    | ParameterTypeMismatch of UnionCaseInfo * string * UnionCaseInfo * string
+    | ModifierMismatch of UnionCaseInfo * string * UnionCaseInfo * string
+    | IdenticalPath of UnionCaseInfo * UnionCaseInfo
+    | RestNotLast of UnionCaseInfo
+    | InvalidRestType of UnionCaseInfo
+
+exception InvalidRouter of kind: InvalidRouterKind with
+    override this.Message =
+        let withCase (case: UnionCaseInfo) =
+            sprintf "Invalid router defined for union case %s.%s: %s"
+                case.DeclaringType.FullName case.Name
+        match this.kind with
+        | InvalidRouterKind.UnsupportedType ty ->
+            "Unsupported route type: " + ty.FullName
+        | InvalidRouterKind.ParameterSyntax(case, field) ->
+            withCase case ("Invalid parameter syntax: " + field)
+        | InvalidRouterKind.DuplicateField(case, field) ->
+            withCase case ("Field duplicated in the path: " + field)
+        | InvalidRouterKind.UnknownField(case, field) ->
+            withCase case ("Unknown field in the path: " + field)
+        | InvalidRouterKind.MissingField(case, field) ->
+            withCase case ("Missing field in the path: " + field)
+        | InvalidRouterKind.ParameterTypeMismatch(case, field, otherCase, otherField) ->
+            withCase case (sprintf "Parameter %s at the same path position as %s's %s but has a different type"
+                field otherCase.Name otherField)
+        | InvalidRouterKind.ModifierMismatch(case, field, otherCase, otherField) ->
+            withCase case (sprintf "Parameter %s at the same path position as %s's %s but has a different modifier"
+                field otherCase.Name otherField)
+        | InvalidRouterKind.IdenticalPath(case, otherCase) ->
+            withCase case ("Matches the exact same path as " + otherCase.Name)
+        | InvalidRouterKind.RestNotLast case ->
+            withCase case "{*rest} parameter must be the last fragment"
+        | InvalidRouterKind.InvalidRestType case ->
+            withCase case "{*rest} parameter must have type string, list or array"
+
+[<AutoOpen>]
+module private RouterImpl =
+    open System.Text.RegularExpressions
 
     type ArraySegment<'T> with
         member this.Item with get(i) = this.Array.[this.Offset + i]
 
-    type private SegmentParserResult = seq<obj * list<string>>
-    type private SegmentParser = list<string> -> SegmentParserResult
-    type private SegmentWriter = obj -> list<string>
-    type private Segment =
+    type SegmentParserResult = option<obj * list<string>>
+    type SegmentParser = list<string> -> SegmentParserResult
+    type SegmentWriter = obj -> list<string>
+    type Segment =
         {
             parse: SegmentParser
             write: SegmentWriter
         }
 
-    let private fail : SegmentParserResult = Seq.empty
-    let private ok x : SegmentParserResult = Seq.singleton x
+    let fail kind = raise (InvalidRouter kind)
 
-    let inline private tryParseBaseType<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
-        fun s ->
-            let mutable out = Unchecked.defaultof<'T>
-            if (^T : (static member TryParse : string * byref<'T> -> bool) (s, &out)) then
-                Some (box out)
-            else
-                None
+    let inline tryParseBaseType<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> s =
+        let mutable out = Unchecked.defaultof<'T>
+        if (^T : (static member TryParse : string * byref<'T> -> bool) (s, &out)) then
+            Some (box out)
+        else
+            None
 
-    let inline private defaultBaseTypeParser<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> = function
-        | [] -> fail
+    let inline defaultBaseTypeParser<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> = function
+        | [] -> None
         | x :: rest ->
-            match tryParseBaseType<'T>() x with
-            | Some x -> ok (box x, rest)
-            | None -> fail
+            match tryParseBaseType<'T> x with
+            | Some x -> Some (box x, rest)
+            | None -> None
 
-    let inline private baseTypeSegment<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
+    let inline baseTypeSegment<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
         {
             parse = defaultBaseTypeParser<'T>
             write = fun x -> [string x]
         }
 
-    let private baseTypes : IDictionary<Type, Segment> = dict [
+    let baseTypes : IDictionary<Type, Segment> = dict [
         typeof<string>, {
             parse = function
-                | [] -> fail
-                | x :: rest -> ok (box x, rest)
+                | [] -> None
+                | x :: rest -> Some (box x, rest)
             write = unbox<string> >> List.singleton
         }
         typeof<bool>, {
@@ -138,41 +189,42 @@ module Router =
         typeof<decimal>, baseTypeSegment<decimal>()
     ]
 
-    let private sequenceSegment getSegment (ty: Type) revAndConvert toListAndLength : Segment =
+    let sequenceSegment getSegment (ty: Type) revAndConvert toListAndLength : Segment =
         let itemSegment = getSegment ty
         let rec parse acc remainingLength fragments =
             if remainingLength = 0 then
-                ok (revAndConvert acc, fragments)
+                Some (revAndConvert acc, fragments)
             else
-                itemSegment.parse fragments
-                |> Seq.collect (fun (x, rest) ->
-                    parse (x :: acc) (remainingLength - 1) rest)
+                match itemSegment.parse fragments with
+                | None -> None
+                | Some (x, rest) ->
+                    parse (x :: acc) (remainingLength - 1) rest
         {
             parse = function
                 | x :: rest ->
                     match Int32.TryParse(x) with
                     | true, length -> parse [] length rest
-                    | false, _ -> fail
-                | _ -> fail
+                    | false, _ -> None
+                | _ -> None
             write = fun x ->
                 let list, (length: int) = toListAndLength x
                 string length :: List.collect itemSegment.write list
         }
 
-    let [<Literal>] private FLAGS_STATIC =
+    let [<Literal>] FLAGS_STATIC =
         Reflection.BindingFlags.Static |||
         Reflection.BindingFlags.Public |||
         Reflection.BindingFlags.NonPublic
 
-    let private arrayRevAndUnbox<'T> (l: list<obj>) : 'T[] =
+    let arrayRevAndUnbox<'T> (l: list<obj>) : 'T[] =
         let a = [|for x in l -> unbox<'T> x|]
         Array.Reverse(a)
         a
 
-    let private arrayLengthAndBox<'T> (a: array<'T>) : list<obj> * int =
+    let arrayLengthAndBox<'T> (a: array<'T>) : list<obj> * int =
         [for x in a -> box x], a.Length
 
-    let private arraySegment getSegment ty : Segment =
+    let arraySegment getSegment ty : Segment =
         let arrayRevAndUnbox =
             typeof<Segment>.DeclaringType.GetMethod("arrayRevAndUnbox", FLAGS_STATIC)
                 .MakeGenericMethod([|ty|])
@@ -183,13 +235,13 @@ module Router =
             (fun l -> arrayRevAndUnbox.Invoke(null, [|l|]))
             (fun l -> arrayLengthAndBox.Invoke(null, [|l|]) :?> _)
 
-    let private listRevAndUnbox<'T> (l: list<obj>) : list<'T> =
+    let listRevAndUnbox<'T> (l: list<obj>) : list<'T> =
         List.map unbox<'T> l |> List.rev
 
-    let private listLengthAndBox<'T> (l: list<'T>) : list<obj> * int =
+    let listLengthAndBox<'T> (l: list<'T>) : list<obj> * int =
         List.mapFold (fun l e -> box e, l + 1) 0 l
 
-    let private listSegment getSegment ty : Segment =
+    let listSegment getSegment ty : Segment =
         let listRevAndUnbox =
             typeof<Segment>.DeclaringType.GetMethod("listRevAndUnbox", FLAGS_STATIC)
                 .MakeGenericMethod([|ty|])
@@ -200,75 +252,314 @@ module Router =
             (fun l -> listRevAndUnbox.Invoke(null, [|l|]))
             (fun l -> listLengthAndBox.Invoke(null, [|l|]) :?> _)
 
-    let private parseEndPointCasePath (case: UnionCaseInfo) =
+    [<CustomEquality; NoComparison>]
+    type ParameterModifier =
+        /// No modifier: "/{parameter}"
+        | Basic
+        /// Rest of the path: "/{*parameter}"
+        | Rest of (seq<obj> -> obj) * (obj -> seq<obj>)
+        /// Optional segment: "/{?parameter}" (TODO)
+        //| Optional
+
+        interface IEquatable<ParameterModifier> with
+            member this.Equals(that) =
+                match this, that with
+                | Basic, Basic
+                | Rest _, Rest _ -> true
+                | _ -> false
+
+    /// A {parameter} path segment.
+    type Parameter =
+        {
+            /// A parameter can be common among multiple union cases.
+            /// `index` lists these cases, and for each of them, its total number of fields and the index of the field for this segment.
+            index: list<UnionCaseInfo * int * int>
+            ``type``: Type
+            segment: Segment
+            modifier: ParameterModifier
+            /// Note that several cases can have the same parameter with different names.
+            /// In this case, the name field is taken from the first declared case.
+            name: string
+        }
+
+    /// The parser for a union type at a given point in the path.
+    type UnionParser =
+        {
+            /// All recognized "/constant" segments, associated with the parser for the rest of the path.
+            constants: IDictionary<string, UnionParser>
+            /// The recognized "/{parameter}" segment, if any.
+            parameter: option<Parameter * UnionParser>
+            /// The union case that parses correctly if the path ends here, if any.
+            finalize: option<UnionCaseInfo * (obj[] -> obj)>
+        }
+
+    /// Intermediate representation of a path segment.
+    type UnionParserSegment =
+        | Constant of string
+        | Parameter of Parameter
+
+    let parseEndPointCasePath (case: UnionCaseInfo) : list<string> =
         case.GetCustomAttributes()
         |> Array.tryPick (function
-            | :? EndPointAttribute as e -> Some e.Root
+            | :? EndPointAttribute as e -> Some (List.ofSeq e.Path)
             | _ -> None)
-        |> Option.defaultWith (fun () -> case.Name)
+        |> Option.defaultWith (fun () -> [case.Name])
 
-    let private parseConsecutiveTypes getSegment (tys: Type[]) (ctor: obj[] -> obj) : SegmentParser =
+    let isConstantFragment (s: string) =
+        not (s.Contains("{"))
+
+    type Unboxer =
+        static member List<'T> (items: seq<obj>) : list<'T> =
+            [ for x in items -> unbox<'T> x ]
+
+        static member Array<'T> (items: seq<obj>) : 'T[] =
+            [| for x in items -> unbox<'T> x |]
+
+    type Decons =
+        static member List<'T> (l: list<'T>) : seq<obj> =
+            Seq.cast l
+
+        static member Array<'T> (l: 'T[]) : seq<obj> =
+            Seq.cast l
+
+    let restModifierFor (ty: Type) case =
+        if ty = typeof<string> then
+            ty, Rest(
+                Seq.cast<string> >> String.concat "/" >> box,
+                fun s ->
+                    match unbox<string> s with
+                    | "" -> Seq.empty
+                    | s -> s.Split('/') |> Seq.cast<obj>
+            )
+        elif ty.IsArray && ty.GetArrayRank() = 1 then
+            let elt = ty.GetElementType()
+            let unboxer = typeof<Unboxer>.GetMethod("Array", FLAGS_STATIC).MakeGenericMethod([|elt|])
+            let decons = typeof<Decons>.GetMethod("Array", FLAGS_STATIC).MakeGenericMethod([|elt|])
+            elt, Rest(
+                (fun x -> unboxer.Invoke(null, [|x|])),
+                (fun x -> decons.Invoke(null, [|x|]) :?> _)
+            )
+        elif ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<list<_>> then
+            let targs = ty.GetGenericArguments()
+            let unboxer = typeof<Unboxer>.GetMethod("List", FLAGS_STATIC).MakeGenericMethod(targs)
+            let decons = typeof<Decons>.GetMethod("List", FLAGS_STATIC).MakeGenericMethod(targs)
+            targs.[0], Rest(
+                (fun x -> unboxer.Invoke(null, [|x|])),
+                (fun x -> decons.Invoke(null, [|x|]) :?> _)
+            )
+        else
+            fail (InvalidRouterKind.InvalidRestType case)
+
+    let fragmentParameterRE = Regex(@"^\{([?*]?)([a-zA-Z0-9_]+)\}$", RegexOptions.Compiled)
+
+    let parseEndPointCase getSegment (case: UnionCaseInfo) =
+        let fields = case.GetFields()
+        let defaultFrags() =
+            fields
+            |> Array.mapi (fun i p ->
+                let ty = p.PropertyType
+                Parameter {
+                    index = [case, fields.Length, i]
+                    ``type`` = ty
+                    segment = getSegment ty
+                    modifier = Basic
+                    name = p.Name
+                })
+            |> List.ofSeq
+        match parseEndPointCasePath case with
+        // EndPoint "/"
+        | [] -> defaultFrags()
+        // EndPoint "/const"
+        | [root] when isConstantFragment root -> Constant root :: defaultFrags()
+        // EndPoint <complex_path>
+        | frags ->
+            let unboundFields = HashSet(fields |> Array.map (fun f -> f.Name))
+            let fragCount = frags.Length
+            let res =
+                frags
+                |> List.mapi (fun fragIx frag ->
+                    if isConstantFragment frag then
+                        Constant frag
+                    else
+                        let m = fragmentParameterRE.Match(frag)
+                        if not m.Success then fail (InvalidRouterKind.ParameterSyntax(case, frag))
+                        let fieldName = m.Groups.[2].Value
+                        match fields |> Array.tryFindIndex (fun p -> p.Name = fieldName) with
+                        | Some i ->
+                            let p = fields.[i]
+                            if not (unboundFields.Remove(fieldName)) then
+                                fail (InvalidRouterKind.DuplicateField(case, fieldName))
+                            let ty = p.PropertyType
+                            let eltTy, modifier =
+                                match m.Groups.[1].Value with
+                                | "" -> ty, Basic
+                                | "*" ->
+                                    if fragIx <> fragCount - 1 then
+                                        fail (InvalidRouterKind.RestNotLast case)
+                                    restModifierFor ty case
+                                | _ -> fail (InvalidRouterKind.ParameterSyntax(case, frag))
+                            Parameter {
+                                index = [case, fields.Length, i]
+                                ``type`` = ty
+                                segment = getSegment eltTy
+                                modifier = modifier
+                                name = p.Name
+                            }
+                        | None -> fail (InvalidRouterKind.UnknownField(case, fieldName))
+                )
+            if unboundFields.Count > 0 then
+                fail (InvalidRouterKind.MissingField(case, Seq.head unboundFields))
+            res
+
+    let caseCtor (case: UnionCaseInfo) : UnionCaseInfo * (obj[] -> obj) =
+        case, FSharpValue.PreComputeUnionConstructor(case, true)
+
+    let rec mergeEndPointCaseFragments (cases: seq<UnionCaseInfo * list<UnionParserSegment>>) : UnionParser =
+        let constants = Dictionary<string, _>()
+        let mutable parameter = None
+        let mutable final = None
+        cases |> Seq.iter (fun (case, p) ->
+            match p with
+            | Constant s :: rest ->
+                let existing =
+                    match constants.TryGetValue(s) with
+                    | true, x -> x
+                    | false, _ -> []
+                constants.[s] <- (case, rest) :: existing
+            | Parameter param :: rest ->
+                match parameter with
+                | Some (case', param', ps) ->
+                    if param.``type`` <> param'.``type`` then
+                        fail (InvalidRouterKind.ParameterTypeMismatch(case', param'.name, case, param.name))
+                    if param.modifier <> param'.modifier then
+                        fail (InvalidRouterKind.ModifierMismatch(case', param'.name, case, param.name))
+                    let param = { param with index = param.index @ param'.index }
+                    parameter <- Some (case', param, (case, rest) :: ps)
+                | None ->
+                    parameter <- Some (case, param, [case, rest])
+            | [] ->
+                match final with
+                | Some (case', _) -> fail (InvalidRouterKind.IdenticalPath(case, case'))
+                | None -> final <- Some (case, caseCtor case)
+        )
+        {
+            constants = dict [
+                for KeyValue(s, cases) in constants do
+                    yield s, mergeEndPointCaseFragments cases
+            ]
+            parameter = parameter |> Option.map (fun (_, param, cases) ->
+                param, mergeEndPointCaseFragments cases)
+            finalize = final |> Option.map snd
+        }
+
+    let parseUnion cases : SegmentParser =
+        let parser = mergeEndPointCaseFragments cases
+        fun l ->
+            let d = Dictionary<UnionCaseInfo, obj[]>()
+            let rec run (parser: UnionParser) l =
+                let finalize rest =
+                    parser.finalize |> Option.map (fun (case, ctor) ->
+                        let args =
+                            match d.TryGetValue(case) with
+                            | true, args -> args
+                            | false, _ -> [||]
+                        (ctor args, rest))
+                let mutable constant = Unchecked.defaultof<_>
+                match l with
+                | [] -> finalize []
+                | s :: rest when parser.constants.TryGetValue(s, &constant) ->
+                    run constant rest
+                | l ->
+                    parser.parameter
+                    |> Option.bind (function
+                        | { modifier = Basic } as param, nextParser ->
+                            match param.segment.parse l with
+                            | None -> None
+                            | Some (o, rest) ->
+                                for (case, fieldCount, i) in param.index do
+                                    let a =
+                                        match d.TryGetValue(case) with
+                                        | true, a -> a
+                                        | false, _ ->
+                                            let a = Array.zeroCreate fieldCount
+                                            d.[case] <- a
+                                            a
+                                    a.[i] <- o
+                                run nextParser rest
+                        | { modifier = Rest(restBuild, _) } as param, nextParser ->
+                            let restValues = ResizeArray()
+                            let rec parse l =
+                                match param.segment.parse l, l with
+                                | None, [] ->
+                                    for (case, fieldCount, i) in param.index do
+                                        let a =
+                                            match d.TryGetValue(case) with
+                                            | true, a -> a
+                                            | false, _ ->
+                                                let a = Array.zeroCreate fieldCount
+                                                d.[case] <- a
+                                                a
+                                        a.[i] <- restBuild restValues
+                                    run nextParser []
+                                | None, _::_ -> None
+                                | Some (o, rest), _ ->
+                                    restValues.Add(o)
+                                    parse rest
+                            parse l
+                    )
+                |> Option.orElseWith (fun () -> finalize l)
+            run parser l
+
+    let parseConsecutiveTypes getSegment (tys: Type[]) (ctor: obj[] -> obj) : SegmentParser =
         let fields = Array.map getSegment tys
         fun (fragments: list<string>) ->
             let args = Array.zeroCreate fields.Length
             let rec go i fragments =
                 if i = fields.Length then
-                    ok (ctor args, fragments)
+                    Some (ctor args, fragments)
                 else
-                    fields.[i].parse fragments
-                    |> Seq.collect (fun (x, rest) ->
+                    match fields.[i].parse fragments with
+                    | None -> None
+                    | Some (x, rest) ->
                         args.[i] <- x
                         go (i + 1) rest
-                    )
             go 0 fragments
 
-    let private writeConsecutiveTypes getSegment (tys: Type[]) (dector: obj -> obj[]) : SegmentWriter =
+    let writeConsecutiveTypes getSegment (tys: Type[]) (dector: obj -> obj[]) : SegmentWriter =
         let fields = tys |> Array.map (fun t -> (getSegment t).write)
         fun (r: obj) ->
             Array.map2 (<|) fields (dector r)
             |> List.concat
 
-    let private parseUnionCaseArgs getSegment (case: UnionCaseInfo) : SegmentParser =
-        let tys = case.GetFields() |> Array.map (fun p -> p.PropertyType)
-        let ctor = FSharpValue.PreComputeUnionConstructor case
-        parseConsecutiveTypes getSegment tys ctor
+    let caseDector (case: UnionCaseInfo) : obj -> obj[] =
+        FSharpValue.PreComputeUnionReader(case, true)
 
-    let private writeUnionCase getSegment (path: string) (case: UnionCaseInfo) =
-        let tys = case.GetFields() |> Array.map (fun p -> p.PropertyType)
-        let dector = FSharpValue.PreComputeUnionReader(case, true)
-        let write = writeConsecutiveTypes getSegment tys dector
-        match path with
-        | "" -> write
-        | path -> fun r -> path :: write r
+    let writeUnionCase (case: UnionCaseInfo, path: list<UnionParserSegment>) =
+        let dector = caseDector case
+        fun o ->
+            let vals = dector o
+            path |> List.collect (function
+                | Constant s -> [s]
+                | Parameter({ modifier = Basic } as param) ->
+                    let (_, _, i) = param.index |> List.find (fun (case', _, _) -> case' = case)
+                    param.segment.write vals.[i]
+                | Parameter({ modifier = Rest(_, decons) } as param) ->
+                    let (_, _, i) = param.index |> List.find (fun (case', _, _) -> case' = case)
+                    [ for x in decons vals.[i] do yield! param.segment.write x ]
+            )
 
-    let private unionSegment (getSegment: Type -> Segment) (ty: Type) : Segment =
-        let parsers, readers =
+    let unionSegment (getSegment: Type -> Segment) (ty: Type) : Segment =
+        let cases =
             FSharpType.GetUnionCases(ty, true)
-            |> Array.map (fun case ->
-                let path = parseEndPointCasePath case
-                (path, parseUnionCaseArgs getSegment case), writeUnionCase getSegment path case)
-            |> Array.unzip
-        let parsers = dict parsers
-        let getRoute =
+            |> Array.map (fun c -> c, parseEndPointCase getSegment c)
+        let write =
+            let writers = Array.map writeUnionCase cases
             let tagReader = FSharpValue.PreComputeUnionTagReader(ty, true)
-            fun r -> readers.[tagReader r] r
-        let unprefixedSetRoute path =
-            match parsers.TryGetValue "" with
-            | true, c -> c path
-            | false, _ -> fail
-        let setRoute path =
-            seq {
-                match path with
-                | head :: rest ->
-                    match parsers.TryGetValue head with
-                    | true, c -> yield! c rest
-                    | false, _ -> ()
-                | [] -> ()
-                yield! unprefixedSetRoute path
-            }
-        { parse = setRoute; write = getRoute }
+            fun r -> writers.[tagReader r] r
+        let parse = parseUnion cases
+        { parse = parse; write = write }
 
-    let private tupleSegment getSegment ty =
+    let tupleSegment getSegment ty =
         let tys = FSharpType.GetTupleElements ty
         let ctor = FSharpValue.PreComputeTupleConstructor ty
         let dector = FSharpValue.PreComputeTupleReader ty
@@ -277,7 +568,7 @@ module Router =
             write = writeConsecutiveTypes getSegment tys dector
         }
 
-    let private recordSegment getSegment ty =
+    let recordSegment getSegment ty =
         let tys = FSharpType.GetRecordFields(ty, true) |> Array.map (fun p -> p.PropertyType)
         let ctor = FSharpValue.PreComputeRecordConstructor(ty, true)
         let dector = FSharpValue.PreComputeRecordReader(ty, true)
@@ -286,7 +577,7 @@ module Router =
             write = writeConsecutiveTypes getSegment tys dector
         }
 
-    let rec private getSegment (cache: Dictionary<Type, Segment>) (ty: Type) : Segment =
+    let rec getSegment (cache: Dictionary<Type, Segment>) (ty: Type) : Segment =
         match cache.TryGetValue(ty) with
         | true, x -> unbox x
         | false, _ ->
@@ -309,9 +600,12 @@ module Router =
                 elif FSharpType.IsRecord(ty, true) then
                     recordSegment getSegment ty
                 else
-                    failwithf "Router.Infer used with type %s, which is not supported." ty.FullName
+                    fail (InvalidRouterKind.UnsupportedType ty)
             cache.[ty] <- !segment
             !segment
+
+/// Functions for building Routers that bind page navigation with Elmish.
+module Router =
 
     /// Infer a router constructed around an endpoint type `'ep`.
     /// This type must be an F# union type, and its cases should use `EndPointAttribute`
@@ -331,7 +625,7 @@ module Router =
                 path.Split('/')
                 |> List.ofArray
                 |> frag.parse
-                |> Seq.tryPick (function
+                |> Option.bind (function
                     | x, [] -> Some (unbox<'ep> x |> makeMessage)
                     | _ -> None)
         }
