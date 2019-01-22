@@ -50,10 +50,28 @@ module Routing =
         TestCaseData(fun () -> Router.infer<'T, _, _> id id |> ignore)
             .SetArgDisplayNames(typeof<'T>.Name)
 
-    type RestNotLast = | [<EndPoint "/foo/{*x}/bar">] RestNotLast of x: string
+    type ``Invalid parameter syntax`` =
+        | [<EndPoint "/{x">] X of x: string
+    type ``Unknown parameter name`` =
+        | [<EndPoint "/{y}">] X of x: string
+    type ``Incomplete parameter list`` =
+        | [<EndPoint "/{x}/{z}">] X of x: string * y: string * z: string
+    type ``Identical paths with different parameter names`` =
+        | [<EndPoint "/foo/{x}">] X of x: string
+        | [<EndPoint "/foo/{y}">] Y of y: string
+    type ``Mismatched type parameters in same position`` =
+        | [<EndPoint "/foo/{x}">] X of x: string
+        | [<EndPoint "/foo/{x}/y">] Y of x: int
+    type ``Rest parameter in non-final position`` =
+        | [<EndPoint "/foo/{*x}/bar">] X of x: string
 
     let failingRouters = [
-        failingRouter<RestNotLast>()
+        failingRouter<``Invalid parameter syntax``>()
+        failingRouter<``Unknown parameter name``>()
+        failingRouter<``Incomplete parameter list``>()
+        failingRouter<``Identical paths with different parameter names``>()
+        failingRouter<``Mismatched type parameters in same position``>()
+        failingRouter<``Rest parameter in non-final position``>()
     ]
 
     [<Test; TestCaseSource "failingRouters"; NonParallelizable>]
