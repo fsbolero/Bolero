@@ -279,7 +279,10 @@ module private RouterImpl =
         if ty = typeof<string> then
             ty, Rest(
                 Seq.cast<string> >> String.concat "/" >> box,
-                fun s -> (unbox<string> s).Split('/') |> Seq.cast<obj>
+                fun s ->
+                    match unbox<string> s with
+                    | "" -> Seq.empty
+                    | s -> s.Split('/') |> Seq.cast<obj>
             )
         elif ty.IsArray && ty.GetArrayRank() = 1 then
             let elt = ty.GetElementType()
