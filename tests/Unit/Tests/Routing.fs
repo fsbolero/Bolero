@@ -7,6 +7,7 @@ open OpenQA.Selenium
 /// Blazor router integration.
 [<Category "Routing">]
 module Routing =
+    open Bolero
 
     let elt = NodeFixture()
 
@@ -44,3 +45,17 @@ module Routing =
             with :? WebDriverTimeoutException -> None
         res |> Option.iter (fun res -> Assert.AreEqual(resCls, res.Text))
         Assert.AreEqual(WebFixture.Url + url, WebFixture.Driver.Url)
+
+    let failingRouter<'T>() =
+        TestCaseData(fun () -> Router.infer<'T, _, _> id id |> ignore)
+            .SetArgDisplayNames(typeof<'T>.Name)
+
+    type RestNotLast = | [<EndPoint "/foo/{*x}/bar">] RestNotLast of x: string
+
+    let failingRouters = [
+        failingRouter<RestNotLast>()
+    ]
+
+    [<Test; TestCaseSource "failingRouters"; NonParallelizable>]
+    let ``Invalid routers``(makeAndIgnoreRouter: unit -> unit) =
+        Assert.Throws(fun () -> makeAndIgnoreRouter()) |> ignore
