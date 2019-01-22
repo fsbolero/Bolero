@@ -46,43 +46,11 @@ type Page =
     | [<EndPoint "/with-rest-list/{*rest}">] WithRestList of rest: list<int>
     | [<EndPoint "/with-rest-array/{*rest}">] WithRestArray of rest: (int * string)[]
 
-    member this.ExpectedUrl =
-        match this with
-        | Home -> "/"
-        | NoArg -> "/no-arg"
-        | WithArg s -> sprintf "/with-arg/%s" s
-        | WithArgs(s, i) -> sprintf "/with-args/%s/%i" s i
-        | WithUnion u -> sprintf "/with-union%s" u.ExpectedUrl
-        | WithUnionNotTerminal(u, s) -> sprintf "/with-union2%s/%s" u.ExpectedUrl s
-        | WithNestedUnion u -> sprintf "/with-nested-union%s" u.ExpectedUrl
-        | WithTuple((i, s, b)) -> sprintf "/with-tuple/%i/%s/%b" i s b
-        | WithRecord { x = x; y = y; z = z } -> sprintf "/with-record/%i%s/%b" x y.ExpectedUrl z
-        | WithList l -> sprintf "/with-list/%i%s" l.Length
-                        <| String.concat "" [for i, s in l -> sprintf "/%i/%s" i s]
-        | WithArray a -> sprintf "/with-array/%i%s" a.Length
-                        <| String.concat "" [for i, s in a -> sprintf "/%i/%s" i s]
-        | WithPath s -> sprintf "/with-path/%s" s
-        | WithPathAndSuffix s -> sprintf "/with-path/%s/and-suffix" s
-        | WithPathAndSuffix2(s, i) -> sprintf "/with-path/%s/and-suffix/%i" s i
-        | WithPathAndSuffix3 s -> sprintf "/with-path/%s/other-suffix" s
-        | WithPathConstant -> "/with-path/and/constant"
-        | WithPathRecord { x = x; y = y; z = z } -> sprintf "/with-path-record/%i%s/%b" x y.ExpectedUrl z
-        | WithRestString s -> sprintf "/with-rest-string/%s" s
-        | WithRestList l -> sprintf "/with-rest-list/%s" (l |> Seq.map string |> String.concat "/")
-        | WithRestArray a -> sprintf "/with-rest-list/%s" (a |> Seq.map (fun (i, s) -> sprintf "%i/%s" i s) |> String.concat "/")
-
 and InnerPage =
     | [<EndPoint "/">] InnerHome
     | [<EndPoint "/no-arg">] InnerNoArg
     | [<EndPoint "/with-arg">] InnerWithArg of string
     | [<EndPoint "/with-args">] InnerWithArgs of string * int
-
-    member this.ExpectedUrl =
-        match this with
-        | InnerHome -> "/"
-        | InnerNoArg -> "/no-arg"
-        | InnerWithArg s -> sprintf "/with-arg/%s" s
-        | InnerWithArgs(s, i) -> sprintf "/with-args/%s/%i" s i
 
 and Record =
     {
