@@ -42,6 +42,9 @@ type Page =
     | [<EndPoint "/with-path/{arg}/other-suffix">] WithPathAndSuffix3 of arg: string
     | [<EndPoint "/with-path/and/constant">] WithPathConstant
     | [<EndPoint "/with-path-record/{arg}">] WithPathRecord of arg: Record
+    | [<EndPoint "/with-rest-string/{*rest}">] WithRestString of rest: string
+    | [<EndPoint "/with-rest-list/{*rest}">] WithRestList of rest: list<int>
+    | [<EndPoint "/with-rest-array/{*rest}">] WithRestArray of rest: (int * string)[]
 
     member this.ExpectedUrl =
         match this with
@@ -64,6 +67,9 @@ type Page =
         | WithPathAndSuffix3 s -> sprintf "/with-path/%s/other-suffix" s
         | WithPathConstant -> "/with-path/and/constant"
         | WithPathRecord { x = x; y = y; z = z } -> sprintf "/with-path-record/%i%s/%b" x y.ExpectedUrl z
+        | WithRestString s -> sprintf "/with-rest-string/%s" s
+        | WithRestList l -> sprintf "/with-rest-list/%s" (l |> Seq.map string |> String.concat "/")
+        | WithRestArray a -> sprintf "/with-rest-list/%s" (a |> Seq.map (fun (i, s) -> sprintf "%i/%s" i s) |> String.concat "/")
 
 and InnerPage =
     | [<EndPoint "/">] InnerHome
@@ -132,62 +138,73 @@ let rec pageClass = function
     | WithPathAndSuffix3 s -> sprintf "withpathsuffix3-%s" s
     | WithPathConstant -> "withpathconstant"
     | WithPathRecord { x = x; y = y; z = z } -> sprintf "withpathrecord-%i-%s-%b" x (innerPageClass y) z
+    | WithRestString s -> sprintf "withreststring-%s" (s.Replace("/", "-"))
+    | WithRestList l -> sprintf "withrestlist-%s" (l |> Seq.map string |> String.concat "-")
+    | WithRestArray a -> sprintf "withrestarray-%s" (a |> Seq.map (fun (i, s) -> sprintf "%i-%s" i s) |> String.concat "-")
 
 let innerlinks =
     [
-        InnerHome
-        InnerNoArg
-        InnerWithArg "foo"
-        InnerWithArg "bar"
-        InnerWithArg ""
-        InnerWithArgs("foo", 1)
-        InnerWithArgs("bar", 2)
-        InnerWithArgs("", 3)
+        "/",                InnerHome
+        "/no-arg",          InnerNoArg
+        "/with-arg/foo",    InnerWithArg "foo"
+        "/with-arg/bar",    InnerWithArg "bar"
+        "/with-arg/",       InnerWithArg ""
+        "/with-args/foo/1", InnerWithArgs("foo", 1)
+        "/with-args/bar/2", InnerWithArgs("bar", 2)
+        "/with-args//3",    InnerWithArgs("", 3)
     ]
 
 let baseLinks =
     [
         yield! [
-            Home
-            NoArg
-            WithArg "foo"
-            WithArg "bar"
-            WithArg ""
-            WithArgs("foo", 1)
-            WithArgs("bar", 2)
-            WithArgs("", 3)
-            WithTuple(42, "hi", true)
-            WithTuple(324, "", false)
-            WithList [2, "a"; 34, "b"]
-            WithList [2, ""; 34, "b"]
-            WithArray [|2, "a"; 34, "b"|]
-            WithArray [|2, ""; 34, "b"|]
-            WithPath "abc"
-            WithPath ""
-            WithPathAndSuffix "abc"
-            WithPathAndSuffix ""
-            WithPathAndSuffix2("abc", 123)
-            WithPathAndSuffix2("", 123)
-            WithPathAndSuffix3 "abc"
-            WithPathAndSuffix3 ""
-            WithPathConstant
+            "/",                                Home
+            "/no-arg",                          NoArg
+            "/with-arg/foo",                    WithArg "foo"
+            "/with-arg/bar",                    WithArg "bar"
+            "/with-arg/",                       WithArg ""
+            "/with-args/foo/1",                 WithArgs("foo", 1)
+            "/with-args/bar/2",                 WithArgs("bar", 2)
+            "/with-args//3",                    WithArgs("", 3)
+            "/with-tuple/42/hi/true",           WithTuple(42, "hi", true)
+            "/with-tuple/324//false",           WithTuple(324, "", false)
+            "/with-list/2/2/a/34/b",            WithList [2, "a"; 34, "b"]
+            "/with-list/2/2//34/b",             WithList [2, ""; 34, "b"]
+            "/with-array/2/2/a/34/b",           WithArray [|2, "a"; 34, "b"|]
+            "/with-array/2/2//34/b",            WithArray [|2, ""; 34, "b"|]
+            "/with-path/abc",                   WithPath "abc"
+            "/with-path/",                      WithPath ""
+            "/with-path/abc/and-suffix",        WithPathAndSuffix "abc"
+            "/with-path//and-suffix",           WithPathAndSuffix ""
+            "/with-path/abc/and-suffix/123",    WithPathAndSuffix2("abc", 123)
+            "/with-path//and-suffix/123",       WithPathAndSuffix2("", 123)
+            "/with-path/abc/other-suffix",      WithPathAndSuffix3 "abc"
+            "/with-path//other-suffix",         WithPathAndSuffix3 ""
+            "/with-path/and/constant",          WithPathConstant
+            "/with-rest-string",                WithRestString ""
+            "/with-rest-string/foo",            WithRestString "foo"
+            "/with-rest-string/foo/bar",        WithRestString "foo/bar"
+            "/with-rest-list",                  WithRestList []
+            "/with-rest-list/42",               WithRestList [42]
+            "/with-rest-list/12/34/56",         WithRestList [12; 34; 56]
+            "/with-rest-array",                 WithRestArray [||]
+            "/with-rest-array/1/foo",           WithRestArray [|(1, "foo")|]
+            "/with-rest-array/1/foo/2/bar",     WithRestArray [|(1, "foo"); (2, "bar")|]
         ]
-        for page in innerlinks do
-            yield WithUnion page
-            yield WithUnionNotTerminal (page, "foo")
-            yield WithUnionNotTerminal (page, "")
-            yield WithRecord { x = 1; y = page; z = true }
-            yield WithPathRecord { x = 3; y = page; z = false }
+        for link, page in innerlinks do
+            yield "/with-union" + link,                     WithUnion page
+            yield "/with-union2" + link + "/foo",           WithUnionNotTerminal (page, "foo")
+            yield "/with-union2" + link + "/",              WithUnionNotTerminal (page, "")
+            yield "/with-record/1" + link + "/true",        WithRecord { x = 1; y = page; z = true }
+            yield "/with-path-record/3" + link + "/false",  WithPathRecord { x = 3; y = page; z = false }
     ]
 
 let links =
     baseLinks @
-    List.map WithNestedUnion baseLinks
+    List.map (fun (l, p) -> "/with-nested-union" + l, WithNestedUnion p) baseLinks
 
 let view model dispatch =
     concat [
-        for page in links do
-            let url = page.ExpectedUrl
+        for url, page in links do
             let cls = pageClass page
             yield a [attr.classes ["link-" + cls]; router.HRef page] [text url]
             yield button [

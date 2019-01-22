@@ -16,17 +16,16 @@ module Routing =
 
     let links =
         App.Routing.links
-        |> List.map (fun page ->
+        |> List.map (fun (url, page) ->
             let cls = App.Routing.pageClass page
-            TestCaseData(cls, page).SetArgDisplayNames(
+            TestCaseData(cls, url, page).SetArgDisplayNames(
                 (string page)
                     // Replace parentheses with unicode ones for nicer display in VS test explorer
                     .Replace("(", "❨")
                     .Replace(")", "❩")))
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
-    let ``Click link``(linkCls, page: App.Routing.Page) =
-        let url = page.ExpectedUrl
+    let ``Click link``(linkCls: string, url: string, page: App.Routing.Page) =
         elt.ByClass("link-" + linkCls).Click()
         let resCls = App.Routing.pageClass page
         let res =
@@ -36,9 +35,8 @@ module Routing =
         Assert.AreEqual(WebFixture.Url + url, WebFixture.Driver.Url)
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
-    let ``Set by model``(linkCls, page: App.Routing.Page) =
+    let ``Set by model``(linkCls: string, url: string, page: App.Routing.Page) =
         Thread.Sleep(500) // Some cases fail without this, mainly ones with empty strings. TODO: investigate
-        let url = page.ExpectedUrl
         elt.ByClass("btn-" + linkCls).Click()
         let resCls = App.Routing.pageClass page
         let res =
