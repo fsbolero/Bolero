@@ -99,7 +99,7 @@ module Templating =
         Assert.IsTrue(isValidPosition(), "Position: " + position.Text)
 
         elt.ByClass("btn3").Click()
-        elt.AssertAreEqualEventually("clicked 1", 
+        elt.AssertAreEqualEventually("clicked 1",
             (fun () -> state.Text),
             "Same event bound multiple times")
         Assert.IsTrue(isValidPosition(), "Position: " + position.Text)

@@ -35,9 +35,9 @@ open ProviderImplementation.ProvidedTypes
 
 /// Available value types for a `bind` attribute.
 type BindingType =
-    | String
-    | Number
-    | Bool
+    | BindString
+    | BindNumber
+    | BindBool
 
 /// Available hole kinds.
 type HoleType =
@@ -52,20 +52,6 @@ type HoleType =
     /// An attribute hole.
     | Attribute
 
-module Binding =
-
-    let ToString (valType: Type) (expr: Expr) : Expr<string> =
-        if valType = typeof<string> then
-            Expr.Cast expr
-        elif valType = typeof<bool> then
-            <@ string (%%expr: bool) @>
-        elif valType = typeof<int> then
-            <@ string (%%expr: int) @>
-        elif valType = typeof<float> then
-            <@ string (%%expr: float) @>
-        else
-            failwithf "Unknown binding value type %s" valType.FullName
-
 module HoleType =
 
     /// Try to find a common supertype for two hole types.
@@ -77,30 +63,6 @@ module HoleType =
         | DataBinding valType, String | String, DataBinding valType
         | DataBinding valType, Html | Html, DataBinding valType -> DataBinding valType
         | _ -> failwithf "Hole name used multiple times with incompatible types: %s" holeName
-
-    /// Event handler type whose argument is the given type.
-    let EventHandlerOf (argType: Type) : Type =
-        ProvidedTypeBuilder.MakeGenericType(typedefof<Action<_>>, [argType])
-
-    /// Get the .NET type corresponding to a hole type.
-    let TypeOf (holeType: HoleType) : Type =
-        match holeType with
-        | String -> typeof<string>
-        | Html -> typeof<Node>
-        | Event argType -> EventHandlerOf argType
-        | DataBinding _ -> typeof<obj * Action<UIChangeEventArgs>>
-        | Attribute -> typeof<Attr>
-
-    /// Wrap the filler `expr`, of type `outerType`, to make it fit into a hole of type `innerType`.
-    /// Return `None` if no wrapping is needed.
-    let Wrap (innerType: HoleType) (outerType: HoleType) (expr: Expr) : option<Expr> =
-        if innerType = outerType then None else
-        match innerType, outerType with
-        | Html, String -> Some <@@ Node.Text %%expr @@>
-        | Event argTy, Event _ -> Some <| Expr.Coerce(expr, EventHandlerOf argTy)
-        | String, DataBinding _ -> Some <@@ fst (%%expr: obj * Action<UIChangeEventArgs>) @@>
-        | Html, DataBinding _ -> Some <@@ Node.Text (string (fst (%%expr: obj * Action<UIChangeEventArgs>))) @@>
-        | a, b -> failwithf "Hole name used multiple times with incompatible types (%A, %A)" a b
 
     /// Get the .NET type of the event handler argument for the given event name.
     let EventArg (name: string) : Type =
@@ -161,149 +123,131 @@ module HoleType =
 // END EVENTS
         | _ -> typeof<UIEventArgs>
 
-/// A template hole.
-type Hole =
+/// Matches a ${HoleName} anywhere in a string.
+let HoleRE = Regex(@"\${(\w+)}", RegexOptions.Compiled)
+
+/// Map the var named `name`: it has type `innerType` in a given subexpression,
+/// and `outerType` in its parent.
+type VarSubstitution =
     {
-        Var: Var
-        Type: HoleType
+        name: string
+        innerType: HoleType
+        outerType: HoleType
     }
 
-module Hole =
+type Expr =
+    | Concat of list<Expr>
+    | PlainHtml of string
+    | Elt of name: string * attrs: list<Expr> * children: list<Expr>
+    | Attr of name: string * value: Expr
+    | VarContent of varName: string
+    | WrapVars of vars: list<VarSubstitution> * expr: Expr
+    | Fst of varName: string
+    | Snd of varName: string
 
-    /// Figure out a hole that can represent both `hole1` and `hole2`
-    /// because they have the same name.
-    let Merge (key: string) (hole1: Hole) (hole2: Hole) =
-        let ty = HoleType.Merge key hole1.Type hole2.Type
-        let var =
-            if ty = hole1.Type then hole1.Var
-            elif ty = hole2.Type then hole2.Var
-            else Var(key, HoleType.TypeOf ty)
-        { Var = var; Type = ty }
+type Vars = Map<string, HoleType>
 
-type Holes = Map<string, Hole>
+module Vars =
 
-module Holes =
-
-    /// Merge the holes from two subsets of a template.
-    let Merge (holes1: Holes) (holes2: Holes) =
-        (holes1, holes2) ||> Map.fold (fun map key hole ->
-            let hole =
+    /// Merge the vars from two subsets of a template.
+    let Merge (vars1: Vars) (vars2: Vars) =
+        (vars1, vars2) ||> Map.fold (fun map key type' ->
+            let type' =
                 match Map.tryFind key map with
-                | None -> hole
-                | Some hole2 -> Hole.Merge key hole hole2
-            Map.add key hole map
+                | None -> type'
+                | Some type2 -> HoleType.Merge key type' type2
+            Map.add key type' map
         )
 
-    /// Merge the holes from many subsets of a template.
-    let MergeMany (holes: seq<Holes>) =
-        Seq.fold Merge Map.empty holes
+    /// Merge the vars from many subsets of a template.
+    let MergeMany (vars: seq<Vars>) =
+        Seq.fold Merge Map.empty vars
 
-/// A compiled expression for a subset of a template together with the holes it contains.
-type Parsed<'T> =
+/// A compiled expression for a subset of a template together with the vars it contains.
+type Parsed =
     {
-        Holes: Holes
-        Expr: Expr<'T>
+        Vars: Vars
+        Expr: list<Expr>
     }
+
+let NoVars e =
+    { Vars = Map.empty; Expr = e }
+
+let WithVars vars e =
+    { Vars = vars; Expr = e }
+
+let HasVars p =
+    not (Map.isEmpty p.Vars)
 
 module Parsed =
 
-    /// Map the holes in `p`'s expression so that they use vars from `finalHoles`.
-    let private substHoles (finalHoles: Holes) (p: Parsed<'T>) =
-        (p.Expr, p.Holes) ||> Map.fold (fun e k v ->
-            // Map var names for holes used multiple times
-            match Map.tryFind k finalHoles with
-            | Some v' when v'.Var <> v.Var ->
-                match Expr.Var v'.Var |> HoleType.Wrap v.Type v'.Type with
-                | None ->
-                    e.Substitute(fun var ->
-                        if var = v.Var
-                        then Some (Expr.Var v'.Var)
-                        else None)
-                | Some value ->
-                    Expr.Let(v.Var, value, e)
-                |> Expr.Cast
-            | Some _ -> e
-            | _ -> e
+    let private substVars (finalVars: Vars) (p: Parsed) =
+        let substs = ([], p.Vars) ||> Map.fold (fun substs k type' ->
+            match Map.tryFind k finalVars with
+            | Some type2 when type' <> type2 ->
+                { name = k; innerType = type'; outerType = type2 } :: substs
+            | _ -> substs
         )
+        match substs with
+        | [] -> p.Expr
+        | l -> [WrapVars(l, Concat p.Expr)]
 
-    /// Concatenate parsed expressions, merging their holes.
-    let Concat (p: seq<Parsed<'T>>) : Parsed<'T[]> =
-        let finalHoles = Holes.MergeMany [ for p in p -> p.Holes ]
-        let exprs = p |> Seq.map (substHoles finalHoles)
-        {
-            Holes = finalHoles
-            Expr = TExpr.Array<'T> exprs
-        }
+    let private mergeConsecutiveTexts (exprs: seq<Expr>) : seq<Expr> =
+        let currentHtml = StringBuilder()
+        let res = ResizeArray()
+        let pushHtml () =
+            let s = currentHtml.ToString()
+            if s <> "" then
+                res.Add(PlainHtml s)
+                currentHtml.Clear() |> ignore
+        let rec go = function
+            | Concat es ->
+                List.iter go es
+            | PlainHtml t ->
+                currentHtml.Append(t) |> ignore
+            | e ->
+                pushHtml()
+                res.Add(e)
+        Seq.iter go exprs
+        pushHtml()
+        res :> _
 
-    /// Transform a parsed expression.
-    let Map (f: Expr<'T> -> Expr<'U>) (p: Parsed<'T>) : Parsed<'U> =
-        {
-            Holes = p.Holes
-            Expr = f p.Expr
-        }
+    let Concat (p: seq<Parsed>) : Parsed =
+        let vars =
+            p
+            |> Seq.map (fun p -> p.Vars)
+            |> Vars.MergeMany
+        let exprs =
+            p
+            |> Seq.collect (substVars vars)
+            |> mergeConsecutiveTexts
+            |> List.ofSeq
+        WithVars vars exprs
 
-    /// Combine two parsed expressions, merging their holes.
-    let Map2 (f: Expr<'T> -> Expr<'U> -> Expr<'V>) (p1: Parsed<'T>) (p2: Parsed<'U>) : Parsed<'V> =
-        let finalHoles = Holes.Merge p1.Holes p2.Holes
-        let e1 = substHoles finalHoles p1
-        let e2 = substHoles finalHoles p2
-        {
-            Holes = Holes.Merge p1.Holes p2.Holes
-            Expr = f e1 e2
-        }
+    let Map2 (f: list<Expr> -> list<Expr> -> list<Expr>) (p1: Parsed) (p2: Parsed) : Parsed =
+        let vars = Vars.Merge p1.Vars p2.Vars
+        let e1 = substVars vars p1
+        let e2 = substVars vars p2
+        WithVars vars (f e1 e2)
 
-/// Matches a ${HoleName} anywhere in a string.
-let HoleNameRE = Regex(@"\${(\w+)}", RegexOptions.Compiled)
-
-/// A piece of text (either HTML text or attribute value) is a sequence of text parts,
-/// which can be plain strings or holes.
-type TextPart =
-    | Plain of string
-    | Hole of Hole
-
-module TextPart =
-
-    /// Get a string expression for a text part.
-    let ToStringExpr = function
-        | Plain s -> <@ s @>
-        | Hole h -> Expr.Var h.Var |> Binding.ToString h.Var.Type
-
-    /// Get a string expression for a piece of text, represented as a sequence of text parts.
-    let ManyToStringExpr = function
-        | [||] -> <@ "" @>
-        | [|p|] -> ToStringExpr p
-        | [|p1;p2|] -> <@ %(ToStringExpr p1) + %(ToStringExpr p2) @>
-        | parts ->
-            let arr = TExpr.Array<string> (Seq.map ToStringExpr parts)
-            <@ String.concat "" %arr @>
-
-let MakeHole (holeName: string) (holeType: HoleType) : Hole =
-    let var = Var(holeName, HoleType.TypeOf holeType)
-    { Type = holeType; Var = var }
-
-/// Parse a piece of text into a sequence of text parts.
-let ParseText (t: string) (holeType: HoleType) : Holes * TextPart[] =
-    let parse = HoleNameRE.Matches(t) |> Seq.cast<Match> |> Array.ofSeq
-    if Array.isEmpty parse then Map.empty, [|Plain t|] else
+/// Parse a piece of text, which can be either a text node or an attribute value.
+let ParseText (t: string) (varType: HoleType) : Parsed =
+    let parse = HoleRE.Matches(t) |> Seq.cast<Match> |> Array.ofSeq
+    if Array.isEmpty parse then NoVars [PlainHtml t] else
     let parts = ResizeArray()
     let mutable lastHoleEnd = 0
-    let mutable holes = Map.empty
-    let getHole holeName =
-        match Map.tryFind holeName holes with
-        | Some hole -> hole
-        | None ->
-            let hole = MakeHole holeName holeType
-            holes <- Map.add holeName hole holes
-            hole
+    let mutable vars = Map.empty
     for p in parse do
         if p.Index > lastHoleEnd then
-            parts.Add(Plain t.[lastHoleEnd..p.Index - 1])
-        let hole = getHole p.Groups.[1].Value
-        parts.Add(Hole hole)
+            parts.Add(PlainHtml t.[lastHoleEnd..p.Index - 1])
+        let varName = p.Groups.[1].Value
+        if not (Map.containsKey varName vars) then
+            vars <- Map.add varName varType vars
+        parts.Add(VarContent varName)
         lastHoleEnd <- p.Index + p.Length
     if lastHoleEnd < t.Length then
-        parts.Add(Plain t.[lastHoleEnd..t.Length - 1])
-    holes, parts.ToArray()
+        parts.Add(PlainHtml t.[lastHoleEnd..t.Length - 1])
+    WithVars vars (parts.ToArray() |> List.ofSeq)
 
 /// None if this is not a data binding.
 /// Some None if this is a data binding without specified event.
@@ -315,112 +259,67 @@ let GetDataBindingEvent = function
     | _ -> None
 
 /// Figure out if this is a data binding attribute, and if so, what value type and event it binds.
-let GetDataBindingType (ownerNode: HtmlNode) (attrName: string) : option<BindingType * string> =
+let (|DataBinding|_|) (ownerNode: HtmlNode) (attrName: string) : option<BindingType * string> =
     match GetDataBindingEvent attrName with
     | None -> None
     | Some ev ->
     let nodeName = ownerNode.Name
     if nodeName = "textarea" then
-        Some (BindingType.String, defaultArg ev "oninput")
+        Some (BindingType.BindString, defaultArg ev "oninput")
     elif nodeName = "select" then
-        Some (BindingType.String, defaultArg ev "onchange")
+        Some (BindingType.BindString, defaultArg ev "onchange")
     elif nodeName = "input" then
         match ownerNode.GetAttributeValue("type", "text") with
-        | "number" -> Some (BindingType.Number, defaultArg ev "oninput")
-        | "checkbox" -> Some (BindingType.Bool, defaultArg ev "onchange")
-        | _ -> Some (BindingType.String, defaultArg ev "oninput")
+        | "number" -> Some (BindingType.BindNumber, defaultArg ev "oninput")
+        | "checkbox" -> Some (BindingType.BindBool, defaultArg ev "onchange")
+        | _ -> Some (BindingType.BindString, defaultArg ev "oninput")
     else None
 
-let MakeEventHandler (attrName: string) (holeName: string) : list<Parsed<Attr>> =
+let MakeEventHandler (attrName: string) (varName: string) : Parsed =
     let argType = HoleType.EventArg attrName
-    let hole = MakeHole holeName (HoleType.Event argType)
-    let holes = Map [holeName, hole]
-    let value = TExpr.Coerce<obj>(Expr.Var hole.Var)
-    [{ Holes = holes; Expr = <@ Attr(attrName, %value) @> }]
+    WithVars (Map [varName, Event argType]) [Attr(attrName, VarContent varName)]
 
-let MakeAttrAttribute (holeName: string) : list<Parsed<Attr>> =
-    let hole = MakeHole holeName HoleType.Attribute
-    let holes = Map [holeName, hole]
-    let value = TExpr.Coerce<Attr>(Expr.Var hole.Var)
-    [{ Holes = holes; Expr = value }]
-
-let MakeDataBinding (holeName: string) (valType: BindingType) (eventName: string) : list<Parsed<Attr>> =
-    let hole = MakeHole holeName (HoleType.DataBinding valType)
-    let holeVar() : Expr<obj * Action<UIChangeEventArgs>> = Expr.Var hole.Var |> Expr.Cast
-    let holes = Map [holeName, hole]
+let MakeDataBinding (varName: string) (valType: BindingType) (eventName: string) : Parsed =
     let valueAttrName =
         match valType with
-        | BindingType.Number | BindingType.String -> "value"
-        | BindingType.Bool -> "checked"
-    [
-        { Holes = holes; Expr = <@ Attr(valueAttrName, fst (%holeVar())) @> }
-        { Holes = holes; Expr = <@ Attr(eventName, snd (%holeVar())) @> }
+        | BindingType.BindNumber | BindingType.BindString -> "value"
+        | BindingType.BindBool -> "checked"
+    WithVars (Map [varName, DataBinding valType]) [
+        Attr(valueAttrName, Fst varName)
+        Attr(eventName, Snd varName)
     ]
 
-let MakeStringAttribute (attrName: string) (holes: Holes) (parts: TextPart[]) : list<Parsed<Attr>> =
-    let value = TextPart.ManyToStringExpr parts
-    [{ Holes = holes; Expr = <@ Attr(attrName, %value) @> }]
-
-let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : list<Parsed<Attr>> =
+let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : Parsed =
     let name = attr.Name
-    match ParseText attr.Value HoleType.String with
-    | holes, [|Hole _|] when name.StartsWith "on" ->
-        let (KeyValue(holeName, _)) = Seq.head holes
-        MakeEventHandler name holeName
-    | holes, [|Hole _|] when name = "attr" ->
-        let (KeyValue(holeName, _)) = Seq.head holes
-        MakeAttrAttribute holeName
-    | holes, ([|Hole _|] as parts) ->
-        match GetDataBindingType ownerNode name with
-        | Some (valType, eventName) ->
-            let (KeyValue(holeName, _)) = Seq.head holes
-            MakeDataBinding holeName valType eventName
-        | None ->
-            MakeStringAttribute name holes parts
-    | holes, parts ->
-        MakeStringAttribute name holes parts
+    let parsed = ParseText attr.Value HoleType.String
+    match name, parsed.Expr with
+    | _, [VarContent _] when name = "attr" ->
+        parsed
+    | _, [VarContent varName] when name.StartsWith "on" ->
+        MakeEventHandler name varName
+    | DataBinding ownerNode (valType, eventName), [VarContent varName] ->
+        MakeDataBinding varName valType eventName
+    | _ ->
+        WithVars parsed.Vars [Attr(name, Concat parsed.Expr)]
 
-/// If a node doesn't contain any holes, we represent it as a plain HTML string for performance.
-type ParsedNode =
-    | PlainHtml of string
-    | WithHoles of Parsed<Node>
-
-module ParsedNode =
-
-    /// Convert to seq<Parsed<Node>> while merging consecutive plain HTML nodes
-    let ManyToParsed (s: seq<ParsedNode>) : seq<Parsed<Node>> =
-        let currentHtml = StringBuilder()
-        let res = ResizeArray()
-        let pushHtml() =
-            let s = currentHtml.ToString()
-            if s <> "" then
-                res.Add({ Holes = Map.empty; Expr = <@ Node.RawHtml s @> })
-            currentHtml.Clear() |> ignore
-        for n in s do
-            match n with
-            | PlainHtml s -> currentHtml.Append(s) |> ignore
-            | WithHoles h ->
-                pushHtml()
-                res.Add(h)
-        pushHtml()
-        res :> _
-
-    let HasHoles = function
-        | PlainHtml _ -> false
-        | WithHoles h -> not (Map.isEmpty h.Holes)
-
-let rec ParseNode (node: HtmlNode) : list<ParsedNode> =
+let rec ParseNode (node: HtmlNode) : Parsed =
     match node.NodeType with
     | HtmlNodeType.Element ->
         let name = node.Name
         let attrs =
             node.Attributes
-            |> Seq.collect (ParseAttribute node)
+            |> Seq.map (ParseAttribute node)
             |> Parsed.Concat
         let children =
             node.ChildNodes
-            |> Seq.collect ParseNode
-        if Map.isEmpty attrs.Holes && not (Seq.exists ParsedNode.HasHoles children) then
+            |> Seq.map ParseNode
+            |> Parsed.Concat
+        if HasVars attrs || HasVars children then
+            (attrs, children)
+            ||> Parsed.Map2 (fun attrs children ->
+                [Elt (name, attrs, children)])
+        else
+            // Node has no vars, we can represent it as raw HTML for performance.
             let rec removeComments (n: HtmlNode) =
                 if isNull n then () else
                 let nxt = n.NextSibling
@@ -428,43 +327,22 @@ let rec ParseNode (node: HtmlNode) : list<ParsedNode> =
                 | HtmlNodeType.Text | HtmlNodeType.Element -> ()
                 | _ -> n.Remove()
                 removeComments nxt
-            [PlainHtml node.OuterHtml]
-        else
-            let children =
-                children
-                |> ParsedNode.ManyToParsed
-                |> Parsed.Concat
-            (attrs, children)
-            ||> Parsed.Map2 (fun attrs children ->
-                <@ Node.Elt(name, List.ofArray %attrs, List.ofArray %children) @>
-            )
-            |> WithHoles
-            |> List.singleton
+            NoVars [PlainHtml node.OuterHtml]
     | HtmlNodeType.Text ->
         // Using .InnerHtml and RawHtml to properly interpret HTML entities.
-        match ParseText (node :?> HtmlTextNode).InnerHtml HoleType.Html with
-        | _, [|Plain t|] -> [PlainHtml t]
-        | holes, parts ->
-        [
-            for part in parts do
-                match part with
-                | Plain t -> yield PlainHtml t
-                | Hole h -> yield WithHoles { Holes = holes; Expr = Expr.Var h.Var |> Expr.Cast }
-        ]
+        ParseText (node :?> HtmlTextNode).InnerHtml HoleType.Html
     | _ ->
-        []
+        NoVars [] // Ignore comments
 
-let ParseOneTemplate (nodes: HtmlNodeCollection) : Parsed<Node> =
+let ParseOneTemplate (nodes: HtmlNodeCollection) : Parsed =
     nodes
-    |> Seq.collect ParseNode
-    |> ParsedNode.ManyToParsed
+    |> Seq.map ParseNode
     |> Parsed.Concat
-    |> Parsed.Map (fun e -> <@ Node.Concat (List.ofArray %e) @>)
 
 type ParsedTemplates =
     {
-        Main: Parsed<Node>
-        Nested: Map<string, Parsed<Node>>
+        Main: Parsed
+        Nested: Map<string, Parsed>
     }
 
 let ParseDoc (doc: HtmlDocument) : ParsedTemplates =

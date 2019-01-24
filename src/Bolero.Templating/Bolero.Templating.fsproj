@@ -18,6 +18,7 @@
              Link="TemplatingInternals.fs" />
     <Compile Include="Utilities.fs" />
     <Compile Include="Parsing.fs" />
+    <Compile Include="ConvertExpr.fs" />
     <Compile Include="CodeGen.fs" />
     <Compile Include="Provider.fs" />
     <None Include="paket.references" />
