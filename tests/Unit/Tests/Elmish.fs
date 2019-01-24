@@ -20,12 +20,14 @@ module Elmish =
             "constant value",
             elt.ByClass("constValue-input").GetAttribute("value"))
 
-    [<Test>]
+    [<Test; NonParallelizable>]
     let ``Input event handler dispatches message``() =
         let el = elt.ByClass("stringValue-input")
-        el.SendKeys("Changed!" + Keys.Backspace)
-        elt.AssertEventually((fun () ->
-            elt.ByClass("stringValue-repeat").Text = "stringValueInitChanged"),
+        el.SendKeys("Changed!")
+        el.SendKeys(Keys.Backspace)
+        elt.AssertAreEqualEventually(
+            "stringValueInitChanged",
+            (fun () -> elt.ByClass("stringValue-repeat").Text),
             "Element not updated")
 
     [<Test>]
