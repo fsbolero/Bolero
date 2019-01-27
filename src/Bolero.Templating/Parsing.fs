@@ -24,14 +24,8 @@ open System
 open System.IO
 open System.Text
 open System.Text.RegularExpressions
-open FSharp.Quotations
-open FSharp.Reflection
 open Microsoft.AspNetCore.Blazor
-open Microsoft.AspNetCore.Blazor.Components
 open HtmlAgilityPack
-open Bolero
-open Bolero.TemplatingInternals
-open ProviderImplementation.ProvidedTypes
 
 /// Available value types for a `bind` attribute.
 type BindingType =

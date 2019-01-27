@@ -1,27 +1,18 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\tools\Common.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <OutputPath>..\..\build\$(Configuration)\typeproviders\fsharp41</OutputPath>
-    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <DefineConstants>IS_DESIGNTIME</DefineConstants>
+    <BaseOutputPath>..\..\build</BaseOutputPath>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\build\AssemblyInfo.fs" />
-    <Compile Include="../../paket-files/fsprojects/FSharp.TypeProviders.SDK/src/ProvidedTypes.fsi"
-             Link="ProvidedTypes.fsi" />
-    <Compile Include="../../paket-files/fsprojects/FSharp.TypeProviders.SDK/src/ProvidedTypes.fs"
-             Link="ProvidedTypes.fs" />
-    <Compile Include="../Bolero/Node.fs"
-             Link="Node.fs" />
-    <Compile Include="..\Bolero\TemplatingInternals.fs"
-             Link="TemplatingInternals.fs" />
-    <Compile Include="Utilities.fs" />
     <Compile Include="Parsing.fs" />
-    <Compile Include="ConvertExpr.fs" />
-    <Compile Include="CodeGen.fs" />
-    <Compile Include="Provider.fs" />
     <None Include="paket.references" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Bolero\Bolero.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
