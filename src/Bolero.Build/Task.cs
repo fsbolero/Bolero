@@ -24,7 +24,7 @@ using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Mono.Cecil;
 
-namespace Bolero.Build{
+namespace Bolero.Build {
 
     public class BoleroTask : Task {
 
@@ -33,8 +33,13 @@ namespace Bolero.Build{
         private void StripFile(string f) {
             var anyChanged = false;
             var bytes = File.ReadAllBytes(f);
+            var basePath = Path.GetDirectoryName(f);
+            var param = new ReaderParameters
+            {
+                AssemblyResolver = new AssemblyResolver(basePath),
+            };
             using (var mem = new MemoryStream(bytes))
-            using (var asm = AssemblyDefinition.ReadAssembly(mem))
+            using (var asm = AssemblyDefinition.ReadAssembly(mem, param))
             {
                 var resources = asm.MainModule.Resources;
                 for (var i = resources.Count - 1; i >= 0; i--) {
@@ -49,17 +54,19 @@ namespace Bolero.Build{
                 }
                 if (anyChanged) {
                     asm.Write(f);
-                    this.Log.LogMessage("Stripped F# metadata from {0}", f);
+                    Log.LogMessage("Stripped F# metadata from {0}", f);
                 }
             }
         }
 
         public override bool Execute() {
-            foreach (var asm in this.Assemblies) {
+            foreach (var asm in Assemblies) {
                 try {
-                    this.StripFile(asm.ItemSpec);
+                    StripFile(asm.ItemSpec);
                 } catch (Exception exn) {
-                    this.Log.LogErrorFromException(exn);
+                    Log.LogError("Bolero failed to strip F# metadata from {0}: {1}",
+                        Path.GetFileName(asm.ItemSpec), exn.Message);
+                    Log.LogMessage("{0}", exn);
                     return false;
                 }
             }
