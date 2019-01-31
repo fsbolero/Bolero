@@ -130,8 +130,8 @@ let rec ConvertNode (vars: Map<string, Expr>) (node: Parsing.Expr) : Expr<Node> 
         <@ Node.Elt (name, List.ofArray %attrs, List.ofArray %children) @>
     | Parsing.VarContent varName ->
         vars.[varName] |> Expr.Cast
-    | Parsing.WrapVars (subst, attr) ->
-        WrapAndConvert vars subst ConvertNode attr
+    | Parsing.WrapVars (subst, node) ->
+        WrapAndConvert vars subst ConvertNode node
     | Parsing.Fst _ | Parsing.Snd _ | Parsing.Attr _ ->
         failwithf "Invalid node: %A" node
 

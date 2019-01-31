@@ -9,6 +9,7 @@
   <ItemGroup>
     <Compile Include="..\..\build\AssemblyInfo.fs" />
     <Compile Include="Remoting.fs" />
+    <Compile Include="Templating.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>

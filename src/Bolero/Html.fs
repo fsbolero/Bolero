@@ -1391,6 +1391,3 @@ module bind =
     /// The value is updated on the onchange event.
     let changeFloat (value: float) (callback: float -> unit) =
         attrParseValue<float> "onchange" value callback
-
-[<assembly:FSharp.Core.CompilerServices.TypeProviderAssembly "Bolero.Templating.Provider">]
-do ()

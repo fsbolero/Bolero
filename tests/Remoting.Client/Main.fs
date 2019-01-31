@@ -26,6 +26,7 @@ open Bolero
 open Bolero.Html
 open Bolero.Remoting
 open Elmish
+open Bolero.Templating.Client
 
 type MyApi =
     {
@@ -93,32 +94,23 @@ type Item() =
             button [on.click (fun _ -> dispatch (RemoveItem k))] [text "Remove"]
         ]
 
+type Tpl = Template<"main.html">
+
 let Display model dispatch =
-    concat [
-        div [] [
-            input [
-                attr.value (string model.currentKey)
-                on.change (fun e -> dispatch (SetCurrentKey (int (e.Value :?> string))))
-                attr.``type`` "number"
-                attr.placeholder "Key"
-            ]
-            input [
-                attr.value (string model.currentValue)
-                on.change (fun e -> dispatch (SetCurrentValue (e.Value :?> string)))
-                attr.placeholder "Value"
-            ]
-            button [on.click (fun _ -> dispatch AddItem)] [text "Add"]
-        ]
-        div [] [
-            button [on.click (fun _ -> dispatch RefreshItems)] [text "Refresh"]
-        ]
-        ul [] [for item in model.items -> ecomp<Item, _, _> item dispatch]
-        pre [] [
+    Tpl()
+        .key(string model.currentKey)
+        .setKey(fun e -> dispatch (SetCurrentKey (int (e.Value :?> string))))
+        .value(string model.currentValue)
+        .setValue(fun e -> dispatch (SetCurrentValue (e.Value :?> string)))
+        .add(fun _ -> dispatch AddItem)
+        .refresh(fun _ -> dispatch RefreshItems)
+        .items(concat [for item in model.items -> ecomp<Item, _, _> item dispatch])
+        .error(
             match model.lastError with
-            | None -> ()
-            | Some exn -> yield text (string exn)
-        ]
-    ]
+            | None -> empty
+            | Some exn -> text (string exn)
+        )
+        .Elt()
 
 type MyApp() =
     inherit ProgramComponent<Model, Message>()
@@ -127,6 +119,7 @@ type MyApp() =
         let myApi = this.Remote<MyApi>()
         Program.mkProgram (fun _ -> InitModel, Cmd.ofMsg RefreshItems) (Update myApi) Display
         |> Program.withConsoleTrace
+        |> Program.withHotReloading
 
 
 

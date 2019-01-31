@@ -1,4 +1,4 @@
-﻿// $begin{copyright}
+// $begin{copyright}
 //
 // This file is part of Bolero
 //
@@ -20,12 +20,14 @@
 
 namespace Bolero.Tests.Remoting
 
+open System.IO
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Bolero.Remoting
+open Bolero.Templating
 
 type MyApiHandler(log: ILogger<MyApiHandler>) =
     inherit RemoteHandler<Client.MyApi>()
@@ -56,15 +58,16 @@ type Startup() =
             .AddRemoting<MyApiHandler>()
         |> ignore
 
-    member this.Configure(app: IApplicationBuilder) =
+    member this.Configure(app: IApplicationBuilder, env: IHostingEnvironment) =
         app.UseRemoting()
+            .UseHotReload(dir = Path.Combine(env.ContentRootPath, "..", "Remoting.Client"))
             .UseBlazor<Client.Startup>()
         |> ignore
 
 module Main =
     [<EntryPoint>]
     let Main args =
-        WebHost.CreateDefaultBuilder()
+        WebHost.CreateDefaultBuilder(args)
             .UseStartup<Startup>()
             .Build()
             .Run()

@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "outFile": "content/lib.js",
+    "removeComments": true,
+    "module": "none"
+  },
+  "include": [ "*.ts" ],
+  "compileOnSave": true
+}

@@ -58,3 +58,24 @@ type Events =
 type TemplateNode() =
     /// For internal use only.
     member val Holes : obj[] = null with get, set
+
+[<AllowNullLiteral>]
+type IClient =
+#if !IS_DESIGNTIME
+    [<Microsoft.JSInterop.JSInvokable>]
+#endif
+    abstract FileChanged : filename: string * content: string -> unit
+
+    abstract RequestFile : filename: string -> option<Map<string, obj> -> Node>
+
+module TemplateCache =
+
+    let mutable client =
+        { new IClient with
+            member this.RequestFile(_) = None
+            member this.FileChanged(_, _) = () }
+
+#if !IS_DESIGNTIME
+[<assembly:FSharp.Core.CompilerServices.TypeProviderAssembly "Bolero.Templating.Provider">]
+do ()
+#endif

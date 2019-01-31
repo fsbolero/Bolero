@@ -14,6 +14,7 @@
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Bolero.Templating\Bolero.Templating.fsproj" />
     <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />
   </ItemGroup>
   <Import Project="..\..\src\Bolero.Build\Bolero.Build.targets" />

@@ -73,7 +73,7 @@ let HoleMethodBodies (holeType: Parsing.HoleType) : (ProvidedParameter list * (E
         ]
     | Parsing.HoleType.DataBinding Parsing.BindingType.BindNumber ->
         [
-            ["value" => typeof<int>; "set" => EventHandlerOf typeof<int>], fun args ->
+            ["value" => typeof<int>; "set" => typeof<Action<int>>], fun args ->
                 <@@ box (box (%%args.[1]: int), Events.OnChangeInt(%%args.[2])) @@>
             ["value" => typeof<float>; "set" => typeof<Action<float>>], fun args ->
                 <@@ box (box (%%args.[1]: float), Events.OnChangeFloat(%%args.[2])) @@>
@@ -100,37 +100,48 @@ let MakeHoleMethods (holeName: string) (holeType: Parsing.HoleType) (index: int)
                     %this @@>) :> MemberInfo
     ]
 
-let MakeFinalMethod (content: Parsing.Parsed) =
+let MakeFinalMethod (filename: option<string>) (content: Parsing.Parsed) =
     ProvidedMethod("Elt", [], typeof<Node>, fun args ->
         let this = getThis args
-        let vars = content.Vars |> Map.map (fun k v -> Var(k, TypeOf v))
-        let varExprs = vars |> Map.map (fun _ v -> Expr.Var v)
-        ((0, ConvertNode varExprs (Parsing.Concat content.Expr) :> Expr), vars)
-        ||> Seq.fold (fun (i, e) (KeyValue(_, var)) ->
-            let value = <@@ (%this).Holes.[i] @@>
-            let value = Expr.Coerce(value, var.Type)
-            i + 1, Expr.Let(var, value, e)
-        )
-        |> snd
+        let directExpr =
+            let vars = content.Vars |> Map.map (fun k v -> Var(k, TypeOf v))
+            let varExprs = vars |> Map.map (fun _ v -> Expr.Var v)
+            ((0, ConvertNode varExprs (Parsing.Concat content.Expr) :> Expr), vars)
+            ||> Seq.fold (fun (i, e) (KeyValue(_, var)) ->
+                let value = <@@ (%this).Holes.[i] @@>
+                let value = Expr.Coerce(value, var.Type)
+                i + 1, Expr.Let(var, value, e)
+            )
+            |> snd
+        match filename with
+        | None ->
+            directExpr
+        | Some filename ->
+            let varNames = TExpr.Array [for KeyValue(k, _) in content.Vars -> <@ k @>]
+            <@@ let vars = Map.ofArray (Array.zip %varNames (%this).Holes)
+                match TemplateCache.client.RequestFile(filename) with
+                | Some f -> f vars
+                | None -> %%directExpr @@>
     )
 
 /// Populate the members of the provided type for one template.
-let PopulateOne (ty: ProvidedTypeDefinition) (content: Parsing.Parsed) =
+let PopulateOne (filename: option<string>) (ty: ProvidedTypeDefinition) (content: Parsing.Parsed) =
     ty.AddMembers [
         yield MakeCtor content.Vars ty :> MemberInfo
         yield! content.Vars |> Seq.mapi (fun i (KeyValue(name, type')) ->
             MakeHoleMethods name type' i ty
         ) |> Seq.concat
-        yield MakeFinalMethod content :> MemberInfo
+        yield MakeFinalMethod filename content :> MemberInfo
     ]
 
 /// Populate the members of the provided type for a root template and its nested templates.
 let Populate (mainTy: ProvidedTypeDefinition) (pathOrHtml: string) (rootFolder: string) =
     let content = Parsing.ParseFileOrContent pathOrHtml rootFolder
-    PopulateOne mainTy content.Main
+    let filename = content.Filename
+    PopulateOne filename mainTy content.Main
     for KeyValue(name, content) in content.Nested do
         let ty = ProvidedTypeDefinition(name, Some typeof<TemplateNode>,
                     isErased = false,
                     hideObjectMethods = true)
         mainTy.AddMember ty
-        PopulateOne ty content
+        PopulateOne filename ty content // TODO: what's the filename for nested?
