@@ -5,6 +5,7 @@
     <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\build\task\$(Configuration)\netstandard2.0\Bolero.Build.dll</BoleroTaskAssemblyPath>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Bolero.Templating\Bolero.Templating.fsproj" />
     <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />
   </ItemGroup>
   <ItemGroup>

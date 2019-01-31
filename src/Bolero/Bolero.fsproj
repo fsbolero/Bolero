@@ -26,7 +26,7 @@
     <ProjectReference Include="..\Bolero.Build\Bolero.Build.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="..\..\src\Bolero.Templating.Provider\Bolero.Templating.Provider.fsproj">
+    <ProjectReference Include="..\Bolero.Templating.Provider\Bolero.Templating.Provider.fsproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>

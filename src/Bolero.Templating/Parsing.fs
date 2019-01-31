@@ -335,11 +335,12 @@ let ParseOneTemplate (nodes: HtmlNodeCollection) : Parsed =
 
 type ParsedTemplates =
     {
+        Filename: option<string>
         Main: Parsed
         Nested: Map<string, Parsed>
     }
 
-let ParseDoc (doc: HtmlDocument) : ParsedTemplates =
+let ParseDoc (filename: option<string>) (doc: HtmlDocument) : ParsedTemplates =
     let nested =
         let templateNodes =
             match doc.DocumentNode.SelectNodes("//template") with
@@ -360,18 +361,19 @@ let ParseDoc (doc: HtmlDocument) : ParsedTemplates =
         )
         |> Map.ofSeq
     let main = ParseOneTemplate doc.DocumentNode.ChildNodes
-    { Main = main; Nested = nested }
+    { Filename = filename; Main = main; Nested = nested }
 
 /// Get the HTML document for the given type provider argument, either inline or from a file.
-let GetDoc (fileOrContent: string) (rootFolder: string) : HtmlDocument =
+let GetDoc (fileOrContent: string) (rootFolder: string) : option<string> * HtmlDocument =
     let doc = HtmlDocument()
     if fileOrContent.Contains("<") then
         doc.LoadHtml(fileOrContent)
+        None, doc
     else
         doc.Load(Path.Combine(rootFolder, fileOrContent))
-    doc
+        Some fileOrContent, doc
 
 /// Parse a type provider argument into a set of templates.
 let ParseFileOrContent (fileOrContent: string) (rootFolder: string) : ParsedTemplates =
     GetDoc fileOrContent rootFolder
-    |> ParseDoc
+    ||> ParseDoc

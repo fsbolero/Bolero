@@ -113,22 +113,33 @@ type ProgramComponent<'model, 'msg>() =
 
     member internal this.SetState(program, model, dispatch) =
         if not <| obj.ReferenceEquals(model, oldModel) then
-            this.View <- program.view model dispatch
-            oldModel <- model
-            this.StateHasChanged()
-            this.Router |> Option.iter (fun router ->
-                let newUri = router.GetRoute model
-                let oldUri = this.GetCurrentUri()
-                if newUri <> oldUri then
-                    this.UriHelper.NavigateTo(newUri)
-            )
+            this.ForceSetState(program, model, dispatch)
+
+    member private this.ForceSetState(program, model, dispatch) =
+        this.View <- program.view model dispatch
+        oldModel <- model
+        this.StateHasChanged()
+        this.Router |> Option.iter (fun router ->
+            let newUri = router.GetRoute model
+            let oldUri = this.GetCurrentUri()
+            if newUri <> oldUri then
+                this.UriHelper.NavigateTo(newUri)
+        )
+
+    member this.Rerender() =
+        this.ForceSetState(this.Program, oldModel, this.Dispatch)
 
     override this.OnInit() =
         base.OnInit()
         let program = this.Program
+        let setDispatch dispatch =
+            this.Dispatch <- dispatch
         { program with
             setState = fun model dispatch ->
                 this.SetState(program, model, dispatch)
+            init = fun arg ->
+                let model, cmd = program.init arg
+                model, setDispatch :: cmd
         }
         |> Program.runWith this
 
@@ -142,14 +153,11 @@ type ProgramComponent<'model, 'msg>() =
         this.BaseUri <- this.UriHelper.GetBaseUri()
         System.EventHandler<string> this.OnLocationChanged
         |> this.UriHelper.OnLocationChanged.AddHandler
-        let setDispatch dispatch =
-            this.Dispatch <- dispatch
         match r.SetRoute (this.GetCurrentUri()) with
         | Some msg ->
-            let model, routeCmd = program.update msg initModel
-            model, setDispatch :: routeCmd
+            program.update msg initModel
         | None ->
-            initModel, [setDispatch]
+            initModel, []
 
     override this.Render() =
         this.View
