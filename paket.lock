@@ -2,6 +2,8 @@ STORAGE: NONE
 RESTRICTION: || (== netcoreapp2.1) (== netstandard2.0)
 NUGET
   remote: https://api.nuget.org/v3/index.json
+    Blazor.Extensions.SignalR (0.1.8)
+      Microsoft.AspNetCore.Blazor.Browser (>= 0.7)
     Chessie (0.6) - restriction: || (== netcoreapp2.1) (&& (== netstandard2.0) (>= netcoreapp2.0))
       FSharp.Core (>= 4.0.1.7-alpha)
       NETStandard.Library (>= 1.6)
@@ -570,7 +572,6 @@ NUGET
       Microsoft.Extensions.DependencyModel (>= 1.0.3) - restriction: || (== netcoreapp2.1) (&& (== netstandard2.0) (>= netcoreapp1.0))
       Microsoft.TestPlatform.ObjectModel (>= 15.9) - restriction: || (== netcoreapp2.1) (&& (== netstandard2.0) (>= netcoreapp1.0)) (&& (== netstandard2.0) (>= uap10.0))
       Newtonsoft.Json (>= 9.0.1) - restriction: || (== netcoreapp2.1) (&& (== netstandard2.0) (>= netcoreapp1.0)) (&& (== netstandard2.0) (>= uap10.0))
-    Microsoft.TypeScript.MSBuild (3.2.3)
     Microsoft.Win32.Primitives (4.3) - restriction: || (== netcoreapp2.1) (&& (== netstandard2.0) (>= netcoreapp1.0))
       Microsoft.NETCore.Platforms (>= 1.1)
       Microsoft.NETCore.Targets (>= 1.1)
@@ -1278,8 +1279,8 @@ NUGET
       System.Xml.XPath (>= 4.3)
 GITHUB
   remote: fsprojects/FSharp.TypeProviders.SDK
-    src/ProvidedTypes.fs (3a934e274650f1116cf7872226e7eac1bf775a6d)
-    src/ProvidedTypes.fsi (3a934e274650f1116cf7872226e7eac1bf775a6d)
+    src/ProvidedTypes.fs (a34e47921ae5ce694c37d9b8e946f1bb4d2df0f6)
+    src/ProvidedTypes.fsi (a34e47921ae5ce694c37d9b8e946f1bb4d2df0f6)
 GROUP fake
 STORAGE: NONE
 RESTRICTION: == netstandard2.0

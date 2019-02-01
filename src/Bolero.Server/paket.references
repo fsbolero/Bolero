@@ -3,3 +3,4 @@ Microsoft.AspNetCore.Http.Abstractions
 Microsoft.Extensions.DependencyInjection.Abstractions
 Microsoft.AspNetCore.WebSockets
 Microsoft.AspNetCore.Hosting.Abstractions
+Microsoft.AspNetCore.SignalR

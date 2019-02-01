@@ -21,54 +21,87 @@
 namespace Bolero.Templating.Client
 
 open System
-open System.Collections.Generic
+open System.Collections.Concurrent
+open System.Threading.Tasks
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.JSInterop
 open Microsoft.AspNetCore.Blazor.Services
+open Blazor.Extensions
 open Bolero
 open Bolero.Templating
 open Bolero.TemplatingInternals
 
-type WebSocketClient internal (url: string, runtime: IJSInProcessRuntime, rerender: unit -> unit) as this =
+type SignalRClient internal (settings: HotReloadSettings, rerender: unit -> unit) =
 
-    let thisRef = new DotNetObjectRef(this)
-    let cache = Dictionary<string, Parsing.Expr>()
+    let cache = ConcurrentDictionary<string, Parsing.Expr>()
 
-    do runtime.Invoke("Bolero.Templating.setup", url, thisRef)
+    let hub =
+        HubConnectionBuilder()
+            .WithUrl(settings.Url, fun opt ->
+                opt.Transport <- HttpTransportType.WebSockets
+                opt.SkipNegotiation <- true
+                opt.LogLevel <- settings.LogLevel)
+            .Build()
 
-    [<JSInvokable>]
-    member this.FileChanged(filename: string, content: string) =
+    let storeFileContent filename content =
         cache.[filename] <- Parsing.Concat (Parsing.ParseFileOrContent content "").Main.Expr
+
+    let setupHandlers() =
+        hub.On("FileChanged", fun filename content ->
+            storeFileContent filename content
+            rerender()
+            Task.CompletedTask)
+        |> ignore
+
+    let requestFile (filename: string) =
+        hub.InvokeAsync<string>("RequestFile", filename).ContinueWith(fun (t: Task<_>) ->
+            if t.IsCompleted then storeFileContent filename t.Result
+            elif t.IsFaulted then printfn "Hot reload failed to request file: %A" t.Exception
+        )
+
+    let connect = async {
+        let mutable connected = false
+        while not connected do
+            try
+                do! hub.StartAsync() |> Async.AwaitTask
+                connected <- true
+            with _ ->
+                do! Async.Sleep settings.ReconnectDelay
+                printfn "Hot reload reconnecting..."
+        printfn "Connected!"
+        for KeyValue(filename, _) in cache do
+            do! requestFile filename |> Async.AwaitTask
         rerender()
+    }
+
+    do  hub.OnClose(fun _ ->
+            printfn "Hot reload disconnected!"
+            connect |> Async.StartAsTask :> Task)
+        setupHandlers()
+        connect |> Async.Start
 
     interface IClient with
-
-        member this.FileChanged(filename, content) =
-            this.FileChanged(filename, content)
 
         member this.RequestFile(filename) =
             match cache.TryGetValue(filename) with
             | false, _ ->
-                runtime.Invoke("Bolero.Templating.requestFile", filename)
+                requestFile filename |> ignore
                 None
             | true, e ->
                 Some (fun vars -> ConvertExpr.ConvertNode vars e)
-
-    interface IDisposable with
-
-        member this.Dispose() =
-            thisRef.Dispose()
 
 module Program =
 
     let private registerClient (comp: ProgramComponent<_, _>) =
         match JSRuntime.Current with
-        | :? IJSInProcessRuntime as rt ->
-            let service = comp.Services.GetService<IHotReloadService>()
-            let path = match service with null -> "/bolero-reload" | s -> s.UrlPath
+        | :? IJSInProcessRuntime ->
+            let settings =
+                let s = comp.Services.GetService<HotReloadSettings>()
+                if obj.ReferenceEquals(s, null) then HotReloadSettings.Default else s
             let baseUri = comp.Services.GetService<IUriHelper>().GetBaseUri()
-            let uriBuilder = UriBuilder(baseUri, Scheme = "ws", Path = path)
-            new WebSocketClient(uriBuilder.ToString(), rt, comp.Rerender) :> IClient
+            let url = UriBuilder(baseUri, Scheme = "ws", Path = settings.Url).ToString()
+            let settings = { settings with Url = url }
+            new SignalRClient(settings, comp.Rerender) :> IClient
         | _ ->
             raise (NotImplementedException "Server-side template reloading not implemented yet")
 

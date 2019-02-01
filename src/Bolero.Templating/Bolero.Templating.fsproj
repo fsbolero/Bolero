@@ -9,12 +9,9 @@
   <ItemGroup>
     <Compile Include="..\..\build\AssemblyInfo.fs" />
     <Compile Include="Parsing.fs" />
-    <Compile Include="Service.fs" />
+    <Compile Include="Settings.fs" />
     <Compile Include="ConvertNode.fs" />
     <Compile Include="Client.fs" />
-    <None Include="tsconfig.json" />
-    <None Include="lib.ts" />
-    <None Include="blazor-api.ts" />
     <EmbeddedResource Include="content\**" Exclude="**\*.js;**\*.css" LogicalName="blazor:file:%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="content\**\*.js" LogicalName="blazor:js:%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="content\**\*.css" LogicalName="blazor:css:%(RecursiveDir)%(Filename)%(Extension)" />

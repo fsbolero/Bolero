@@ -17,78 +17,21 @@
 // permissions and limitations under the License.
 //
 // $end{copyright}
-namespace Bolero.Templating
+namespace Bolero.Templating.Server
 
 open System
 open System.IO
-open System.Net.WebSockets
-open System.Text
 open System.Threading.Tasks
 open System.Runtime.CompilerServices
-open System.Runtime.InteropServices
 open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.SignalR
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 
 [<AutoOpen>]
-module private Impl =
-
-    type WebSocket with
-        member this.AsyncSendText(s: string, [<Optional; DefaultParameterValue true>] endOfMessage: bool) = async {
-            let s = Encoding.UTF8.GetBytes(s)
-            let! token = Async.CancellationToken
-            return! this.SendAsync(ArraySegment(s, 0, s.Length), WebSocketMessageType.Text, endOfMessage, token)
-                |> Async.AwaitTask
-        }
-
-        member this.TryAsyncReceiveFrame(buffer) = async {
-            let! token = Async.CancellationToken
-            try
-                let! response = this.ReceiveAsync(buffer, token) |> Async.AwaitTask
-                match response.MessageType with
-                | WebSocketMessageType.Close -> return None
-                | _ -> return Some response
-            with :? WebSocketException as exn when exn.WebSocketErrorCode = WebSocketError.ConnectionClosedPrematurely ->
-                return None
-        }
-
-        member this.AsyncReceiveMessage() =
-            let message = ResizeArray()
-            let buffer = Array.zeroCreate 4096
-            let rec go() = async {
-                let! response = this.TryAsyncReceiveFrame(ArraySegment(buffer))
-                match response with
-                | None -> return None
-                | Some response ->
-                    message.AddRange(ArraySegment(buffer, 0, response.Count))
-                    if response.EndOfMessage then
-                        return Some (message.ToArray())
-                    else
-                        return! go()
-            }
-            go()
-
-    type WatcherMessage =
-        | FileChanged of fullPath: string * content: string
-        | AddWatcher of filename: string * connId: string * notify: (string -> Async<unit>)
-        | RemoveWatcher of connId: string
-
-    type Watcher = MailboxProcessor<WatcherMessage>
-
-    type WatcherState =
-        {
-            byConnId: Map<string, Set<string> * (string -> Async<unit>)>
-            byPath: Map<string, Set<string>>
-        }
-
-    let logState (log: ILogger) (state: WatcherState) =
-        log.LogInformation("Connections:")
-        for KeyValue(connId, (paths, _)) in state.byConnId do
-            log.LogInformation("  {0}: {1}", connId, String.concat ", " paths)
-        log.LogInformation("Files:")
-        for KeyValue(path, conns) in state.byPath do
-            log.LogInformation("  {0}: {1}", path, String.concat ", " conns)
+module Impl =
 
     let rec asyncRetry (times: int) (job: Async<'T>) : Async<option<'T>> = async {
         try
@@ -102,104 +45,72 @@ module private Impl =
                 return! asyncRetry (times - 1) job
     }
 
-    let Watcher (dir: string) (log: ILogger) : Watcher = MailboxProcessor.Start(fun mb -> async {
-
-        let callback (args: FileSystemEventArgs) =
-            Async.StartImmediate <| async {
-                let! content = asyncRetry 3 <| async {
-                    use f = File.OpenText(args.FullPath)
-                    return! f.ReadToEndAsync() |> Async.AwaitTask
-                }
-                match content with
-                | None -> log.LogWarning("Bolero HotReload: ")
-                | Some content -> mb.Post(FileChanged(args.FullPath, content))
-            }
-
-        use fsw = new FileSystemWatcher(dir, "*.html", EnableRaisingEvents = true)
-        fsw.Created.Add(callback)
-        fsw.Changed.Add(callback)
-        fsw.Renamed.Add(callback)
-
-        let rec loop state = async {
-            match! mb.Receive() with
-            | FileChanged (fullPath, content) ->
-                let conns =
-                    state.byPath
-                    |> Map.tryFind fullPath
-                    |> Option.defaultValue Set.empty
-                for connId in conns do
-                    do! (snd state.byConnId.[connId]) content
-                return! loop state
-            | AddWatcher (filename, connId, ws) ->
-                let fullPath = Path.Combine(dir, filename)
-                let connEntry =
-                    match Map.tryFind connId state.byConnId with
-                    | None -> Set.singleton fullPath, ws
-                    | Some (paths, ws) -> Set.add fullPath paths, ws
-                let pathEntry =
-                    Map.tryFind fullPath state.byPath
-                    |> Option.defaultValue Set.empty
-                    |> Set.add connId
-                return! loop
-                    { state with
-                        byConnId = Map.add connId connEntry state.byConnId
-                        byPath = Map.add fullPath pathEntry state.byPath }
-            | RemoveWatcher connId ->
-                match Map.tryFind connId state.byConnId with
-                | None -> return! loop state
-                | Some (paths, _) ->
-                    return! loop
-                        { state with
-                            byConnId = Map.remove connId state.byConnId
-                            byPath = Set.foldBack Map.remove paths state.byPath }
+    type WatcherConfig =
+        {
+            dir: option<string>
         }
 
-        return! loop
-            { byConnId = Map.empty
-              byPath = Map.empty }
-    })
+    type HotReloadHub(watcher: Watcher) =
+        inherit Hub()
 
-    let rec HandleConnection (connId: string) (ws: WebSocket) (watcher: Watcher) = async {
-        match! ws.AsyncReceiveMessage() with
-        | None -> ()
-        | Some msg ->
-            let filename = Encoding.UTF8.GetString(msg)
-            watcher.Post(AddWatcher(filename, connId, fun text -> async {
-                do! ws.AsyncSendText(filename + "\n", false)
-                return! ws.AsyncSendText(text)
-            }))
-            return! HandleConnection connId ws watcher
-    }
+        member this.RequestFile(filename: string) : Task<string> =
+            async {
+                let fullPath = watcher.FullPathOf(filename)
+                do! this.Groups.AddToGroupAsync(this.Context.ConnectionId, fullPath) |> Async.AwaitTask
+                let! fileContent = watcher.GetFileContent fullPath
+                return Option.toObj fileContent
+            }
+            |> Async.StartAsTask
+
+    and Watcher(config: WatcherConfig, env: IHostingEnvironment, log: ILogger<Watcher>, hub: IHubContext<HotReloadHub>) =
+        let dir =
+            match config.dir with
+            | Some dir -> Path.Combine(env.ContentRootPath, dir)
+            | None -> env.ContentRootPath
+
+        let getFileContent fullPath =
+            asyncRetry 3 <| async {
+                use f = File.OpenText(fullPath)
+                return! f.ReadToEndAsync() |> Async.AwaitTask
+            }
+
+        let onchange (args: FileSystemEventArgs) =
+            Async.StartImmediate <| async {
+                let filename = Path.GetFileName(args.FullPath) // TODO: what if it's in a subdirectory?
+                match! getFileContent args.FullPath with
+                | None ->
+                    log.LogWarning("Bolero HotReload: failed to reload {0}", args.FullPath)
+                | Some content ->
+                    return! hub.Clients.Group(args.FullPath)
+                        .SendAsync("FileChanged", filename, content)
+                        |> Async.AwaitTask
+            }
+
+        member this.FullPathOf(filename) =
+            Path.Combine(dir, filename)
+
+        member this.GetFileContent(fullPath) =
+            getFileContent fullPath
+
+        member this.Start() =
+            let fsw = new FileSystemWatcher(dir, "*.html", EnableRaisingEvents = true)
+            fsw.Created.Add(onchange)
+            fsw.Changed.Add(onchange)
+            fsw.Renamed.Add(onchange)
 
 [<Extension>]
 type ServerTemplatingExtensions =
 
     [<Extension>]
-    static member UseHotReload
-        (
-            this: IApplicationBuilder,
-            ?dir: string,
-            ?urlPath: string,
-            ?webSocketOptions: WebSocketOptions
-        ) : IApplicationBuilder =
-        let urlPath = defaultArg urlPath "/bolero-reload"
-        let this =
-            match webSocketOptions with
-            | None -> this.UseWebSockets()
-            | Some options -> this.UseWebSockets(options)
-        let dir =
-            match dir with
-            | Some dir -> dir
-            | None -> this.ApplicationServices.GetRequiredService<IHostingEnvironment>().ContentRootPath
-        let log = this.ApplicationServices.GetService<ILogger<ServerTemplatingExtensions>>()
-        let watcher = Watcher dir log
-        this.Use(fun context next ->
-            async {
-                if context.Request.Path.Value = urlPath then
-                    let! websocket = context.WebSockets.AcceptWebSocketAsync() |> Async.AwaitTask
-                    return! HandleConnection context.Connection.Id websocket watcher
-                else
-                    return! next.Invoke() |> Async.AwaitTask
-            }
-            |> Async.StartAsTask
-            :> Task)
+    static member AddHotReload(this: IServiceCollection, ?templateDir: string) : IServiceCollection =
+        this.AddSignalRCore().AddJsonProtocol() |> ignore
+        this.AddSingleton({ dir = templateDir })
+            .AddSingleton<Watcher>()
+
+    [<Extension>]
+    static member UseHotReload(this: IApplicationBuilder, ?urlPath: string) : IApplicationBuilder =
+        this.ApplicationServices.GetService<Watcher>().Start()
+        let urlPath = defaultArg urlPath Bolero.Templating.HotReloadSettings.Default.Url
+        this.UseSignalR(fun route ->
+            route.MapHub<HotReloadHub>(PathString urlPath)
+        )
