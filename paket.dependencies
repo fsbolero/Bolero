@@ -3,6 +3,7 @@ source https://api.nuget.org/v3/index.json
 storage: none
 framework: netstandard2.0, netcoreapp2.1
 
+nuget Blazor.Extensions.SignalR
 nuget FsCheck.NUnit ~> 2.12
 nuget FSharp.Core ~> 4.5.0
 nuget HtmlAgilityPack ~> 1.8.0
@@ -12,7 +13,6 @@ nuget Microsoft.AspNetCore.Blazor.Server ~> 0.7.0
 clitool Microsoft.AspNetCore.Blazor.Cli ~> 0.7.0
 nuget Microsoft.JSInterop ~> 0.7.0
 nuget Microsoft.NET.Test.Sdk 15.8.0
-nuget Microsoft.TypeScript.MSBuild
 nuget Mono.WebAssembly.Interop ~> 0.7.0
 clitool dotnet-fake ~> 5.0
 nuget Microsoft.AspNetCore ~> 2.1.0

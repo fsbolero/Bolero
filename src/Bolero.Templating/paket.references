@@ -2,4 +2,4 @@ FSharp.Core
 HtmlAgilityPack
 Microsoft.AspNetCore.Blazor
 Microsoft.AspNetCore.Blazor.Build
-Microsoft.TypeScript.MSBuild
+Blazor.Extensions.SignalR

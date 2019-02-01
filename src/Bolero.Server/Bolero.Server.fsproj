@@ -13,6 +13,7 @@
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Bolero.Templating\Bolero.Templating.fsproj" />
     <ProjectReference Include="..\Bolero\Bolero.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

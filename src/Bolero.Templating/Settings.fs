@@ -20,6 +20,16 @@
 
 namespace Bolero.Templating
 
-[<AllowNullLiteral>]
-type IHotReloadService =
-    abstract UrlPath: string
+type HotReloadSettings =
+    {
+        Url: string
+        ReconnectDelay: int
+        LogLevel: Blazor.Extensions.SignalRLogLevel
+    }
+
+    static member Default =
+        {
+            Url = "/bolero-reload"
+            ReconnectDelay = 5000
+            LogLevel = Blazor.Extensions.SignalRLogLevel.Information
+        }
