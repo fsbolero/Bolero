@@ -6,5 +6,13 @@
 <div>
   <button onclick="${refresh}">Refresh</button>
 </div>
-<ul>${items}</ul>
+<ul>
+  ${items}
+  <template id="item">
+    <li>
+      ${key} &rarr; ${value}
+      <button onclick="${remove}">Remove</button>
+    </li>
+  </template>
+</ul>
 <pre>${error}</pre>
