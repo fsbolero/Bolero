@@ -85,16 +85,15 @@ let Update (myApi: MyApi) msg model =
     | Error exn ->
         { model with lastError = Some exn }, []
 
+type Tpl = Template<"main.html">
+
 type Item() =
     inherit ElmishComponent<KeyValuePair<int, string>, Message>()
 
     override __.View (KeyValue (k, v)) dispatch =
-        li [] [
-            textf "%i => %s" k v
-            button [on.click (fun _ -> dispatch (RemoveItem k))] [text "Remove"]
-        ]
-
-type Tpl = Template<"main.html">
+        Tpl.item().key(string k).value(v)
+            .remove(fun _ -> dispatch (RemoveItem k))
+            .Elt()
 
 let Display model dispatch =
     Tpl()

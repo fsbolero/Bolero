@@ -33,7 +33,7 @@ open Bolero.TemplatingInternals
 
 type SignalRClient internal (settings: HotReloadSettings, rerender: unit -> unit) =
 
-    let cache = ConcurrentDictionary<string, Parsing.Expr>()
+    let cache = ConcurrentDictionary<string, Parsing.ParsedTemplates>()
 
     let hub =
         HubConnectionBuilder()
@@ -44,7 +44,7 @@ type SignalRClient internal (settings: HotReloadSettings, rerender: unit -> unit
             .Build()
 
     let storeFileContent filename content =
-        cache.[filename] <- Parsing.Concat (Parsing.ParseFileOrContent content "").Main.Expr
+        cache.[filename] <- Parsing.ParseFileOrContent content ""
 
     let setupHandlers() =
         hub.On("FileChanged", fun filename content ->
@@ -82,13 +82,19 @@ type SignalRClient internal (settings: HotReloadSettings, rerender: unit -> unit
 
     interface IClient with
 
-        member this.RequestFile(filename) =
+        member this.RequestTemplate(filename, subtemplate) =
             match cache.TryGetValue(filename) with
             | false, _ ->
                 requestFile filename |> ignore
                 None
-            | true, e ->
-                Some (fun vars -> ConvertExpr.ConvertNode vars e)
+            | true, tpl ->
+                Some (fun vars ->
+                    let tpl =
+                        match subtemplate with
+                        | null -> tpl.Main
+                        | sub -> tpl.Nested.[sub]
+                    let expr = Parsing.Concat tpl.Expr
+                    ConvertExpr.ConvertNode vars expr)
 
 module Program =
 
