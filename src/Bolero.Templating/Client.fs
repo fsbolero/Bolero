@@ -31,61 +31,30 @@ open Bolero
 open Bolero.Templating
 open Bolero.TemplatingInternals
 
-type SignalRClient internal (settings: HotReloadSettings, rerender: unit -> unit) =
+[<AbstractClass>]
+type ClientBase() =
 
     let cache = ConcurrentDictionary<string, Parsing.ParsedTemplates>()
 
-    let hub =
-        HubConnectionBuilder()
-            .WithUrl(settings.Url, fun opt ->
-                opt.Transport <- HttpTransportType.WebSockets
-                opt.SkipNegotiation <- true
-                opt.LogLevel <- settings.LogLevel)
-            .Build()
-
-    let storeFileContent filename content =
+    member this.StoreFileContent(filename, content) =
         cache.[filename] <- Parsing.ParseFileOrContent content ""
 
-    let setupHandlers() =
-        hub.On("FileChanged", fun filename content ->
-            storeFileContent filename content
-            rerender()
-            Task.CompletedTask)
-        |> ignore
+    member this.RefreshAllFiles() =
+        cache.Keys
+        |> Seq.map this.RequestFile
+        |> Async.Parallel
+        |> Async.Ignore
 
-    let requestFile (filename: string) =
-        hub.InvokeAsync<string>("RequestFile", filename).ContinueWith(fun (t: Task<_>) ->
-            if t.IsCompleted then storeFileContent filename t.Result
-            elif t.IsFaulted then printfn "Hot reload failed to request file: %A" t.Exception
-        )
+    abstract RequestFile : string -> Async<unit>
 
-    let connect = async {
-        let mutable connected = false
-        while not connected do
-            try
-                do! hub.StartAsync() |> Async.AwaitTask
-                connected <- true
-            with _ ->
-                do! Async.Sleep settings.ReconnectDelay
-                printfn "Hot reload reconnecting..."
-        printfn "Connected!"
-        for KeyValue(filename, _) in cache do
-            do! requestFile filename |> Async.AwaitTask
-        rerender()
-    }
-
-    do  hub.OnClose(fun _ ->
-            printfn "Hot reload disconnected!"
-            connect |> Async.StartAsTask :> Task)
-        setupHandlers()
-        connect |> Async.Start
+    abstract SetOnChange : (unit -> unit) -> unit
 
     interface IClient with
 
         member this.RequestTemplate(filename, subtemplate) =
             match cache.TryGetValue(filename) with
             | false, _ ->
-                requestFile filename |> ignore
+                this.RequestFile filename |> Async.Start
                 None
             | true, tpl ->
                 Some (fun vars ->
@@ -95,6 +64,62 @@ type SignalRClient internal (settings: HotReloadSettings, rerender: unit -> unit
                         | sub -> tpl.Nested.[sub]
                     let expr = Parsing.Concat tpl.Expr
                     ConvertExpr.ConvertNode vars expr)
+
+        member this.SetOnChange(callback) =
+            this.SetOnChange(callback)
+
+        member this.FileChanged(filename, content) =
+            this.StoreFileContent(filename, content)
+
+type SignalRClient(settings: HotReloadSettings) as this =
+    inherit ClientBase()
+
+    let hub =
+        HubConnectionBuilder()
+            .WithUrl(settings.Url, fun opt ->
+                opt.Transport <- HttpTransportType.WebSockets
+                opt.SkipNegotiation <- true
+                opt.LogLevel <- settings.LogLevel)
+            .Build()
+
+    let mutable rerender = ignore
+
+    let setupHandlers() =
+        hub.On("FileChanged", fun filename content ->
+            this.StoreFileContent(filename, content)
+            rerender()
+            Task.CompletedTask)
+        |> ignore
+
+    let connect = async {
+        let mutable connected = false
+        while not connected do
+            try
+                do! hub.StartAsync() |> Async.AwaitTask
+                connected <- true
+            with _ ->
+                do! Async.Sleep settings.ReconnectDelayInMs
+                printfn "Hot reload reconnecting..."
+        printfn "Connected!"
+        do! this.RefreshAllFiles()
+        rerender()
+    }
+
+    do  hub.OnClose(fun _ ->
+            printfn "Hot reload disconnected!"
+            connect |> Async.StartAsTask :> Task)
+        setupHandlers()
+        connect |> Async.Start
+
+    override this.RequestFile(filename) =
+        hub.InvokeAsync<string>("RequestFile", filename).ContinueWith(fun (t: Task<_>) ->
+            if t.IsCompleted then this.StoreFileContent(filename, t.Result)
+            elif t.IsFaulted then printfn "Hot reload failed to request file: %A" t.Exception
+        )
+        |> Async.AwaitTask
+
+    override this.SetOnChange(callback) =
+        rerender <- callback
 
 module Program =
 
@@ -107,12 +132,18 @@ module Program =
             let baseUri = comp.Services.GetService<IUriHelper>().GetBaseUri()
             let url = UriBuilder(baseUri, Scheme = "ws", Path = settings.Url).ToString()
             let settings = { settings with Url = url }
-            new SignalRClient(settings, comp.Rerender) :> IClient
+            let client = new SignalRClient(settings)
+            TemplateCache.client <- client
+            client :> IClient
         | _ ->
-            raise (NotImplementedException "Server-side template reloading not implemented yet")
+            failwith "To use hot reload on the server side, call AddHotReload() in the ASP.NET Core services"
 
     let withHotReloading (program: Elmish.Program<ProgramComponent<'model, 'msg>, 'model, 'msg, Node>) =
         { program with
             init = fun comp ->
-                TemplateCache.client <- registerClient comp
+                let client =
+                    match comp.Services.GetService<IClient>() with
+                    | null -> registerClient comp
+                    | client -> client
+                client.SetOnChange(comp.Rerender)
                 program.init comp }

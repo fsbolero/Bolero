@@ -23,13 +23,13 @@ namespace Bolero.Templating
 type HotReloadSettings =
     {
         Url: string
-        ReconnectDelay: int
+        ReconnectDelayInMs: int
         LogLevel: Blazor.Extensions.SignalRLogLevel
     }
 
     static member Default =
         {
             Url = "/bolero-reload"
-            ReconnectDelay = 5000
+            ReconnectDelayInMs = 5000
             LogLevel = Blazor.Extensions.SignalRLogLevel.Information
         }
