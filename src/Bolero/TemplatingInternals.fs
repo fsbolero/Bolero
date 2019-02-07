@@ -63,9 +63,16 @@ type TemplateNode() =
 type IClient =
     /// subtemplate is null to request the full file template.
     abstract RequestTemplate : filename: string * subtemplate: string -> option<Map<string, obj> -> Node>
+    abstract SetOnChange : (unit -> unit) -> unit
+    abstract FileChanged : filename: string * content: string -> unit
 
 module TemplateCache =
-    let mutable client = { new IClient with member this.RequestTemplate(_, _) = None }
+    let mutable client =
+        { new IClient with
+            member this.RequestTemplate(_, _) = None
+            member this.SetOnChange(_) = ()
+            member this.FileChanged(_, _) = ()
+        }
 
 #if !IS_DESIGNTIME
 [<assembly:FSharp.Core.CompilerServices.TypeProviderAssembly "Bolero.Templating.Provider">]
