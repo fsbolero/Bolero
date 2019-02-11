@@ -86,6 +86,7 @@ let Update (myApi: MyApi) msg model =
         { model with lastError = Some exn }, []
 
 type Tpl = Template<"main.html">
+type Form = Template<"subdir/form.html">
 
 type Item() =
     inherit ElmishComponent<KeyValuePair<int, string>, Message>()
@@ -96,12 +97,16 @@ type Item() =
             .Elt()
 
 let Display model dispatch =
+    let form =
+        Form()
+            .key(string model.currentKey)
+            .setKey(fun e -> dispatch (SetCurrentKey (int (e.Value :?> string))))
+            .value(string model.currentValue)
+            .setValue(fun e -> dispatch (SetCurrentValue (e.Value :?> string)))
+            .add(fun _ -> dispatch AddItem)
+            .Elt()
     Tpl()
-        .key(string model.currentKey)
-        .setKey(fun e -> dispatch (SetCurrentKey (int (e.Value :?> string))))
-        .value(string model.currentValue)
-        .setValue(fun e -> dispatch (SetCurrentValue (e.Value :?> string)))
-        .add(fun _ -> dispatch AddItem)
+        .form(form)
         .refresh(fun _ -> dispatch RefreshItems)
         .items(concat [for item in model.items -> ecomp<Item, _, _> item dispatch])
         .error(
