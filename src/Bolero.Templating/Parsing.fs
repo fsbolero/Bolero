@@ -370,8 +370,10 @@ let GetDoc (fileOrContent: string) (rootFolder: string) : option<string> * HtmlD
         doc.LoadHtml(fileOrContent)
         None, doc
     else
-        doc.Load(Path.Combine(rootFolder, fileOrContent))
-        Some fileOrContent, doc
+        let rootFolder = Path.Canonicalize rootFolder
+        let fullPath = Path.Combine(rootFolder, fileOrContent) |> Path.Canonicalize
+        doc.Load(fullPath)
+        Some (Path.GetRelativePath rootFolder fullPath), doc
 
 /// Parse a type provider argument into a set of templates.
 let ParseFileOrContent (fileOrContent: string) (rootFolder: string) : ParsedTemplates =

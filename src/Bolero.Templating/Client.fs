@@ -142,6 +142,8 @@ module Program =
         { program with
             init = fun comp ->
                 let client =
+                    // In server mode, the IClient service is set by services.AddHotReload().
+                    // In client mode, it is not set, so we create it here.
                     match comp.Services.GetService<IClient>() with
                     | null -> registerClient comp
                     | client -> client

@@ -69,9 +69,11 @@ module Impl =
             match config.dir with
             | Some dir -> Path.Combine(env.ContentRootPath, dir)
             | None -> env.ContentRootPath
+            |> Path.Canonicalize
 
         let fullPathOf filename =
             Path.Combine(dir, filename)
+            |> Path.Canonicalize
 
         let getFileContent fullPath =
             asyncRetry 3 <| async {
@@ -83,7 +85,7 @@ module Impl =
 
         let onchange (fullPath: string) =
             async {
-                let filename = Path.GetFileName(fullPath) // TODO: what if it's in a subdirectory?
+                let filename = Path.GetRelativePath dir fullPath
                 match! getFileContent fullPath with
                 | None ->
                     log.LogWarning("Bolero HotReload: failed to reload {0}", fullPath)
@@ -106,7 +108,10 @@ module Impl =
             getFileContent fullPath
 
         member this.Start() =
-            let fsw = new FileSystemWatcher(dir, "*.html", EnableRaisingEvents = true)
+            let fsw =
+                new FileSystemWatcher(dir, "*.html",
+                    IncludeSubdirectories = true,
+                    EnableRaisingEvents = true)
             fsw.Created.Add(callback)
             fsw.Changed.Add(callback)
             fsw.Renamed.Add(callback)
