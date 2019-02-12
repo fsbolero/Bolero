@@ -37,6 +37,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Bolero.Templating.Provider", "src\Bolero.Templating.Provider\Bolero.Templating.Provider.fsproj", "{770469C8-531A-4317-9BCE-DFF61E79B944}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Bolero.Templating.Server", "src\Bolero.Templating.Server\Bolero.Templating.Server.fsproj", "{262580BD-45C4-4190-A852-59D8720A9EDE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -167,6 +169,18 @@ Global
 		{770469C8-531A-4317-9BCE-DFF61E79B944}.Release|x64.Build.0 = Release|Any CPU
 		{770469C8-531A-4317-9BCE-DFF61E79B944}.Release|x86.ActiveCfg = Release|Any CPU
 		{770469C8-531A-4317-9BCE-DFF61E79B944}.Release|x86.Build.0 = Release|Any CPU
+		{262580BD-45C4-4190-A852-59D8720A9EDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{262580BD-45C4-4190-A852-59D8720A9EDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{262580BD-45C4-4190-A852-59D8720A9EDE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{262580BD-45C4-4190-A852-59D8720A9EDE}.Debug|x64.Build.0 = Debug|Any CPU
+		{262580BD-45C4-4190-A852-59D8720A9EDE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{262580BD-45C4-4190-A852-59D8720A9EDE}.Debug|x86.Build.0 = Debug|Any CPU
+		{262580BD-45C4-4190-A852-59D8720A9EDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{262580BD-45C4-4190-A852-59D8720A9EDE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{262580BD-45C4-4190-A852-59D8720A9EDE}.Release|x64.ActiveCfg = Release|Any CPU
+		{262580BD-45C4-4190-A852-59D8720A9EDE}.Release|x64.Build.0 = Release|Any CPU
+		{262580BD-45C4-4190-A852-59D8720A9EDE}.Release|x86.ActiveCfg = Release|Any CPU
+		{262580BD-45C4-4190-A852-59D8720A9EDE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -182,6 +196,7 @@ Global
 		{328CE686-3CB0-4AC7-9779-866ABE310DF6} = {8BE98B06-91C5-4948-B5AA-F80C67849031}
 		{35F2204C-123D-4399-B5F1-5DEAF1F30C24} = {8BE98B06-91C5-4948-B5AA-F80C67849031}
 		{770469C8-531A-4317-9BCE-DFF61E79B944} = {8BE98B06-91C5-4948-B5AA-F80C67849031}
+		{262580BD-45C4-4190-A852-59D8720A9EDE} = {8BE98B06-91C5-4948-B5AA-F80C67849031}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5493A436-6524-48E0-874D-CD70C1615AAF}

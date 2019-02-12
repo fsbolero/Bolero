@@ -7,12 +7,11 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\build\AssemblyInfo.fs" />
-    <Compile Include="Remoting.fs" />
+    <Compile Include="Templating.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Bolero\Bolero.fsproj" />
+    <ProjectReference Include="..\Bolero.Templating\Bolero.Templating.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
