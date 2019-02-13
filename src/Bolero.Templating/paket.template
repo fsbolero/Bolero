@@ -1,16 +1,13 @@
 type file
 id Bolero.HotReload
 description
-    HTML template hot reloading for Bolero: a set of tools and libraries to run F# applications in WebAssembly using Blazor
+    Client-side component of the HTML template hot reloading for Bolero: a set of tools and libraries to run F# applications in WebAssembly using Blazor
 authors
     Loic Denuziere
 files
     ../../build/Release/netstandard2.0/Bolero.Templating.dll ==> lib/netstandard2.0
     ../../build/Release/netstandard2.0/Bolero.Templating.xml ==> lib/netstandard2.0
-    ../../build/Release/netstandard2.0/Bolero.Templating.Server.dll ==> lib/netstandard2.0
-    ../../build/Release/netstandard2.0/Bolero.Templating.Server.xml ==> lib/netstandard2.0
 dependencies
     Bolero CURRENTVERSION
     HtmlAgilityPack >= LOCKED:Minor
     Blazor.Extensions.SignalR >= LOCKED:Minor
-    Microsoft.AspNetCore.SignalR >= LOCKED:Minor
