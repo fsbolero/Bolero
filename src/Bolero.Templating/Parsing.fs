@@ -287,8 +287,8 @@ let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : Parsed =
     let name = attr.Name
     let parsed = ParseText attr.Value HoleType.String
     match name, parsed.Expr with
-    | _, [VarContent _] when name = "attr" ->
-        parsed
+    | _, [VarContent varName] when name = "attr" ->
+        WithVars (Map [varName, Attribute]) parsed.Expr
     | _, [VarContent varName] when name.StartsWith "on" ->
         MakeEventHandler name varName
     | DataBinding ownerNode (valType, eventName), [VarContent varName] ->

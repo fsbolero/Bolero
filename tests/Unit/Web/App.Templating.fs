@@ -37,6 +37,7 @@ type Inline = Template<"""
         <span class="attrhole2-2 ${AttrHole2}"></span>
         <span class="attrhole3-1 ${AttrHole3}"></span>
         <span class="attrhole3-2">${AttrHole3}</span>
+        <span class="fullattrhole" attr="${FullAttrHole}"></span>
     </div>
 """>
 
@@ -181,6 +182,7 @@ let Tests() =
             .AttrHole1("attrhole1-content")
             .AttrHole2("attrhole2-content")
             .AttrHole3("attrhole3-content")
+            .FullAttrHole(Attrs [attr.id "fullattrhole-content"; "data-fullattrhole" => 1234])
             .Elt()
         File()
             .SimpleHole(div [attr.classes ["file-hole"]] [])
