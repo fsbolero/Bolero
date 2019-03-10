@@ -84,6 +84,13 @@ module Templating =
         Assert.AreEqual("1234", elt.GetAttribute("data-fullattrhole"))
 
     [<Test>]
+    let ``Attr hole obj value``() =
+        let elt = elt.ByClass("attrhole4")
+        Assert.AreEqual("5678", elt.GetAttribute("data-value"))
+        Assert.IsNotNull(elt.GetAttribute("data-true"))
+        Assert.IsNull(elt.GetAttribute("data-false"))
+
+    [<Test>]
     let ``Event hole``() =
         let elt = elt.Inner(By.ClassName "events")
         let state = elt.ByClass("currentstate")

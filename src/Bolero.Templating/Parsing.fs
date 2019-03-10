@@ -45,6 +45,8 @@ type HoleType =
     | DataBinding of BindingType
     /// An attribute hole.
     | Attribute
+    /// An attribute value hole.
+    | AttributeValue
 
 module HoleType =
 
@@ -52,10 +54,10 @@ module HoleType =
     let Merge (holeName: string) (t1: HoleType) (t2: HoleType) : HoleType =
         if t1 = t2 then t1 else
         match t1, t2 with
-        | String, Html | Html, String -> String
+        | (String | Html | AttributeValue), (String | Html | AttributeValue) -> String
         | Event _, Event _ -> Event typeof<UIEventArgs>
-        | DataBinding valType, String | String, DataBinding valType
-        | DataBinding valType, Html | Html, DataBinding valType -> DataBinding valType
+        | DataBinding valType, (String | Html | AttributeValue)
+        | (String | Html | AttributeValue), DataBinding valType -> DataBinding valType
         | _ -> failwithf "Hole name used multiple times with incompatible types: %s" holeName
 
     /// Get the .NET type of the event handler argument for the given event name.
@@ -287,12 +289,15 @@ let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : Parsed =
     let name = attr.Name
     let parsed = ParseText attr.Value HoleType.String
     match name, parsed.Expr with
-    | _, [VarContent varName] when name = "attr" ->
-        WithVars (Map [varName, Attribute]) parsed.Expr
-    | _, [VarContent varName] when name.StartsWith "on" ->
-        MakeEventHandler name varName
     | DataBinding ownerNode (valType, eventName), [VarContent varName] ->
         MakeDataBinding varName valType eventName
+    | _, [VarContent varName] ->
+        if name = "attr" then
+            WithVars (Map [varName, Attribute]) parsed.Expr
+        elif name.StartsWith "on" then
+            MakeEventHandler name varName
+        else
+            WithVars (Map [varName, AttributeValue]) [Attr(name, VarContent varName)]
     | _ ->
         WithVars parsed.Vars [Attr(name, Concat parsed.Expr)]
 

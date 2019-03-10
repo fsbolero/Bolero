@@ -40,6 +40,7 @@ let TypeOf (holeType: Parsing.HoleType) : Type =
     | Parsing.Event argType -> EventHandlerOf argType
     | Parsing.DataBinding _ -> typeof<obj * Action<UIChangeEventArgs>>
     | Parsing.Attribute -> typeof<Attr>
+    | Parsing.AttributeValue -> typeof<obj>
 
 /// Wrap the filler `expr`, of type `outerType`, to make it fit into a hole of type `innerType`.
 /// Return `None` if no wrapping is needed.
@@ -48,6 +49,8 @@ let WrapExpr (innerType: Parsing.HoleType) (outerType: Parsing.HoleType) (expr: 
     match innerType, outerType with
     | Parsing.Html, Parsing.String ->
         Some <@@ Node.Text %%expr @@>
+    | Parsing.AttributeValue, Parsing.String ->
+        Some <| Expr.Coerce(expr, typeof<obj>)
     | Parsing.Event argTy, Parsing.Event _ ->
         Some <| Expr.Coerce(expr, EventHandlerOf argTy)
     | Parsing.String, Parsing.DataBinding _ ->

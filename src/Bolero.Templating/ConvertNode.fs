@@ -37,6 +37,7 @@ let TypeOf (holeType: Parsing.HoleType) : Type =
     | Parsing.Event argType -> EventHandlerOf argType
     | Parsing.DataBinding _ -> typeof<obj * Action<UIChangeEventArgs>>
     | Parsing.Attribute -> typeof<Attr>
+    | Parsing.AttributeValue -> typeof<obj>
 
 let WrapExpr (innerType: Parsing.HoleType) (outerType: Parsing.HoleType) (expr: obj) : option<obj> =
     if innerType = outerType then None else
