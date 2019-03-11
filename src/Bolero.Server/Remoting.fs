@@ -18,17 +18,18 @@
 //
 // $end{copyright}
 
-namespace Bolero.Remoting
+namespace Bolero.Remoting.Server
 
 open System
 open System.IO
+open System.Reflection
 open System.Runtime.CompilerServices
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Bolero
-open System.Reflection
+open Bolero.Remoting
 
 type IRemoteHandler =
     abstract Handler : IRemoteService

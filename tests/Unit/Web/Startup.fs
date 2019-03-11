@@ -24,7 +24,7 @@ namespace Bolero.Tests.Web
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Blazor.Builder
-open Bolero.Remoting
+open Bolero.Remoting.Server
 open Microsoft.Extensions.FileProviders
 
 type BlazorStartup() =

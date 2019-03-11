@@ -25,8 +25,9 @@ open Microsoft.AspNetCore.Blazor.Components
 open Bolero
 open Bolero.Html
 open Bolero.Remoting
-open Elmish
+open Bolero.Remoting.Client
 open Bolero.Templating.Client
+open Elmish
 
 type MyApi =
     {

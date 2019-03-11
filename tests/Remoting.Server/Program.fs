@@ -25,7 +25,7 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
-open Bolero.Remoting
+open Bolero.Remoting.Server
 open Bolero.Templating.Server
 
 type MyApiHandler(log: ILogger<MyApiHandler>) =

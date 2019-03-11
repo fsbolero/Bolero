@@ -18,7 +18,7 @@
 //
 // $end{copyright}
 
-namespace Bolero.Remoting
+namespace Bolero.Remoting.Client
 
 open System
 open System.IO
@@ -29,6 +29,7 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.DependencyInjection.Extensions
 open FSharp.Reflection
 open Bolero
+open Bolero.Remoting
 
 /// Provides remote service implementations when running in WebAssembly.
 type ClientRemoteProvider(http: HttpClient) =
