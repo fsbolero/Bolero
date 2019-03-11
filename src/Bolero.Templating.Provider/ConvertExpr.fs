@@ -48,16 +48,19 @@ let WrapExpr (innerType: Parsing.HoleType) (outerType: Parsing.HoleType) (expr: 
     if innerType = outerType then None else
     match innerType, outerType with
     | Parsing.Html, Parsing.String ->
-        Some <@@ Node.Text %%expr @@>
+        <@@ Node.Text %%expr @@>
     | Parsing.AttributeValue, Parsing.String ->
-        Some <| Expr.Coerce(expr, typeof<obj>)
+        Expr.Coerce(expr, typeof<obj>)
     | Parsing.Event argTy, Parsing.Event _ ->
-        Some <| Expr.Coerce(expr, EventHandlerOf argTy)
+        Expr.Coerce(expr, EventHandlerOf argTy)
     | Parsing.String, Parsing.DataBinding _ ->
-        Some <@@ (%%expr: obj * Action<UIChangeEventArgs>).Item1 @@>
+        <@@ (%%expr: obj * Action<UIChangeEventArgs>).Item1 @@>
     | Parsing.Html, Parsing.DataBinding _ ->
-        Some <@@ Node.Text ((%%expr: obj * Action<UIChangeEventArgs>).Item1.ToString()) @@>
+        <@@ Node.Text ((%%expr: obj * Action<UIChangeEventArgs>).Item1.ToString()) @@>
+    | Parsing.AttributeValue, Parsing.DataBinding _ ->
+        <@@ (%%expr: obj * Action<UIChangeEventArgs>).Item1.ToString() @@>
     | a, b -> failwithf "Hole name used multiple times with incompatible types (%A, %A)" a b
+    |> Some
 
 /// Map an expression's vars from its parent, wrapping the expression in let declarations.
 let WrapAndConvert (vars: Map<string, Expr>) (subst: list<Parsing.VarSubstitution>) convert expr =

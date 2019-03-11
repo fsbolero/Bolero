@@ -40,17 +40,21 @@ let TypeOf (holeType: Parsing.HoleType) : Type =
     | Parsing.AttributeValue -> typeof<obj>
 
 let WrapExpr (innerType: Parsing.HoleType) (outerType: Parsing.HoleType) (expr: obj) : option<obj> =
+    let inline bindValueOf (e: obj) = fst (e :?> obj * Action<UIChangeEventArgs>)
     if innerType = outerType then None else
     match innerType, outerType with
     | Parsing.Html, Parsing.String ->
-        Some (box (Node.Text (unbox expr)))
+        box (Node.Text (unbox expr))
+    | Parsing.AttributeValue, Parsing.String ->
+        box (string expr)
     | Parsing.Event _, Parsing.Event _ ->
-        Some expr
-    | Parsing.String, Parsing.DataBinding _ ->
-        Some (fst (expr :?> obj * Action<UIChangeEventArgs>))
+        expr
     | Parsing.Html, Parsing.DataBinding _ ->
-        Some (box (Node.Text (fst (expr :?> obj * Action<UIChangeEventArgs>) :?> string)))
+        box (Node.Text (string (bindValueOf expr)))
+    | (Parsing.String | Parsing.AttributeValue), Parsing.DataBinding _ ->
+        box (string (bindValueOf expr))
     | a, b -> failwithf "Hole name used multiple times with incompatible types (%A, %A)" a b
+    |> Some
 
 let WrapAndConvert (vars: Map<string, obj>) (subst: list<Parsing.VarSubstitution>) convert expr =
     let vars = (vars, subst) ||> List.fold (fun vars wrap ->
