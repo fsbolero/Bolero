@@ -25,7 +25,7 @@ Then:
 
 * Run `build.cmd`
 
-To learn more, you can check [the documentation](https://github.com/intellifactory/bolero/wiki).
+To learn more, you can check [the documentation](https://fsbolero.io/docs).
 
 ## Contributing
 
