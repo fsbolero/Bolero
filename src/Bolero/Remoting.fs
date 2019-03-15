@@ -21,8 +21,6 @@
 namespace Bolero.Remoting
 
 open System
-open System.Collections.Generic
-open System.Reflection
 open System.Runtime.CompilerServices
 open Microsoft.Extensions.DependencyInjection
 open FSharp.Reflection
@@ -43,7 +41,6 @@ type RemoteMethodDefinition =
         FunctionType: Type
         ArgumentType: Type
         ReturnType: Type
-        CustomAttributes: seq<Attribute>
     }
 
 [<Extension>]
@@ -89,7 +86,6 @@ type RemotingExtensions =
             let resValueTy = resTy.GetGenericArguments().[0]
             ok {
                 Name = field.Name
-                CustomAttributes = field.GetCustomAttributes()
                 FunctionType = field.PropertyType
                 ArgumentType = argTy
                 ReturnType = resValueTy
