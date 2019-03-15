@@ -20,13 +20,16 @@
 
 namespace Bolero.Tests.Remoting
 
+open System
 open Microsoft.AspNetCore
+open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Bolero.Remoting.Server
 open Bolero.Templating.Server
+open Microsoft.AspNetCore.Authentication.Cookies
 
 type MyApiHandler(log: ILogger<MyApiHandler>) =
     inherit RemoteHandler<Client.MyApi>()
@@ -47,11 +50,26 @@ type MyApiHandler(log: ILogger<MyApiHandler>) =
                 log.LogInformation("Removing {0}", k)
                 items <- Map.remove k items
             }
+            login = Remote.withContext <| fun http login -> async {
+                log.LogInformation("User logging in: {0}", login)
+                return! http.AsyncSignIn(login, TimeSpan.FromDays(365. * 10.))
+            }
+            logout = Remote.withContext <| fun http () -> async {
+                log.LogInformation("User logging out: {0}", http.User.Identity.Name)
+                return! http.AsyncSignOut()
+            }
+            getLogin = Remote.authorize <| fun http () -> async {
+                log.LogInformation("User getting their login: {0}", http.User.Identity.Name)
+                return http.User.Identity.Name
+            }
         }
 
 type Startup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
+        services
+            .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie() |> ignore
         services
             .AddRemoting<MyApiHandler>()
             .AddHotReload(templateDir = "../Remoting.Client")
@@ -59,7 +77,8 @@ type Startup() =
         |> ignore
 
     member this.Configure(app: IApplicationBuilder, env: IHostingEnvironment) =
-        app.UseRemoting()
+        app.UseAuthentication()
+            .UseRemoting()
             .UseHotReload()
             .UseBlazor<Client.Startup>()
         |> ignore

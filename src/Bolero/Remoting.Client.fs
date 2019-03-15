@@ -30,6 +30,10 @@ open Microsoft.Extensions.DependencyInjection.Extensions
 open FSharp.Reflection
 open Bolero
 open Bolero.Remoting
+open System.Net
+
+exception UnauthorizedException
+exception InvalidResponseException
 
 /// Provides remote service implementations when running in WebAssembly.
 type ClientRemoteProvider(http: HttpClient) =
@@ -53,9 +57,15 @@ type ClientRemoteProvider(http: HttpClient) =
 
     member this.SendAndParse<'T>(method, requestUri, content) = async {
         let! resp = send method requestUri content
-        let! respBody = resp.Content.ReadAsStreamAsync() |> Async.AwaitTask
-        use reader = new StreamReader(respBody)
-        return Json.Read<'T> reader
+        match resp.StatusCode with
+        | HttpStatusCode.OK ->
+            let! respBody = resp.Content.ReadAsStreamAsync() |> Async.AwaitTask
+            use reader = new StreamReader(respBody)
+            return Json.Read<'T> reader
+        | HttpStatusCode.Unauthorized ->
+            return raise UnauthorizedException
+        | _ ->
+            return raise InvalidResponseException
     }
 
     member this.MakeRemoteProxy(ty: Type, baseUri: string ref) =

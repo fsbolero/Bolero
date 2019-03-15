@@ -2,3 +2,4 @@ Microsoft.AspNetCore.Blazor.Build
 Microsoft.AspNetCore.Blazor.Cli
 FSharp.Core
 Elmish
+Microsoft.AspNetCore.Authorization

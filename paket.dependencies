@@ -7,6 +7,8 @@ nuget Blazor.Extensions.SignalR
 nuget FsCheck.NUnit ~> 2.12
 nuget FSharp.Core ~> 4.5.0
 nuget HtmlAgilityPack ~> 1.8.0
+nuget Microsoft.AspNetCore.StaticFiles ~> 2.1.0
+nuget Microsoft.AspNetCore.Authentication.Cookies ~> 2.1.0
 nuget Microsoft.AspNetCore.Blazor.Browser ~> 0.7.0
 nuget Microsoft.AspNetCore.Blazor.Build ~> 0.7.0
 nuget Microsoft.AspNetCore.Blazor.Server ~> 0.7.0
