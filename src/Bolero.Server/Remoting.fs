@@ -60,7 +60,8 @@ module Remote =
     /// Give a remote function access to its HttpContext.
     /// Must be called outside any async {} block.
     let withContext (f: HttpContext -> 'req -> Async<'resp>) =
-        id (fun req -> f context.Value req)
+        () // <-- Forces compiling this into a function-returning function rather than a 2-arg function
+        fun req -> f context.Value req
 
     /// Mark a remote function as requiring authentication with the given policy.
     /// Must be called outside any async {} block.
@@ -70,7 +71,7 @@ module Remote =
     /// Mark a remote function as requiring authentication.
     /// Must be called outside any async {} block.
     let authorize (f: HttpContext -> 'req -> Async<'resp>) =
-        WithAuthorization([], f) :> obj :?> ('req -> Async<'resp>)
+        WithAuthorization([AuthorizeAttribute()], f) :> obj :?> ('req -> Async<'resp>)
 
 type internal RemotingService(basePath: PathString, ty: System.Type, handler: obj, authPolicyProvider: IAuthorizationPolicyProvider) =
 
@@ -83,18 +84,15 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
         let encoder = Json.GetEncoder method.ReturnType
         let meth = ty.GetProperty(method.Name).GetGetMethod().Invoke(handler, [||])
         let tAuthPolicy =
-            let authData =
-                match meth with
-                | :? Remote.IWithAuthorization as m -> m.AuthorizeData
-                | _ -> Seq.empty
-            match authPolicyProvider, Seq.isEmpty authData with
-            | _, true -> None
-            | null, false ->
-                failwithf "Remote method %s.%s is configured for authorization, but the application has no authorization policy."
-                    ty.FullName method.Name
-            | authPolicyProvider, false ->
-                AuthorizationPolicy.CombineAsync(authPolicyProvider, authData)
-                |> Some
+            match meth with
+            | :? Remote.IWithAuthorization as m ->
+                if isNull authPolicyProvider then
+                    failwithf "Remote method %s.%s is configured for authorization, but the application has no authorization policy."
+                        ty.FullName method.Name
+                else
+                    AuthorizationPolicy.CombineAsync(authPolicyProvider, m.AuthorizeData)
+                    |> ValueSome
+            | _ -> ValueNone
         let callMeth = method.FunctionType.GetMethod("Invoke", instanceFlags)
         let output = typeof<RemotingService>.GetMethod("Output", staticFlags)
         let output = output.MakeGenericMethod(method.ReturnType)
@@ -107,8 +105,8 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
                 let res = callMeth.Invoke(meth, [|arg|])
                 output.Invoke(null, [|ctx; encoder; res|]) :?> Task
             match tAuthPolicy with
-            | None -> run()
-            | Some tAuthPolicy ->
+            | ValueNone -> run()
+            | ValueSome tAuthPolicy ->
                 tAuthPolicy
                     .ContinueWith(fun (tAuthPolicy: Task<AuthorizationPolicy>) ->
                         auth.AuthorizeAsync(ctx.User, tAuthPolicy.Result)
