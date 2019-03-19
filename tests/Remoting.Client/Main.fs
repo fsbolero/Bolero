@@ -36,6 +36,7 @@ type MyApi =
         login : string -> Async<unit>
         logout : unit -> Async<unit>
         getLogin : unit -> Async<string>
+        authDouble : int -> Async<int>
     }
 
     interface IRemoteService with
@@ -46,9 +47,11 @@ type Model =
         currentKey: int
         currentValue: string
         items : Map<int, string>
-        lastError : option<exn>
+        lastError : option<string>
         loginInput : string
         currentLogin : option<string>
+        authDoubleInput : int
+        authDoubleResult : string
     }
 
 let InitModel =
@@ -59,6 +62,8 @@ let InitModel =
         lastError = None
         loginInput = ""
         currentLogin = None
+        authDoubleInput = 0
+        authDoubleResult = ""
     }
 
 type Message =
@@ -68,12 +73,16 @@ type Message =
     | AddItem
     | RemoveItem of int
     | ItemsRefreshed of Map<int, string>
-    | Error of exn
     | GetLogin
     | SetLoginInput of string
     | Login
     | Logout
-    | GotLogin of option<string>
+    | LoggedIn of RemoteResponse<string>
+    | LoggedOut
+    | SetAuthDoubleInput of int
+    | SendAuthDouble
+    | RecvAuthDouble of int
+    | Exn of exn
 
 let Update (myApi: MyApi) msg model =
     match msg with
@@ -83,29 +92,41 @@ let Update (myApi: MyApi) msg model =
         { model with currentValue = v }, []
     | RefreshItems ->
         model,
-        Cmd.ofAsync myApi.getItems () ItemsRefreshed Error
+        Cmd.ofAsync myApi.getItems () ItemsRefreshed Exn
     | AddItem ->
         model,
         Cmd.ofAsync myApi.setItem (model.currentKey, model.currentValue)
-            (fun () -> RefreshItems) Error
+            (fun () -> RefreshItems) Exn
     | RemoveItem k ->
         model,
         Cmd.ofAsync myApi.removeItem k
-            (fun () -> RefreshItems) Error
+            (fun () -> RefreshItems) Exn
     | ItemsRefreshed items ->
         { model with items = items; lastError = None }, []
-    | Error exn ->
-        { model with lastError = Some exn }, []
     | GetLogin ->
-        model, Cmd.ofAsync myApi.getLogin () (Some >> GotLogin) Error
+        model, Cmd.ofRemote myApi.getLogin () LoggedIn Exn
     | SetLoginInput s ->
         { model with loginInput = s }, []
     | Login ->
-        model, Cmd.ofAsync myApi.login model.loginInput (fun _ -> GetLogin) Error
+        model, Cmd.ofAsync myApi.login model.loginInput (fun _ -> GetLogin) Exn
     | Logout ->
-        model, Cmd.ofAsync myApi.logout () (fun () -> GotLogin None) Error
-    | GotLogin s ->
-        { model with currentLogin = s }, []
+        model, Cmd.ofAsync myApi.logout () (fun () -> LoggedOut) Exn
+    | LoggedIn (Success s) ->
+        { model with currentLogin = Some s; lastError = None }, []
+    | LoggedIn Unauthorized ->
+        { model with currentLogin = None; lastError = Some "Failed to retrieve login: user not authenticated" }, []
+    | LoggedOut ->
+        { model with currentLogin = None; lastError = None }, []
+    | SetAuthDoubleInput i ->
+        { model with authDoubleInput = i }, []
+    | SendAuthDouble ->
+        model, Cmd.ofAsync myApi.authDouble model.authDoubleInput RecvAuthDouble Exn
+    | RecvAuthDouble v ->
+        { model with authDoubleResult = string v }, []
+    | Exn RemoteUnauthorizedException ->
+        { model with authDoubleResult = "Error: you must be logged in" }, []
+    | Exn exn ->
+        { model with lastError = Some (string exn) }, []
 
 type Tpl = Template<"main.html">
 type Form = Template<"subdir/form.html">
@@ -150,6 +171,15 @@ let Display model dispatch =
                 textf "Logged in as %s" login
                 button [on.click (fun _ -> dispatch Logout)] [text "Log out"]
             ]
+        hr []
+        text "2 * "
+        input [
+            attr.``type`` "number"
+            bind.changeInt model.authDoubleInput (dispatch << SetAuthDoubleInput)
+        ]
+        text " = "
+        button [on.click (fun _ -> dispatch SendAuthDouble)] [text "Send"]
+        text model.authDoubleResult
     ]
 
 type MyApp() =

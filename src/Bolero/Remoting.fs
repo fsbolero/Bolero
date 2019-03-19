@@ -26,6 +26,9 @@ open Microsoft.Extensions.DependencyInjection
 open FSharp.Reflection
 open Bolero
 
+exception RemoteUnauthorizedException with
+    override this.Message = "Unauthorized remote operation"
+
 /// Indicate that this type is a remote service, served at the given base URL path.
 type IRemoteService =
     abstract BasePath : string

@@ -60,3 +60,17 @@ type HttpContextExtensions private () =
         | None -> this.SignOutAsync()
         | Some properties -> this.SignOutAsync(properties)
         |> Async.AwaitTask
+
+    /// Get the logged in user's name, or None if they are not logged in.
+    [<Extension>]
+    static member TryUsername(this: HttpContext) =
+        match this.User with
+        | null -> None
+        | u -> Some u.Identity.Name
+
+    /// Get the logged in user's identity, or None if they are not logged in.
+    [<Extension>]
+    static member TryIdentity(this: HttpContext) =
+        match this.User with
+        | null -> None
+        | u -> Some u.Identity

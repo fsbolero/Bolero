@@ -32,8 +32,46 @@ open Bolero
 open Bolero.Remoting
 open System.Net
 
-exception UnauthorizedException
-exception InvalidResponseException
+type RemoteResponse<'resp> =
+    | Success of 'resp
+    | Unauthorized
+
+    member this.TryGetResponse() =
+        match this with
+        | Success x -> Some x
+        | Unauthorized -> None
+
+module Cmd =
+
+    // This should be in Elmish really.
+    /// Command that will evaluate an async block and map the success to a message
+    /// discarding any possible error
+    let performAsync (f: 'req -> Async<'resp>) (arg: 'req) (ofSuccess: 'resp -> 'msg) =
+        let bind dispatch = async {
+            let! r = f arg
+            dispatch (ofSuccess r)
+        }
+        [bind >> Async.StartImmediate]
+
+    let private wrapRemote (f: 'req -> Async<'resp>) : 'req -> Async<RemoteResponse<'resp>> =
+        () // <-- Forces compiling this into a function-returning function rather than a 2-arg function
+        fun (arg: 'req) -> async {
+            try
+                let! r = f arg
+                return Success r
+            with RemoteUnauthorizedException ->
+                return Unauthorized
+        }
+
+    /// Command that will call a remote Bolero function with authorization and map the result
+    /// into response or error (of exception)
+    let ofRemote (f: 'req -> Async<'resp>) (arg: 'req) (ofSuccess: RemoteResponse<'resp> -> 'msg) (ofError: exn -> 'msg) =
+        Elmish.Cmd.ofAsync (wrapRemote f) arg ofSuccess ofError
+
+    /// Command that will call a remote Bolero function with authorization and map the success
+    /// to a message discarding any possible error
+    let performRemote (f: 'req -> Async<'resp>) (arg: 'req) (ofSuccess: RemoteResponse<'resp> -> 'msg) =
+        performAsync (wrapRemote f) arg ofSuccess
 
 /// Provides remote service implementations when running in WebAssembly.
 type ClientRemoteProvider(http: HttpClient) =
@@ -63,9 +101,9 @@ type ClientRemoteProvider(http: HttpClient) =
             use reader = new StreamReader(respBody)
             return Json.Read<'T> reader
         | HttpStatusCode.Unauthorized ->
-            return raise UnauthorizedException
-        | _ ->
-            return raise InvalidResponseException
+            return raise RemoteUnauthorizedException
+        | code ->
+            return raise (HttpRequestException("Unexpected response status: " + string code))
     }
 
     member this.MakeRemoteProxy(ty: Type, baseUri: string ref) =

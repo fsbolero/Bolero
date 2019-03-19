@@ -62,6 +62,10 @@ type MyApiHandler(log: ILogger<MyApiHandler>) =
                 log.LogInformation("User getting their login: {0}", http.User.Identity.Name)
                 return http.User.Identity.Name
             }
+            authDouble = Remote.authorize <| fun http i -> async {
+                log.LogInformation("User {0} doubling {1}", http.User.Identity.Name, i)
+                return i * 2
+            }
         }
 
 type Startup() =
@@ -69,8 +73,8 @@ type Startup() =
     member this.ConfigureServices(services: IServiceCollection) =
         services
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-            .AddCookie() |> ignore
-        services
+                .AddCookie()
+                .Services
             .AddRemoting<MyApiHandler>()
             .AddHotReload(templateDir = "../Remoting.Client")
             .AddServerSideBlazor<Client.Startup>()

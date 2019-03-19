@@ -79,6 +79,10 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
     let staticFlags = flags ||| BindingFlags.Static
     let instanceFlags = flags ||| BindingFlags.Instance
 
+    static let fail (ctx: HttpContext) =
+        ctx.Response.StatusCode <- StatusCodes.Status401Unauthorized
+        // TODO: allow customizing based on what failed?
+
     let makeHandler (method: RemoteMethodDefinition) =
         let decoder = Json.GetDecoder method.ArgumentType
         let encoder = Json.GetEncoder method.ReturnType
@@ -116,8 +120,7 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
                         if tAuthResult.Result.Succeeded then
                             run()
                         else
-                            ctx.Response.StatusCode <- StatusCodes.Status401Unauthorized
-                            // TODO: allow customizing based on what failed?
+                            fail ctx
                             Task.CompletedTask
                     )
                     .Unwrap()
@@ -135,10 +138,13 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
 
     static member Output<'Out>(ctx: HttpContext, encoder: Json.Encoder<obj>, a: Async<'Out>) : Task =
         async {
-            let! x = a
-            let v = encoder x
-            use writer = new StreamWriter(ctx.Response.Body)
-            Json.Raw.Write writer v
+            try
+                let! x = a
+                let v = encoder x
+                use writer = new StreamWriter(ctx.Response.Body)
+                Json.Raw.Write writer v
+            with RemoteUnauthorizedException ->
+                fail ctx
         }
         |> Async.StartImmediateAsTask
         :> _
