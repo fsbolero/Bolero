@@ -5,6 +5,7 @@
     <BaseOutputPath>..\..\build</BaseOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- <DefineConstants>DEBUG_RENDERER;$(DefineConstants)</DefineConstants> -->
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\..\build\AssemblyInfo.fs" />
