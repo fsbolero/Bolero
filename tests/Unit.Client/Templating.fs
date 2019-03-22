@@ -18,7 +18,7 @@
 //
 // $end{copyright}
 
-module Bolero.Tests.Web.App.Templating
+module Bolero.Tests.Client.Templating
 
 open Bolero
 open Bolero.Html
@@ -42,7 +42,7 @@ type Inline = Template<"""
     </div>
 """>
 
-type File = Template<"Web/testtemplate.html">
+type File = Template<"wwwroot/testtemplate.html">
 
 type Events = Template<"""
     <div class="events">

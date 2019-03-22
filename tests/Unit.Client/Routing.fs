@@ -18,7 +18,7 @@
 //
 // $end{copyright}
 
-module Bolero.Tests.Web.App.Routing
+module Bolero.Tests.Client.Routing
 
 open Bolero
 open Bolero.Html

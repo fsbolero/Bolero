@@ -18,11 +18,12 @@
 //
 // $end{copyright}
 
-module Bolero.Tests.Web.App.Remoting
+module Bolero.Tests.Client.Remoting
 
 open Bolero
 open Bolero.Html
 open Bolero.Remoting
+open Bolero.Remoting.Client
 open Elmish
 
 type RemoteApi =
@@ -30,6 +31,10 @@ type RemoteApi =
         getValue : string -> Async<option<string>>
         setValue : string * string -> Async<unit>
         removeValue : string -> Async<unit>
+        signIn : string -> Async<unit>
+        signOut : unit -> Async<unit>
+        getUsername : unit -> Async<string>
+        getAdmin : unit -> Async<string>
     }
 
     interface IRemoteService with
@@ -40,6 +45,11 @@ type Model =
         key : string
         value : string
         received : option<string>
+        username : string
+        signedInAs : option<string>
+        signInError : option<string>
+        getAdmin : option<string>
+        error: option<exn>
     }
 
 let initModel =
@@ -47,6 +57,11 @@ let initModel =
         key = ""
         value = ""
         received = None
+        username = ""
+        signedInAs = None
+        signInError = None
+        getAdmin = None
+        error = None
     }
 
 type Message =
@@ -58,6 +73,16 @@ type Message =
     | Get of string
     | Error of exn
 
+    | SetUsername of string
+    | SendSignIn
+    | RecvSignIn
+    | SendSignOut
+    | RecvSignOut
+    | SendGetUsername
+    | RecvGetUsername of RemoteResponse<string>
+    | SendGetAdmin
+    | RecvGetAdmin of RemoteResponse<string>
+
 let update api msg model =
     match msg with
     | SetKey x -> { model with key = x }, []
@@ -66,7 +91,43 @@ let update api msg model =
     | Add -> model, Cmd.ofAsync api.setValue (model.key, model.value) (fun () -> Get model.key) Error
     | Remove -> model, Cmd.ofAsync api.removeValue model.key (fun () -> Get model.key) Error
     | Get k -> model, Cmd.ofAsync api.getValue k Received Error
-    | Error exn -> model, []
+    | Error exn -> { model with error = Some exn }, []
+
+    | SetUsername x -> { model with username = x }, []
+    | SendSignIn -> model, Cmd.ofAsync api.signIn model.username (fun () -> RecvSignIn) Error
+    | RecvSignIn -> model, Cmd.ofMsg SendGetUsername
+    | SendSignOut -> model, Cmd.ofAsync api.signOut () (fun () -> RecvSignOut) Error
+    | RecvSignOut -> { model with signedInAs = None }, []
+    | SendGetUsername -> model, Cmd.ofRemote api.getUsername () RecvGetUsername Error
+    | RecvGetUsername resp -> { model with signedInAs = resp.TryGetResponse() }, []
+    | SendGetAdmin -> model, Cmd.ofRemote api.getAdmin () RecvGetAdmin Error
+    | RecvGetAdmin resp -> { model with getAdmin = resp.TryGetResponse() }, []
+
+let remote model dispatch =
+    concat [
+        input [
+            attr.classes ["signin-input"]
+            bind.input model.username (dispatch << SetUsername)
+        ]
+        button [
+            attr.classes ["signin-button"]
+            on.click (fun _ -> dispatch SendSignIn)
+        ] [text "Sign in"]
+        button [
+            attr.classes ["signout-button"]
+            on.click (fun _ -> dispatch SendSignOut)
+        ] [text "Sign out"]
+        div [attr.classes ["is-signedin"]] [
+            text (defaultArg model.signedInAs "<not logged in>")
+        ]
+        button [
+            attr.classes ["get-admin"]
+            on.click (fun _ -> dispatch SendGetAdmin)
+        ] [text "Get whether I'm admin"]
+        div [attr.classes ["is-admin"]] [
+            text (defaultArg model.getAdmin "<not admin>")
+        ]
+    ]
 
 let view model dispatch =
     div [] [
@@ -85,6 +146,10 @@ let view model dispatch =
         cond model.received <| function
             | None -> div [attr.classes ["output-empty"]] []
             | Some v -> div [attr.classes ["output"]] [text v]
+        remote model dispatch
+        cond model.error <| function
+        | None -> empty
+        | Some e -> p [] [textf "%A" e]
     ]
 
 type Test() =

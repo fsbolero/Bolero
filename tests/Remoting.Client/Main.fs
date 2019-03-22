@@ -21,7 +21,6 @@
 module Bolero.Tests.Remoting.Client
 
 open System.Collections.Generic
-open Microsoft.AspNetCore.Blazor.Components
 open Bolero
 open Bolero.Html
 open Bolero.Remoting
@@ -34,6 +33,10 @@ type MyApi =
         getItems : unit -> Async<Map<int, string>>
         setItem : (int * string) -> Async<unit>
         removeItem : int -> Async<unit>
+        login : string -> Async<unit>
+        logout : unit -> Async<unit>
+        getLogin : unit -> Async<string>
+        authDouble : int -> Async<int>
     }
 
     interface IRemoteService with
@@ -44,7 +47,11 @@ type Model =
         currentKey: int
         currentValue: string
         items : Map<int, string>
-        lastError : option<exn>
+        lastError : option<string>
+        loginInput : string
+        currentLogin : option<string>
+        authDoubleInput : int
+        authDoubleResult : string
     }
 
 let InitModel =
@@ -53,6 +60,10 @@ let InitModel =
         currentValue = ""
         items = Map.empty
         lastError = None
+        loginInput = ""
+        currentLogin = None
+        authDoubleInput = 0
+        authDoubleResult = ""
     }
 
 type Message =
@@ -62,7 +73,16 @@ type Message =
     | AddItem
     | RemoveItem of int
     | ItemsRefreshed of Map<int, string>
-    | Error of exn
+    | GetLogin
+    | SetLoginInput of string
+    | Login
+    | Logout
+    | LoggedIn of RemoteResponse<string>
+    | LoggedOut
+    | SetAuthDoubleInput of int
+    | SendAuthDouble
+    | RecvAuthDouble of int
+    | Exn of exn
 
 let Update (myApi: MyApi) msg model =
     match msg with
@@ -72,19 +92,41 @@ let Update (myApi: MyApi) msg model =
         { model with currentValue = v }, []
     | RefreshItems ->
         model,
-        Cmd.ofAsync myApi.getItems () ItemsRefreshed Error
+        Cmd.ofAsync myApi.getItems () ItemsRefreshed Exn
     | AddItem ->
         model,
         Cmd.ofAsync myApi.setItem (model.currentKey, model.currentValue)
-            (fun () -> RefreshItems) Error
+            (fun () -> RefreshItems) Exn
     | RemoveItem k ->
         model,
         Cmd.ofAsync myApi.removeItem k
-            (fun () -> RefreshItems) Error
+            (fun () -> RefreshItems) Exn
     | ItemsRefreshed items ->
         { model with items = items; lastError = None }, []
-    | Error exn ->
-        { model with lastError = Some exn }, []
+    | GetLogin ->
+        model, Cmd.ofRemote myApi.getLogin () LoggedIn Exn
+    | SetLoginInput s ->
+        { model with loginInput = s }, []
+    | Login ->
+        model, Cmd.ofAsync myApi.login model.loginInput (fun _ -> GetLogin) Exn
+    | Logout ->
+        model, Cmd.ofAsync myApi.logout () (fun () -> LoggedOut) Exn
+    | LoggedIn (Success s) ->
+        { model with currentLogin = Some s; lastError = None }, []
+    | LoggedIn Unauthorized ->
+        { model with currentLogin = None; lastError = Some "Failed to retrieve login: user not authenticated" }, []
+    | LoggedOut ->
+        { model with currentLogin = None; lastError = None }, []
+    | SetAuthDoubleInput i ->
+        { model with authDoubleInput = i }, []
+    | SendAuthDouble ->
+        model, Cmd.ofAsync myApi.authDouble model.authDoubleInput RecvAuthDouble Exn
+    | RecvAuthDouble v ->
+        { model with authDoubleResult = string v }, []
+    | Exn RemoteUnauthorizedException ->
+        { model with authDoubleResult = "Error: you must be logged in" }, []
+    | Exn exn ->
+        { model with lastError = Some (string exn) }, []
 
 type Tpl = Template<"main.html">
 type Form = Template<"subdir/form.html">
@@ -106,23 +148,49 @@ let Display model dispatch =
             .setValue(fun e -> dispatch (SetCurrentValue (e.Value :?> string)))
             .add(fun _ -> dispatch AddItem)
             .Elt()
-    Tpl()
-        .form(form)
-        .refresh(fun _ -> dispatch RefreshItems)
-        .items(concat [for item in model.items -> ecomp<Item, _, _> item dispatch])
-        .error(
-            match model.lastError with
-            | None -> empty
-            | Some exn -> text (string exn)
-        )
-        .Elt()
+    concat [
+        Tpl()
+            .form(form)
+            .refresh(fun _ -> dispatch RefreshItems)
+            .items(forEach model.items <| fun item -> ecomp<Item, _, _> item dispatch)
+            .error(
+                cond model.lastError <| function
+                | None -> empty
+                | Some exn -> text (string exn)
+            )
+            .Elt()
+        hr []
+        cond model.currentLogin <| function
+        | None ->
+            concat [
+                input [bind.change model.loginInput (dispatch << SetLoginInput)]
+                button [on.click (fun _ -> dispatch Login)] [text "Log in"]
+            ]
+        | Some login ->
+            concat [
+                textf "Logged in as %s" login
+                button [on.click (fun _ -> dispatch Logout)] [text "Log out"]
+            ]
+        hr []
+        text "2 * "
+        input [
+            attr.``type`` "number"
+            bind.changeInt model.authDoubleInput (dispatch << SetAuthDoubleInput)
+        ]
+        text " = "
+        button [on.click (fun _ -> dispatch SendAuthDouble)] [text "Send"]
+        text model.authDoubleResult
+    ]
 
 type MyApp() =
     inherit ProgramComponent<Model, Message>()
 
     override this.Program =
         let myApi = this.Remote<MyApi>()
-        Program.mkProgram (fun _ -> InitModel, Cmd.ofMsg RefreshItems) (Update myApi) Display
+        Program.mkProgram (fun _ -> InitModel, Cmd.batch [
+            Cmd.ofMsg RefreshItems
+            Cmd.ofMsg GetLogin
+        ]) (Update myApi) Display
         |> Program.withConsoleTrace
         |> Program.withHotReloading
 

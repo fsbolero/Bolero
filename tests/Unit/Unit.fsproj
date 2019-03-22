@@ -8,16 +8,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Utility.fs" />
-    <Compile Include="Web\App.Html.fs" />
-    <Compile Include="Web\App.Templating.fs" />
-    <Compile Include="Web\App.Elmish.fs" />
-    <Compile Include="Web\App.Routing.fs" />
-    <Compile Include="Web\App.Remoting.fs" />
-    <Compile Include="Web\App.fs" />
-    <Compile Include="Web\Startup.fs" />
-    <Compile Include="Web\Fixture.fs" />
-    <Content Include="Web\index.html" />
-    <Content Include="Web\testtemplate.html" />
+    <Compile Include="Startup.fs" />
+    <Compile Include="Fixture.fs" />
     <Compile Include="Tests\Json.fs" />
     <Compile Include="Tests\Html.fs" />
     <Compile Include="Tests\Templating.fs" />
@@ -30,6 +22,7 @@
     <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />
     <ProjectReference Include="..\..\src\Bolero.Templating\Bolero.Templating.fsproj" />
     <ProjectReference Include="..\..\src\Bolero.Server\Bolero.Server.fsproj" />
+    <ProjectReference Include="..\Unit.Client\Unit.Client.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

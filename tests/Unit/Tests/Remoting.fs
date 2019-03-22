@@ -43,3 +43,36 @@ module Remoting =
                 out.Text = v
             )
         ]
+
+    [<Test; NonParallelizable>]
+    let ``Authorized remote function succeeds when signed in`` () =
+        let username = elt.ByClass("signin-input")
+        username.Clear()
+        username.SendKeys("someone")
+        elt.ByClass("signin-button").Click()
+        elt.AssertAreEqualEventually("someone", fun () -> elt.ByClass("is-signedin").Text)
+
+    [<Test; NonParallelizable>]
+    let ``Authorized remote function fails when signed out`` () =
+        elt.ByClass("signout-button").Click()
+        elt.AssertAreEqualEventually("<not logged in>", fun () -> elt.ByClass("is-signedin").Text)
+
+    [<Test; NonParallelizable>]
+    let ``Authorized remote function fails if role is missing`` () =
+        let username = elt.ByClass("signin-input")
+        username.Clear()
+        username.SendKeys("someone")
+        elt.ByClass("signin-button").Click()
+        elt.AssertAreEqualEventually("someone", fun () -> elt.ByClass("is-signedin").Text)
+        elt.ByClass("get-admin").Click()
+        elt.AssertAreEqualEventually("<not admin>", fun () -> elt.ByClass("is-admin").Text)
+
+    [<Test; NonParallelizable>]
+    let ``Authorized remote function succeeds if role is present`` () =
+        let username = elt.ByClass("signin-input")
+        username.Clear()
+        username.SendKeys("admin")
+        elt.ByClass("signin-button").Click()
+        elt.AssertAreEqualEventually("admin", fun () -> elt.ByClass("is-signedin").Text)
+        elt.ByClass("get-admin").Click()
+        elt.AssertAreEqualEventually("admin ok", fun () -> elt.ByClass("is-admin").Text)
