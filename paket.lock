@@ -350,7 +350,7 @@ NUGET
       Microsoft.AspNetCore.Http (>= 2.1.1)
       Microsoft.AspNetCore.Http.Extensions (>= 2.1.1)
       Microsoft.Extensions.Options (>= 2.1.1)
-    Microsoft.AspNetCore.Hosting (2.1.1) - restriction: || (== netcoreapp2.1) (&& (== netstandard2.0) (>= netcoreapp2.1))
+    Microsoft.AspNetCore.Hosting (2.1.1)
       Microsoft.AspNetCore.Hosting.Abstractions (>= 2.1.1)
       Microsoft.AspNetCore.Http (>= 2.1.1)
       Microsoft.AspNetCore.Http.Extensions (>= 2.1.1)
@@ -1285,7 +1285,7 @@ NUGET
       System.Threading.Tasks (>= 4.3)
     System.IO.FileSystem.Primitives (4.3)
       System.Runtime (>= 4.3)
-    System.IO.Pipelines (4.5.3) - restriction: || (== netcoreapp2.1) (&& (== netstandard2.0) (>= netcoreapp2.1))
+    System.IO.Pipelines (4.5.3)
     System.Linq (4.3)
       System.Collections (>= 4.3)
       System.Diagnostics.Debug (>= 4.3)
@@ -1711,8 +1711,8 @@ NUGET
       System.Xml.XPath (>= 4.3)
 GITHUB
   remote: fsprojects/FSharp.TypeProviders.SDK
-    src/ProvidedTypes.fs (18459e8b23b44b389dc8f2b8fe444fedf2b47a8c)
-    src/ProvidedTypes.fsi (18459e8b23b44b389dc8f2b8fe444fedf2b47a8c)
+    src/ProvidedTypes.fs (8cc9f9f8ca9b934e1f9d37743bc792dccc91675c)
+    src/ProvidedTypes.fsi (8cc9f9f8ca9b934e1f9d37743bc792dccc91675c)
 GROUP fake
 STORAGE: NONE
 RESTRICTION: == netstandard2.0

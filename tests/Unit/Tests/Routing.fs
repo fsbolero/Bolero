@@ -4,6 +4,7 @@ open System.Threading
 open FSharp.Reflection
 open NUnit.Framework
 open OpenQA.Selenium
+open Bolero.Tests
 
 /// Blazor router integration.
 [<Category "Routing">]
@@ -18,9 +19,9 @@ module Routing =
         elt.Init("test-fixture-routing")
 
     let links =
-        App.Routing.links
+        Client.Routing.links
         |> List.map (fun (url, page) ->
-            let cls = App.Routing.pageClass page
+            let cls = Client.Routing.pageClass page
             TestCaseData(cls, url, page).SetArgDisplayNames(
                 (string page)
                     // Replace parentheses with unicode ones for nicer display in VS test explorer
@@ -28,9 +29,9 @@ module Routing =
                     .Replace(")", "❩")))
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
-    let ``Click link``(linkCls: string, url: string, page: App.Routing.Page) =
+    let ``Click link``(linkCls: string, url: string, page: Client.Routing.Page) =
         elt.ByClass("link-" + linkCls).Click()
-        let resCls = App.Routing.pageClass page
+        let resCls = Client.Routing.pageClass page
         let res =
             try Some <| elt.Wait(fun () -> elt.ByClass(resCls))
             with :? WebDriverTimeoutException -> None
@@ -38,10 +39,10 @@ module Routing =
         Assert.AreEqual(WebFixture.Url + url, WebFixture.Driver.Url)
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
-    let ``Set by model``(linkCls: string, url: string, page: App.Routing.Page) =
+    let ``Set by model``(linkCls: string, url: string, page: Client.Routing.Page) =
         Thread.Sleep(500) // Some cases fail without this, mainly ones with empty strings. TODO: investigate
         elt.ByClass("btn-" + linkCls).Click()
-        let resCls = App.Routing.pageClass page
+        let resCls = Client.Routing.pageClass page
         let res =
             try Some <| elt.Wait(fun () -> elt.ByClass(resCls))
             with :? WebDriverTimeoutException -> None

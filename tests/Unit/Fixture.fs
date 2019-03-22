@@ -69,7 +69,7 @@ type WebFixture() =
             let! _ = Async.Parallel [
                 startChrome()
                 async {
-                    server <- WebHost.CreateDefaultBuilder()
+                    server <- WebHost.CreateDefaultBuilder([||])
                         .UseStartup<Startup>()
                         .UseUrls(url)
                         .Build()

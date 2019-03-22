@@ -18,21 +18,27 @@
 //
 // $end{copyright}
 
-// Web application to run and test with Selenium.
-namespace Bolero.Tests.Web.App
+// ASP.NET Core and Blazor startup for web tests.
+namespace Bolero.Tests.Client
 
-open Bolero
-open Bolero.Html
+open Microsoft.Extensions.DependencyInjection
+open Microsoft.AspNetCore.Blazor.Builder
+open Microsoft.AspNetCore.Blazor.Hosting
 
-type Tests() =
-    inherit Component()
+type Startup() =
 
-    override this.Render() =
-        div [attr.id "test-fixture"] [
-            Html.Tests()
-            Elmish.Tests()
-            Routing.Tests()
-            Remoting.Tests()
-            Templating.Tests()
-            // insert tests here
-        ]
+    member this.ConfigureServices(services: IServiceCollection) =
+        Bolero.Remoting.Client.ClientRemotingExtensions.AddRemoting(services)
+        |> ignore
+
+    member this.Configure(app: IBlazorApplicationBuilder) =
+        app.AddComponent<Tests>("#app")
+
+module Program =
+    [<EntryPoint>]
+    let Main args =
+        BlazorWebAssemblyHost.CreateDefaultBuilder()
+            .UseBlazorStartup<Startup>()
+            .Build()
+            .Run()
+        0

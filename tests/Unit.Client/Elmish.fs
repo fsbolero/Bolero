@@ -18,7 +18,7 @@
 //
 // $end{copyright}
 
-module Bolero.Tests.Web.App.Elmish
+module Bolero.Tests.Client.Elmish
 
 open Bolero
 open Bolero.Html

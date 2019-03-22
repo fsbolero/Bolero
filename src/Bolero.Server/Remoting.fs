@@ -87,16 +87,28 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
         let decoder = Json.GetDecoder method.ArgumentType
         let encoder = Json.GetEncoder method.ReturnType
         let meth = ty.GetProperty(method.Name).GetGetMethod().Invoke(handler, [||])
-        let tAuthPolicy =
+        let rec getAuthPolicy (meth: obj) =
             match meth with
             | :? Remote.IWithAuthorization as m ->
                 if isNull authPolicyProvider then
-                    failwithf "Remote method %s.%s is configured for authorization, but the application has no authorization policy."
+                    failwithf "Remote method %s.%s is configured for authorization, \
+                        but the application has no authorization policy. \
+                        Add .AddAuthorization() to your server-side services."
                         ty.FullName method.Name
                 else
                     AuthorizationPolicy.CombineAsync(authPolicyProvider, m.AuthorizeData)
-                    |> ValueSome
-            | _ -> ValueNone
+                    |> Some
+            | _ ->
+                // For some reason the WithAuthorization returned by Remote.authorizeWith
+                // is wrapped in a closure, so we need to retrieve it.
+                let fields = meth.GetType().GetFields()
+                fields |> Array.tryPick (fun field ->
+                    if field.Name.StartsWith("clo") then
+                        getAuthPolicy <| field.GetValue(meth)
+                    else
+                        None
+                )
+        let tAuthPolicy = getAuthPolicy meth
         let callMeth = method.FunctionType.GetMethod("Invoke", instanceFlags)
         let output = typeof<RemotingService>.GetMethod("Output", staticFlags)
         let output = output.MakeGenericMethod(method.ReturnType)
@@ -109,8 +121,8 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
                 let res = callMeth.Invoke(meth, [|arg|])
                 output.Invoke(null, [|ctx; encoder; res|]) :?> Task
             match tAuthPolicy with
-            | ValueNone -> run()
-            | ValueSome tAuthPolicy ->
+            | None -> run()
+            | Some tAuthPolicy ->
                 tAuthPolicy
                     .ContinueWith(fun (tAuthPolicy: Task<AuthorizationPolicy>) ->
                         auth.AuthorizeAsync(ctx.User, tAuthPolicy.Result)
@@ -219,7 +231,7 @@ type ServerRemotingExtensions =
             |> Array.ofSeq
         let auth = this.ApplicationServices.GetService<IAuthorizationService>()
         this.Use(fun ctx next ->
-            handlers
-            |> Array.tryPick (fun h -> h.TryHandle(ctx, auth))
-            |> Option.defaultWith next.Invoke
+            match handlers |> Array.tryPick (fun h -> h.TryHandle(ctx, auth)) with
+            | Some t -> t
+            | None -> next.Invoke()
         )
