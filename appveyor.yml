@@ -1,4 +1,3 @@
-version: 0.4.{build}
 image:
 - Visual Studio 2017
 # - Ubuntu
@@ -12,6 +11,12 @@ branches:
 
 init:
 - git config --global core.autocrlf input
+
+before_build:
+- ps: |
+    dotnet tool install -g nbgv
+    $semver = cmd /c $HOME\.dotnet\tools\nbgv get-version -v SemVer2
+    Update-AppveyorBuild -Version "$semver APPVEYOR_BUILD_NUMBER"
 
 build_script:
 - sh: BUILD_SCRIPT=./build.sh   # Use build.cmd on Windows, build.sh on Linux
