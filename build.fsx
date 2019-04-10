@@ -32,6 +32,7 @@ open Fake.IO.FileSystemOperators
 open Utility
 
 let config = getArg "-c" "Debug"
+let version = getArg "-v" "0.1.0"
 let testUploadUrl = getArgOpt "--push-tests"
 let verbosity = getFlag "--verbose" >> function
     | true -> "n"
@@ -119,6 +120,7 @@ Target.create "pack" (fun o ->
     Fake.DotNet.Paket.pack (fun p ->
         { p with
             OutputPath = "build"
+            Version = version o
             ToolPath = ".paket/paket"
         }
     )

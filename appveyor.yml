@@ -17,13 +17,13 @@ init:
 before_build:
 - ps: |
     dotnet tool install -g nbgv
-    $semver = cmd /c $HOME\.dotnet\tools\nbgv get-version -v SemVer2
-    Update-AppveyorBuild -Version "$semver ($env:APPVEYOR_BUILD_ID)"
+    $env:SEMVER = cmd /c $HOME\.dotnet\tools\nbgv get-version -v SemVer2
+    Update-AppveyorBuild -Version "$env:SEMVER ($env:APPVEYOR_BUILD_ID)"
 
 build_script:
 - sh: BUILD_SCRIPT=./build.sh   # Use build.cmd on Windows, build.sh on Linux
 - ps: $env:NUGET_PACKAGES = "$env:APPVEYOR_BUILD_FOLDER\.nuget"
-- ps: '& $env:BUILD_SCRIPT -t pack -c Release /p:GhPages=true'
+- ps: '& $env:BUILD_SCRIPT -t pack -c Release -v "$env:SEMVER" /p:GhPages=true'
 
 test_script:
 - ps: '& $env:BUILD_SCRIPT -s -t test -c Release --push-tests "https://ci.appveyor.com/api/testresults/mstest/$env:APPVEYOR_JOB_ID"'
