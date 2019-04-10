@@ -32,7 +32,6 @@ open Fake.IO.FileSystemOperators
 open Utility
 
 let config = getArg "-c" "Debug"
-let version = getArg "-v" "0.1.0"
 let testUploadUrl = getArgOpt "--push-tests"
 let verbosity = getFlag "--verbose" >> function
     | true -> "n"
@@ -110,24 +109,6 @@ Target.create "tags" (fun _ ->
     )
 )
 
-Target.description "Generate AssemblyInfo.fs and .cs"
-Target.create "assemblyinfo" (fun o ->
-    let fullVersion = version o
-    let baseVersion =
-        let v = System.Version(fullVersion)
-        sprintf "%i.%i.0.0" v.Major v.Minor
-    let attributes =
-        [
-            AssemblyInfo.Company "IntelliFactory"
-            AssemblyInfo.FileVersion fullVersion
-            AssemblyInfo.Version baseVersion
-        ]
-    unchangedIfIdentical (slnDir </> "build" </> "AssemblyInfo.fs") <| fun f ->
-        AssemblyInfoFile.createFSharp f attributes
-    unchangedIfIdentical (slnDir </> "build" </> "AssemblyInfo.cs") <| fun f ->
-        AssemblyInfoFile.createCSharp f attributes
-)
-
 Target.description "Run a full compilation"
 Target.create "build" (fun _ ->
     dotnet "build-server" "shutdown" // Using this to avoid locking of the output dlls
@@ -138,7 +119,6 @@ Target.create "pack" (fun o ->
     Fake.DotNet.Paket.pack (fun p ->
         { p with
             OutputPath = "build"
-            Version = version o
             ToolPath = ".paket/paket"
         }
     )
@@ -178,8 +158,7 @@ Target.create "test-debug" (fun o ->
     dotnet' "tests/Unit" ["VSTEST_HOST_DEBUG", "1"] "test" "%s" (buildArgs o)
 )
 
-"assemblyinfo"
-    ==> "corebuild"
+"corebuild"
     ==> "build"
     ==> "pack"
 
@@ -187,9 +166,7 @@ Target.create "test-debug" (fun o ->
 "build" ==> "run-server"
 "build" ==> "run-remoting"
 
-"assemblyinfo" ==> "test"
 "build" ?=> "test"
-"assemblyinfo" ==> "test-debug"
 "build" ?=> "test-debug"
 
 Target.runOrDefaultWithArguments "build"

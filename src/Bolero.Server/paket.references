@@ -4,3 +4,4 @@ Microsoft.Extensions.DependencyInjection.Abstractions
 Microsoft.AspNetCore.Hosting.Abstractions
 Microsoft.AspNetCore.Authorization
 Microsoft.AspNetCore.Authentication
+Nerdbank.GitVersioning

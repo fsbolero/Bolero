@@ -7,7 +7,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\build\AssemblyInfo.fs" />
     <Compile Include="Path.fs" />
     <Compile Include="Parsing.fs" />
     <Compile Include="Settings.fs" />

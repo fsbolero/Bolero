@@ -7,7 +7,6 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\build\AssemblyInfo.fs" />
     <Compile Include="HttpContext.fs" />
     <Compile Include="Remoting.fs" />
     <None Include="paket.references" />

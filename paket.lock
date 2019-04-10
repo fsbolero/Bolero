@@ -984,6 +984,7 @@ NUGET
       System.Threading (>= 4.0.11)
     Mono.WebAssembly.Interop (0.7)
       Microsoft.JSInterop (>= 0.7)
+    Nerdbank.GitVersioning (2.3.138) - copy_local: true
     NETStandard.Library (2.0.3)
       Microsoft.NETCore.Platforms (>= 1.1)
     Newtonsoft.Json (12.0.1)
@@ -1590,12 +1591,12 @@ NUGET
       System.Text.Encoding (>= 4.3)
     System.Text.Encodings.Web (4.5) - restriction: || (== netcoreapp2.1) (&& (== netstandard2.0) (>= netcoreapp2.1))
     System.Text.RegularExpressions (4.3)
-      System.Collections (>= 4.3) - restriction: || (&& (== netcoreapp2.1) (>= dnxcore50)) (&& (== netcoreapp2.1) (< netcoreapp1.1)) (== netstandard2.0)
-      System.Globalization (>= 4.3) - restriction: || (&& (== netcoreapp2.1) (>= dnxcore50)) (&& (== netcoreapp2.1) (< netcoreapp1.1)) (== netstandard2.0)
-      System.Resources.ResourceManager (>= 4.3) - restriction: || (&& (== netcoreapp2.1) (>= dnxcore50)) (&& (== netcoreapp2.1) (< netcoreapp1.1)) (== netstandard2.0)
+      System.Collections (>= 4.3) - restriction: || (&& (== netcoreapp2.1) (< netcoreapp1.1)) (&& (== netcoreapp2.1) (< portable-net45+win8+wp8+wpa81)) (== netstandard2.0)
+      System.Globalization (>= 4.3) - restriction: || (&& (== netcoreapp2.1) (< netcoreapp1.1)) (&& (== netcoreapp2.1) (< portable-net45+win8+wp8+wpa81)) (== netstandard2.0)
+      System.Resources.ResourceManager (>= 4.3) - restriction: || (&& (== netcoreapp2.1) (< netcoreapp1.1)) (&& (== netcoreapp2.1) (< portable-net45+win8+wp8+wpa81)) (== netstandard2.0)
       System.Runtime (>= 4.3)
-      System.Runtime.Extensions (>= 4.3) - restriction: || (&& (== netcoreapp2.1) (>= dnxcore50)) (&& (== netcoreapp2.1) (< netcoreapp1.1)) (== netstandard2.0)
-      System.Threading (>= 4.3) - restriction: || (&& (== netcoreapp2.1) (>= dnxcore50)) (&& (== netcoreapp2.1) (< netcoreapp1.1)) (== netstandard2.0)
+      System.Runtime.Extensions (>= 4.3) - restriction: || (&& (== netcoreapp2.1) (< netcoreapp1.1)) (&& (== netcoreapp2.1) (< portable-net45+win8+wp8+wpa81)) (== netstandard2.0)
+      System.Threading (>= 4.3) - restriction: || (&& (== netcoreapp2.1) (< netcoreapp1.1)) (&& (== netcoreapp2.1) (< portable-net45+win8+wp8+wpa81)) (== netstandard2.0)
     System.Threading (4.3)
       System.Runtime (>= 4.3)
       System.Threading.Tasks (>= 4.3)
@@ -1711,8 +1712,8 @@ NUGET
       System.Xml.XPath (>= 4.3)
 GITHUB
   remote: fsprojects/FSharp.TypeProviders.SDK
-    src/ProvidedTypes.fs (8cc9f9f8ca9b934e1f9d37743bc792dccc91675c)
-    src/ProvidedTypes.fsi (8cc9f9f8ca9b934e1f9d37743bc792dccc91675c)
+    src/ProvidedTypes.fs (70c52847d873284cfe393a23a927126ee7fa2859)
+    src/ProvidedTypes.fsi (70c52847d873284cfe393a23a927126ee7fa2859)
 GROUP fake
 STORAGE: NONE
 RESTRICTION: == netstandard2.0

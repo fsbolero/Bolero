@@ -1,4 +1,4 @@
-version: "$APPVEYOR_BUILD_ID"
+version: build {build}
 
 image:
 - Visual Studio 2017
@@ -23,7 +23,7 @@ before_build:
 build_script:
 - sh: BUILD_SCRIPT=./build.sh   # Use build.cmd on Windows, build.sh on Linux
 - ps: $env:NUGET_PACKAGES = "$env:APPVEYOR_BUILD_FOLDER\.nuget"
-- ps: '& $env:BUILD_SCRIPT -t pack -c Release -v "$env:APPVEYOR_BUILD_VERSION" /p:GhPages=true'
+- ps: '& $env:BUILD_SCRIPT -t pack -c Release /p:GhPages=true'
 
 test_script:
 - ps: '& $env:BUILD_SCRIPT -s -t test -c Release --push-tests "https://ci.appveyor.com/api/testresults/mstest/$env:APPVEYOR_JOB_ID"'
