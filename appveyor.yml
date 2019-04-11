@@ -33,21 +33,17 @@ environment:
   GH_TOKEN:
     secure: dhFy1eZoqG4QPkKTuLFxix7QQMxaIyIpYjkvTU3CukYZz1CEOJeHfBSaT8tkPsGL
 
-nuget:
-  disable_publish_on_pr: true
+# all builds on the AppVeyor NuGet feed
+artifacts:
+  - path: build\*.nupkg
+    name: nuget
 
 for:
 
-# Publish to NuGet and github.io only from Windows on master
+# Publish pages to github.io only from master
 - branches:
     only:
     - master
-  # matrix:
-  #   only:
-  #   - image: Visual Studio 2017
-  artifacts:
-  - path: build\*.nupkg
-    name: nuget
   on_success:
   - ps: .\tools\gh-pages.ps1 -env appveyor
 
