@@ -4,7 +4,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <BaseOutputPath>..\..\build</BaseOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Templating.fs" />

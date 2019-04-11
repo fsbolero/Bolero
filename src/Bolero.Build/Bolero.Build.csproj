@@ -4,7 +4,6 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <BaseOutputPath>..\..\build\task</BaseOutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
