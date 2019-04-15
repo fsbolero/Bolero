@@ -1,5 +1,6 @@
 <Project>
   <PropertyGroup>
+    <Company>IntelliFactory</Company>
     <!-- UseSharedCompilation=true causes problems with locked Bolero.Build.dll -->
     <UseSharedCompilation>false</UseSharedCompilation>
   </PropertyGroup>

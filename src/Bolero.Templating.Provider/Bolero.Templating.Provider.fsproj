@@ -4,10 +4,8 @@
     <OutputPath>..\..\build\$(Configuration)\typeproviders\fsharp41</OutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <DefineConstants>IS_DESIGNTIME</DefineConstants>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\build\AssemblyInfo.fs" />
     <Compile Include="../../paket-files/fsprojects/FSharp.TypeProviders.SDK/src/ProvidedTypes.fsi"
              Link="ProvidedTypes.fsi" />
     <Compile Include="../../paket-files/fsprojects/FSharp.TypeProviders.SDK/src/ProvidedTypes.fs"

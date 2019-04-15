@@ -4,3 +4,4 @@ FSharp.Core
 Microsoft.AspNetCore.Blazor.Browser
 Elmish
 Microsoft.AspNetCore.Authorization
+Nerdbank.GitVersioning

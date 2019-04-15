@@ -3,11 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <BaseOutputPath>..\..\build</BaseOutputPath>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\..\build\AssemblyInfo.fs" />
     <Compile Include="Path.fs" />
     <Compile Include="Parsing.fs" />
     <Compile Include="Settings.fs" />
