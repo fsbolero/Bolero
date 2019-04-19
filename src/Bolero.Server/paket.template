@@ -11,4 +11,4 @@ files
     ../../build/Release/netstandard2.0/Bolero.Server.xml ==> lib/netstandard2.0
 dependencies
     Bolero.HotReload CURRENTVERSION
-    Microsoft.AspNetCore.SignalR >= LOCKED:Minor
+    Microsoft.AspNetCore.SignalR >= 1.0.0
