@@ -12,10 +12,13 @@
     <Compile Include="Remoting.fs" />
     <Compile Include="App.fs" />
     <Compile Include="Startup.fs" />
-    <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="0.7.0" PrivateAssets="all" />
+    <PackageReference Update="FSharp.Core" Version="4.5.2" />
+    <PackageReference Include="Elmish" Version="2.0" />
+  </ItemGroup>
 </Project>

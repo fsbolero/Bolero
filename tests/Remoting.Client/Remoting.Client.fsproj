@@ -10,8 +10,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.fs" />
-    <None Include="paket.references" />
   </ItemGroup>
   <Import Project="..\..\src\Bolero.Build\Bolero.Build.targets" />
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <DotNetCliToolReference Include="Microsoft.AspNetCore.Blazor.Cli" Version="0.7.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="0.7.0" PrivateAssets="all" />
+    <PackageReference Update="FSharp.Core" Version="4.5.2" />
+    <PackageReference Include="Elmish" Version="2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="2.1.0" />
+  </ItemGroup>
 </Project>
