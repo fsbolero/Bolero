@@ -12,6 +12,7 @@ branches:
   - gh-pages
 
 init:
+- cmd: choco install dotnetcore-sdk --pre
 - git config --global core.autocrlf input
 
 before_build:
