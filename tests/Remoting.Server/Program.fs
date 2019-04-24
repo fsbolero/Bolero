@@ -76,14 +76,18 @@ type Startup() =
                 .AddCookie()
                 .Services
             .AddRemoting<MyApiHandler>()
+#if BLAZOR_0_7
             .AddHotReload(templateDir = "../Remoting.Client")
-            .AddServerSideBlazor<Client.Startup>()
+#endif
+            .AddServerSideBlazor()
         |> ignore
 
     member this.Configure(app: IApplicationBuilder, env: IHostingEnvironment) =
         app.UseAuthentication()
             .UseRemoting()
+#if BLAZOR_0_7
             .UseHotReload()
+#endif
             .UseBlazor<Client.Startup>()
         |> ignore
 

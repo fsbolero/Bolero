@@ -19,6 +19,7 @@
 // $end{copyright}
 namespace Bolero.Templating.Server
 
+#if BLAZOR_0_7
 open System
 open System.IO
 open System.Threading.Tasks
@@ -164,3 +165,4 @@ type ServerTemplatingExtensions =
         this.UseSignalR(fun route ->
             route.MapHub<HotReloadHub>(PathString urlPath)
         )
+#endif

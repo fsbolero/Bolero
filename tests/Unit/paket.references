@@ -5,10 +5,7 @@ FSharp.Core
 FsCheck.NUnit
 Selenium.WebDriver
 Selenium.WebDriver.ChromeDriver
-Microsoft.AspNetCore
 Microsoft.AspNetCore.Blazor.Server
 Microsoft.AspNetCore.Blazor.Build
-Microsoft.AspNetCore.Authentication
-Microsoft.AspNetCore.Authentication.Cookies
 Selenium.Support
 # Selenium.WebDriver.GeckoDriver.Win64

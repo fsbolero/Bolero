@@ -1,7 +1,6 @@
 Microsoft.JSInterop
 Mono.WebAssembly.Interop
 FSharp.Core
-Microsoft.AspNetCore.Blazor.Browser
+Microsoft.AspNetCore.Blazor
 Elmish
-Microsoft.AspNetCore.Authorization
 Nerdbank.GitVersioning

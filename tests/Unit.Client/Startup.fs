@@ -22,7 +22,7 @@
 namespace Bolero.Tests.Client
 
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.AspNetCore.Blazor.Builder
+open Microsoft.AspNetCore.Components.Builder
 open Microsoft.AspNetCore.Blazor.Hosting
 
 type Startup() =
@@ -31,7 +31,7 @@ type Startup() =
         Bolero.Remoting.Client.ClientRemotingExtensions.AddRemoting(services)
         |> ignore
 
-    member this.Configure(app: IBlazorApplicationBuilder) =
+    member this.Configure(app: IComponentsApplicationBuilder) =
         app.AddComponent<Tests>("#app")
 
 module Program =

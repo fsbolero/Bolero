@@ -20,6 +20,7 @@
 
 namespace Bolero.Templating
 
+#if BLAZOR_0_7
 type HotReloadSettings =
     {
         Url: string
@@ -33,3 +34,4 @@ type HotReloadSettings =
             ReconnectDelayInMs = 5000
             LogLevel = Blazor.Extensions.SignalRLogLevel.Information
         }
+#endif

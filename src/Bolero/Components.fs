@@ -22,17 +22,15 @@ namespace Bolero
 
 open System
 open System.Collections.Generic
-open Microsoft.AspNetCore.Blazor
-open Microsoft.AspNetCore.Blazor.Components
-open Microsoft.AspNetCore.Blazor.Services
-open Microsoft.Extensions.DependencyInjection
+open Microsoft.AspNetCore.Components
+open Microsoft.JSInterop
 open Elmish
 open Bolero.Render
 
 /// A component built from `Html.Node`s.
 [<AbstractClass>]
 type Component() =
-    inherit BlazorComponent()
+    inherit ComponentBase()
 
     let matchCache = Dictionary()
 
@@ -90,6 +88,8 @@ type ProgramComponent<'model, 'msg>() =
     member val UriHelper = Unchecked.defaultof<IUriHelper> with get, set
     [<Inject>]
     member val Services = Unchecked.defaultof<System.IServiceProvider> with get, set
+    [<Inject>]
+    member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
     member val private View = Empty with get, set
     member val private Dispatch = ignore with get, set
     member val private BaseUri = "/" with get, set
@@ -115,10 +115,13 @@ type ProgramComponent<'model, 'msg>() =
         if not <| obj.ReferenceEquals(model, oldModel) then
             this.ForceSetState(program, model, dispatch)
 
+    member internal this.StateHasChanged() =
+        base.StateHasChanged()
+
     member private this.ForceSetState(program, model, dispatch) =
         this.View <- program.view model dispatch
         oldModel <- model
-        this.StateHasChanged()
+        this.Invoke(fun () -> this.StateHasChanged()) |> ignore
         this.Router |> Option.iter (fun router ->
             let newUri = router.GetRoute model
             let oldUri = this.GetCurrentUri()

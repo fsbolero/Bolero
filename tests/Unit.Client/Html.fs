@@ -22,9 +22,8 @@ module Bolero.Tests.Client.Html
 
 open Bolero
 open Bolero.Html
-open Microsoft.AspNetCore.Blazor
-open Microsoft.AspNetCore.Blazor.Routing
-open Microsoft.AspNetCore.Blazor.Components
+open Microsoft.AspNetCore.Components
+open Microsoft.AspNetCore.Components.Routing
 open Microsoft.JSInterop
 
 type SomeUnion =
@@ -124,13 +123,16 @@ type BindElementRef() =
     let mutable elt1 = Unchecked.defaultof<ElementRef>
     let elt2 = ElementRefBinder()
 
+    [<Inject>]
+    member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
+
     override this.Render() =
         concat [
             button [
                 attr.``class`` "element-ref"
                 attr.ref (fun r -> elt1 <- r)
                 on.click (fun _ ->
-                    JSRuntime.Current.InvokeAsync("setContent", elt1, "ElementRef 1 is bound")
+                    this.JSRuntime.InvokeAsync("setContent", elt1, "ElementRef 1 is bound")
                     |> ignore
                 )
             ] [text "Click me"]
@@ -138,7 +140,7 @@ type BindElementRef() =
                 attr.``class`` "element-ref-binder"
                 attr.bindRef elt2
                 on.click (fun _ ->
-                    JSRuntime.Current.InvokeAsync("setContent", elt2.Ref, "ElementRef 2 is bound")
+                    this.JSRuntime.InvokeAsync("setContent", elt2.Ref, "ElementRef 2 is bound")
                     |> ignore
                 )
             ] [text "Click me"]

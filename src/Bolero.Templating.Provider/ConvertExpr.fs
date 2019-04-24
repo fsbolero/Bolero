@@ -24,7 +24,7 @@ module Bolero.Templating.ConvertExpr
 
 open System
 open FSharp.Quotations
-open Microsoft.AspNetCore.Blazor
+open Microsoft.AspNetCore.Components
 open ProviderImplementation.ProvidedTypes
 open Bolero
 

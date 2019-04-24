@@ -21,7 +21,7 @@
 module rec Bolero.Html
 
 open System
-open Microsoft.AspNetCore.Blazor
+open Microsoft.AspNetCore.Components
 
 /// Create an HTML text node.
 let text str = Text str
@@ -54,7 +54,7 @@ let forEach<'T> (items: seq<'T>) (mkNode: 'T -> Node) =
     Node.ForEach [for n in items -> mkNode n]
 
 /// Create a fragment from a Blazor component.
-let comp<'T when 'T :> Components.IComponent> attrs children =
+let comp<'T when 'T :> IComponent> attrs children =
     Node.BlazorComponent<'T>(attrs, children)
 
 /// Create a fragment from an Elmish component.
@@ -968,7 +968,6 @@ module attr =
 // END ATTRS
 
 module on =
-    open Microsoft.AspNetCore.Blazor.Components
 
     let event<'T when 'T :> UIEventArgs> event (callback: 'T -> unit) =
         "on" + event => BindMethods.GetEventHandlerValue callback
@@ -1342,7 +1341,6 @@ module on =
 
 /// Two-way binding for HTML input elements.
 module bind =
-    open Microsoft.AspNetCore.Blazor.Components
 
     let private attr<'T, 'U> (valueName: string) (eventName: string) (value: 'T) (callback: 'U -> unit) =
         Attrs [

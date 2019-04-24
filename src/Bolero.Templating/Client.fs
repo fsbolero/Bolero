@@ -20,12 +20,13 @@
 
 namespace Bolero.Templating.Client
 
+#if BLAZOR_0_7
 open System
 open System.Collections.Concurrent
 open System.Threading.Tasks
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.JSInterop
-open Microsoft.AspNetCore.Blazor.Services
+open Microsoft.AspNetCore.Components
 open Blazor.Extensions
 open Bolero
 open Bolero.Templating
@@ -124,7 +125,7 @@ type SignalRClient(settings: HotReloadSettings) as this =
 module Program =
 
     let private registerClient (comp: ProgramComponent<_, _>) =
-        match JSRuntime.Current with
+        match comp.JSRuntime with
         | :? IJSInProcessRuntime ->
             let settings =
                 let s = comp.Services.GetService<HotReloadSettings>()
@@ -149,3 +150,4 @@ module Program =
                     | client -> client
                 client.SetOnChange(comp.Rerender)
                 program.init comp }
+#endif

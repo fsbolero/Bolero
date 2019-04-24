@@ -22,8 +22,7 @@ namespace Bolero
 
 open System
 #if !IS_DESIGNTIME
-open Microsoft.AspNetCore.Blazor
-open Microsoft.AspNetCore.Blazor.Components
+open Microsoft.AspNetCore.Components
 #endif
 
 /// HTML attribute or Blazor component parameter.

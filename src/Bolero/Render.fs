@@ -25,14 +25,14 @@ open System.Collections.Generic
 open FSharp.Reflection
 
 #if !DEBUG_RENDERER
-open Microsoft.AspNetCore.Blazor
-open Microsoft.AspNetCore.Blazor.RenderTree
+open Microsoft.AspNetCore.Components
+open Microsoft.AspNetCore.Components.RenderTree
 #else
 open System.IO
 
-type BlazorTreeBuilder = Microsoft.AspNetCore.Blazor.RenderTree.RenderTreeBuilder
-type BlazorFragment = Microsoft.AspNetCore.Blazor.RenderFragment
-type ElementRef = Microsoft.AspNetCore.Blazor.ElementRef
+type BlazorTreeBuilder = Microsoft.AspNetCore.Components.RenderTree.RenderTreeBuilder
+type BlazorFragment = Microsoft.AspNetCore.Components.RenderFragment
+type ElementRef = Microsoft.AspNetCore.Components.ElementRef
 
 type RenderTreeBuilder(b: BlazorTreeBuilder, indent: int, out: TextWriter) =
     let mutable indent = indent

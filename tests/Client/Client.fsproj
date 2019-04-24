@@ -3,8 +3,6 @@
   <Import Project="..\..\tools\Common.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <RunCommand>dotnet</RunCommand>
-    <RunArguments>blazor serve</RunArguments>
     <DefineConstants Condition="'$(GhPages)' != ''">$(DefineConstants);GHPAGES</DefineConstants>
     <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\build\task\$(Configuration)\netstandard2.0\Bolero.Build.dll</BoleroTaskAssemblyPath>
   </PropertyGroup>

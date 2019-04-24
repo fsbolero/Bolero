@@ -2,5 +2,4 @@ FSharp.Core
 HtmlAgilityPack
 Microsoft.AspNetCore.Blazor
 Microsoft.AspNetCore.Blazor.Build
-Blazor.Extensions.SignalR
 Nerdbank.GitVersioning

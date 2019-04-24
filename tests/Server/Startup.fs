@@ -20,6 +20,7 @@
 
 namespace Bolero.Test.Server
 
+open System.Text.Encodings.Web
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
@@ -29,17 +30,20 @@ open Bolero.Test
 type Startup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
-        services.AddServerSideBlazor<Client.Startup>()
+        services
+            .AddSingleton<HtmlEncoder>(HtmlEncoder.Default)
+            .AddServerSideBlazor()
         |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
+
         app
-            // UseServerSideBlazor will try to serve Client's index.html, which points to blazor.webassembly.js.
-            // This overrides it with Server's index.html.
-            .UseDefaultFiles()
             .UseStaticFiles()
-            // Then we can let ServerSideBlazor do its thing.
-            .UseServerSideBlazor<Client.Startup>()
+            .UseRouting()
+            .UseEndpoints(fun endpoints ->
+                endpoints.MapBlazorHub<Client.Main.MyApp>("#main") |> ignore
+                endpoints.MapFallbackToFile("index.html") |> ignore
+            )
         |> ignore
 
 module Program =
