@@ -10,6 +10,7 @@ build:
 branches:
   except:
   - gh-pages
+skip_tags: true
 
 init:
 - git config --global core.autocrlf input
