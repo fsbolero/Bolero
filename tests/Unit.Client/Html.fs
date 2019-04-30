@@ -91,29 +91,33 @@ type BoleroComponent() =
 type Binds() =
     inherit Component()
 
-    let inputState = ref ""
-    let changeState = ref ""
-    let inputIntState = ref 0
-    let changeIntState = ref 0
-    let inputFloatState = ref 0.
-    let changeFloatState = ref 0.
+    let inputState = ref "bind-input-value"
+    let changeState = ref "bind-change-value"
+    let inputIntState = ref 1111
+    let changeIntState = ref 2222
+    let inputFloatState = ref 3333.
+    let changeFloatState = ref 4444.
     let checkedState = ref false
+
+    member this.Set (r: ref<'T>) (v: 'T) =
+        r := v
+        this.StateHasChanged()
 
     override this.Render() =
         concat [
-            input [attr.``class`` "bind-input"; bind.input inputState.Value inputState.set_Value]
+            input [attr.``class`` "bind-input"; bind.input inputState.Value (this.Set inputState)]
             span [attr.``class`` "bind-input-out"] [text inputState.Value]
-            input [attr.``class`` "bind-change"; bind.change changeState.Value changeState.set_Value]
+            input [attr.``class`` "bind-change"; bind.change changeState.Value (this.Set changeState)]
             span [attr.``class`` "bind-change-out"] [text changeState.Value]
-            input [attr.``type`` "number"; attr.``class`` "bind-input-int"; bind.inputInt inputIntState.Value inputIntState.set_Value]
+            input [attr.``type`` "number"; attr.``class`` "bind-input-int"; bind.inputInt inputIntState.Value (this.Set inputIntState)]
             span [attr.``class`` "bind-input-int-out"] [textf "%i" inputIntState.Value]
-            input [attr.``type`` "number"; attr.``class`` "bind-change-int"; bind.changeInt changeIntState.Value changeIntState.set_Value]
+            input [attr.``type`` "number"; attr.``class`` "bind-change-int"; bind.changeInt changeIntState.Value (this.Set changeIntState)]
             span [attr.``class`` "bind-change-int-out"] [textf "%i" changeIntState.Value]
-            input [attr.``type`` "number"; attr.``class`` "bind-input-float"; bind.inputFloat inputFloatState.Value inputFloatState.set_Value]
+            input [attr.``type`` "number"; attr.``class`` "bind-input-float"; bind.inputFloat inputFloatState.Value (this.Set inputFloatState)]
             span [attr.``class`` "bind-input-float-out"] [textf "%f" inputFloatState.Value]
-            input [attr.``type`` "number"; attr.``class`` "bind-change-float"; bind.changeFloat changeFloatState.Value changeFloatState.set_Value]
+            input [attr.``type`` "number"; attr.``class`` "bind-change-float"; bind.changeFloat changeFloatState.Value (this.Set changeFloatState)]
             span [attr.``class`` "bind-change-float-out"] [textf "%f" changeFloatState.Value]
-            input [attr.``type`` "checkbox"; attr.``class`` "bind-checked"; bind.``checked`` checkedState.Value checkedState.set_Value]
+            input [attr.``type`` "checkbox"; attr.``class`` "bind-checked"; bind.``checked`` checkedState.Value (this.Set checkedState)]
             span [attr.``class`` "bind-checked-out"] [textf "%b" checkedState.Value]
         ]
 
