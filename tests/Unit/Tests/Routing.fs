@@ -40,7 +40,6 @@ module Routing =
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
     let ``Set by model``(linkCls: string, url: string, page: Client.Routing.Page) =
-        Thread.Sleep(500) // Some cases fail without this, mainly ones with empty strings. TODO: investigate
         elt.ByClass("btn-" + linkCls).Click()
         let resCls = Client.Routing.pageClass page
         let res =

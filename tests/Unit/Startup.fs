@@ -73,7 +73,7 @@ type Startup() =
         |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
-        let serverSide = true
+        let serverSide = false
         app .UseAuthentication()
             .UseRemoting()
             |> ignore
