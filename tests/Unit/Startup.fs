@@ -25,7 +25,6 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Authentication.Cookies
 open Bolero.Remoting.Server
-open Microsoft.Extensions.FileProviders
 open System.Security.Claims
 open Microsoft.AspNetCore.Authorization
 open Bolero.Tests
@@ -70,14 +69,21 @@ type Startup() =
                 .AddCookie()
                 .Services
             .AddRemoting(remoteHandler)
+            .AddServerSideBlazor()
         |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
-        let fileProvider = new PhysicalFileProvider(__SOURCE_DIRECTORY__)
-        app
-            .UseAuthentication()
+        let serverSide = true
+        app .UseAuthentication()
             .UseRemoting()
-            //.UseDefaultFiles(DefaultFilesOptions(FileProvider = fileProvider))
-            //.UseStaticFiles(StaticFileOptions(FileProvider = fileProvider))
-            .UseBlazor<Client.Startup>()
+            |> ignore
+        if serverSide then
+            app .UseStaticFiles()
+                .UseRouting()
+                .UseEndpoints(fun endpoints ->
+                    endpoints.MapBlazorHub<Client.Tests>("#app") |> ignore
+                    endpoints.MapFallbackToFile("index.html") |> ignore
+                )
+        else
+            app .UseBlazor<Client.Startup>()
         |> ignore
