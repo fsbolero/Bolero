@@ -37,7 +37,7 @@ type Component() =
     override this.BuildRenderTree(builder) =
         base.BuildRenderTree(builder)
         this.Render()
-        |> RenderNode builder matchCache
+        |> RenderNode this builder matchCache
 
     /// The rendered contents of the component.
     abstract Render : unit -> Node
