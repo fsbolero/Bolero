@@ -222,7 +222,7 @@ NUGET
       Selenium.WebDriver (>= 3.141)
     Selenium.WebDriver (3.141)
       Newtonsoft.Json (>= 10.0.3)
-    Selenium.WebDriver.ChromeDriver (73.0.3683.68)
+    Selenium.WebDriver.ChromeDriver (74.0.3729.6)
     System.AppContext (4.3) - restriction: || (== netcoreapp3.0) (&& (== netstandard2.0) (>= netcoreapp1.0))
       System.Runtime (>= 4.3)
     System.Buffers (4.5) - restriction: || (&& (== netcoreapp3.0) (>= monoandroid) (< netstandard2.0)) (&& (== netcoreapp3.0) (>= monotouch)) (&& (== netcoreapp3.0) (< netcoreapp2.0)) (&& (== netcoreapp3.0) (>= xamarinios)) (&& (== netcoreapp3.0) (>= xamarinmac)) (&& (== netcoreapp3.0) (>= xamarintvos)) (&& (== netcoreapp3.0) (>= xamarinwatchos)) (== netstandard2.0)
@@ -675,6 +675,7 @@ NUGET
     System.Threading.ThreadPool (4.3) - restriction: || (== netcoreapp3.0) (&& (== netstandard2.0) (>= netcoreapp1.0))
       System.Runtime (>= 4.3)
       System.Runtime.Handles (>= 4.3)
+    System.ValueTuple (4.5)
     System.Xml.ReaderWriter (4.3.1)
       System.Collections (>= 4.3)
       System.Diagnostics.Debug (>= 4.3)
@@ -754,6 +755,10 @@ NUGET
       System.Xml.ReaderWriter (>= 4.3)
       System.Xml.XmlDocument (>= 4.3)
       System.Xml.XPath (>= 4.3)
+    TaskBuilder.fs (2.1)
+      FSharp.Core (>= 4.1.17)
+      NETStandard.Library (>= 1.6.1)
+      System.ValueTuple (>= 4.4)
 GITHUB
   remote: fsprojects/FSharp.TypeProviders.SDK
     src/ProvidedTypes.fs (c8fc89b0e8bac34e321372b004de76d600651cda)

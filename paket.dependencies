@@ -31,6 +31,7 @@ nuget Selenium.WebDriver.ChromeDriver
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 nuget Nerdbank.GitVersioning copy_local: true
+nuget TaskBuilder.fs
 
 group fake
 source https://api.nuget.org/v3/index.json
