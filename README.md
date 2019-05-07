@@ -1,6 +1,6 @@
 # Bolero - F# Tools for Blazor
 
-[![Build status](https://ci.appveyor.com/api/projects/status/7vdtq7mkef04bbqq?svg=true)](https://ci.appveyor.com/project/IntelliFactory/bolero)
+[![Build status](https://ci.appveyor.com/api/projects/status/7vdtq7mkef04bbqq/branch/master?svg=true)](https://ci.appveyor.com/project/IntelliFactory/bolero)
 
 Bolero is a set of tools and libraries to run F# applications in WebAssembly using [Blazor](https://blazor.net/).
 
