@@ -30,6 +30,7 @@ open Microsoft.Extensions.Logging
 open Bolero.Remoting.Server
 open Bolero.Templating.Server
 open Microsoft.AspNetCore.Authentication.Cookies
+open Microsoft.Extensions.Hosting
 
 type MyApiHandler(log: ILogger<MyApiHandler>) =
     inherit RemoteHandler<Client.MyApi>()
@@ -80,7 +81,7 @@ type Startup() =
             .AddServerSideBlazor()
         |> ignore
 
-    member this.Configure(app: IApplicationBuilder, env: IHostingEnvironment) =
+    member this.Configure(app: IApplicationBuilder, env: IHostEnvironment) =
         app.UseAuthentication()
             .UseRemoting()
             .UseHotReload()
