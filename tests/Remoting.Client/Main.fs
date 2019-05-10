@@ -192,9 +192,7 @@ type MyApp() =
             Cmd.ofMsg GetLogin
         ]) (Update myApi) Display
         |> Program.withConsoleTrace
-#if BLAZOR_0_7
         |> Program.withHotReloading
-#endif
 
 
 

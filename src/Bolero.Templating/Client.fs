@@ -20,7 +20,6 @@
 
 namespace Bolero.Templating.Client
 
-#if BLAZOR_0_7
 open System
 open System.Collections.Concurrent
 open System.Threading.Tasks
@@ -72,11 +71,11 @@ type ClientBase() =
         member this.FileChanged(filename, content) =
             this.StoreFileContent(filename, content)
 
-type SignalRClient(settings: HotReloadSettings) as this =
+type SignalRClient(settings: HotReloadSettings, runtime: IJSRuntime) as this =
     inherit ClientBase()
 
     let hub =
-        HubConnectionBuilder()
+        HubConnectionBuilder(runtime)
             .WithUrl(settings.Url, fun opt ->
                 opt.Transport <- HttpTransportType.WebSockets
                 opt.SkipNegotiation <- true
@@ -126,14 +125,14 @@ module Program =
 
     let private registerClient (comp: ProgramComponent<_, _>) =
         match comp.JSRuntime with
-        | :? IJSInProcessRuntime ->
+        | :? IJSInProcessRuntime as runtime ->
             let settings =
                 let s = comp.Services.GetService<HotReloadSettings>()
                 if obj.ReferenceEquals(s, null) then HotReloadSettings.Default else s
             let baseUri = comp.Services.GetService<IUriHelper>().GetBaseUri()
             let url = UriBuilder(baseUri, Scheme = "ws", Path = settings.Url).ToString()
             let settings = { settings with Url = url }
-            let client = new SignalRClient(settings)
+            let client = new SignalRClient(settings, runtime)
             TemplateCache.client <- client
             client :> IClient
         | _ ->
@@ -150,4 +149,3 @@ module Program =
                     | client -> client
                 client.SetOnChange(comp.Rerender)
                 program.init comp }
-#endif

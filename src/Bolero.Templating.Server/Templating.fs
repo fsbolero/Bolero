@@ -19,7 +19,6 @@
 // $end{copyright}
 namespace Bolero.Templating.Server
 
-#if BLAZOR_0_7
 open System
 open System.IO
 open System.Threading.Tasks
@@ -153,7 +152,7 @@ type ServerTemplatingExtensions =
 
     [<Extension>]
     static member AddHotReload(this: IServiceCollection, ?templateDir: string) : IServiceCollection =
-        this.AddSignalR().AddJsonProtocol() |> ignore
+        this.AddSignalR().AddNewtonsoftJsonProtocol() |> ignore
         this.AddSingleton({ dir = templateDir })
             .AddSingleton<Watcher>()
             .AddTransient<IClient, Client>()
@@ -165,4 +164,3 @@ type ServerTemplatingExtensions =
         this.UseSignalR(fun route ->
             route.MapHub<HotReloadHub>(PathString urlPath)
         )
-#endif

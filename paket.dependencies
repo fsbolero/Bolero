@@ -32,6 +32,7 @@ github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 nuget Nerdbank.GitVersioning copy_local: true
 nuget TaskBuilder.fs
+nuget Blazor.Extensions.SignalR ~> 0.1.9
 
 group fake
 source https://api.nuget.org/v3/index.json
