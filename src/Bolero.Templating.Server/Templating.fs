@@ -152,7 +152,7 @@ type ServerTemplatingExtensions =
 
     [<Extension>]
     static member AddHotReload(this: IServiceCollection, ?templateDir: string) : IServiceCollection =
-        this.AddSignalR().AddNewtonsoftJsonProtocol() |> ignore
+        this.AddSignalR().AddJsonProtocol() |> ignore
         this.AddSingleton({ dir = templateDir })
             .AddSingleton<Watcher>()
             .AddTransient<IClient, Client>()

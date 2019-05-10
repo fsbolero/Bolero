@@ -1,4 +1,4 @@
-version 5.193.0
+version 5.203.2
 source https://api.nuget.org/v3/index.json
 storage: none
 framework: netstandard2.0, netcoreapp3.0
@@ -6,16 +6,16 @@ framework: netstandard2.0, netcoreapp3.0
 nuget FsCheck.NUnit ~> 2.12
 nuget FSharp.Core ~> 4.5.0
 nuget HtmlAgilityPack ~> 1.8.0
-nuget Microsoft.AspNetCore.Blazor 3.0.0-preview4-19216-03
-nuget Microsoft.AspNetCore.Blazor.Build 3.0.0-preview4-19216-03
-nuget Microsoft.AspNetCore.Blazor.Server 3.0.0-preview4-19216-03
-nuget Microsoft.AspNetCore.Blazor.DevServer 3.0.0-preview4-19216-03
-nuget Microsoft.AspNetCore.Components 3.0.0-preview4-19216-03
-nuget Microsoft.AspNetCore.Components.Browser 3.0.0-preview4-19216-03
-nuget Microsoft.AspNetCore.NodeServices 3.0.0-preview4-19216-03
-nuget Microsoft.AspNetCore.SpaServices 3.0.0-preview4-19216-03
-nuget Microsoft.AspNetCore.SpaServices.Extensions 3.0.0-preview4-19216-03
-nuget System.Runtime.CompilerServices.Unsafe 4.6.0-preview4.19212.13
+nuget Microsoft.AspNetCore.Blazor 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.Blazor.Build 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.Blazor.Server 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.Blazor.DevServer 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.Components 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.Components.Browser 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.NodeServices 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.SpaServices 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.SpaServices.Extensions 3.0.0-preview5-19227-01
+nuget System.Runtime.CompilerServices.Unsafe 4.6.0-preview5.19224.8
 nuget Microsoft.NET.Test.Sdk 15.8.0
 nuget Elmish >= 2.0
 nuget Microsoft.Build.Utilities.Core ~> 15.0
