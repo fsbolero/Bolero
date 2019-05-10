@@ -162,7 +162,7 @@ NUGET
       System.Threading (>= 4.0.11)
     Mono.WebAssembly.Interop (3.0.0-preview4.19216.2)
       Microsoft.JSInterop (>= 3.0.0-preview4.19216.2)
-    Nerdbank.GitVersioning (2.3.138) - copy_local: true
+    Nerdbank.GitVersioning (2.3.151) - copy_local: true
     NETStandard.Library (2.0.3)
       Microsoft.NETCore.Platforms (>= 1.1)
     Newtonsoft.Json (12.0.2)
@@ -761,8 +761,8 @@ NUGET
       System.ValueTuple (>= 4.4)
 GITHUB
   remote: fsprojects/FSharp.TypeProviders.SDK
-    src/ProvidedTypes.fs (c8fc89b0e8bac34e321372b004de76d600651cda)
-    src/ProvidedTypes.fsi (c8fc89b0e8bac34e321372b004de76d600651cda)
+    src/ProvidedTypes.fs (f97f77ba03a8f91d927ab70259dc91eb8ba02e40)
+    src/ProvidedTypes.fsi (f97f77ba03a8f91d927ab70259dc91eb8ba02e40)
 GROUP fake
 STORAGE: NONE
 RESTRICTION: == netstandard2.0
