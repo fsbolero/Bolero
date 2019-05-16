@@ -32,7 +32,12 @@ open Fake.IO.FileSystemOperators
 open Utility
 
 let config = getArg "-c" "Debug"
-let version = getArg "-v" "0.1.0"
+let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
+    CreateProcess.fromRawCommand ".paket/nbgv" ["get-version"; "-v"; "SemVer2"]
+    |> CreateProcess.redirectOutput
+    |> Proc.run
+    |> fun r -> r.Result.Output.Trim()
+)
 let testUploadUrl = getArgOpt "--push-tests"
 let verbosity = getFlag "--verbose" >> function
     | true -> "n"
@@ -96,7 +101,7 @@ Target.create "tags" (fun _ ->
             let esc = escapeDashes event.Name
             s.AppendLine(sprintf """    /// Create a handler for HTML event `%s`.""" event.Name)
              .AppendLine(sprintf """    let %s (callback: UI%sEventArgs -> unit) : Attr =""" esc event.Type)
-             .AppendLine(sprintf """        "on%s" => BindMethods.GetEventHandlerValue callback""" esc)
+             .AppendLine(sprintf """        event "%s" callback""" esc)
              .AppendLine()
         )
     )

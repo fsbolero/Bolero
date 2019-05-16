@@ -70,6 +70,7 @@ type WebFixture() =
                 startChrome()
                 async {
                     server <- WebHost.CreateDefaultBuilder([||])
+                        .UseContentRoot(__SOURCE_DIRECTORY__)
                         .UseStartup<Startup>()
                         .UseUrls(url)
                         .Build()

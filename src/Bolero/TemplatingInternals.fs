@@ -21,7 +21,7 @@
 module Bolero.TemplatingInternals
 
 open System
-open Microsoft.AspNetCore.Blazor
+open Microsoft.AspNetCore.Components
 
 /// This indirection resolves two problems:
 /// 1. TPs can't generate delegate constructor calls;

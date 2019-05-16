@@ -24,8 +24,8 @@
     <Compile Include="Provider.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="4.5.2" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.8.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="0.7.0" />
+    <PackageReference Update="FSharp.Core" Version="4.5.4" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.8.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.0.0-preview5*" />
   </ItemGroup>
 </Project>

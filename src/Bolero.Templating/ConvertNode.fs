@@ -21,7 +21,7 @@
 module Bolero.Templating.Client.ConvertExpr
 
 open System
-open Microsoft.AspNetCore.Blazor
+open Microsoft.AspNetCore.Components
 open Bolero
 open Bolero.Templating
 

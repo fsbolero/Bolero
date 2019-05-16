@@ -10,19 +10,25 @@ build:
 branches:
   except:
   - gh-pages
+skip_tags: true
 
 init:
+- cmd: choco install dotnetcore-sdk --pre
 - git config --global core.autocrlf input
 
 before_build:
 - ps: |
-    dotnet tool install -g nbgv
-    $env:SEMVER = cmd /c $HOME\.dotnet\tools\nbgv get-version -v SemVer2
+    dotnet tool install nbgv --tool-path .paket
+    $env:SEMVER = .paket/nbgv get-version -v SemVer2
     Update-AppveyorBuild -Version "$env:SEMVER ($env:APPVEYOR_BUILD_ID)"
 
 build_script:
 - sh: BUILD_SCRIPT=./build.sh   # Use build.cmd on Windows, build.sh on Linux
 - ps: $env:NUGET_PACKAGES = "$env:APPVEYOR_BUILD_FOLDER\.nuget"
+  # Chrome on AV is not latest
+- ps: |
+    dotnet add tests\Unit\Unit.fsproj package Selenium.WebDriver.ChromeDriver --version 73.0.3683.68
+    dotnet restore
 - ps: '& $env:BUILD_SCRIPT -t pack -c Release -v "$env:SEMVER" /p:GhPages=true'
 
 test_script:

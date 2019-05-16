@@ -5,10 +5,10 @@ description
 authors
     Loic Denuziere
 files
-    ../../build/Release/netstandard2.0/Bolero.Templating.Server.dll ==> lib/netstandard2.0
-    ../../build/Release/netstandard2.0/Bolero.Templating.Server.xml ==> lib/netstandard2.0
-    ../../build/Release/netstandard2.0/Bolero.Server.dll ==> lib/netstandard2.0
-    ../../build/Release/netstandard2.0/Bolero.Server.xml ==> lib/netstandard2.0
+    ../../build/Release/netcoreapp3.0/Bolero.Templating.Server.dll ==> lib/netcoreapp3.0
+    ../../build/Release/netcoreapp3.0/Bolero.Templating.Server.xml ==> lib/netcoreapp3.0
+    ../../build/Release/netcoreapp3.0/Bolero.Server.dll ==> lib/netcoreapp3.0
+    ../../build/Release/netcoreapp3.0/Bolero.Server.xml ==> lib/netcoreapp3.0
 dependencies
     Bolero.HotReload CURRENTVERSION
-    Microsoft.AspNetCore.SignalR >= 1.0.0
+#    Microsoft.AspNetCore.SignalR >= LOCKED:Minor

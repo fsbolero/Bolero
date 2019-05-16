@@ -1,8 +1,7 @@
-version 5.193.0
-
+version 5.203.2
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: netstandard2.0, netcoreapp2.1
+framework: netstandard2.0, netcoreapp3.0
 
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
@@ -19,4 +18,3 @@ nuget Fake.DotNet.AssemblyInfoFile
 nuget Fake.DotNet.Cli
 nuget Fake.DotNet.Paket
 nuget FSharp.Data ~> 3.0-beta
-clitool dotnet-fake ~> 5.0

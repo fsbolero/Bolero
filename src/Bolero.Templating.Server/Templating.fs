@@ -64,7 +64,7 @@ module Impl =
             }
             |> Async.StartAsTask
 
-    and Watcher(config: WatcherConfig, env: IHostingEnvironment, log: ILogger<Watcher>, hub: IHubContext<HotReloadHub>) =
+    and Watcher(config: WatcherConfig, env: IHostEnvironment, log: ILogger<Watcher>, hub: IHubContext<HotReloadHub>) =
         let dir =
             match config.dir with
             | Some dir -> Path.Combine(env.ContentRootPath, dir)

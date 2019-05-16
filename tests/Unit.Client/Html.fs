@@ -22,9 +22,8 @@ module Bolero.Tests.Client.Html
 
 open Bolero
 open Bolero.Html
-open Microsoft.AspNetCore.Blazor
-open Microsoft.AspNetCore.Blazor.Routing
-open Microsoft.AspNetCore.Blazor.Components
+open Microsoft.AspNetCore.Components
+open Microsoft.AspNetCore.Components.Routing
 open Microsoft.JSInterop
 
 type SomeUnion =
@@ -92,30 +91,37 @@ type BoleroComponent() =
 type Binds() =
     inherit Component()
 
-    let inputState = ref ""
-    let changeState = ref ""
-    let inputIntState = ref 0
-    let changeIntState = ref 0
-    let inputFloatState = ref 0.
-    let changeFloatState = ref 0.
-    let checkedState = ref false
+    [<Parameter>]
+    member val inputState = "" with get, set
+    [<Parameter>]
+    member val changeState = "" with get, set
+    [<Parameter>]
+    member val inputIntState = 0 with get, set
+    [<Parameter>]
+    member val changeIntState = 0 with get, set
+    [<Parameter>]
+    member val inputFloatState = 0. with get, set
+    [<Parameter>]
+    member val changeFloatState = 0. with get, set
+    [<Parameter>]
+    member val checkedState = false with get, set
 
     override this.Render() =
         concat [
-            input [attr.``class`` "bind-input"; bind.input inputState.Value inputState.set_Value]
-            span [attr.``class`` "bind-input-out"] [text inputState.Value]
-            input [attr.``class`` "bind-change"; bind.change changeState.Value changeState.set_Value]
-            span [attr.``class`` "bind-change-out"] [text changeState.Value]
-            input [attr.``type`` "number"; attr.``class`` "bind-input-int"; bind.inputInt inputIntState.Value inputIntState.set_Value]
-            span [attr.``class`` "bind-input-int-out"] [textf "%i" inputIntState.Value]
-            input [attr.``type`` "number"; attr.``class`` "bind-change-int"; bind.changeInt changeIntState.Value changeIntState.set_Value]
-            span [attr.``class`` "bind-change-int-out"] [textf "%i" changeIntState.Value]
-            input [attr.``type`` "number"; attr.``class`` "bind-input-float"; bind.inputFloat inputFloatState.Value inputFloatState.set_Value]
-            span [attr.``class`` "bind-input-float-out"] [textf "%f" inputFloatState.Value]
-            input [attr.``type`` "number"; attr.``class`` "bind-change-float"; bind.changeFloat changeFloatState.Value changeFloatState.set_Value]
-            span [attr.``class`` "bind-change-float-out"] [textf "%f" changeFloatState.Value]
-            input [attr.``type`` "checkbox"; attr.``class`` "bind-checked"; bind.``checked`` checkedState.Value checkedState.set_Value]
-            span [attr.``class`` "bind-checked-out"] [textf "%b" checkedState.Value]
+            input [attr.``class`` "bind-input"; bind.input this.inputState (fun x -> this.inputState <- x)]
+            span [attr.``class`` "bind-input-out"] [text this.inputState]
+            input [attr.``class`` "bind-change"; bind.change this.changeState (fun x -> this.changeState <- x)]
+            span [attr.``class`` "bind-change-out"] [text this.changeState]
+            input [attr.``type`` "number"; attr.``class`` "bind-input-int"; bind.inputInt this.inputIntState (fun x -> this.inputIntState <- x)]
+            span [attr.``class`` "bind-input-int-out"] [textf "%i" this.inputIntState]
+            input [attr.``type`` "number"; attr.``class`` "bind-change-int"; bind.changeInt this.changeIntState (fun x -> this.changeIntState <- x)]
+            span [attr.``class`` "bind-change-int-out"] [textf "%i" this.changeIntState]
+            input [attr.``type`` "number"; attr.``class`` "bind-input-float"; bind.inputFloat this.inputFloatState (fun x -> this.inputFloatState <- x)]
+            span [attr.``class`` "bind-input-float-out"] [textf "%f" this.inputFloatState]
+            input [attr.``type`` "number"; attr.``class`` "bind-change-float"; bind.changeFloat this.changeFloatState (fun x -> this.changeFloatState <- x)]
+            span [attr.``class`` "bind-change-float-out"] [textf "%f" this.changeFloatState]
+            input [attr.``type`` "checkbox"; attr.``class`` "bind-checked"; bind.``checked`` this.checkedState (fun x -> this.checkedState <- x)]
+            span [attr.``class`` "bind-checked-out"] [textf "%b" this.checkedState]
         ]
 
 type BindElementRef() =
@@ -124,13 +130,16 @@ type BindElementRef() =
     let mutable elt1 = Unchecked.defaultof<ElementRef>
     let elt2 = ElementRefBinder()
 
+    [<Inject>]
+    member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
+
     override this.Render() =
         concat [
             button [
                 attr.``class`` "element-ref"
                 attr.ref (fun r -> elt1 <- r)
                 on.click (fun _ ->
-                    JSRuntime.Current.InvokeAsync("setContent", elt1, "ElementRef 1 is bound")
+                    this.JSRuntime.InvokeAsync("setContent", elt1, "ElementRef 1 is bound")
                     |> ignore
                 )
             ] [text "Click me"]
@@ -138,7 +147,7 @@ type BindElementRef() =
                 attr.``class`` "element-ref-binder"
                 attr.bindRef elt2
                 on.click (fun _ ->
-                    JSRuntime.Current.InvokeAsync("setContent", elt2.Ref, "ElementRef 2 is bound")
+                    this.JSRuntime.InvokeAsync("setContent", elt2.Ref, "ElementRef 2 is bound")
                     |> ignore
                 )
             ] [text "Click me"]

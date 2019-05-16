@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <Import Project="..\..\tools\Common.props" />
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <BlazorLinkOnBuild>false</BlazorLinkOnBuild>
   </PropertyGroup>
@@ -26,15 +26,12 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8" />
     <PackageReference Include="nunit" Version="3.11" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.13" />
-    <PackageReference Update="FSharp.Core" Version="4.5.2" />
-    <PackageReference Include="FsCheck.NUnit" Version="2.12" />
-    <PackageReference Include="Selenium.WebDriver" Version="*" />
-    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="*" />
-    <PackageReference Include="Microsoft.AspNetCore" Version="2.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.Server" Version="0.7.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="0.7.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication" Version="2.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.1.0" />
-    <PackageReference Include="Selenium.Support" Version="*" />
+    <PackageReference Update="FSharp.Core" Version="4.5.4" />
+    <PackageReference Include="FsCheck.NUnit" Version="2.14" />
+    <PackageReference Include="Selenium.WebDriver" Version="3.141" />
+    <PackageReference Include="Selenium.WebDriver.ChromeDriver" Version="74.0.3729.6" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.Server" Version="3.0.0-preview5*" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="3.0.0-preview5*" PrivateAssets="all" />
+    <PackageReference Include="Selenium.Support" Version="3.141" />
   </ItemGroup>
 </Project>

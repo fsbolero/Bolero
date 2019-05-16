@@ -20,7 +20,7 @@
 
 module Bolero.Test.Client.Main
 
-open Microsoft.AspNetCore.Blazor.Routing
+open Microsoft.AspNetCore.Components.Routing
 open Microsoft.JSInterop
 open Elmish
 open Bolero
@@ -111,14 +111,14 @@ type SecretPw = Template<"""<div>
 
 let btnRef = ElementRefBinder()
 
-let viewForm model dispatch =
+let viewForm (js: IJSRuntime) model dispatch =
     div [] [
         input [attr.value model.input; on.change (fun e -> dispatch (SetInput (unbox e.Value)))]
         input [
             attr.bindRef btnRef
             attr.``type`` "submit"
             on.click (fun _ ->
-                JSRuntime.Current.InvokeAsync("console.log", btnRef.Ref) |> ignore
+                js.InvokeAsync("console.log", btnRef.Ref) |> ignore
                 dispatch Submit
             )
             attr.style (if model.input = "" then "color:gray;" else null)
@@ -186,7 +186,7 @@ type ViewItemPage() =
             p [] [a [router.HRef Collection] [text "Back to collection"]]
         ]
 
-let view model dispatch =
+let view js model dispatch =
     concat [
         RawHtml """
             <div style="color:gray">The links below should have blue background based on the current page.</div>
@@ -198,7 +198,7 @@ let view model dispatch =
             navLink NavLinkMatch.Prefix [router.HRef Collection] [text "Collection"]
         ]
         cond model.page <| function
-            | Form -> viewForm model dispatch
+            | Form -> viewForm js model dispatch
             | Collection -> viewCollection model dispatch
             | Item k -> ecomp<ViewItemPage,_,_> (k, model.items.[k]) dispatch
     ]
@@ -207,7 +207,7 @@ type MyApp() =
     inherit ProgramComponent<Model, Message>()
 
     override this.Program =
-        Program.mkProgram (fun _ -> initModel(), []) update view
+        Program.mkProgram (fun _ -> initModel(), []) update (view this.JSRuntime)
         |> Program.withConsoleTrace
         |> Program.withErrorHandler (fun (msg, exn) -> printfn "%s: %A" msg exn)
         |> Program.withRouter router

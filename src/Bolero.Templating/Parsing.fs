@@ -24,7 +24,7 @@ open System
 open System.IO
 open System.Text
 open System.Text.RegularExpressions
-open Microsoft.AspNetCore.Blazor
+open Microsoft.AspNetCore.Components
 open HtmlAgilityPack
 
 /// Available value types for a `bind` attribute.

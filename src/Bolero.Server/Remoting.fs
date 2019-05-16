@@ -30,8 +30,10 @@ open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
+open FSharp.Control.Tasks.V2
 open Bolero
 open Bolero.Remoting
+open System.Text
 
 type IRemoteHandler =
     abstract Handler : IRemoteService
@@ -114,28 +116,27 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
         let output = output.MakeGenericMethod(method.ReturnType)
         fun (auth: IAuthorizationService) (ctx: HttpContext) ->
             let run() =
-                let arg =
-                    using (new StreamReader(ctx.Request.Body)) Json.Raw.Read
-                    |> decoder
-                Remote.context.Value <- ctx
-                let res = callMeth.Invoke(meth, [|arg|])
-                output.Invoke(null, [|ctx; encoder; res|]) :?> Task
-            match tAuthPolicy with
-            | None -> run()
-            | Some tAuthPolicy ->
-                tAuthPolicy
-                    .ContinueWith(fun (tAuthPolicy: Task<AuthorizationPolicy>) ->
-                        auth.AuthorizeAsync(ctx.User, tAuthPolicy.Result)
-                    )
-                    .Unwrap()
-                    .ContinueWith(fun (tAuthResult: Task<AuthorizationResult>) ->
-                        if tAuthResult.Result.Succeeded then
-                            run()
-                        else
-                            fail ctx
-                            Task.CompletedTask
-                    )
-                    .Unwrap()
+                task {
+                    use reader = new StreamReader(ctx.Request.Body)
+                    let! body = reader.ReadToEndAsync()
+                    let arg = Json.Raw.Parse body |> decoder
+                    Remote.context.Value <- ctx
+                    let res = callMeth.Invoke(meth, [|arg|])
+                    return! output.Invoke(null, [|ctx; encoder; res|]) :?> Task
+                } :> Task
+
+            task {
+                match tAuthPolicy with
+                | None -> return! run()
+                | Some tAuthPolicy ->
+                    let! authPolicy = tAuthPolicy
+                    let! authResult = auth.AuthorizeAsync(ctx.User, authPolicy)
+                    if authResult.Succeeded then
+                        return! run()
+                    else
+                        fail ctx
+            }
+            :> Task
 
     let methodData =
         match RemotingExtensions.ExtractRemoteMethods ty with
@@ -149,17 +150,15 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
     let methods = dict [for m in methodData -> m.Name, makeHandler m]
 
     static member Output<'Out>(ctx: HttpContext, encoder: Json.Encoder<obj>, a: Async<'Out>) : Task =
-        async {
+        task {
             try
                 let! x = a
                 let v = encoder x
-                use writer = new StreamWriter(ctx.Response.Body)
-                Json.Raw.Write writer v
+                let json = Json.Raw.Stringify v
+                return! ctx.Response.WriteAsync(json, Encoding.UTF8)
             with RemoteUnauthorizedException ->
                 fail ctx
-        }
-        |> Async.StartImmediateAsTask
-        :> _
+        } :> Task
 
     member this.ServiceType = ty
 

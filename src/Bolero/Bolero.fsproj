@@ -27,12 +27,11 @@
     <ProjectReference Include="..\Bolero.Templating.Provider\Bolero.Templating.Provider.fsproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
-    <PackageReference Update="FSharp.Core" Version="4.5.2" />
-    <PackageReference Include="Microsoft.JSInterop" Version="0.7.0" />
-    <PackageReference Include="Mono.WebAssembly.Interop" Version="0.7.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.Browser" Version="0.7.0" />
+    <PackageReference Update="FSharp.Core" Version="4.5.4" />
+    <PackageReference Include="Microsoft.JSInterop" Version="3.0.0-preview5*" />
+    <PackageReference Include="Mono.WebAssembly.Interop" Version="3.0.0-preview5*" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.0.0-preview5*" />
     <PackageReference Include="Elmish" Version="2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="2.1.0" />
-    <PackageReference Include="Nerdbank.GitVersioning" Version="2.3.138" PrivateAssets="all" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="2.3.151" PrivateAssets="all" />
   </ItemGroup>
 </Project>
