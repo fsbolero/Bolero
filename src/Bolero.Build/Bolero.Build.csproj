@@ -5,5 +5,9 @@
     <BaseOutputPath>..\..\build\task</BaseOutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.*" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.0" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="2.3.151" PrivateAssets="all" />
+  </ItemGroup>
 </Project>

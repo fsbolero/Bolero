@@ -9,5 +9,5 @@ files
     ../../build/Release/netstandard2.0/Bolero.Templating.xml ==> lib/netstandard2.0
 dependencies
     Bolero CURRENTVERSION
-    HtmlAgilityPack >= LOCKED:Minor
+    HtmlAgilityPack >= 1.8.14
 #    Blazor.Extensions.SignalR >= LOCKED:Patch

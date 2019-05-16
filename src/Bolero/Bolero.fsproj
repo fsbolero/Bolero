@@ -18,7 +18,6 @@
     <Compile Include="Remoting.Client.fs" />
     <Compile Include="Program.fs" />
     <Compile Include="Html.fs" />
-    <None Include="paket.references" />
     <None Include="paket.template" />
   </ItemGroup>
   <ItemGroup>
@@ -28,6 +27,11 @@
     <ProjectReference Include="..\Bolero.Templating.Provider\Bolero.Templating.Provider.fsproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <PackageReference Update="FSharp.Core" Version="4.5.4" />
+    <PackageReference Include="Microsoft.JSInterop" Version="3.0.0-preview5*" />
+    <PackageReference Include="Mono.WebAssembly.Interop" Version="3.0.0-preview5*" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.0.0-preview5*" />
+    <PackageReference Include="Elmish" Version="2.0" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="2.3.151" PrivateAssets="all" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

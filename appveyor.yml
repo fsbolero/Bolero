@@ -27,8 +27,7 @@ build_script:
 - ps: $env:NUGET_PACKAGES = "$env:APPVEYOR_BUILD_FOLDER\.nuget"
   # Chrome on AV is not latest
 - ps: |
-    dotnet tool install paket --tool-path .paket
-    .paket/paket add Selenium.WebDriver.ChromeDriver --version 73.0.3683.68
+    dotnet add tests\Unit\Unit.fsproj package Selenium.WebDriver.ChromeDriver --version 73.0.3683.68
     dotnet restore
 - ps: '& $env:BUILD_SCRIPT -t pack -c Release -v "$env:SEMVER" /p:GhPages=true'
 

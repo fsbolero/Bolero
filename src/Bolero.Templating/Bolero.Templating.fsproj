@@ -14,10 +14,14 @@
     <EmbeddedResource Include="content\**" Exclude="**\*.js;**\*.css" LogicalName="blazor:file:%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="content\**\*.js" LogicalName="blazor:js:%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="content\**\*.css" LogicalName="blazor:css:%(RecursiveDir)%(Filename)%(Extension)" />
-    <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bolero\Bolero.fsproj" />
+    <PackageReference Update="FSharp.Core" Version="4.5.4" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.8.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.0.0-preview5*" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="3.0.0-preview5*" />
+    <PackageReference Include="Blazor.Extensions.SignalR" Version="0.1.9" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="2.3.151" PrivateAssets="all" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

@@ -11,6 +11,6 @@ files
     ../../build/Release/typeproviders/fsharp41/netstandard2.0/HtmlAgilityPack.dll ==> typeproviders/fsharp41/netstandard2.0
     ../../build/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Blazor.dll ==> typeproviders/fsharp41/netstandard2.0
 dependencies
-    FSharp.Core >= LOCKED:Minor
-    Microsoft.AspNetCore.Blazor >= LOCKED:Minor
-    Elmish >= LOCKED:Minor
+    FSharp.Core >= 4.5.0
+    Microsoft.AspNetCore.Blazor >= 3.0.0-preview5
+    Elmish >= 2.0.0

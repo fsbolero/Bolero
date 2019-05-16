@@ -9,10 +9,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Templating.fs" />
-    <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bolero.Templating\Bolero.Templating.fsproj" />
+    <PackageReference Update="FSharp.Core" Version="4.5.4" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

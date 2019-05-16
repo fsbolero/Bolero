@@ -22,7 +22,10 @@
     <Compile Include="ConvertExpr.fs" />
     <Compile Include="CodeGen.fs" />
     <Compile Include="Provider.fs" />
-    <None Include="paket.references" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="4.5.4" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.8.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.0.0-preview5*" />
+  </ItemGroup>
 </Project>
