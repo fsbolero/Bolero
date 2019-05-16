@@ -77,11 +77,6 @@ let runTags filename apply =
     if input <> output then
         File.WriteAllText(filename, output)
 
-let eventTypes =
-    Events.GetSample().Rows
-    |> Seq.map (fun r -> r.Type)
-    |> Seq.distinct
-
 Target.description "Generate HTML tags and attributes from CSV"
 Target.create "tags" (fun _ ->
     runTags "src/Bolero/Html.fs" (
@@ -106,15 +101,7 @@ Target.create "tags" (fun _ ->
             let esc = escapeDashes event.Name
             s.AppendLine(sprintf """    /// Create a handler for HTML event `%s`.""" event.Name)
              .AppendLine(sprintf """    let %s (callback: UI%sEventArgs -> unit) : Attr =""" esc event.Type)
-             .AppendLine(sprintf """        event%s "%s" callback""" event.Type esc)
-             .AppendLine()
-        )
-        >> replace eventTypes "EVENTTYPES" (fun s event ->
-            s.AppendLine(sprintf """    /// Create a handler for a HTML event of type UI%sEventArgs.""" event)
-             .AppendLine(sprintf """    let event%s eventName (callback: UI%sEventArgs -> unit) : Attr =""" event event)
-             .AppendLine(        """        ExplicitAttr (fun builder sequence receiver ->""")
-             .AppendLine(sprintf """            builder.AddAttribute<UI%sEventArgs>(sequence, "on" + eventName,""" event)
-             .AppendLine(sprintf """                EventCallback.Factory.Create(receiver, Action<UI%sEventArgs>(callback))))""" event)
+             .AppendLine(sprintf """        event "%s" callback""" esc)
              .AppendLine()
         )
     )
