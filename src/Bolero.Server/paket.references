@@ -1,7 +1,3 @@
 FSharp.Core
-Microsoft.AspNetCore.Http.Abstractions
-Microsoft.Extensions.DependencyInjection.Abstractions
-Microsoft.AspNetCore.Hosting.Abstractions
-Microsoft.AspNetCore.Authorization
-Microsoft.AspNetCore.Authentication
 Nerdbank.GitVersioning
+TaskBuilder.fs

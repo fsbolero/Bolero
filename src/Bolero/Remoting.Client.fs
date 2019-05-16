@@ -76,8 +76,15 @@ module Cmd =
 /// Provides remote service implementations when running in WebAssembly.
 type ClientRemoteProvider(http: HttpClient) =
 
-    let normalizeBasePath(basePath: string) =
-        basePath + (if basePath.EndsWith "/" then "" else "/")
+    let normalizeBasePath (basePath: string) =
+        let baseAddress = http.BaseAddress.OriginalString
+        let sb = StringBuilder(baseAddress)
+        match baseAddress.EndsWith("/"), basePath.StartsWith("/") with
+        | true, true -> sb.Append(basePath.[1..]) |> ignore
+        | false, false -> sb.Append('/').Append(basePath) |> ignore
+        | _ -> sb.Append(basePath) |> ignore
+        if not (basePath.EndsWith("/")) then sb.Append('/') |> ignore
+        sb.ToString()
 
     let send (method: HttpMethod) (requestUri: string) (content: obj) =
         let content =

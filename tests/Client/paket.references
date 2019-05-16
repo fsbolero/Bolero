@@ -1,4 +1,5 @@
+Microsoft.AspNetCore.Blazor
 Microsoft.AspNetCore.Blazor.Build
-Microsoft.AspNetCore.Blazor.Cli
+Microsoft.AspNetCore.Blazor.DevServer
 FSharp.Core
 Elmish

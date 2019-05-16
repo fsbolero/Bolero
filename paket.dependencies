@@ -1,24 +1,22 @@
-version 5.193.0
+version 5.203.2
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: netstandard2.0, netcoreapp2.1
+framework: netstandard2.0, netcoreapp3.0
 
-nuget Blazor.Extensions.SignalR ~> 0.1.8
 nuget FsCheck.NUnit ~> 2.12
 nuget FSharp.Core ~> 4.5.0
 nuget HtmlAgilityPack ~> 1.8.0
-nuget Microsoft.AspNetCore.App ~> 2.1.0
-nuget Microsoft.AspNetCore.Authorization ~> 2.1.0
-nuget Microsoft.AspNetCore.Authentication ~> 2.1.0
-nuget Microsoft.AspNetCore.Authentication.Cookies ~> 2.1.0
-nuget Microsoft.AspNetCore.Blazor.Browser ~> 0.7.0
-nuget Microsoft.AspNetCore.Blazor.Build ~> 0.7.0
-nuget Microsoft.AspNetCore.Blazor.Server ~> 0.7.0
-clitool Microsoft.AspNetCore.Blazor.Cli ~> 0.7.0
-nuget Microsoft.JSInterop ~> 0.7.0
+nuget Microsoft.AspNetCore.Blazor 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.Blazor.Build 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.Blazor.Server 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.Blazor.DevServer 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.Components 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.Components.Browser 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.NodeServices 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.SpaServices 3.0.0-preview5-19227-01
+nuget Microsoft.AspNetCore.SpaServices.Extensions 3.0.0-preview5-19227-01
+nuget System.Runtime.CompilerServices.Unsafe 4.6.0-preview5.19224.8
 nuget Microsoft.NET.Test.Sdk 15.8.0
-nuget Mono.WebAssembly.Interop ~> 0.7.0
-clitool dotnet-fake ~> 5.0
 nuget Elmish >= 2.0
 nuget Microsoft.Build.Utilities.Core ~> 15.0
 nuget Mono.Cecil ~> 0.10.0
@@ -31,6 +29,8 @@ nuget Selenium.WebDriver.ChromeDriver
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 nuget Nerdbank.GitVersioning copy_local: true
+nuget TaskBuilder.fs
+nuget Blazor.Extensions.SignalR ~> 0.1.9
 
 group fake
 source https://api.nuget.org/v3/index.json

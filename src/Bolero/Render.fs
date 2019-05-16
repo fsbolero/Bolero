@@ -25,14 +25,14 @@ open System.Collections.Generic
 open FSharp.Reflection
 
 #if !DEBUG_RENDERER
-open Microsoft.AspNetCore.Blazor
-open Microsoft.AspNetCore.Blazor.RenderTree
+open Microsoft.AspNetCore.Components
+open Microsoft.AspNetCore.Components.RenderTree
 #else
 open System.IO
 
-type BlazorTreeBuilder = Microsoft.AspNetCore.Blazor.RenderTree.RenderTreeBuilder
-type BlazorFragment = Microsoft.AspNetCore.Blazor.RenderFragment
-type ElementRef = Microsoft.AspNetCore.Blazor.ElementRef
+type BlazorTreeBuilder = Microsoft.AspNetCore.Components.RenderTree.RenderTreeBuilder
+type BlazorFragment = Microsoft.AspNetCore.Components.RenderFragment
+type ElementRef = Microsoft.AspNetCore.Components.ElementRef
 
 type RenderTreeBuilder(b: BlazorTreeBuilder, indent: int, out: TextWriter) =
     let mutable indent = indent
@@ -106,7 +106,7 @@ and RenderFragment(f: RenderTreeBuilder -> unit) =
 #endif
 
 /// Render `node` into `builder` at `sequence` number.
-let rec renderNode (builder: RenderTreeBuilder) (matchCache: Type -> int * (obj -> int)) sequence node =
+let rec renderNode (currentComp: obj) (builder: RenderTreeBuilder) (matchCache: Type -> int * (obj -> int)) sequence node =
     match node with
     | Empty -> sequence
     | Text text ->
@@ -116,44 +116,44 @@ let rec renderNode (builder: RenderTreeBuilder) (matchCache: Type -> int * (obj 
         builder.AddMarkupContent(sequence, html)
         sequence + 1
     | Concat nodes ->
-        List.fold (renderNode builder matchCache) sequence nodes
+        List.fold (renderNode currentComp builder matchCache) sequence nodes
     | Cond (cond, node) ->
         builder.AddContent(sequence + (if cond then 1 else 0),
-            RenderFragment(fun tb -> renderNode tb matchCache 0 node |> ignore))
+            RenderFragment(fun tb -> renderNode currentComp tb matchCache 0 node |> ignore))
         sequence + 2
     | Match (unionType, value, node) ->
         let caseCount, getMatchedCase = matchCache unionType
         let matchedCase = getMatchedCase value
         builder.AddContent(sequence + matchedCase,
-            RenderFragment(fun tb -> renderNode tb matchCache 0 node |> ignore))
+            RenderFragment(fun tb -> renderNode currentComp tb matchCache 0 node |> ignore))
         sequence + caseCount
     | ForEach nodes ->
         builder.AddContent(sequence,
-            RenderFragment(fun tb -> List.iter (renderNode tb matchCache 0 >> ignore) nodes))
+            RenderFragment(fun tb -> List.iter (renderNode currentComp tb matchCache 0 >> ignore) nodes))
         sequence + 1
     | Elt (name, attrs, children) ->
         builder.OpenElement(sequence, name)
         let sequence = sequence + 1
-        let sequence = renderAttrs builder sequence attrs
-        let sequence = List.fold (renderNode builder matchCache) sequence children
+        let sequence = renderAttrs currentComp builder sequence attrs
+        let sequence = List.fold (renderNode currentComp builder matchCache) sequence children
         builder.CloseElement()
         sequence
     | Component (comp, attrs, children) ->
         builder.OpenComponent(sequence, comp)
         let sequence = sequence + 1
-        let sequence = renderAttrs builder sequence attrs
+        let sequence = renderAttrs currentComp builder sequence attrs
         let hasChildren = not (List.isEmpty children)
         if hasChildren then
             let frag = RenderFragment(fun builder ->
                 builder.AddContent(sequence + 1, RenderFragment(fun builder ->
-                    List.fold (renderNode builder matchCache) 0 children
+                    List.fold (renderNode currentComp builder matchCache) 0 children
                     |> ignore)))
             builder.AddAttribute(sequence, "ChildContent", frag)
         builder.CloseComponent()
         sequence + (if hasChildren then 2 else 0)
 
 /// Render a list of attributes into `builder` at `sequence` number.
-and renderAttrs builder sequence attrs =
+and renderAttrs currentComp builder sequence attrs =
     // AddAttribute calls want to be just after the OpenElement/OpenComponent call,
     // so we make sure that AddElementReferenceCapture is called last.
     let rec run attrs =
@@ -165,6 +165,10 @@ and renderAttrs builder sequence attrs =
                 (sequence + 1, ref)
             | Attrs attrs ->
                 run attrs
+            | ExplicitAttr setAttr ->
+                setAttr builder sequence currentComp
+                //builder.AddAttribute(sequence, name, mkCallback currentComp)
+                (sequence + 1, ref)
             | Ref ref ->
                 (sequence, Some ref)
         )
@@ -175,7 +179,7 @@ and renderAttrs builder sequence attrs =
     | sequence, None ->
         sequence
 
-let RenderNode builder (matchCache: Dictionary<Type, _>) node =
+let RenderNode currentComp builder (matchCache: Dictionary<Type, _>) node =
     let getMatchParams (ty: Type) =
         match matchCache.TryGetValue(ty) with
         | true, x -> x
@@ -188,5 +192,5 @@ let RenderNode builder (matchCache: Dictionary<Type, _>) node =
 #if DEBUG_RENDERER
     let builder = RenderTreeBuilder(builder, 0, stdout)
 #endif
-    renderNode builder getMatchParams 0 node
+    renderNode currentComp builder getMatchParams 0 node
     |> ignore

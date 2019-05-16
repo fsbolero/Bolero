@@ -23,7 +23,7 @@ module Bolero.Templating.CodeGen
 open System
 open System.Reflection
 open FSharp.Quotations
-open Microsoft.AspNetCore.Blazor
+open Microsoft.AspNetCore.Components
 open ProviderImplementation.ProvidedTypes
 open Bolero
 open Bolero.TemplatingInternals

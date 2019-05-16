@@ -22,14 +22,14 @@ namespace Bolero
 
 open System
 #if !IS_DESIGNTIME
-open Microsoft.AspNetCore.Blazor
-open Microsoft.AspNetCore.Blazor.Components
+open Microsoft.AspNetCore.Components
 #endif
 
 /// HTML attribute or Blazor component parameter.
 type Attr =
     | Attr of string * obj
     | Attrs of list<Attr>
+    | ExplicitAttr of (Microsoft.AspNetCore.Components.RenderTree.RenderTreeBuilder -> int -> obj -> unit)
 #if !IS_DESIGNTIME
     | Ref of Action<ElementRef>
 #endif

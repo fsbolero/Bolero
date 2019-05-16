@@ -21,7 +21,7 @@
 module rec Bolero.Html
 
 open System
-open Microsoft.AspNetCore.Blazor
+open Microsoft.AspNetCore.Components
 
 /// Create an HTML text node.
 let text str = Text str
@@ -54,7 +54,7 @@ let forEach<'T> (items: seq<'T>) (mkNode: 'T -> Node) =
     Node.ForEach [for n in items -> mkNode n]
 
 /// Create a fragment from a Blazor component.
-let comp<'T when 'T :> Components.IComponent> attrs children =
+let comp<'T when 'T :> IComponent> attrs children =
     Node.BlazorComponent<'T>(attrs, children)
 
 /// Create a fragment from an Elmish component.
@@ -968,387 +968,394 @@ module attr =
 // END ATTRS
 
 module on =
-    open Microsoft.AspNetCore.Blazor.Components
 
-    let event<'T when 'T :> UIEventArgs> event (callback: 'T -> unit) =
-        "on" + event => BindMethods.GetEventHandlerValue callback
+    /// [omit]
+    [<CompilerMessageAttribute("This method is intended for use in generated code only.", 10001, IsHidden=true, IsError=false)>]
+    let inline eventInline< ^T, ^F when ^T :> UIEventArgs and ^F : (member Create : obj * Action< ^T> -> EventCallback< ^T>)> factory eventName (callback: ^T -> unit) : Attr =
+        ExplicitAttr (fun builder sequence receiver ->
+            builder.AddAttribute< ^T>(sequence, "on" + eventName,
+                (^F : (member Create : obj * Action< ^T> -> EventCallback< ^T>)(factory, receiver, Action< ^T>(callback)))
+            ))
+
+    /// Create a handler for a HTML event of type UIEventArgs.
+    let inline event< ^T when ^T :> UIEventArgs> eventName (callback: ^T -> unit) =
+        eventInline< ^T, _> EventCallback.Factory eventName callback
 
 // BEGIN EVENTS
     /// Create a handler for HTML event `focus`.
     let focus (callback: UIFocusEventArgs -> unit) : Attr =
-        "onfocus" => BindMethods.GetEventHandlerValue callback
+        event "focus" callback
 
     /// Create a handler for HTML event `blur`.
     let blur (callback: UIFocusEventArgs -> unit) : Attr =
-        "onblur" => BindMethods.GetEventHandlerValue callback
+        event "blur" callback
 
     /// Create a handler for HTML event `focusin`.
     let focusin (callback: UIFocusEventArgs -> unit) : Attr =
-        "onfocusin" => BindMethods.GetEventHandlerValue callback
+        event "focusin" callback
 
     /// Create a handler for HTML event `focusout`.
     let focusout (callback: UIFocusEventArgs -> unit) : Attr =
-        "onfocusout" => BindMethods.GetEventHandlerValue callback
+        event "focusout" callback
 
     /// Create a handler for HTML event `mouseover`.
     let mouseover (callback: UIMouseEventArgs -> unit) : Attr =
-        "onmouseover" => BindMethods.GetEventHandlerValue callback
+        event "mouseover" callback
 
     /// Create a handler for HTML event `mouseout`.
     let mouseout (callback: UIMouseEventArgs -> unit) : Attr =
-        "onmouseout" => BindMethods.GetEventHandlerValue callback
+        event "mouseout" callback
 
     /// Create a handler for HTML event `mousemove`.
     let mousemove (callback: UIMouseEventArgs -> unit) : Attr =
-        "onmousemove" => BindMethods.GetEventHandlerValue callback
+        event "mousemove" callback
 
     /// Create a handler for HTML event `mousedown`.
     let mousedown (callback: UIMouseEventArgs -> unit) : Attr =
-        "onmousedown" => BindMethods.GetEventHandlerValue callback
+        event "mousedown" callback
 
     /// Create a handler for HTML event `mouseup`.
     let mouseup (callback: UIMouseEventArgs -> unit) : Attr =
-        "onmouseup" => BindMethods.GetEventHandlerValue callback
+        event "mouseup" callback
 
     /// Create a handler for HTML event `click`.
     let click (callback: UIMouseEventArgs -> unit) : Attr =
-        "onclick" => BindMethods.GetEventHandlerValue callback
+        event "click" callback
 
     /// Create a handler for HTML event `dblclick`.
     let dblclick (callback: UIMouseEventArgs -> unit) : Attr =
-        "ondblclick" => BindMethods.GetEventHandlerValue callback
+        event "dblclick" callback
 
     /// Create a handler for HTML event `wheel`.
     let wheel (callback: UIMouseEventArgs -> unit) : Attr =
-        "onwheel" => BindMethods.GetEventHandlerValue callback
+        event "wheel" callback
 
     /// Create a handler for HTML event `mousewheel`.
     let mousewheel (callback: UIMouseEventArgs -> unit) : Attr =
-        "onmousewheel" => BindMethods.GetEventHandlerValue callback
+        event "mousewheel" callback
 
     /// Create a handler for HTML event `contextmenu`.
     let contextmenu (callback: UIMouseEventArgs -> unit) : Attr =
-        "oncontextmenu" => BindMethods.GetEventHandlerValue callback
+        event "contextmenu" callback
 
     /// Create a handler for HTML event `drag`.
     let drag (callback: UIDragEventArgs -> unit) : Attr =
-        "ondrag" => BindMethods.GetEventHandlerValue callback
+        event "drag" callback
 
     /// Create a handler for HTML event `dragend`.
     let dragend (callback: UIDragEventArgs -> unit) : Attr =
-        "ondragend" => BindMethods.GetEventHandlerValue callback
+        event "dragend" callback
 
     /// Create a handler for HTML event `dragenter`.
     let dragenter (callback: UIDragEventArgs -> unit) : Attr =
-        "ondragenter" => BindMethods.GetEventHandlerValue callback
+        event "dragenter" callback
 
     /// Create a handler for HTML event `dragleave`.
     let dragleave (callback: UIDragEventArgs -> unit) : Attr =
-        "ondragleave" => BindMethods.GetEventHandlerValue callback
+        event "dragleave" callback
 
     /// Create a handler for HTML event `dragover`.
     let dragover (callback: UIDragEventArgs -> unit) : Attr =
-        "ondragover" => BindMethods.GetEventHandlerValue callback
+        event "dragover" callback
 
     /// Create a handler for HTML event `dragstart`.
     let dragstart (callback: UIDragEventArgs -> unit) : Attr =
-        "ondragstart" => BindMethods.GetEventHandlerValue callback
+        event "dragstart" callback
 
     /// Create a handler for HTML event `drop`.
     let drop (callback: UIDragEventArgs -> unit) : Attr =
-        "ondrop" => BindMethods.GetEventHandlerValue callback
+        event "drop" callback
 
     /// Create a handler for HTML event `keydown`.
     let keydown (callback: UIKeyboardEventArgs -> unit) : Attr =
-        "onkeydown" => BindMethods.GetEventHandlerValue callback
+        event "keydown" callback
 
     /// Create a handler for HTML event `keyup`.
     let keyup (callback: UIKeyboardEventArgs -> unit) : Attr =
-        "onkeyup" => BindMethods.GetEventHandlerValue callback
+        event "keyup" callback
 
     /// Create a handler for HTML event `keypress`.
     let keypress (callback: UIKeyboardEventArgs -> unit) : Attr =
-        "onkeypress" => BindMethods.GetEventHandlerValue callback
+        event "keypress" callback
 
     /// Create a handler for HTML event `change`.
     let change (callback: UIChangeEventArgs -> unit) : Attr =
-        "onchange" => BindMethods.GetEventHandlerValue callback
+        event "change" callback
 
     /// Create a handler for HTML event `input`.
     let input (callback: UIChangeEventArgs -> unit) : Attr =
-        "oninput" => BindMethods.GetEventHandlerValue callback
+        event "input" callback
 
     /// Create a handler for HTML event `invalid`.
     let invalid (callback: UIEventArgs -> unit) : Attr =
-        "oninvalid" => BindMethods.GetEventHandlerValue callback
+        event "invalid" callback
 
     /// Create a handler for HTML event `reset`.
     let reset (callback: UIEventArgs -> unit) : Attr =
-        "onreset" => BindMethods.GetEventHandlerValue callback
+        event "reset" callback
 
     /// Create a handler for HTML event `select`.
     let select (callback: UIEventArgs -> unit) : Attr =
-        "onselect" => BindMethods.GetEventHandlerValue callback
+        event "select" callback
 
     /// Create a handler for HTML event `selectstart`.
     let selectstart (callback: UIEventArgs -> unit) : Attr =
-        "onselectstart" => BindMethods.GetEventHandlerValue callback
+        event "selectstart" callback
 
     /// Create a handler for HTML event `selectionchange`.
     let selectionchange (callback: UIEventArgs -> unit) : Attr =
-        "onselectionchange" => BindMethods.GetEventHandlerValue callback
+        event "selectionchange" callback
 
     /// Create a handler for HTML event `submit`.
     let submit (callback: UIEventArgs -> unit) : Attr =
-        "onsubmit" => BindMethods.GetEventHandlerValue callback
+        event "submit" callback
 
     /// Create a handler for HTML event `beforecopy`.
     let beforecopy (callback: UIEventArgs -> unit) : Attr =
-        "onbeforecopy" => BindMethods.GetEventHandlerValue callback
+        event "beforecopy" callback
 
     /// Create a handler for HTML event `beforecut`.
     let beforecut (callback: UIEventArgs -> unit) : Attr =
-        "onbeforecut" => BindMethods.GetEventHandlerValue callback
+        event "beforecut" callback
 
     /// Create a handler for HTML event `beforepaste`.
     let beforepaste (callback: UIEventArgs -> unit) : Attr =
-        "onbeforepaste" => BindMethods.GetEventHandlerValue callback
+        event "beforepaste" callback
 
     /// Create a handler for HTML event `copy`.
     let copy (callback: UIClipboardEventArgs -> unit) : Attr =
-        "oncopy" => BindMethods.GetEventHandlerValue callback
+        event "copy" callback
 
     /// Create a handler for HTML event `cut`.
     let cut (callback: UIClipboardEventArgs -> unit) : Attr =
-        "oncut" => BindMethods.GetEventHandlerValue callback
+        event "cut" callback
 
     /// Create a handler for HTML event `paste`.
     let paste (callback: UIClipboardEventArgs -> unit) : Attr =
-        "onpaste" => BindMethods.GetEventHandlerValue callback
+        event "paste" callback
 
     /// Create a handler for HTML event `touchcancel`.
     let touchcancel (callback: UITouchEventArgs -> unit) : Attr =
-        "ontouchcancel" => BindMethods.GetEventHandlerValue callback
+        event "touchcancel" callback
 
     /// Create a handler for HTML event `touchend`.
     let touchend (callback: UITouchEventArgs -> unit) : Attr =
-        "ontouchend" => BindMethods.GetEventHandlerValue callback
+        event "touchend" callback
 
     /// Create a handler for HTML event `touchmove`.
     let touchmove (callback: UITouchEventArgs -> unit) : Attr =
-        "ontouchmove" => BindMethods.GetEventHandlerValue callback
+        event "touchmove" callback
 
     /// Create a handler for HTML event `touchstart`.
     let touchstart (callback: UITouchEventArgs -> unit) : Attr =
-        "ontouchstart" => BindMethods.GetEventHandlerValue callback
+        event "touchstart" callback
 
     /// Create a handler for HTML event `touchenter`.
     let touchenter (callback: UITouchEventArgs -> unit) : Attr =
-        "ontouchenter" => BindMethods.GetEventHandlerValue callback
+        event "touchenter" callback
 
     /// Create a handler for HTML event `touchleave`.
     let touchleave (callback: UITouchEventArgs -> unit) : Attr =
-        "ontouchleave" => BindMethods.GetEventHandlerValue callback
+        event "touchleave" callback
 
     /// Create a handler for HTML event `pointercapture`.
     let pointercapture (callback: UIPointerEventArgs -> unit) : Attr =
-        "onpointercapture" => BindMethods.GetEventHandlerValue callback
+        event "pointercapture" callback
 
     /// Create a handler for HTML event `lostpointercapture`.
     let lostpointercapture (callback: UIPointerEventArgs -> unit) : Attr =
-        "onlostpointercapture" => BindMethods.GetEventHandlerValue callback
+        event "lostpointercapture" callback
 
     /// Create a handler for HTML event `pointercancel`.
     let pointercancel (callback: UIPointerEventArgs -> unit) : Attr =
-        "onpointercancel" => BindMethods.GetEventHandlerValue callback
+        event "pointercancel" callback
 
     /// Create a handler for HTML event `pointerdown`.
     let pointerdown (callback: UIPointerEventArgs -> unit) : Attr =
-        "onpointerdown" => BindMethods.GetEventHandlerValue callback
+        event "pointerdown" callback
 
     /// Create a handler for HTML event `pointerenter`.
     let pointerenter (callback: UIPointerEventArgs -> unit) : Attr =
-        "onpointerenter" => BindMethods.GetEventHandlerValue callback
+        event "pointerenter" callback
 
     /// Create a handler for HTML event `pointerleave`.
     let pointerleave (callback: UIPointerEventArgs -> unit) : Attr =
-        "onpointerleave" => BindMethods.GetEventHandlerValue callback
+        event "pointerleave" callback
 
     /// Create a handler for HTML event `pointermove`.
     let pointermove (callback: UIPointerEventArgs -> unit) : Attr =
-        "onpointermove" => BindMethods.GetEventHandlerValue callback
+        event "pointermove" callback
 
     /// Create a handler for HTML event `pointerout`.
     let pointerout (callback: UIPointerEventArgs -> unit) : Attr =
-        "onpointerout" => BindMethods.GetEventHandlerValue callback
+        event "pointerout" callback
 
     /// Create a handler for HTML event `pointerover`.
     let pointerover (callback: UIPointerEventArgs -> unit) : Attr =
-        "onpointerover" => BindMethods.GetEventHandlerValue callback
+        event "pointerover" callback
 
     /// Create a handler for HTML event `pointerup`.
     let pointerup (callback: UIPointerEventArgs -> unit) : Attr =
-        "onpointerup" => BindMethods.GetEventHandlerValue callback
+        event "pointerup" callback
 
     /// Create a handler for HTML event `canplay`.
     let canplay (callback: UIEventArgs -> unit) : Attr =
-        "oncanplay" => BindMethods.GetEventHandlerValue callback
+        event "canplay" callback
 
     /// Create a handler for HTML event `canplaythrough`.
     let canplaythrough (callback: UIEventArgs -> unit) : Attr =
-        "oncanplaythrough" => BindMethods.GetEventHandlerValue callback
+        event "canplaythrough" callback
 
     /// Create a handler for HTML event `cuechange`.
     let cuechange (callback: UIEventArgs -> unit) : Attr =
-        "oncuechange" => BindMethods.GetEventHandlerValue callback
+        event "cuechange" callback
 
     /// Create a handler for HTML event `durationchange`.
     let durationchange (callback: UIEventArgs -> unit) : Attr =
-        "ondurationchange" => BindMethods.GetEventHandlerValue callback
+        event "durationchange" callback
 
     /// Create a handler for HTML event `emptied`.
     let emptied (callback: UIEventArgs -> unit) : Attr =
-        "onemptied" => BindMethods.GetEventHandlerValue callback
+        event "emptied" callback
 
     /// Create a handler for HTML event `pause`.
     let pause (callback: UIEventArgs -> unit) : Attr =
-        "onpause" => BindMethods.GetEventHandlerValue callback
+        event "pause" callback
 
     /// Create a handler for HTML event `play`.
     let play (callback: UIEventArgs -> unit) : Attr =
-        "onplay" => BindMethods.GetEventHandlerValue callback
+        event "play" callback
 
     /// Create a handler for HTML event `playing`.
     let playing (callback: UIEventArgs -> unit) : Attr =
-        "onplaying" => BindMethods.GetEventHandlerValue callback
+        event "playing" callback
 
     /// Create a handler for HTML event `ratechange`.
     let ratechange (callback: UIEventArgs -> unit) : Attr =
-        "onratechange" => BindMethods.GetEventHandlerValue callback
+        event "ratechange" callback
 
     /// Create a handler for HTML event `seeked`.
     let seeked (callback: UIEventArgs -> unit) : Attr =
-        "onseeked" => BindMethods.GetEventHandlerValue callback
+        event "seeked" callback
 
     /// Create a handler for HTML event `seeking`.
     let seeking (callback: UIEventArgs -> unit) : Attr =
-        "onseeking" => BindMethods.GetEventHandlerValue callback
+        event "seeking" callback
 
     /// Create a handler for HTML event `stalled`.
     let stalled (callback: UIEventArgs -> unit) : Attr =
-        "onstalled" => BindMethods.GetEventHandlerValue callback
+        event "stalled" callback
 
     /// Create a handler for HTML event `stop`.
     let stop (callback: UIEventArgs -> unit) : Attr =
-        "onstop" => BindMethods.GetEventHandlerValue callback
+        event "stop" callback
 
     /// Create a handler for HTML event `suspend`.
     let suspend (callback: UIEventArgs -> unit) : Attr =
-        "onsuspend" => BindMethods.GetEventHandlerValue callback
+        event "suspend" callback
 
     /// Create a handler for HTML event `timeupdate`.
     let timeupdate (callback: UIEventArgs -> unit) : Attr =
-        "ontimeupdate" => BindMethods.GetEventHandlerValue callback
+        event "timeupdate" callback
 
     /// Create a handler for HTML event `volumechange`.
     let volumechange (callback: UIEventArgs -> unit) : Attr =
-        "onvolumechange" => BindMethods.GetEventHandlerValue callback
+        event "volumechange" callback
 
     /// Create a handler for HTML event `waiting`.
     let waiting (callback: UIEventArgs -> unit) : Attr =
-        "onwaiting" => BindMethods.GetEventHandlerValue callback
+        event "waiting" callback
 
     /// Create a handler for HTML event `loadstart`.
     let loadstart (callback: UIProgressEventArgs -> unit) : Attr =
-        "onloadstart" => BindMethods.GetEventHandlerValue callback
+        event "loadstart" callback
 
     /// Create a handler for HTML event `timeout`.
     let timeout (callback: UIProgressEventArgs -> unit) : Attr =
-        "ontimeout" => BindMethods.GetEventHandlerValue callback
+        event "timeout" callback
 
     /// Create a handler for HTML event `abort`.
     let abort (callback: UIProgressEventArgs -> unit) : Attr =
-        "onabort" => BindMethods.GetEventHandlerValue callback
+        event "abort" callback
 
     /// Create a handler for HTML event `load`.
     let load (callback: UIProgressEventArgs -> unit) : Attr =
-        "onload" => BindMethods.GetEventHandlerValue callback
+        event "load" callback
 
     /// Create a handler for HTML event `loadend`.
     let loadend (callback: UIProgressEventArgs -> unit) : Attr =
-        "onloadend" => BindMethods.GetEventHandlerValue callback
+        event "loadend" callback
 
     /// Create a handler for HTML event `progress`.
     let progress (callback: UIProgressEventArgs -> unit) : Attr =
-        "onprogress" => BindMethods.GetEventHandlerValue callback
+        event "progress" callback
 
     /// Create a handler for HTML event `error`.
     let error (callback: UIProgressEventArgs -> unit) : Attr =
-        "onerror" => BindMethods.GetEventHandlerValue callback
+        event "error" callback
 
     /// Create a handler for HTML event `activate`.
     let activate (callback: UIEventArgs -> unit) : Attr =
-        "onactivate" => BindMethods.GetEventHandlerValue callback
+        event "activate" callback
 
     /// Create a handler for HTML event `beforeactivate`.
     let beforeactivate (callback: UIEventArgs -> unit) : Attr =
-        "onbeforeactivate" => BindMethods.GetEventHandlerValue callback
+        event "beforeactivate" callback
 
     /// Create a handler for HTML event `beforedeactivate`.
     let beforedeactivate (callback: UIEventArgs -> unit) : Attr =
-        "onbeforedeactivate" => BindMethods.GetEventHandlerValue callback
+        event "beforedeactivate" callback
 
     /// Create a handler for HTML event `deactivate`.
     let deactivate (callback: UIEventArgs -> unit) : Attr =
-        "ondeactivate" => BindMethods.GetEventHandlerValue callback
+        event "deactivate" callback
 
     /// Create a handler for HTML event `ended`.
     let ended (callback: UIEventArgs -> unit) : Attr =
-        "onended" => BindMethods.GetEventHandlerValue callback
+        event "ended" callback
 
     /// Create a handler for HTML event `fullscreenchange`.
     let fullscreenchange (callback: UIEventArgs -> unit) : Attr =
-        "onfullscreenchange" => BindMethods.GetEventHandlerValue callback
+        event "fullscreenchange" callback
 
     /// Create a handler for HTML event `fullscreenerror`.
     let fullscreenerror (callback: UIEventArgs -> unit) : Attr =
-        "onfullscreenerror" => BindMethods.GetEventHandlerValue callback
+        event "fullscreenerror" callback
 
     /// Create a handler for HTML event `loadeddata`.
     let loadeddata (callback: UIEventArgs -> unit) : Attr =
-        "onloadeddata" => BindMethods.GetEventHandlerValue callback
+        event "loadeddata" callback
 
     /// Create a handler for HTML event `loadedmetadata`.
     let loadedmetadata (callback: UIEventArgs -> unit) : Attr =
-        "onloadedmetadata" => BindMethods.GetEventHandlerValue callback
+        event "loadedmetadata" callback
 
     /// Create a handler for HTML event `pointerlockchange`.
     let pointerlockchange (callback: UIEventArgs -> unit) : Attr =
-        "onpointerlockchange" => BindMethods.GetEventHandlerValue callback
+        event "pointerlockchange" callback
 
     /// Create a handler for HTML event `pointerlockerror`.
     let pointerlockerror (callback: UIEventArgs -> unit) : Attr =
-        "onpointerlockerror" => BindMethods.GetEventHandlerValue callback
+        event "pointerlockerror" callback
 
     /// Create a handler for HTML event `readystatechange`.
     let readystatechange (callback: UIEventArgs -> unit) : Attr =
-        "onreadystatechange" => BindMethods.GetEventHandlerValue callback
+        event "readystatechange" callback
 
     /// Create a handler for HTML event `scroll`.
     let scroll (callback: UIEventArgs -> unit) : Attr =
-        "onscroll" => BindMethods.GetEventHandlerValue callback
+        event "scroll" callback
 
 // END EVENTS
 
 /// Two-way binding for HTML input elements.
 module bind =
-    open Microsoft.AspNetCore.Blazor.Components
 
     let private attr<'T, 'U> (valueName: string) (eventName: string) (value: 'T) (callback: 'U -> unit) =
         Attrs [
             valueName => value
-            eventName => BindMethods.GetEventHandlerValue(
-                fun (e: UIChangeEventArgs) -> callback (unbox<'U> e.Value))
+            on.event eventName (fun (e: UIChangeEventArgs) ->
+                callback (unbox<'U> e.Value))
         ]
 
     let inline private attrParseValue< ^T when ^T : (static member TryParse : string * byref< ^T> -> bool)>
@@ -1360,34 +1367,34 @@ module bind =
 
     /// Bind a boolean to the value of a checkbox.
     let ``checked`` (value: bool) (callback: bool -> unit) =
-        attr<bool, bool> "checked" "onchange" value callback
+        attr<bool, bool> "checked" "change" value callback
 
     /// Bind a string to the value of an input.
     /// The value is updated on the oninput event.
     let input (value: string) (callback: string -> unit) =
-        attr<string, string> "value" "oninput" value callback
+        attr<string, string> "value" "input" value callback
 
     /// Bind a string to the value of an input.
     /// The value is updated on the onchange event.
     let change (value: string) (callback: string -> unit) =
-        attr<string, string> "value" "onchange" value callback
+        attr<string, string> "value" "change" value callback
 
     /// Bind an integer to the value of an input.
     /// The value is updated on the oninput event.
     let inputInt (value: int) (callback: int -> unit) =
-        attrParseValue<int> "oninput" value callback
+        attrParseValue<int> "input" value callback
 
     /// Bind an integer to the value of an input.
     /// The value is updated on the onchange event.
     let changeInt (value: int) (callback: int -> unit) =
-        attrParseValue<int> "onchange" value callback
+        attrParseValue<int> "change" value callback
 
     /// Bind a float to the value of an input.
     /// The value is updated on the oninput event.
     let inputFloat (value: float) (callback: float -> unit) =
-        attrParseValue<float> "oninput" value callback
+        attrParseValue<float> "input" value callback
 
     /// Bind a float to the value of an input.
     /// The value is updated on the onchange event.
     let changeFloat (value: float) (callback: float -> unit) =
-        attrParseValue<float> "onchange" value callback
+        attrParseValue<float> "change" value callback

@@ -22,14 +22,14 @@ namespace Bolero.Test.Client
 
 open Microsoft.AspNetCore.Blazor.Hosting
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.AspNetCore.Blazor.Builder
+open Microsoft.AspNetCore.Components.Builder
 
 type Startup() =
 
     member __.ConfigureServices(services: IServiceCollection) =
         ()
 
-    member __.Configure(app: IBlazorApplicationBuilder) =
+    member __.Configure(app: IComponentsApplicationBuilder) =
         app.AddComponent<Main.MyApp>("#main")
 
 module Program =

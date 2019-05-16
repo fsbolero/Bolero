@@ -101,7 +101,7 @@ Target.create "tags" (fun _ ->
             let esc = escapeDashes event.Name
             s.AppendLine(sprintf """    /// Create a handler for HTML event `%s`.""" event.Name)
              .AppendLine(sprintf """    let %s (callback: UI%sEventArgs -> unit) : Attr =""" esc event.Type)
-             .AppendLine(sprintf """        "on%s" => BindMethods.GetEventHandlerValue callback""" esc)
+             .AppendLine(sprintf """        event "%s" callback""" esc)
              .AppendLine()
         )
     )

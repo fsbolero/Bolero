@@ -22,7 +22,7 @@ module Bolero.Tests.Client.Templating
 
 open Bolero
 open Bolero.Html
-open Microsoft.AspNetCore.Blazor
+open Microsoft.AspNetCore.Components
 
 type Inline = Template<"""
     <div class="inline">

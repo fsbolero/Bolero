@@ -197,7 +197,7 @@ type MyApp() =
 
 
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.AspNetCore.Blazor.Builder
+open Microsoft.AspNetCore.Components.Builder
 open Microsoft.AspNetCore.Blazor.Hosting
 
 type Startup() =
@@ -206,7 +206,7 @@ type Startup() =
         services.AddRemoting()
         |> ignore
 
-    member __.Configure(app: IBlazorApplicationBuilder) =
+    member __.Configure(app: IComponentsApplicationBuilder) =
         app.AddComponent<MyApp>("#main")
 
 module Program =
