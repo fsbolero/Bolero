@@ -10,4 +10,4 @@ files
 dependencies
     Bolero CURRENTVERSION
     HtmlAgilityPack >= LOCKED:Minor
-#    Blazor.Extensions.SignalR >= LOCKED:Patch
+    Blazor.Extensions.SignalR >= LOCKED:Patch
