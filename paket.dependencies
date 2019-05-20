@@ -10,11 +10,6 @@ nuget Microsoft.AspNetCore.Blazor 3.0.0-preview5-19227-01
 nuget Microsoft.AspNetCore.Blazor.Build 3.0.0-preview5-19227-01
 nuget Microsoft.AspNetCore.Blazor.Server 3.0.0-preview5-19227-01
 nuget Microsoft.AspNetCore.Blazor.DevServer 3.0.0-preview5-19227-01
-nuget Microsoft.AspNetCore.Components 3.0.0-preview5-19227-01
-nuget Microsoft.AspNetCore.Components.Browser 3.0.0-preview5-19227-01
-nuget Microsoft.AspNetCore.NodeServices 3.0.0-preview5-19227-01
-nuget Microsoft.AspNetCore.SpaServices 3.0.0-preview5-19227-01
-nuget Microsoft.AspNetCore.SpaServices.Extensions 3.0.0-preview5-19227-01
 nuget System.Runtime.CompilerServices.Unsafe 4.6.0-preview5.19224.8
 nuget Microsoft.NET.Test.Sdk 15.8.0
 nuget Elmish >= 2.0
