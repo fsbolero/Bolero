@@ -1,13 +1,8 @@
-type file
+type project
 id Bolero.Server
 description
     Server-side component of Bolero: a set of tools and libraries to run F# applications in WebAssembly using Blazor
 authors
     Loic Denuziere
-files
-    ../../build/Release/netcoreapp3.0/Bolero.Templating.Server.dll ==> lib/netcoreapp3.0
-    ../../build/Release/netcoreapp3.0/Bolero.Templating.Server.xml ==> lib/netcoreapp3.0
-    ../../build/Release/netcoreapp3.0/Bolero.Server.dll ==> lib/netcoreapp3.0
-    ../../build/Release/netcoreapp3.0/Bolero.Server.xml ==> lib/netcoreapp3.0
-dependencies
-    Bolero.HotReload CURRENTVERSION
+include-referenced-projects true
+interproject-references fix

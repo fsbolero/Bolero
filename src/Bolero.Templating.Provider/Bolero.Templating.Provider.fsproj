@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <OutputPath>..\..\build\$(Configuration)\typeproviders\fsharp41</OutputPath>
+    <OutputPath>..\Bolero\bin\$(Configuration)\typeproviders\fsharp41</OutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <DefineConstants>IS_DESIGNTIME</DefineConstants>
   </PropertyGroup>

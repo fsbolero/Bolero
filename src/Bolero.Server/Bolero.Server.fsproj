@@ -3,7 +3,6 @@
   <Import Project="..\..\tools\Common.props" />
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <BaseOutputPath>..\..\build</BaseOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <OutputType>Library</OutputType>
   </PropertyGroup>
@@ -14,6 +13,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bolero\Bolero.fsproj" />
+    <ProjectReference Include="..\Bolero.Templating\Bolero.Templating.fsproj" />
+    <ProjectReference Include="..\Bolero.Templating.Server\Bolero.Templating.Server.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

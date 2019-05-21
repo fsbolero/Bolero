@@ -3,7 +3,7 @@
   <Import Project="..\..\tools\Common.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\build\task\$(Configuration)\netstandard2.0\Bolero.Build.dll</BoleroTaskAssemblyPath>
+    <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\src\Bolero.Build\src\$(Configuration)\netstandard2.0\Bolero.Build.dll</BoleroTaskAssemblyPath>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Html.fs" />

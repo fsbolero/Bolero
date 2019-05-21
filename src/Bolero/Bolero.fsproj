@@ -2,7 +2,6 @@
   <Import Project="..\..\tools\Common.props" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <BaseOutputPath>..\..\build</BaseOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- <DefineConstants>DEBUG_RENDERER;$(DefineConstants)</DefineConstants> -->
   </PropertyGroup>

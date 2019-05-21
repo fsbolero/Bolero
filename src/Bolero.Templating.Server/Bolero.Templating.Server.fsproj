@@ -3,7 +3,6 @@
   <Import Project="..\..\tools\Common.props" />
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
-    <BaseOutputPath>..\..\build</BaseOutputPath>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <OutputType>Library</OutputType>
   </PropertyGroup>
