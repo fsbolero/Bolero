@@ -44,34 +44,46 @@ type RemoteHandler<'T when 'T :> IRemoteService>() =
     interface IRemoteHandler with
         member this.Handler = this.Handler :> IRemoteService
 
-module Remote =
+/// Types inheriting from FSharpFunc used to sneak retrievable information into a value of type `a -> b`.
+module internal RemoteInternals =
 
-    let internal context = new ThreadLocal<HttpContext>()
+    type IWithContext =
+        abstract Invoke : HttpContext -> obj
 
-    type internal IWithAuthorization =
+    type WithContext<'req, 'resp>(f: HttpContext -> 'req -> Async<'resp>) =
+        inherit FSharp.Core.FSharpFunc<'req, Async<'resp>>()
+
+        interface IWithContext with
+            member this.Invoke ctx = box (f ctx)
+
+        override this.Invoke(req) = f null req
+
+    type IWithAuthorization =
+        inherit IWithContext
         abstract AuthorizeData : seq<IAuthorizeData>
 
-    type internal WithAuthorization<'req, 'resp>(authData: seq<IAuthorizeData>, f) =
-        inherit FSharp.Core.FSharpFunc<'req, Async<'resp>>()
+    type WithAuthorization<'req, 'resp>(authData: seq<IAuthorizeData>, f) =
+        inherit WithContext<'req, 'resp>(f)
 
         interface IWithAuthorization with
             member this.AuthorizeData = authData
 
-        override this.Invoke(req) = f context.Value req
+open RemoteInternals
+
+module Remote =
 
     /// Give a remote function access to its HttpContext.
-    /// Must be called outside any async {} block.
+    /// Must be used directly as the value of a remote function.
     let withContext (f: HttpContext -> 'req -> Async<'resp>) =
-        () // <-- Forces compiling this into a function-returning function rather than a 2-arg function
-        fun req -> f context.Value req
+        WithContext(f) :> obj :?> ('req -> Async<'resp>)
 
     /// Mark a remote function as requiring authentication with the given policy.
-    /// Must be called outside any async {} block.
+    /// Must be used directly as the value of a remote function.
     let authorizeWith (authData: seq<IAuthorizeData>) (f: HttpContext -> 'req -> Async<'resp>) =
         WithAuthorization(authData, f) :> obj :?> ('req -> Async<'resp>)
 
     /// Mark a remote function as requiring authentication.
-    /// Must be called outside any async {} block.
+    /// Must be used directly as the value of a remote function.
     let authorize (f: HttpContext -> 'req -> Async<'resp>) =
         WithAuthorization([AuthorizeAttribute()], f) :> obj :?> ('req -> Async<'resp>)
 
@@ -89,38 +101,41 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
         let decoder = Json.GetDecoder method.ArgumentType
         let encoder = Json.GetEncoder method.ReturnType
         let meth = ty.GetProperty(method.Name).GetGetMethod().Invoke(handler, [||])
-        let rec getAuthPolicy (meth: obj) =
+        let rec getMethodAndAuthPolicy (meth: obj) =
             match meth with
-            | :? Remote.IWithAuthorization as m ->
+            | :? IWithAuthorization as wa ->
                 if isNull authPolicyProvider then
                     failwithf "Remote method %s.%s is configured for authorization, \
                         but the application has no authorization policy. \
                         Add .AddAuthorization() to your server-side services."
                         ty.FullName method.Name
                 else
-                    AuthorizationPolicy.CombineAsync(authPolicyProvider, m.AuthorizeData)
-                    |> Some
+                    let tAuthPolicy = AuthorizationPolicy.CombineAsync(authPolicyProvider, wa.AuthorizeData)
+                    (wa :> IWithContext).Invoke, Some tAuthPolicy
+            | :? IWithContext as wc ->
+                wc.Invoke, None
             | _ ->
-                // For some reason the WithAuthorization returned by Remote.authorizeWith
+                // For some reason the WithContext returned by withContext and authorizeWith
                 // is wrapped in a closure, so we need to retrieve it.
-                let fields = meth.GetType().GetFields()
-                fields |> Array.tryPick (fun field ->
+                meth.GetType().GetFields()
+                |> Array.tryPick (fun field ->
                     if field.Name.StartsWith("clo") then
-                        getAuthPolicy <| field.GetValue(meth)
+                        Some <| getMethodAndAuthPolicy (field.GetValue(meth))
                     else
                         None
                 )
-        let tAuthPolicy = getAuthPolicy meth
+                |> Option.defaultValue ((fun _ -> meth), None)
+        let getMeth, tAuthPolicy = getMethodAndAuthPolicy meth
         let callMeth = method.FunctionType.GetMethod("Invoke", instanceFlags)
         let output = typeof<RemotingService>.GetMethod("Output", staticFlags)
         let output = output.MakeGenericMethod(method.ReturnType)
         fun (auth: IAuthorizationService) (ctx: HttpContext) ->
+            let meth = getMeth ctx
             let run() =
                 task {
                     use reader = new StreamReader(ctx.Request.Body)
                     let! body = reader.ReadToEndAsync()
                     let arg = Json.Raw.Parse body |> decoder
-                    Remote.context.Value <- ctx
                     let res = callMeth.Invoke(meth, [|arg|])
                     return! output.Invoke(null, [|ctx; encoder; res|]) :?> Task
                 } :> Task
