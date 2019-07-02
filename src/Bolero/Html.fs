@@ -20,6 +20,8 @@
 
 module rec Bolero.Html
 
+#nowarn "10001" // `event` calls `eventInline` which has custom warning
+
 open System
 open Microsoft.AspNetCore.Components
 
