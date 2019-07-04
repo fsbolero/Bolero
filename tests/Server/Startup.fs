@@ -30,13 +30,13 @@ open Bolero.Test
 type Startup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
+        services.AddMvcCore() |> ignore
         services
             .AddSingleton<HtmlEncoder>(HtmlEncoder.Default)
             .AddServerSideBlazor()
         |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
-
         app
             .UseStaticFiles()
             .UseRouting()

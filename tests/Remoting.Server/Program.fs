@@ -71,6 +71,7 @@ type MyApiHandler(log: ILogger<MyApiHandler>) =
 type Startup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
+        services.AddMvcCore() |> ignore
         services
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie()
@@ -82,7 +83,11 @@ type Startup() =
     member this.Configure(app: IApplicationBuilder, env: IHostEnvironment) =
         app.UseAuthentication()
             .UseRemoting()
-            .UseBlazor<Client.Startup>()
+            .UseClientSideBlazorFiles<Client.Startup>()
+            .UseRouting()
+            .UseEndpoints(fun endpoints ->
+                endpoints.MapDefaultControllerRoute() |> ignore
+                endpoints.MapFallbackToClientSideBlazor<Client.Startup>("index.html") |> ignore)
         |> ignore
 
 module Main =
