@@ -15,10 +15,8 @@
     <Compile Include="..\Bolero\TemplatingInternals.fs"
              Link="TemplatingInternals.fs" />
     <Compile Include="Utilities.fs" />
-    <Compile Include="..\Bolero.Templating\Path.fs"
-             Link="Path.fs" />
-    <Compile Include="..\Bolero.Templating\Parsing.fs"
-             Link="Parsing.fs" />
+    <Compile Include="Path.fs" />
+    <Compile Include="Parsing.fs" />
     <Compile Include="ConvertExpr.fs" />
     <Compile Include="CodeGen.fs" />
     <Compile Include="Provider.fs" />
