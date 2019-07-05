@@ -19,14 +19,19 @@
 // $end{copyright}
 
 module Utility
+
+#if UTILITY_FROM_PAKET
+#load "../../../../.fake/build.fsx/intellisense.fsx"
+let [<Literal>] slnDir = __SOURCE_DIRECTORY__ + "/../../../.."
+#else
 #load "../.fake/build.fsx/intellisense.fsx"
+let [<Literal>] slnDir = __SOURCE_DIRECTORY__ + "/.."
+#endif
 
 open System.IO
 open Fake.Core
 open Fake.DotNet
 open Fake.IO
-
-let [<Literal>] slnDir = __SOURCE_DIRECTORY__ + "/.."
 
 let dotnet' dir env cmd args =
     Printf.kprintf (fun args ->
