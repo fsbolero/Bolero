@@ -22,7 +22,9 @@ namespace Bolero
 
 open System
 open System.Collections.Generic
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Components
+open Microsoft.AspNetCore.Components.Routing
 open Microsoft.JSInterop
 open Elmish
 open Bolero.Render
@@ -83,6 +85,7 @@ type ProgramComponent<'model, 'msg>() =
     inherit Component()
 
     let mutable oldModel = Unchecked.defaultof<'model>
+    let mutable navigationInterceptionEnabled = false
 
     [<Inject>]
     member val UriHelper = Unchecked.defaultof<IUriHelper> with get, set
@@ -90,6 +93,11 @@ type ProgramComponent<'model, 'msg>() =
     member val Services = Unchecked.defaultof<System.IServiceProvider> with get, set
     [<Inject>]
     member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
+    [<Inject>]
+    member val NavigationInterception = Unchecked.defaultof<INavigationInterception> with get, set
+    [<Inject>]
+    member val ComponentContext = Unchecked.defaultof<IComponentContext> with get, set
+
     member val private View = Empty with get, set
     member val private Dispatch = ignore with get, set
     member val private BaseUri = "/" with get, set
@@ -101,9 +109,9 @@ type ProgramComponent<'model, 'msg>() =
     interface IProgramComponent with
         member this.Services = this.Services
 
-    member private this.OnLocationChanged (_: obj) (uri: string) =
+    member private this.OnLocationChanged (_: obj) (e: LocationChangedEventArgs) =
         this.Router |> Option.iter (fun router ->
-            let uri = this.UriHelper.ToBaseRelativePath(this.BaseUri, uri)
+            let uri = this.UriHelper.ToBaseRelativePath(this.BaseUri, e.Location)
             let route = router.SetRoute uri
             Option.iter this.Dispatch route)
 
@@ -154,7 +162,7 @@ type ProgramComponent<'model, 'msg>() =
         ) =
         this.Router <- Some r
         this.BaseUri <- this.UriHelper.GetBaseUri()
-        System.EventHandler<string> this.OnLocationChanged
+        System.EventHandler<_> this.OnLocationChanged
         |> this.UriHelper.OnLocationChanged.AddHandler
         match r.SetRoute (this.GetCurrentUri()) with
         | Some msg ->
@@ -162,12 +170,19 @@ type ProgramComponent<'model, 'msg>() =
         | None ->
             initModel, []
 
+    override this.OnAfterRenderAsync() =
+        if this.Router.IsSome && not navigationInterceptionEnabled && this.ComponentContext.IsConnected then
+            navigationInterceptionEnabled <- true
+            this.NavigationInterception.EnableNavigationInterceptionAsync()
+        else
+            Task.CompletedTask
+
     override this.Render() =
         this.View
 
     interface System.IDisposable with
         member this.Dispose() =
-            System.EventHandler<string> this.OnLocationChanged
+            System.EventHandler<_> this.OnLocationChanged
             |> this.UriHelper.OnLocationChanged.RemoveHandler
 
 type ElementRefBinder() =

@@ -63,6 +63,7 @@ type Startup() =
         }
 
     member this.ConfigureServices(services: IServiceCollection) =
+        services.AddMvcCore() |> ignore
         services
             .AddAuthorization()
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -85,5 +86,9 @@ type Startup() =
                     endpoints.MapFallbackToFile("index.html") |> ignore
                 )
         else
-            app .UseBlazor<Client.Startup>()
+            app .UseClientSideBlazorFiles<Client.Startup>()
+                .UseRouting()
+                .UseEndpoints(fun endpoints ->
+                    endpoints.MapDefaultControllerRoute() |> ignore
+                    endpoints.MapFallbackToClientSideBlazor<Client.Startup>("index.html") |> ignore)
         |> ignore
