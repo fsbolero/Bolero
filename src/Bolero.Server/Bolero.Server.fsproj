@@ -13,8 +13,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bolero\Bolero.fsproj" />
-    <ProjectReference Include="..\Bolero.Templating\Bolero.Templating.fsproj" />
-    <ProjectReference Include="..\Bolero.Templating.Server\Bolero.Templating.Server.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

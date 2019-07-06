@@ -1,8 +1,0 @@
-type project
-id Bolero.HotReload
-description
-    Client-side component of the HTML template hot reloading for Bolero: a set of tools and libraries to run F# applications in WebAssembly using Blazor
-authors
-    Loic Denuziere
-include-referenced-projects true
-interproject-references fix

@@ -25,7 +25,6 @@ open Bolero
 open Bolero.Html
 open Bolero.Remoting
 open Bolero.Remoting.Client
-open Bolero.Templating.Client
 open Elmish
 
 type MyApi =
@@ -192,7 +191,6 @@ type MyApp() =
             Cmd.ofMsg GetLogin
         ]) (Update myApi) Display
         |> Program.withConsoleTrace
-        |> Program.withHotReloading
 
 
 

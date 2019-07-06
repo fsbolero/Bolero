@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />
-    <ProjectReference Include="..\..\src\Bolero.Templating\Bolero.Templating.fsproj" />
     <ProjectReference Include="..\..\src\Bolero.Server\Bolero.Server.fsproj" />
     <ProjectReference Include="..\Unit.Client\Unit.Client.fsproj" />
   </ItemGroup>

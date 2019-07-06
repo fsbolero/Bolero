@@ -10,9 +10,7 @@
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Bolero.Templating\Bolero.Templating.fsproj" />
     <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />
-    <ProjectReference Include="..\..\src\Bolero.Templating.Server\Bolero.Templating.Server.fsproj" />
     <ProjectReference Include="..\..\src\Bolero.Server\Bolero.Server.fsproj" />
     <ProjectReference Include="..\Remoting.Client\Remoting.Client.fsproj" />
   </ItemGroup>

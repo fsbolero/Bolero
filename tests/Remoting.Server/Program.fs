@@ -28,7 +28,6 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Bolero.Remoting.Server
-open Bolero.Templating.Server
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.Extensions.Hosting
 
@@ -77,14 +76,12 @@ type Startup() =
                 .AddCookie()
                 .Services
             .AddRemoting<MyApiHandler>()
-            .AddHotReload(templateDir = "../Remoting.Client")
             .AddServerSideBlazor()
         |> ignore
 
     member this.Configure(app: IApplicationBuilder, env: IHostEnvironment) =
         app.UseAuthentication()
             .UseRemoting()
-            .UseHotReload()
             .UseBlazor<Client.Startup>()
         |> ignore
 
