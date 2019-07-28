@@ -13,7 +13,7 @@ branches:
 skip_tags: true
 
 init:
-- cmd: choco install dotnetcore-sdk --version 3.0.100-preview6-012264
+- cmd: choco install dotnetcore-sdk --version 3.0.100-preview7-012821
 - git config --global core.autocrlf input
 
 before_build:
