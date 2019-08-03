@@ -76,7 +76,7 @@ type Message =
     | SetLoginInput of string
     | Login
     | Logout
-    | LoggedIn of RemoteResponse<string>
+    | LoggedIn of option<string>
     | LoggedOut
     | SetAuthDoubleInput of int
     | SendAuthDouble
@@ -103,17 +103,16 @@ let Update (myApi: MyApi) msg model =
     | ItemsRefreshed items ->
         { model with items = items; lastError = None }, []
     | GetLogin ->
-        model, Cmd.ofRemote myApi.getLogin () LoggedIn Exn
+        model, Cmd.ofAuthorized myApi.getLogin () LoggedIn Exn
     | SetLoginInput s ->
         { model with loginInput = s }, []
     | Login ->
         model, Cmd.ofAsync myApi.login model.loginInput (fun _ -> GetLogin) Exn
     | Logout ->
         model, Cmd.ofAsync myApi.logout () (fun () -> LoggedOut) Exn
-    | LoggedIn (Success s) ->
-        { model with currentLogin = Some s; lastError = None }, []
-    | LoggedIn Unauthorized ->
-        { model with currentLogin = None; lastError = Some "Failed to retrieve login: user not authenticated" }, []
+    | LoggedIn res ->
+        let error = if res.IsNone then Some "Failed to retrieve login: user not authenticated" else None
+        { model with currentLogin = res; lastError = error }, []
     | LoggedOut ->
         { model with currentLogin = None; lastError = None }, []
     | SetAuthDoubleInput i ->

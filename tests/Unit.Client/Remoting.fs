@@ -79,9 +79,9 @@ type Message =
     | SendSignOut
     | RecvSignOut
     | SendGetUsername
-    | RecvGetUsername of RemoteResponse<string>
+    | RecvGetUsername of option<string>
     | SendGetAdmin
-    | RecvGetAdmin of RemoteResponse<string>
+    | RecvGetAdmin of option<string>
 
 let update api msg model =
     match msg with
@@ -98,10 +98,10 @@ let update api msg model =
     | RecvSignIn -> model, Cmd.ofMsg SendGetUsername
     | SendSignOut -> model, Cmd.ofAsync api.signOut () (fun () -> RecvSignOut) Error
     | RecvSignOut -> { model with signedInAs = None }, []
-    | SendGetUsername -> model, Cmd.ofRemote api.getUsername () RecvGetUsername Error
-    | RecvGetUsername resp -> { model with signedInAs = resp.TryGetResponse() }, []
-    | SendGetAdmin -> model, Cmd.ofRemote api.getAdmin () RecvGetAdmin Error
-    | RecvGetAdmin resp -> { model with getAdmin = resp.TryGetResponse() }, []
+    | SendGetUsername -> model, Cmd.ofAuthorized api.getUsername () RecvGetUsername Error
+    | RecvGetUsername resp -> { model with signedInAs = resp }, []
+    | SendGetAdmin -> model, Cmd.ofAuthorized api.getAdmin () RecvGetAdmin Error
+    | RecvGetAdmin resp -> { model with getAdmin = resp }, []
 
 let remote model dispatch =
     concat [
