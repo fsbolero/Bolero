@@ -20,6 +20,8 @@
 
 namespace Bolero.Remoting.Client
 
+#nowarn "44" // Ignore obsoleteness of RemoteResponse
+
 open System
 open System.IO
 open System.Net.Http
@@ -32,6 +34,7 @@ open Bolero
 open Bolero.Remoting
 open System.Net
 
+[<Obsolete "Use Cmd.ofAuthorized / performAuthorized">]
 type RemoteResponse<'resp> =
     | Success of 'resp
     | Unauthorized
@@ -53,23 +56,42 @@ module Cmd =
         }
         [bind >> Async.StartImmediate]
 
-    let private wrapRemote (f: 'req -> Async<'resp>) : 'req -> Async<RemoteResponse<'resp>> =
+    let private wrapAuthorized (f: 'req -> Async<'resp>) : 'req -> Async<option<'resp>> =
         () // <-- Forces compiling this into a function-returning function rather than a 2-arg function
         fun (arg: 'req) -> async {
             try
                 let! r = f arg
-                return Success r
+                return Some r
             with RemoteUnauthorizedException ->
-                return Unauthorized
+                return None
+        }
+
+    let private wrapRemote (f: 'req -> Async<'resp>) : 'req -> Async<RemoteResponse<'resp>> =
+        wrapAuthorized f >> fun res -> async {
+            match! res with
+            | Some x -> return Success x
+            | None -> return Unauthorized
         }
 
     /// Command that will call a remote Bolero function with authorization and map the result
+    /// into successful Some if authorized, successful None if not, or error (of exception)
+    let ofAuthorized (f: 'req -> Async<'resp>) (arg: 'req) (ofSuccess: option<'resp> -> 'msg) (ofError: exn -> 'msg) =
+        Elmish.Cmd.ofAsync (wrapAuthorized f) arg ofSuccess ofError
+
+    /// Command that will call a remote Bolero function with authorization and map the result
+    /// into Some if authorized, None if not, discarding any possible error
+    let performAuthorized (f: 'req -> Async<'resp>) (arg: 'req) (ofSuccess: option<'resp> -> 'msg) =
+        performAsync (wrapAuthorized f) arg ofSuccess
+
+    /// Command that will call a remote Bolero function with authorization and map the result
     /// into response or error (of exception)
+    [<Obsolete "Use ofAsync or ofAuthorized">]
     let ofRemote (f: 'req -> Async<'resp>) (arg: 'req) (ofSuccess: RemoteResponse<'resp> -> 'msg) (ofError: exn -> 'msg) =
         Elmish.Cmd.ofAsync (wrapRemote f) arg ofSuccess ofError
 
     /// Command that will call a remote Bolero function with authorization and map the success
     /// to a message discarding any possible error
+    [<Obsolete "Use performAsync or performAuthorized">]
     let performRemote (f: 'req -> Async<'resp>) (arg: 'req) (ofSuccess: RemoteResponse<'resp> -> 'msg) =
         performAsync (wrapRemote f) arg ofSuccess
 

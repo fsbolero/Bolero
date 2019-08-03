@@ -1,6 +1,7 @@
 namespace Bolero.Tests.Web
 
 open System
+open System.Globalization
 open NUnit.Framework
 open OpenQA.Selenium
 open OpenQA.Selenium.Support.UI
@@ -95,9 +96,11 @@ module Templating =
         let elt = elt.Inner(By.ClassName "events")
         let state = elt.ByClass("currentstate")
         let position = elt.ByClass("position")
+        let isNumber (s: string) =
+            Double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, ref 0.)
         let isValidPosition() =
             let a = position.Text.Split(',')
-            Int32.TryParse(a.[0], ref 0) && Int32.TryParse(a.[1], ref 0)
+            isNumber a.[0] && isNumber a.[1]
 
         elt.ByClass("btn1").Click()
         elt.AssertAreEqualEventually("clicked 1",

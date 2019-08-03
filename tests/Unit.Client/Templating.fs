@@ -64,7 +64,7 @@ type EventTester() =
     /// and therefore not visible to lambdas.
     member this.OnClick(id, e: UIMouseEventArgs) =
         currentState <- sprintf "clicked %i" id
-        lastPosition <- sprintf "%i,%i" e.ClientX e.ClientY
+        lastPosition <- sprintf "%f,%f" e.ClientX e.ClientY
         this.StateHasChanged()
 
     override this.Render() =

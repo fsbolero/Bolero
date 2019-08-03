@@ -132,7 +132,7 @@ let viewForm (js: IJSRuntime) model dispatch =
                         SecretPw()
                             .Kind(b [] [text "secret"])
                             .Clear(fun _ -> dispatch (SetInput ""))
-                            .DblClick(fun e -> dispatch (SetInput (sprintf "(%i, %i)" e.ClientX e.ClientY)))
+                            .DblClick(fun e -> dispatch (SetInput (sprintf "(%f, %f)" e.ClientX e.ClientY)))
                             .Input(model.input, fun s -> dispatch (SetInput s))
                             .Value(model.addKey, fun k -> dispatch (SetAddKey k))
                             .Elt()
