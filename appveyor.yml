@@ -25,6 +25,11 @@ before_build:
 build_script:
 - sh: BUILD_SCRIPT=./build.sh   # Use build.cmd on Windows, build.sh on Linux
 - ps: $env:NUGET_PACKAGES = "$env:APPVEYOR_BUILD_FOLDER\.nuget"
+  # Chrome on AV is not latest
+- ps: |
+    dotnet tool install paket --tool-path .paket
+    .paket/paket add Selenium.WebDriver.ChromeDriver --version 75.0.3770.140
+    dotnet restore
 - ps: '& $env:BUILD_SCRIPT -t pack -c Release -v "$env:SEMVER" /p:GhPages=true'
 
 test_script:
