@@ -129,7 +129,7 @@ type ProgramComponent<'model, 'msg>() =
     member private this.ForceSetState(program, model, dispatch) =
         this.View <- program.view model dispatch
         oldModel <- model
-        this.Invoke(fun () -> this.StateHasChanged()) |> ignore
+        this.InvokeAsync(this.StateHasChanged) |> ignore
         this.Router |> Option.iter (fun router ->
             let newUri = router.GetRoute model
             let oldUri = this.GetCurrentUri()
@@ -140,8 +140,8 @@ type ProgramComponent<'model, 'msg>() =
     member this.Rerender() =
         this.ForceSetState(this.Program, oldModel, this.Dispatch)
 
-    override this.OnInit() =
-        base.OnInit()
+    override this.OnInitialized() =
+        base.OnInitialized()
         let program = this.Program
         let setDispatch dispatch =
             this.Dispatch <- dispatch
@@ -185,9 +185,9 @@ type ProgramComponent<'model, 'msg>() =
             System.EventHandler<_> this.OnLocationChanged
             |> this.UriHelper.OnLocationChanged.RemoveHandler
 
-type ElementRefBinder() =
+type ElementReferenceBinder() =
 
-    let mutable ref = Unchecked.defaultof<ElementRef>
+    let mutable ref = Unchecked.defaultof<ElementReference>
 
     member this.Ref = ref
 

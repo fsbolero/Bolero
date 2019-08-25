@@ -109,7 +109,7 @@ type SecretPw = Template<"""<div>
                                 <input type="number" bind="${Value}" />
                             </div>""">
 
-let btnRef = ElementRefBinder()
+let btnRef = ElementReferenceBinder()
 
 let viewForm (js: IJSRuntime) model dispatch =
     div [] [

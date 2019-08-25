@@ -32,7 +32,7 @@ open System.IO
 
 type BlazorTreeBuilder = Microsoft.AspNetCore.Components.RenderTree.RenderTreeBuilder
 type BlazorFragment = Microsoft.AspNetCore.Components.RenderFragment
-type ElementRef = Microsoft.AspNetCore.Components.ElementRef
+type ElementReference = Microsoft.AspNetCore.Components.ElementReference
 
 type RenderTreeBuilder(b: BlazorTreeBuilder, indent: int, out: TextWriter) =
     let mutable indent = indent
@@ -92,9 +92,9 @@ type RenderTreeBuilder(b: BlazorTreeBuilder, indent: int, out: TextWriter) =
             if not (isNull b) then b.AddAttribute(sequence, name, value)
             writen "Attr %i %s %A" sequence name value
 
-    member this.AddElementReferenceCapture(sequence: int, r: Action<ElementRef>) =
+    member this.AddElementReferenceCapture(sequence: int, r: Action<ElementReference>) =
         b.AddElementReferenceCapture(sequence, r)
-        writen "ElementRef %i" sequence
+        writen "ElementReference %i" sequence
 
 and RenderFragment(f: RenderTreeBuilder -> unit) =
     member this.Frag : BlazorFragment =

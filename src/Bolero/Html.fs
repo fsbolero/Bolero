@@ -602,11 +602,11 @@ module attr =
         "class" => String.concat " " classes
 
     /// Bind an element reference.
-    let inline ref (f: ElementRef -> unit) =
-        Attr.Ref (Action<ElementRef>(f))
+    let inline ref (f: ElementReference -> unit) =
+        Attr.Ref (Action<ElementReference>(f))
 
     /// Bind an element reference.
-    let bindRef (refBinder: ElementRefBinder) =
+    let bindRef (refBinder: ElementReferenceBinder) =
         ref refBinder.SetRef
 
 // BEGIN ATTRS
