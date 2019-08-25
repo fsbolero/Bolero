@@ -31,7 +31,7 @@ type Attr =
     | Attrs of list<Attr>
 #if !IS_DESIGNTIME
     | ExplicitAttr of (RenderTree.RenderTreeBuilder -> int -> obj -> unit)
-    | Ref of Action<ElementRef>
+    | Ref of Action<ElementReference>
 #endif
 
 /// HTML fragment.

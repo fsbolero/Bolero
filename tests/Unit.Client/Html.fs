@@ -127,8 +127,8 @@ type Binds() =
 type BindElementRef() =
     inherit Component()
 
-    let mutable elt1 = Unchecked.defaultof<ElementRef>
-    let elt2 = ElementRefBinder()
+    let mutable elt1 = Unchecked.defaultof<ElementReference>
+    let elt2 = ElementReferenceBinder()
 
     [<Inject>]
     member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
