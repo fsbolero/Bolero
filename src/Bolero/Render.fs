@@ -155,28 +155,33 @@ let rec renderNode (currentComp: obj) (builder: RenderTreeBuilder) (matchCache: 
 /// Render a list of attributes into `builder` at `sequence` number.
 and renderAttrs currentComp builder sequence attrs =
     // AddAttribute calls want to be just after the OpenElement/OpenComponent call,
-    // so we make sure that AddElementReferenceCapture is called last.
+    // so we make sure that AddElementReferenceCapture and SetKey are called last.
     let rec run attrs =
-        ((sequence, None), attrs)
-        ||> List.fold (fun (sequence, ref) attr ->
+        ((sequence, None, None), attrs)
+        ||> List.fold (fun (sequence, ref, key) attr ->
             match attr with
             | Attr (name, value) ->
                 builder.AddAttribute(sequence, name, value)
-                (sequence + 1, ref)
+                (sequence + 1, ref, key)
             | Attrs attrs ->
                 run attrs
             | ExplicitAttr setAttr ->
                 setAttr builder sequence currentComp
-                //builder.AddAttribute(sequence, name, mkCallback currentComp)
-                (sequence + 1, ref)
+                (sequence + 1, ref, key)
             | Ref ref ->
-                (sequence, Some ref)
+                (sequence, Some ref, key)
+            | Key key ->
+                (sequence, ref, Some key)
         )
-    match run attrs with
-    | sequence, Some r ->
+    let sequence, ref, key = run attrs
+    match key with
+    | Some k -> builder.SetKey(k)
+    | None -> ()
+    match ref with
+    | Some r ->
         builder.AddElementReferenceCapture(sequence, r)
         sequence + 1
-    | sequence, None ->
+    | None ->
         sequence
 
 let RenderNode currentComp builder (matchCache: Dictionary<Type, _>) node =

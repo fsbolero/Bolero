@@ -29,6 +29,7 @@ open Microsoft.AspNetCore.Components
 type Attr =
     | Attr of string * obj
     | Attrs of list<Attr>
+    | Key of obj
 #if !IS_DESIGNTIME
     | ExplicitAttr of (RenderTree.RenderTreeBuilder -> int -> obj -> unit)
     | Ref of Action<ElementReference>

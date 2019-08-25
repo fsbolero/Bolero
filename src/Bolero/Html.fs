@@ -609,6 +609,9 @@ module attr =
     let bindRef (refBinder: ElementReferenceBinder) =
         ref refBinder.SetRef
 
+    let key (k: obj) =
+        Attr.Key k
+
 // BEGIN ATTRS
     /// Create an HTML `accept` attribute.
     let accept (v: obj) : Attr = "accept" => v
