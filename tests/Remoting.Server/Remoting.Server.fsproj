@@ -6,7 +6,7 @@
     <BlazorLinkOnBuild>false</BlazorLinkOnBuild>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Program.fs" />
+    <Compile Include="Startup.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>

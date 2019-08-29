@@ -21,15 +21,17 @@
 namespace Bolero.Tests.Remoting
 
 open System
+open System.Text.Encodings.Web
 open Microsoft.AspNetCore
-open Microsoft.AspNetCore.Authentication
+open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
+open Microsoft.AspNetCore.Http
+open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Bolero.Remoting.Server
-open Microsoft.AspNetCore.Authentication.Cookies
-open Microsoft.Extensions.Hosting
 
 type MyApiHandler(log: ILogger<MyApiHandler>) =
     inherit RemoteHandler<Client.MyApi>()
@@ -68,14 +70,14 @@ type MyApiHandler(log: ILogger<MyApiHandler>) =
             }
         }
 
-type Startup() =
+type Startup(config: IConfiguration) =
 
     member this.ConfigureServices(services: IServiceCollection) =
         services.AddMvcCore() |> ignore
+        services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie()
+            |> ignore
         services
-            .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie()
-                .Services
             .AddRemoting<MyApiHandler>()
             .AddServerSideBlazor()
         |> ignore
@@ -83,12 +85,26 @@ type Startup() =
     member this.Configure(app: IApplicationBuilder, env: IHostEnvironment) =
         app.UseAuthentication()
             .UseRemoting()
-            .UseClientSideBlazorFiles<Client.Startup>()
+            .UseStaticFiles()
             .UseRouting()
-            .UseEndpoints(fun endpoints ->
-                endpoints.MapDefaultControllerRoute() |> ignore
-                endpoints.MapFallbackToClientSideBlazor<Client.Startup>("index.html") |> ignore)
+            |> ignore
+
+        let serverSide = config.GetValue<bool>("serverSide", false)
+        if serverSide then
+            app.UseEndpoints(fun endpoints ->
+                    endpoints.MapBlazorHub<Client.MyApp>("#main") |> ignore
+                    endpoints.MapFallbackToFile("index.html") |> ignore)
+        else
+            app.UseClientSideBlazorFiles<Client.Startup>()
+                .UseEndpoints(fun endpoints ->
+                    endpoints.MapDefaultControllerRoute() |> ignore
+                    endpoints.MapFallbackToClientSideBlazor<Client.Startup>("index.html") |> ignore)
         |> ignore
+
+        if env.IsDevelopment() then
+            app.UseDeveloperExceptionPage()
+                .UseBlazorDebugging()
+                |> ignore
 
 module Main =
     [<EntryPoint>]

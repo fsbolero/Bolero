@@ -49,7 +49,10 @@ type Startup() =
                     match username with
                     | "admin" -> [Claim(ClaimTypes.Role, "admin")]
                     | _ -> []
-                return! http.AsyncSignIn(username, claims = claims)
+                try
+                    do! http.AsyncSignIn(username, claims = claims)
+                with exn ->
+                    printfn "%A" exn
             }
             signOut = Remote.withContext <| fun http () -> async {
                 return! http.AsyncSignOut()
@@ -74,7 +77,7 @@ type Startup() =
         |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
-        let serverSide = false
+        let serverSide = true
         app .UseAuthentication()
             .UseRemoting()
             |> ignore
