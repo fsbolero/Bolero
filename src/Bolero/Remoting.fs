@@ -21,6 +21,7 @@
 namespace Bolero.Remoting
 
 open System
+open System.Net.Http
 open System.Runtime.CompilerServices
 open Microsoft.Extensions.DependencyInjection
 open FSharp.Reflection
@@ -28,6 +29,8 @@ open Bolero
 
 exception RemoteUnauthorizedException with
     override this.Message = "Unauthorized remote operation"
+
+exception RemoteException of HttpResponseMessage
 
 /// Indicate that this type is a remote service, served at the given base URL path.
 type IRemoteService =

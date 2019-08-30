@@ -131,8 +131,8 @@ type ClientRemoteProvider(http: HttpClient) =
             return Json.Read<'T> reader
         | HttpStatusCode.Unauthorized ->
             return raise RemoteUnauthorizedException
-        | code ->
-            return raise (HttpRequestException("Unexpected response status: " + string code))
+        | _ ->
+            return raise (RemoteException resp)
     }
 
     member this.MakeRemoteProxy(ty: Type, baseUri: string ref) =
