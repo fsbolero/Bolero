@@ -33,7 +33,7 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Bolero.Remoting.Server
 
-type MyApiHandler(log: ILogger<MyApiHandler>) =
+type MyApiHandler(log: ILogger<MyApiHandler>, http: IHttpContextAccessor) =
     inherit RemoteHandler<Client.MyApi>()
 
     let mutable items = Map.empty
@@ -52,20 +52,20 @@ type MyApiHandler(log: ILogger<MyApiHandler>) =
                 log.LogInformation("Removing {0}", k)
                 items <- Map.remove k items
             }
-            login = Remote.withContext <| fun http login -> async {
+            login = fun login -> async {
                 log.LogInformation("User logging in: {0}", login)
-                return! http.AsyncSignIn(login, TimeSpan.FromDays(365. * 10.))
+                return! http.HttpContext.AsyncSignIn(login, TimeSpan.FromDays(365. * 10.))
             }
-            logout = Remote.withContext <| fun http () -> async {
-                log.LogInformation("User logging out: {0}", http.User.Identity.Name)
-                return! http.AsyncSignOut()
+            logout = fun () -> async {
+                log.LogInformation("User logging out: {0}", http.HttpContext.User.Identity.Name)
+                return! http.HttpContext.AsyncSignOut()
             }
-            getLogin = Remote.authorize <| fun http () -> async {
-                log.LogInformation("User getting their login: {0}", http.User.Identity.Name)
-                return http.User.Identity.Name
+            getLogin = Remote.authorize <| fun () -> async {
+                log.LogInformation("User getting their login: {0}", http.HttpContext.User.Identity.Name)
+                return http.HttpContext.User.Identity.Name
             }
-            authDouble = Remote.authorize <| fun http i -> async {
-                log.LogInformation("User {0} doubling {1}", http.User.Identity.Name, i)
+            authDouble = Remote.authorize <| fun i -> async {
+                log.LogInformation("User {0} doubling {1}", http.HttpContext.User.Identity.Name, i)
                 return i * 2
             }
         }
