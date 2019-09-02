@@ -24,14 +24,12 @@ open System
 open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
-open System.Threading
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open FSharp.Control.Tasks.V2
-open FSharp.Reflection
 open Bolero
 open Bolero.Remoting
 open System.Text
@@ -45,42 +43,34 @@ type RemoteHandler<'T when 'T :> IRemoteService>() =
     interface IRemoteHandler with
         member this.Handler = this.Handler :> IRemoteService
 
-module Remote =
+type IRemoteContext =
+    abstract HttpContext : HttpContext
+    abstract Authorize<'req, 'resp> : ('req -> Async<'resp>) -> ('req -> Async<'resp>)
+    abstract AuthorizeWith<'req, 'resp> : seq<IAuthorizeData> -> ('req -> Async<'resp>) -> ('req -> Async<'resp>)
 
-    let internal localData = AsyncLocal<IAuthorizationService * IAuthorizationPolicyProvider * HttpContext>()
+type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationService, authPolicyProvider: IAuthorizationPolicyProvider) =
 
-    /// Mark a remote function as requiring authentication with the given policy.
-    /// Must be used directly as the value of a remote function.
-    let authorizeWith (authData: seq<IAuthorizeData>) (f: 'req -> Async<'resp>) =
-        fun req ->
-            let authService, authPolicyProvider, http = localData.Value
-            async {
-                let! authPolicy = AuthorizationPolicy.CombineAsync(authPolicyProvider, authData) |> Async.AwaitTask
-                let! authResult = authService.AuthorizeAsync(http.User, authPolicy) |> Async.AwaitTask
-                if authResult.Succeeded then
-                    return! f req
-                else
-                    return raise RemoteUnauthorizedException
-            }
+    let authorizeWith authData f =
+        if Seq.isEmpty authData then f else
+        let tAuthPolicy = AuthorizationPolicy.CombineAsync(authPolicyProvider, authData)
+        fun req -> async {
+            let! authPolicy = tAuthPolicy |> Async.AwaitTask
+            let! authResult = authService.AuthorizeAsync(http.HttpContext.User, authPolicy) |> Async.AwaitTask
+            if authResult.Succeeded then
+                return! f req
+            else
+                return raise RemoteUnauthorizedException
+        }
 
-    /// Mark a remote function as requiring authentication.
-    /// Must be used directly as the value of a remote function.
-    let authorize (f: 'req -> Async<'resp>) =
-        authorizeWith [AuthorizeAttribute()] f
+    interface IRemoteContext with
+        member __.HttpContext = http.HttpContext
+        member __.Authorize f = authorizeWith [AuthorizeAttribute()] f
+        member __.AuthorizeWith authData f = authorizeWith authData f
 
-type internal RemotingService(basePath: PathString, ty: System.Type, handler: obj, services: IServiceProvider) =
+type internal RemotingService(basePath: PathString, ty: System.Type, handler: obj) =
 
     let flags = BindingFlags.Public ||| BindingFlags.NonPublic
     let staticFlags = flags ||| BindingFlags.Static
-    let instanceFlags = flags ||| BindingFlags.Instance
-
-    let authPolicyProvider = services.GetService<IAuthorizationPolicyProvider>()
-    let http = services.GetService<IHttpContextAccessor>()
-    let authService = services.GetService<IAuthorizationService>()
-
-    static let fail (ctx: HttpContext) =
-        ctx.Response.StatusCode <- StatusCodes.Status401Unauthorized
-        // TODO: allow customizing based on what failed?
 
     let makeHandler (method: RemoteMethodDefinition) =
         let meth = ty.GetProperty(method.Name).GetValue(handler)
@@ -90,7 +80,7 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
         let decoder = Json.GetDecoder method.ArgumentType
         let encoder = Json.GetEncoder method.ReturnType
         fun (ctx: HttpContext) ->
-            output.Invoke(null, [|decoder; encoder; meth; authService; authPolicyProvider; ctx|]) :?> Task
+            output.Invoke(null, [|decoder; encoder; meth; ctx|]) :?> Task
 
     let methodData =
         match RemotingExtensions.ExtractRemoteMethods ty with
@@ -103,24 +93,9 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
 
     let methods = dict [for m in methodData -> m.Name, makeHandler m]
 
-    member val ServerSideService =
-        let fields =
-            methodData
-            |> Array.map (fun method ->
-                let meth = ty.GetProperty(method.Name).GetValue(handler)
-                typeof<RemotingService>.GetMethod("WrapForServerSide", staticFlags)
-                    .MakeGenericMethod(method.ArgumentType, method.ReturnType)
-                    .Invoke(null, [|meth; authService; authPolicyProvider; http|])
-            )
-        FSharpValue.MakeRecord(ty, fields)
+    member val ServerSideService = handler
 
-    static member private WrapForServerSide<'req, 'resp> (f: 'req -> Async<'resp>, authService: IAuthorizationService, authPolicyProvider: IAuthorizationPolicyProvider, http: IHttpContextAccessor) =
-        fun req ->
-            Remote.localData.Value <- (authService, authPolicyProvider, http.HttpContext)
-            f req
-
-    static member private InvokeForClientSide<'req, 'resp>(decoder: Json.Decoder<obj>, encoder: Json.Encoder<obj>, func: 'req -> Async<'resp>, authService: IAuthorizationService, authPolicyProvider: IAuthorizationPolicyProvider, ctx: HttpContext) : Task =
-        Remote.localData.Value <- (authService, authPolicyProvider, ctx)
+    static member private InvokeForClientSide<'req, 'resp>(decoder: Json.Decoder<obj>, encoder: Json.Encoder<obj>, func: 'req -> Async<'resp>, ctx: HttpContext) : Task =
         task {
             use reader = new StreamReader(ctx.Request.Body)
             let! body = reader.ReadToEndAsync()
@@ -131,7 +106,8 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
                 let json = Json.Raw.Stringify v
                 return! ctx.Response.WriteAsync(json, Encoding.UTF8)
             with RemoteUnauthorizedException ->
-                fail ctx
+                ctx.Response.StatusCode <- StatusCodes.Status401Unauthorized
+                // TODO: allow customizing based on what failed?
         } :> Task
 
     member this.ServiceType = ty
@@ -171,29 +147,48 @@ type internal ServerRemoteProvider(services: seq<RemotingService>) =
 [<Extension>]
 type ServerRemotingExtensions =
 
-    [<Extension>]
-    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: 'T) =
-        this.AddSingleton<RemotingService>(fun services ->
-                RemotingService(basePath, typeof<'T>, handler, services))
+    static member private AddRemotingImpl(this: IServiceCollection, getService: IServiceProvider -> RemotingService) =
+        this.AddSingleton<RemotingService>(getService)
+            .AddSingleton<IRemoteContext, RemoteContext>()
             .AddTransient<IRemoteProvider, ServerRemoteProvider>()
             .AddHttpContextAccessor()
 
+    static member private AddRemotingImpl<'T when 'T : not struct>(this: IServiceCollection, basePath: 'T -> PathString, handler: IRemoteContext -> 'T) =
+        ServerRemotingExtensions.AddRemotingImpl(this, fun services ->
+            let ctx = services.GetRequiredService<IRemoteContext>()
+            let handler = handler ctx
+            let basePath = basePath handler
+            RemotingService(basePath, typeof<'T>, handler))
+
+    [<Extension>]
+    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: IRemoteContext -> 'T) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), handler)
+
+    [<Extension>]
+    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: 'T) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), (fun _ -> handler))
+
+    [<Extension>]
+    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: IRemoteContext -> 'T) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), handler)
+
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: 'T) =
-        this.AddRemoting(PathString.op_Implicit basePath, handler)
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), (fun _ -> handler))
+
+    [<Extension>]
+    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: IRemoteContext -> 'T) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), handler)
 
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: 'T) =
-        this.AddRemoting(handler.BasePath, handler)
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), (fun _ -> handler))
 
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteHandler>(this: IServiceCollection) =
-        this.AddSingleton<'T>()
-            .AddSingleton<RemotingService>(fun services ->
-                let handler = services.GetRequiredService<'T>().Handler
-                RemotingService(PathString handler.BasePath, handler.GetType(), handler, services))
-            .AddSingleton<IRemoteProvider, ServerRemoteProvider>()
-            .AddHttpContextAccessor()
+        ServerRemotingExtensions.AddRemotingImpl(this.AddSingleton<'T>(), fun services ->
+            let handler = services.GetRequiredService<'T>().Handler
+            RemotingService(PathString handler.BasePath, handler.GetType(), handler))
 
     [<Extension>]
     static member UseRemoting(this: IApplicationBuilder) =

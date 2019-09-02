@@ -21,21 +21,19 @@
 // ASP.NET Core and Blazor startup for web tests.
 namespace Bolero.Tests.Web
 
+open System.Security.Claims
+open Microsoft.AspNetCore.Authentication.Cookies
+open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.AspNetCore.Authentication.Cookies
 open Bolero.Remoting.Server
-open System.Security.Claims
-open Microsoft.AspNetCore.Authorization
 open Bolero.Tests
-open Microsoft.AspNetCore.Http
 
-type RemoteApiHandler(http: IHttpContextAccessor) =
-    inherit RemoteHandler<Client.Remoting.RemoteApi>()
+type Startup() =
 
     let mutable items = Map.empty
 
-    override this.Handler =
+    let remoteHandler (ctx: IRemoteContext) : Client.Remoting.RemoteApi =
         {
             getValue = fun k -> async {
                 return Map.tryFind k items
@@ -52,22 +50,20 @@ type RemoteApiHandler(http: IHttpContextAccessor) =
                     | "admin" -> [Claim(ClaimTypes.Role, "admin")]
                     | _ -> []
                 try
-                    do! http.HttpContext.AsyncSignIn(username, claims = claims)
+                    do! ctx.HttpContext.AsyncSignIn(username, claims = claims)
                 with exn ->
                     printfn "%A" exn
             }
             signOut = fun () -> async {
-                return! http.HttpContext.AsyncSignOut()
+                return! ctx.HttpContext.AsyncSignOut()
             }
-            getUsername = Remote.authorize <| fun () -> async {
-                return http.HttpContext.User.Identity.Name
+            getUsername = ctx.Authorize <| fun () -> async {
+                return ctx.HttpContext.User.Identity.Name
             }
-            getAdmin = Remote.authorizeWith [AuthorizeAttribute(Roles = "admin")] <| fun () -> async {
+            getAdmin = ctx.AuthorizeWith [AuthorizeAttribute(Roles = "admin")] <| fun () -> async {
                 return "admin ok"
             }
         }
-
-type Startup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
         services.AddMvcCore() |> ignore
@@ -76,7 +72,7 @@ type Startup() =
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie()
                 .Services
-            .AddRemoting<RemoteApiHandler>()
+            .AddRemoting(remoteHandler)
             .AddServerSideBlazor()
         |> ignore
 

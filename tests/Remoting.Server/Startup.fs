@@ -33,7 +33,7 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Bolero.Remoting.Server
 
-type MyApiHandler(log: ILogger<MyApiHandler>, http: IHttpContextAccessor) =
+type MyApiHandler(log: ILogger<MyApiHandler>, ctx: IRemoteContext) =
     inherit RemoteHandler<Client.MyApi>()
 
     let mutable items = Map.empty
@@ -54,18 +54,18 @@ type MyApiHandler(log: ILogger<MyApiHandler>, http: IHttpContextAccessor) =
             }
             login = fun login -> async {
                 log.LogInformation("User logging in: {0}", login)
-                return! http.HttpContext.AsyncSignIn(login, TimeSpan.FromDays(365. * 10.))
+                return! ctx.HttpContext.AsyncSignIn(login, TimeSpan.FromDays(365. * 10.))
             }
             logout = fun () -> async {
-                log.LogInformation("User logging out: {0}", http.HttpContext.User.Identity.Name)
-                return! http.HttpContext.AsyncSignOut()
+                log.LogInformation("User logging out: {0}", ctx.HttpContext.User.Identity.Name)
+                return! ctx.HttpContext.AsyncSignOut()
             }
-            getLogin = Remote.authorize <| fun () -> async {
-                log.LogInformation("User getting their login: {0}", http.HttpContext.User.Identity.Name)
-                return http.HttpContext.User.Identity.Name
+            getLogin = ctx.Authorize <| fun () -> async {
+                log.LogInformation("User getting their login: {0}", ctx.HttpContext.User.Identity.Name)
+                return ctx.HttpContext.User.Identity.Name
             }
-            authDouble = Remote.authorize <| fun i -> async {
-                log.LogInformation("User {0} doubling {1}", http.HttpContext.User.Identity.Name, i)
+            authDouble = ctx.Authorize <| fun i -> async {
+                log.LogInformation("User {0} doubling {1}", ctx.HttpContext.User.Identity.Name, i)
                 return i * 2
             }
         }
