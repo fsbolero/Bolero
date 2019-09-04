@@ -44,7 +44,7 @@ type RemoteHandler<'T when 'T :> IRemoteService>() =
         member this.Handler = this.Handler :> IRemoteService
 
 type IRemoteContext =
-    abstract HttpContext : HttpContext
+    inherit IHttpContextAccessor
     abstract Authorize<'req, 'resp> : ('req -> Async<'resp>) -> ('req -> Async<'resp>)
     abstract AuthorizeWith<'req, 'resp> : seq<IAuthorizeData> -> ('req -> Async<'resp>) -> ('req -> Async<'resp>)
 
@@ -62,8 +62,10 @@ type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationServic
                 return raise RemoteUnauthorizedException
         }
 
+    interface IHttpContextAccessor with
+        member __.HttpContext with get () = http.HttpContext and set v = http.HttpContext <- v
+
     interface IRemoteContext with
-        member __.HttpContext = http.HttpContext
         member __.Authorize f = authorizeWith [AuthorizeAttribute()] f
         member __.AuthorizeWith authData f = authorizeWith authData f
 
