@@ -46,6 +46,7 @@ type Model =
         revOrder: bool
         items: Map<int, string>
         remoteResult: option<string>
+        radioItem: option<int>
         page: Page
     }
 
@@ -57,6 +58,7 @@ type Message =
     | SetKeyOf of key: int
     | AddKey
     | SetRevOrder of rev: bool
+    | SetRadioItem of int
     | SetPage of Page
 
 let initModel _ =
@@ -71,6 +73,7 @@ let initModel _ =
             2, "it's 2"
             3, "it's 3"
         ]
+        radioItem = None
         page = Form
         remoteResult = None
     }
@@ -96,6 +99,7 @@ let update message model =
             let items = model.items |> Map.remove k |> Map.add model.addKey item
             { model with items = items }, []
     | SetRevOrder rev -> { model with revOrder = rev }, []
+    | SetRadioItem i -> { model with radioItem = Some i }, []
     | SetPage p -> { model with page = p }, []
 
 // ondblclick's handler uses UIMouseEventArgs properties to check that we do generate specific UI*EventArgs.
@@ -123,6 +127,13 @@ let viewForm (js: IJSRuntime) model dispatch =
             )
             attr.style (if model.input = "" then "color:gray;" else null)
         ]
+        div [] [textf "selected radio item: %A" model.radioItem]
+        forEach {1..10} <| fun ix ->
+            input [
+                attr.``type`` "radio"
+                attr.name "my-radio-item"
+                bind.change (string ix) (fun _ -> dispatch (SetRadioItem ix))
+            ]
         div [] [text (defaultArg model.submitted "")]
         (match model.submitted with
         | Some s ->
@@ -208,6 +219,6 @@ type MyApp() =
 
     override this.Program =
         Program.mkProgram (fun _ -> initModel(), []) update (view this.JSRuntime)
-        |> Program.withConsoleTrace
+        //|> Program.withConsoleTrace
         |> Program.withErrorHandler (fun (msg, exn) -> printfn "%s: %A" msg exn)
         |> Program.withRouter router

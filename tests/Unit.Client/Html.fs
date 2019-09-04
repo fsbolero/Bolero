@@ -105,6 +105,8 @@ type Binds() =
     member val changeFloatState = 0. with get, set
     [<Parameter>]
     member val checkedState = false with get, set
+    [<Parameter>]
+    member val radioState = 0 with get, set
 
     override this.Render() =
         concat [
@@ -122,6 +124,14 @@ type Binds() =
             span [attr.``class`` "bind-change-float-out"] [textf "%f" this.changeFloatState]
             input [attr.``type`` "checkbox"; attr.``class`` "bind-checked"; bind.``checked`` this.checkedState (fun x -> this.checkedState <- x)]
             span [attr.``class`` "bind-checked-out"] [textf "%b" this.checkedState]
+            forEach {1..10} <| fun v ->
+                input [
+                    attr.``type`` "radio"
+                    attr.name "bind-radio"
+                    attr.``class`` ("bind-radio-" + string v)
+                    bind.change (string v) (fun _ -> this.radioState <- v)
+                ]
+            span [attr.``class`` "bind-radio-out"] [textf "%i" this.radioState]
         ]
 
 type BindElementRef() =

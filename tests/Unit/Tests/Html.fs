@@ -162,6 +162,14 @@ module Html =
         elt.AssertEventually(fun () -> out.Text = "false")
 
     [<Test>]
+    let ``bind.change radio``() =
+        let out = elt.ByClass("bind-radio-out")
+        for v in 1..10 do
+            let inp = elt.ByClass("bind-radio-" + string v)
+            inp.Click()
+            elt.AssertEventually(fun () -> out.Text = string v)
+
+    [<Test>]
     let ElementRefBinder() =
         let btn = elt.ByClass("element-ref")
         Assert.IsNotNull(btn)
