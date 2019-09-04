@@ -21,19 +21,19 @@
 // ASP.NET Core and Blazor startup for web tests.
 namespace Bolero.Tests.Web
 
+open System.Security.Claims
+open Microsoft.AspNetCore.Authentication.Cookies
+open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.AspNetCore.Authentication.Cookies
 open Bolero.Remoting.Server
-open System.Security.Claims
-open Microsoft.AspNetCore.Authorization
 open Bolero.Tests
 
 type Startup() =
 
     let mutable items = Map.empty
 
-    let remoteHandler : Client.Remoting.RemoteApi =
+    let remoteHandler (ctx: IRemoteContext) : Client.Remoting.RemoteApi =
         {
             getValue = fun k -> async {
                 return Map.tryFind k items
@@ -44,23 +44,23 @@ type Startup() =
             removeValue = fun k -> async {
                 items <- Map.remove k items
             }
-            signIn = Remote.withContext <| fun http username -> async {
+            signIn = fun username -> async {
                 let claims =
                     match username with
                     | "admin" -> [Claim(ClaimTypes.Role, "admin")]
                     | _ -> []
                 try
-                    do! http.AsyncSignIn(username, claims = claims)
+                    do! ctx.HttpContext.AsyncSignIn(username, claims = claims)
                 with exn ->
                     printfn "%A" exn
             }
-            signOut = Remote.withContext <| fun http () -> async {
-                return! http.AsyncSignOut()
+            signOut = fun () -> async {
+                return! ctx.HttpContext.AsyncSignOut()
             }
-            getUsername = Remote.authorize <| fun http () -> async {
-                return http.User.Identity.Name
+            getUsername = ctx.Authorize <| fun () -> async {
+                return ctx.HttpContext.User.Identity.Name
             }
-            getAdmin = Remote.authorizeWith [AuthorizeAttribute(Roles = "admin")] <| fun _ () -> async {
+            getAdmin = ctx.AuthorizeWith [AuthorizeAttribute(Roles = "admin")] <| fun () -> async {
                 return "admin ok"
             }
         }
@@ -77,7 +77,7 @@ type Startup() =
         |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
-        let serverSide = true
+        let serverSide = false
         app .UseAuthentication()
             .UseRemoting()
             |> ignore
