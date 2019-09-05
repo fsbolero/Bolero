@@ -19,7 +19,7 @@ Bolero is an early stage project, and Blazor itself is considered experimental, 
 
 To get started, you need the following installed:
 
-* .NET Core SDK 3.0-preview7 or newer. Download it [here](https://dotnet.microsoft.com/download/dotnet-core/3.0).
+* .NET Core SDK 3.0-preview8 or newer. Download it [here](https://dotnet.microsoft.com/download/dotnet-core/3.0).
 
 Then:
 
