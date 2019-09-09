@@ -38,7 +38,7 @@ let TypeOf (holeType: Parsing.HoleType) : Type =
     | Parsing.String -> typeof<string>
     | Parsing.Html -> typeof<Node>
     | Parsing.Event argType -> EventHandlerOf argType
-    | Parsing.DataBinding _ -> typeof<obj * Action<UIChangeEventArgs>>
+    | Parsing.DataBinding _ -> typeof<obj * Action<ChangeEventArgs>>
     | Parsing.Attribute -> typeof<Attr>
     | Parsing.AttributeValue -> typeof<obj>
 
@@ -54,11 +54,11 @@ let WrapExpr (innerType: Parsing.HoleType) (outerType: Parsing.HoleType) (expr: 
     | Parsing.Event argTy, Parsing.Event _ ->
         Expr.Coerce(expr, EventHandlerOf argTy)
     | Parsing.String, Parsing.DataBinding _ ->
-        <@@ (%%expr: obj * Action<UIChangeEventArgs>).Item1 @@>
+        <@@ (%%expr: obj * Action<ChangeEventArgs>).Item1 @@>
     | Parsing.Html, Parsing.DataBinding _ ->
-        <@@ Node.Text ((%%expr: obj * Action<UIChangeEventArgs>).Item1.ToString()) @@>
+        <@@ Node.Text ((%%expr: obj * Action<ChangeEventArgs>).Item1.ToString()) @@>
     | Parsing.AttributeValue, Parsing.DataBinding _ ->
-        <@@ (%%expr: obj * Action<UIChangeEventArgs>).Item1.ToString() @@>
+        <@@ (%%expr: obj * Action<ChangeEventArgs>).Item1.ToString() @@>
     | a, b -> failwithf "Hole name used multiple times with incompatible types (%A, %A)" a b
     |> Some
 

@@ -32,7 +32,7 @@ type Events =
         Action<'T>(ignore)
 
     static member OnChange(f: Action<string>) =
-        Action<UIChangeEventArgs>(fun e ->
+        Action<ChangeEventArgs>(fun e ->
             f.Invoke(unbox<string> e.Value)
         )
 
@@ -51,7 +51,7 @@ type Events =
         )
 
     static member OnChangeBool(f: Action<bool>) =
-        Action<UIChangeEventArgs>(fun e ->
+        Action<ChangeEventArgs>(fun e ->
             f.Invoke(unbox<bool> e.Value)
         )
 

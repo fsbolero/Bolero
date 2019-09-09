@@ -1,0 +1,16 @@
+@page "/"
+@namespace Bolero.Test.Server
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bolero (server side)</title>
+  <meta charset="UTF-8" />
+  <base href="/" />
+</head>
+<body>
+  <div id="main">@(await Html.RenderComponentAsync<Bolero.Test.Client.Main.MyApp>(RenderMode.ServerPrerendered))</div>
+  <script src="_framework/blazor.server.js"></script>
+</body>
+</html>

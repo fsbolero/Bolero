@@ -21,12 +21,10 @@
 namespace Bolero.Tests.Remoting
 
 open System
-open System.Text.Encodings.Web
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
@@ -73,7 +71,7 @@ type MyApiHandler(log: ILogger<MyApiHandler>, ctx: IRemoteContext) =
 type Startup(config: IConfiguration) =
 
     member this.ConfigureServices(services: IServiceCollection) =
-        services.AddMvcCore() |> ignore
+        services.AddMvc().AddRazorRuntimeCompilation() |> ignore
         services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie()
             |> ignore
@@ -92,8 +90,8 @@ type Startup(config: IConfiguration) =
         let serverSide = config.GetValue<bool>("serverSide", false)
         if serverSide then
             app.UseEndpoints(fun endpoints ->
-                    endpoints.MapBlazorHub<Client.MyApp>("#main") |> ignore
-                    endpoints.MapFallbackToFile("index.html") |> ignore)
+                    endpoints.MapBlazorHub() |> ignore
+                    endpoints.MapFallbackToPage("/_Host") |> ignore)
         else
             app.UseClientSideBlazorFiles<Client.Startup>()
                 .UseEndpoints(fun endpoints ->

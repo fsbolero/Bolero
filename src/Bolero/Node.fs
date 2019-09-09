@@ -31,7 +31,7 @@ type Attr =
     | Attrs of list<Attr>
     | Key of obj
 #if !IS_DESIGNTIME
-    | ExplicitAttr of (RenderTree.RenderTreeBuilder -> int -> obj -> unit)
+    | ExplicitAttr of (Rendering.RenderTreeBuilder -> int -> obj -> unit)
     | Ref of Action<ElementReference>
 #endif
 

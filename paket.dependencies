@@ -8,11 +8,12 @@ nuget FSharp.Core >= 4.5.0 lowest_matching: true
 nuget HtmlAgilityPack >= 1.8.0 lowest_matching: true
 nuget Elmish ~> 2.0 lowest_matching: true
 nuget TaskBuilder.fs >= 2.1.0 lowest_matching: true
-nuget Microsoft.AspNetCore.Blazor 3.0.0-preview8.19405.7
-nuget Microsoft.AspNetCore.Blazor.Build 3.0.0-preview8.19405.7
-nuget Microsoft.AspNetCore.Blazor.Server 3.0.0-preview8.19405.7
-nuget Microsoft.AspNetCore.Blazor.DevServer 3.0.0-preview8.19405.7
-nuget System.Runtime.CompilerServices.Unsafe 4.6.0-preview8.19405.3
+nuget Microsoft.AspNetCore.Blazor 3.0.0-preview9.19424.4
+nuget Microsoft.AspNetCore.Blazor.Build 3.0.0-preview9.19424.4
+nuget Microsoft.AspNetCore.Blazor.Server 3.0.0-preview9.19424.4
+nuget Microsoft.AspNetCore.Blazor.DevServer 3.0.0-preview9.19424.4
+nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation 3.0.0-preview9.19424.4
+nuget System.Runtime.CompilerServices.Unsafe 4.6.0-preview9.19421.4
 
 # Build and test references
 nuget FsCheck.NUnit ~> 2.12

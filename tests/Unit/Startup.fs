@@ -66,7 +66,7 @@ type Startup() =
         }
 
     member this.ConfigureServices(services: IServiceCollection) =
-        services.AddMvcCore() |> ignore
+        services.AddMvc().AddRazorRuntimeCompilation() |> ignore
         services
             .AddAuthorization()
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -80,17 +80,15 @@ type Startup() =
         let serverSide = false
         app .UseAuthentication()
             .UseRemoting()
+            .UseStaticFiles()
+            .UseRouting()
             |> ignore
         if serverSide then
-            app .UseStaticFiles()
-                .UseRouting()
-                .UseEndpoints(fun endpoints ->
-                    endpoints.MapBlazorHub<Client.Tests>("#app") |> ignore
-                    endpoints.MapFallbackToFile("index.html") |> ignore
-                )
+            app.UseEndpoints(fun endpoints ->
+                    endpoints.MapBlazorHub() |> ignore
+                    endpoints.MapFallbackToPage("/_Host") |> ignore)
         else
-            app .UseClientSideBlazorFiles<Client.Startup>()
-                .UseRouting()
+            app.UseClientSideBlazorFiles<Client.Startup>()
                 .UseEndpoints(fun endpoints ->
                     endpoints.MapDefaultControllerRoute() |> ignore
                     endpoints.MapFallbackToClientSideBlazor<Client.Startup>("index.html") |> ignore)

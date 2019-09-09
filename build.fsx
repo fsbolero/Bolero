@@ -100,15 +100,15 @@ Target.create "tags" (fun _ ->
         >> replace (Events.GetSample().Rows) "EVENTS" (fun s event ->
             let esc = escapeDashes event.Name
             s.AppendLine(sprintf """    /// Create a handler for HTML event `%s`.""" event.Name)
-             .AppendLine(sprintf """    let %s (callback: UI%sEventArgs -> unit) : Attr =""" esc event.Type)
+             .AppendLine(sprintf """    let %s (callback: %sEventArgs -> unit) : Attr =""" esc event.Type)
              .AppendLine(sprintf """        event "%s" callback""" esc)
              .AppendLine()
         )
     )
-    runTags "src/Bolero.Templating/Parsing.fs" (
+    runTags "src/Bolero.Templating.Provider/Parsing.fs" (
         replace (Events.GetSample().Rows) "EVENTS" (fun s event ->
             if event.Type <> "" then
-                s.AppendLine(sprintf """        | "on%s" -> typeof<UI%sEventArgs>""" event.Name event.Type)
+                s.AppendLine(sprintf """        | "on%s" -> typeof<%sEventArgs>""" event.Name event.Type)
             else
                 s
         )

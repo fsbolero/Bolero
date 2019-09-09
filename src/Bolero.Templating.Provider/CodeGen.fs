@@ -39,8 +39,8 @@ let MakeCtor (holes: Parsing.Vars) (containerTy: ProvidedTypeDefinition) =
                 match type' with
                 | Parsing.HoleType.String -> <@ box "" @>
                 | Parsing.HoleType.Html -> <@ box Node.Empty @>
-                | Parsing.HoleType.Event _ -> <@ box (Events.NoOp<UIEventArgs>()) @>
-                | Parsing.HoleType.DataBinding _ -> <@ box (null, Events.NoOp<UIChangeEventArgs>()) @>
+                | Parsing.HoleType.Event _ -> <@ box (Events.NoOp<EventArgs>()) @>
+                | Parsing.HoleType.DataBinding _ -> <@ box (null, Events.NoOp<ChangeEventArgs>()) @>
                 | Parsing.HoleType.Attribute -> <@ box (Attrs []) @>
                 | Parsing.HoleType.AttributeValue -> <@ null @>
         ]

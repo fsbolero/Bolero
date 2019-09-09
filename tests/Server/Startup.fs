@@ -30,26 +30,24 @@ open Bolero.Test
 type Startup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
-        services.AddMvcCore() |> ignore
-        services
-            .AddSingleton<HtmlEncoder>(HtmlEncoder.Default)
-            .AddServerSideBlazor()
-        |> ignore
+        services.AddMvc().AddRazorRuntimeCompilation() |> ignore
+        services.AddServerSideBlazor() |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
         app
+            .UseDeveloperExceptionPage()
             .UseStaticFiles()
             .UseRouting()
             .UseEndpoints(fun endpoints ->
-                endpoints.MapBlazorHub<Client.Main.MyApp>("#main") |> ignore
-                endpoints.MapFallbackToFile("index.html") |> ignore
+                endpoints.MapBlazorHub() |> ignore
+                endpoints.MapFallbackToPage("/_Host") |> ignore
             )
         |> ignore
 
 module Program =
     [<EntryPoint>]
     let Main args =
-        WebHost.CreateDefaultBuilder()
+        WebHost.CreateDefaultBuilder(args)
             .UseStartup<Startup>()
             .Build()
             .Run()

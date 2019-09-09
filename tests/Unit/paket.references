@@ -8,4 +8,4 @@ Selenium.WebDriver.ChromeDriver
 Microsoft.AspNetCore.Blazor.Server
 Microsoft.AspNetCore.Blazor.Build
 Selenium.Support
-# Selenium.WebDriver.GeckoDriver.Win64
+Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation

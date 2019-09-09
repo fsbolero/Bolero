@@ -1,0 +1,17 @@
+@page "/"
+@namespace Bolero.Tests.Remoting
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bolero (remoting)</title>
+  <meta charset="UTF-8" />
+  <base href="/" />
+</head>
+<body>
+  <div id="main">@(await Html.RenderComponentAsync<Bolero.Tests.Remoting.Client.MyApp>(RenderMode.ServerPrerendered))</div>
+  <script src="_framework/blazor.server.js"></script>
+</body>
+</html>
+

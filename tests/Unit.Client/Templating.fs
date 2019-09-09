@@ -22,7 +22,7 @@ module Bolero.Tests.Client.Templating
 
 open Bolero
 open Bolero.Html
-open Microsoft.AspNetCore.Components
+open Microsoft.AspNetCore.Components.Web
 
 type Inline = Template<"""
     <div class="inline">
@@ -62,7 +62,7 @@ type EventTester() =
 
     /// Must be a method because StateHasChanged is protected,
     /// and therefore not visible to lambdas.
-    member this.OnClick(id, e: UIMouseEventArgs) =
+    member this.OnClick(id, e: MouseEventArgs) =
         currentState <- sprintf "clicked %i" id
         lastPosition <- sprintf "%f,%f" e.ClientX e.ClientY
         this.StateHasChanged()

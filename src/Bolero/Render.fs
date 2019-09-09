@@ -26,11 +26,11 @@ open FSharp.Reflection
 
 #if !DEBUG_RENDERER
 open Microsoft.AspNetCore.Components
-open Microsoft.AspNetCore.Components.RenderTree
+open Microsoft.AspNetCore.Components.Rendering
 #else
 open System.IO
 
-type BlazorTreeBuilder = Microsoft.AspNetCore.Components.RenderTree.RenderTreeBuilder
+type BlazorTreeBuilder = Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder
 type BlazorFragment = Microsoft.AspNetCore.Components.RenderFragment
 type ElementReference = Microsoft.AspNetCore.Components.ElementReference
 

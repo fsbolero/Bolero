@@ -88,19 +88,16 @@ type ProgramComponent<'model, 'msg>() =
     let mutable navigationInterceptionEnabled = false
 
     [<Inject>]
-    member val UriHelper = Unchecked.defaultof<IUriHelper> with get, set
+    member val NavigationManager = Unchecked.defaultof<NavigationManager> with get, set
     [<Inject>]
     member val Services = Unchecked.defaultof<System.IServiceProvider> with get, set
     [<Inject>]
     member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
     [<Inject>]
     member val NavigationInterception = Unchecked.defaultof<INavigationInterception> with get, set
-    [<Inject>]
-    member val ComponentContext = Unchecked.defaultof<IComponentContext> with get, set
 
     member val private View = Empty with get, set
     member val private Dispatch = ignore with get, set
-    member val private BaseUri = "/" with get, set
     member val private Router = None : option<IRouter<'model, 'msg>> with get, set
 
     /// The Elmish program to run.
@@ -111,13 +108,13 @@ type ProgramComponent<'model, 'msg>() =
 
     member private this.OnLocationChanged (_: obj) (e: LocationChangedEventArgs) =
         this.Router |> Option.iter (fun router ->
-            let uri = this.UriHelper.ToBaseRelativePath(this.BaseUri, e.Location)
+            let uri = this.NavigationManager.ToBaseRelativePath(e.Location)
             let route = router.SetRoute uri
             Option.iter this.Dispatch route)
 
     member internal this.GetCurrentUri() =
-        let uri = this.UriHelper.GetAbsoluteUri()
-        this.UriHelper.ToBaseRelativePath(this.BaseUri, uri)
+        let uri = this.NavigationManager.Uri
+        this.NavigationManager.ToBaseRelativePath(uri)
 
     member internal this.SetState(program, model, dispatch) =
         if not <| obj.ReferenceEquals(model, oldModel) then
@@ -134,7 +131,7 @@ type ProgramComponent<'model, 'msg>() =
             let newUri = router.GetRoute model
             let oldUri = this.GetCurrentUri()
             if newUri <> oldUri then
-                this.UriHelper.NavigateTo(newUri)
+                this.NavigationManager.NavigateTo(newUri)
         )
 
     member this.Rerender() =
@@ -161,17 +158,16 @@ type ProgramComponent<'model, 'msg>() =
             initModel: 'model
         ) =
         this.Router <- Some r
-        this.BaseUri <- this.UriHelper.GetBaseUri()
         System.EventHandler<_> this.OnLocationChanged
-        |> this.UriHelper.OnLocationChanged.AddHandler
+        |> this.NavigationManager.LocationChanged.AddHandler
         match r.SetRoute (this.GetCurrentUri()) with
         | Some msg ->
             program.update msg initModel
         | None ->
             initModel, []
 
-    override this.OnAfterRenderAsync() =
-        if this.Router.IsSome && not navigationInterceptionEnabled && this.ComponentContext.IsConnected then
+    override this.OnAfterRenderAsync(firstRender) =
+        if this.Router.IsSome && not navigationInterceptionEnabled && not firstRender then
             navigationInterceptionEnabled <- true
             this.NavigationInterception.EnableNavigationInterceptionAsync()
         else
@@ -183,7 +179,7 @@ type ProgramComponent<'model, 'msg>() =
     interface System.IDisposable with
         member this.Dispose() =
             System.EventHandler<_> this.OnLocationChanged
-            |> this.UriHelper.OnLocationChanged.RemoveHandler
+            |> this.NavigationManager.LocationChanged.RemoveHandler
 
 type ElementReferenceBinder() =
 

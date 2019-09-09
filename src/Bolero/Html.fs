@@ -24,6 +24,7 @@ module rec Bolero.Html
 
 open System
 open Microsoft.AspNetCore.Components
+open Microsoft.AspNetCore.Components.Web
 
 /// Create an HTML text node.
 let text str = Text str
@@ -976,379 +977,379 @@ module on =
 
     /// [omit]
     [<CompilerMessageAttribute("This method is intended for use in generated code only.", 10001, IsHidden=true, IsError=false)>]
-    let inline eventInline< ^T, ^F when ^T :> UIEventArgs and ^F : (member Create : obj * Action< ^T> -> EventCallback< ^T>)> factory eventName (callback: ^T -> unit) : Attr =
+    let inline eventInline< ^T, ^F when ^T :> EventArgs and ^F : (member Create : obj * Action< ^T> -> EventCallback< ^T>)> factory eventName (callback: ^T -> unit) : Attr =
         ExplicitAttr (fun builder sequence receiver ->
             builder.AddAttribute< ^T>(sequence, "on" + eventName,
                 (^F : (member Create : obj * Action< ^T> -> EventCallback< ^T>)(factory, receiver, Action< ^T>(callback)))
             ))
 
-    /// Create a handler for a HTML event of type UIEventArgs.
-    let inline event< ^T when ^T :> UIEventArgs> eventName (callback: ^T -> unit) =
+    /// Create a handler for a HTML event of type EventArgs.
+    let inline event< ^T when ^T :> EventArgs> eventName (callback: ^T -> unit) =
         eventInline< ^T, _> EventCallback.Factory eventName callback
 
 // BEGIN EVENTS
     /// Create a handler for HTML event `focus`.
-    let focus (callback: UIFocusEventArgs -> unit) : Attr =
+    let focus (callback: FocusEventArgs -> unit) : Attr =
         event "focus" callback
 
     /// Create a handler for HTML event `blur`.
-    let blur (callback: UIFocusEventArgs -> unit) : Attr =
+    let blur (callback: FocusEventArgs -> unit) : Attr =
         event "blur" callback
 
     /// Create a handler for HTML event `focusin`.
-    let focusin (callback: UIFocusEventArgs -> unit) : Attr =
+    let focusin (callback: FocusEventArgs -> unit) : Attr =
         event "focusin" callback
 
     /// Create a handler for HTML event `focusout`.
-    let focusout (callback: UIFocusEventArgs -> unit) : Attr =
+    let focusout (callback: FocusEventArgs -> unit) : Attr =
         event "focusout" callback
 
     /// Create a handler for HTML event `mouseover`.
-    let mouseover (callback: UIMouseEventArgs -> unit) : Attr =
+    let mouseover (callback: MouseEventArgs -> unit) : Attr =
         event "mouseover" callback
 
     /// Create a handler for HTML event `mouseout`.
-    let mouseout (callback: UIMouseEventArgs -> unit) : Attr =
+    let mouseout (callback: MouseEventArgs -> unit) : Attr =
         event "mouseout" callback
 
     /// Create a handler for HTML event `mousemove`.
-    let mousemove (callback: UIMouseEventArgs -> unit) : Attr =
+    let mousemove (callback: MouseEventArgs -> unit) : Attr =
         event "mousemove" callback
 
     /// Create a handler for HTML event `mousedown`.
-    let mousedown (callback: UIMouseEventArgs -> unit) : Attr =
+    let mousedown (callback: MouseEventArgs -> unit) : Attr =
         event "mousedown" callback
 
     /// Create a handler for HTML event `mouseup`.
-    let mouseup (callback: UIMouseEventArgs -> unit) : Attr =
+    let mouseup (callback: MouseEventArgs -> unit) : Attr =
         event "mouseup" callback
 
     /// Create a handler for HTML event `click`.
-    let click (callback: UIMouseEventArgs -> unit) : Attr =
+    let click (callback: MouseEventArgs -> unit) : Attr =
         event "click" callback
 
     /// Create a handler for HTML event `dblclick`.
-    let dblclick (callback: UIMouseEventArgs -> unit) : Attr =
+    let dblclick (callback: MouseEventArgs -> unit) : Attr =
         event "dblclick" callback
 
     /// Create a handler for HTML event `wheel`.
-    let wheel (callback: UIMouseEventArgs -> unit) : Attr =
+    let wheel (callback: MouseEventArgs -> unit) : Attr =
         event "wheel" callback
 
     /// Create a handler for HTML event `mousewheel`.
-    let mousewheel (callback: UIMouseEventArgs -> unit) : Attr =
+    let mousewheel (callback: MouseEventArgs -> unit) : Attr =
         event "mousewheel" callback
 
     /// Create a handler for HTML event `contextmenu`.
-    let contextmenu (callback: UIMouseEventArgs -> unit) : Attr =
+    let contextmenu (callback: MouseEventArgs -> unit) : Attr =
         event "contextmenu" callback
 
     /// Create a handler for HTML event `drag`.
-    let drag (callback: UIDragEventArgs -> unit) : Attr =
+    let drag (callback: DragEventArgs -> unit) : Attr =
         event "drag" callback
 
     /// Create a handler for HTML event `dragend`.
-    let dragend (callback: UIDragEventArgs -> unit) : Attr =
+    let dragend (callback: DragEventArgs -> unit) : Attr =
         event "dragend" callback
 
     /// Create a handler for HTML event `dragenter`.
-    let dragenter (callback: UIDragEventArgs -> unit) : Attr =
+    let dragenter (callback: DragEventArgs -> unit) : Attr =
         event "dragenter" callback
 
     /// Create a handler for HTML event `dragleave`.
-    let dragleave (callback: UIDragEventArgs -> unit) : Attr =
+    let dragleave (callback: DragEventArgs -> unit) : Attr =
         event "dragleave" callback
 
     /// Create a handler for HTML event `dragover`.
-    let dragover (callback: UIDragEventArgs -> unit) : Attr =
+    let dragover (callback: DragEventArgs -> unit) : Attr =
         event "dragover" callback
 
     /// Create a handler for HTML event `dragstart`.
-    let dragstart (callback: UIDragEventArgs -> unit) : Attr =
+    let dragstart (callback: DragEventArgs -> unit) : Attr =
         event "dragstart" callback
 
     /// Create a handler for HTML event `drop`.
-    let drop (callback: UIDragEventArgs -> unit) : Attr =
+    let drop (callback: DragEventArgs -> unit) : Attr =
         event "drop" callback
 
     /// Create a handler for HTML event `keydown`.
-    let keydown (callback: UIKeyboardEventArgs -> unit) : Attr =
+    let keydown (callback: KeyboardEventArgs -> unit) : Attr =
         event "keydown" callback
 
     /// Create a handler for HTML event `keyup`.
-    let keyup (callback: UIKeyboardEventArgs -> unit) : Attr =
+    let keyup (callback: KeyboardEventArgs -> unit) : Attr =
         event "keyup" callback
 
     /// Create a handler for HTML event `keypress`.
-    let keypress (callback: UIKeyboardEventArgs -> unit) : Attr =
+    let keypress (callback: KeyboardEventArgs -> unit) : Attr =
         event "keypress" callback
 
     /// Create a handler for HTML event `change`.
-    let change (callback: UIChangeEventArgs -> unit) : Attr =
+    let change (callback: ChangeEventArgs -> unit) : Attr =
         event "change" callback
 
     /// Create a handler for HTML event `input`.
-    let input (callback: UIChangeEventArgs -> unit) : Attr =
+    let input (callback: ChangeEventArgs -> unit) : Attr =
         event "input" callback
 
     /// Create a handler for HTML event `invalid`.
-    let invalid (callback: UIEventArgs -> unit) : Attr =
+    let invalid (callback: EventArgs -> unit) : Attr =
         event "invalid" callback
 
     /// Create a handler for HTML event `reset`.
-    let reset (callback: UIEventArgs -> unit) : Attr =
+    let reset (callback: EventArgs -> unit) : Attr =
         event "reset" callback
 
     /// Create a handler for HTML event `select`.
-    let select (callback: UIEventArgs -> unit) : Attr =
+    let select (callback: EventArgs -> unit) : Attr =
         event "select" callback
 
     /// Create a handler for HTML event `selectstart`.
-    let selectstart (callback: UIEventArgs -> unit) : Attr =
+    let selectstart (callback: EventArgs -> unit) : Attr =
         event "selectstart" callback
 
     /// Create a handler for HTML event `selectionchange`.
-    let selectionchange (callback: UIEventArgs -> unit) : Attr =
+    let selectionchange (callback: EventArgs -> unit) : Attr =
         event "selectionchange" callback
 
     /// Create a handler for HTML event `submit`.
-    let submit (callback: UIEventArgs -> unit) : Attr =
+    let submit (callback: EventArgs -> unit) : Attr =
         event "submit" callback
 
     /// Create a handler for HTML event `beforecopy`.
-    let beforecopy (callback: UIEventArgs -> unit) : Attr =
+    let beforecopy (callback: EventArgs -> unit) : Attr =
         event "beforecopy" callback
 
     /// Create a handler for HTML event `beforecut`.
-    let beforecut (callback: UIEventArgs -> unit) : Attr =
+    let beforecut (callback: EventArgs -> unit) : Attr =
         event "beforecut" callback
 
     /// Create a handler for HTML event `beforepaste`.
-    let beforepaste (callback: UIEventArgs -> unit) : Attr =
+    let beforepaste (callback: EventArgs -> unit) : Attr =
         event "beforepaste" callback
 
     /// Create a handler for HTML event `copy`.
-    let copy (callback: UIClipboardEventArgs -> unit) : Attr =
+    let copy (callback: ClipboardEventArgs -> unit) : Attr =
         event "copy" callback
 
     /// Create a handler for HTML event `cut`.
-    let cut (callback: UIClipboardEventArgs -> unit) : Attr =
+    let cut (callback: ClipboardEventArgs -> unit) : Attr =
         event "cut" callback
 
     /// Create a handler for HTML event `paste`.
-    let paste (callback: UIClipboardEventArgs -> unit) : Attr =
+    let paste (callback: ClipboardEventArgs -> unit) : Attr =
         event "paste" callback
 
     /// Create a handler for HTML event `touchcancel`.
-    let touchcancel (callback: UITouchEventArgs -> unit) : Attr =
+    let touchcancel (callback: TouchEventArgs -> unit) : Attr =
         event "touchcancel" callback
 
     /// Create a handler for HTML event `touchend`.
-    let touchend (callback: UITouchEventArgs -> unit) : Attr =
+    let touchend (callback: TouchEventArgs -> unit) : Attr =
         event "touchend" callback
 
     /// Create a handler for HTML event `touchmove`.
-    let touchmove (callback: UITouchEventArgs -> unit) : Attr =
+    let touchmove (callback: TouchEventArgs -> unit) : Attr =
         event "touchmove" callback
 
     /// Create a handler for HTML event `touchstart`.
-    let touchstart (callback: UITouchEventArgs -> unit) : Attr =
+    let touchstart (callback: TouchEventArgs -> unit) : Attr =
         event "touchstart" callback
 
     /// Create a handler for HTML event `touchenter`.
-    let touchenter (callback: UITouchEventArgs -> unit) : Attr =
+    let touchenter (callback: TouchEventArgs -> unit) : Attr =
         event "touchenter" callback
 
     /// Create a handler for HTML event `touchleave`.
-    let touchleave (callback: UITouchEventArgs -> unit) : Attr =
+    let touchleave (callback: TouchEventArgs -> unit) : Attr =
         event "touchleave" callback
 
     /// Create a handler for HTML event `pointercapture`.
-    let pointercapture (callback: UIPointerEventArgs -> unit) : Attr =
+    let pointercapture (callback: PointerEventArgs -> unit) : Attr =
         event "pointercapture" callback
 
     /// Create a handler for HTML event `lostpointercapture`.
-    let lostpointercapture (callback: UIPointerEventArgs -> unit) : Attr =
+    let lostpointercapture (callback: PointerEventArgs -> unit) : Attr =
         event "lostpointercapture" callback
 
     /// Create a handler for HTML event `pointercancel`.
-    let pointercancel (callback: UIPointerEventArgs -> unit) : Attr =
+    let pointercancel (callback: PointerEventArgs -> unit) : Attr =
         event "pointercancel" callback
 
     /// Create a handler for HTML event `pointerdown`.
-    let pointerdown (callback: UIPointerEventArgs -> unit) : Attr =
+    let pointerdown (callback: PointerEventArgs -> unit) : Attr =
         event "pointerdown" callback
 
     /// Create a handler for HTML event `pointerenter`.
-    let pointerenter (callback: UIPointerEventArgs -> unit) : Attr =
+    let pointerenter (callback: PointerEventArgs -> unit) : Attr =
         event "pointerenter" callback
 
     /// Create a handler for HTML event `pointerleave`.
-    let pointerleave (callback: UIPointerEventArgs -> unit) : Attr =
+    let pointerleave (callback: PointerEventArgs -> unit) : Attr =
         event "pointerleave" callback
 
     /// Create a handler for HTML event `pointermove`.
-    let pointermove (callback: UIPointerEventArgs -> unit) : Attr =
+    let pointermove (callback: PointerEventArgs -> unit) : Attr =
         event "pointermove" callback
 
     /// Create a handler for HTML event `pointerout`.
-    let pointerout (callback: UIPointerEventArgs -> unit) : Attr =
+    let pointerout (callback: PointerEventArgs -> unit) : Attr =
         event "pointerout" callback
 
     /// Create a handler for HTML event `pointerover`.
-    let pointerover (callback: UIPointerEventArgs -> unit) : Attr =
+    let pointerover (callback: PointerEventArgs -> unit) : Attr =
         event "pointerover" callback
 
     /// Create a handler for HTML event `pointerup`.
-    let pointerup (callback: UIPointerEventArgs -> unit) : Attr =
+    let pointerup (callback: PointerEventArgs -> unit) : Attr =
         event "pointerup" callback
 
     /// Create a handler for HTML event `canplay`.
-    let canplay (callback: UIEventArgs -> unit) : Attr =
+    let canplay (callback: EventArgs -> unit) : Attr =
         event "canplay" callback
 
     /// Create a handler for HTML event `canplaythrough`.
-    let canplaythrough (callback: UIEventArgs -> unit) : Attr =
+    let canplaythrough (callback: EventArgs -> unit) : Attr =
         event "canplaythrough" callback
 
     /// Create a handler for HTML event `cuechange`.
-    let cuechange (callback: UIEventArgs -> unit) : Attr =
+    let cuechange (callback: EventArgs -> unit) : Attr =
         event "cuechange" callback
 
     /// Create a handler for HTML event `durationchange`.
-    let durationchange (callback: UIEventArgs -> unit) : Attr =
+    let durationchange (callback: EventArgs -> unit) : Attr =
         event "durationchange" callback
 
     /// Create a handler for HTML event `emptied`.
-    let emptied (callback: UIEventArgs -> unit) : Attr =
+    let emptied (callback: EventArgs -> unit) : Attr =
         event "emptied" callback
 
     /// Create a handler for HTML event `pause`.
-    let pause (callback: UIEventArgs -> unit) : Attr =
+    let pause (callback: EventArgs -> unit) : Attr =
         event "pause" callback
 
     /// Create a handler for HTML event `play`.
-    let play (callback: UIEventArgs -> unit) : Attr =
+    let play (callback: EventArgs -> unit) : Attr =
         event "play" callback
 
     /// Create a handler for HTML event `playing`.
-    let playing (callback: UIEventArgs -> unit) : Attr =
+    let playing (callback: EventArgs -> unit) : Attr =
         event "playing" callback
 
     /// Create a handler for HTML event `ratechange`.
-    let ratechange (callback: UIEventArgs -> unit) : Attr =
+    let ratechange (callback: EventArgs -> unit) : Attr =
         event "ratechange" callback
 
     /// Create a handler for HTML event `seeked`.
-    let seeked (callback: UIEventArgs -> unit) : Attr =
+    let seeked (callback: EventArgs -> unit) : Attr =
         event "seeked" callback
 
     /// Create a handler for HTML event `seeking`.
-    let seeking (callback: UIEventArgs -> unit) : Attr =
+    let seeking (callback: EventArgs -> unit) : Attr =
         event "seeking" callback
 
     /// Create a handler for HTML event `stalled`.
-    let stalled (callback: UIEventArgs -> unit) : Attr =
+    let stalled (callback: EventArgs -> unit) : Attr =
         event "stalled" callback
 
     /// Create a handler for HTML event `stop`.
-    let stop (callback: UIEventArgs -> unit) : Attr =
+    let stop (callback: EventArgs -> unit) : Attr =
         event "stop" callback
 
     /// Create a handler for HTML event `suspend`.
-    let suspend (callback: UIEventArgs -> unit) : Attr =
+    let suspend (callback: EventArgs -> unit) : Attr =
         event "suspend" callback
 
     /// Create a handler for HTML event `timeupdate`.
-    let timeupdate (callback: UIEventArgs -> unit) : Attr =
+    let timeupdate (callback: EventArgs -> unit) : Attr =
         event "timeupdate" callback
 
     /// Create a handler for HTML event `volumechange`.
-    let volumechange (callback: UIEventArgs -> unit) : Attr =
+    let volumechange (callback: EventArgs -> unit) : Attr =
         event "volumechange" callback
 
     /// Create a handler for HTML event `waiting`.
-    let waiting (callback: UIEventArgs -> unit) : Attr =
+    let waiting (callback: EventArgs -> unit) : Attr =
         event "waiting" callback
 
     /// Create a handler for HTML event `loadstart`.
-    let loadstart (callback: UIProgressEventArgs -> unit) : Attr =
+    let loadstart (callback: ProgressEventArgs -> unit) : Attr =
         event "loadstart" callback
 
     /// Create a handler for HTML event `timeout`.
-    let timeout (callback: UIProgressEventArgs -> unit) : Attr =
+    let timeout (callback: ProgressEventArgs -> unit) : Attr =
         event "timeout" callback
 
     /// Create a handler for HTML event `abort`.
-    let abort (callback: UIProgressEventArgs -> unit) : Attr =
+    let abort (callback: ProgressEventArgs -> unit) : Attr =
         event "abort" callback
 
     /// Create a handler for HTML event `load`.
-    let load (callback: UIProgressEventArgs -> unit) : Attr =
+    let load (callback: ProgressEventArgs -> unit) : Attr =
         event "load" callback
 
     /// Create a handler for HTML event `loadend`.
-    let loadend (callback: UIProgressEventArgs -> unit) : Attr =
+    let loadend (callback: ProgressEventArgs -> unit) : Attr =
         event "loadend" callback
 
     /// Create a handler for HTML event `progress`.
-    let progress (callback: UIProgressEventArgs -> unit) : Attr =
+    let progress (callback: ProgressEventArgs -> unit) : Attr =
         event "progress" callback
 
     /// Create a handler for HTML event `error`.
-    let error (callback: UIProgressEventArgs -> unit) : Attr =
+    let error (callback: ProgressEventArgs -> unit) : Attr =
         event "error" callback
 
     /// Create a handler for HTML event `activate`.
-    let activate (callback: UIEventArgs -> unit) : Attr =
+    let activate (callback: EventArgs -> unit) : Attr =
         event "activate" callback
 
     /// Create a handler for HTML event `beforeactivate`.
-    let beforeactivate (callback: UIEventArgs -> unit) : Attr =
+    let beforeactivate (callback: EventArgs -> unit) : Attr =
         event "beforeactivate" callback
 
     /// Create a handler for HTML event `beforedeactivate`.
-    let beforedeactivate (callback: UIEventArgs -> unit) : Attr =
+    let beforedeactivate (callback: EventArgs -> unit) : Attr =
         event "beforedeactivate" callback
 
     /// Create a handler for HTML event `deactivate`.
-    let deactivate (callback: UIEventArgs -> unit) : Attr =
+    let deactivate (callback: EventArgs -> unit) : Attr =
         event "deactivate" callback
 
     /// Create a handler for HTML event `ended`.
-    let ended (callback: UIEventArgs -> unit) : Attr =
+    let ended (callback: EventArgs -> unit) : Attr =
         event "ended" callback
 
     /// Create a handler for HTML event `fullscreenchange`.
-    let fullscreenchange (callback: UIEventArgs -> unit) : Attr =
+    let fullscreenchange (callback: EventArgs -> unit) : Attr =
         event "fullscreenchange" callback
 
     /// Create a handler for HTML event `fullscreenerror`.
-    let fullscreenerror (callback: UIEventArgs -> unit) : Attr =
+    let fullscreenerror (callback: EventArgs -> unit) : Attr =
         event "fullscreenerror" callback
 
     /// Create a handler for HTML event `loadeddata`.
-    let loadeddata (callback: UIEventArgs -> unit) : Attr =
+    let loadeddata (callback: EventArgs -> unit) : Attr =
         event "loadeddata" callback
 
     /// Create a handler for HTML event `loadedmetadata`.
-    let loadedmetadata (callback: UIEventArgs -> unit) : Attr =
+    let loadedmetadata (callback: EventArgs -> unit) : Attr =
         event "loadedmetadata" callback
 
     /// Create a handler for HTML event `pointerlockchange`.
-    let pointerlockchange (callback: UIEventArgs -> unit) : Attr =
+    let pointerlockchange (callback: EventArgs -> unit) : Attr =
         event "pointerlockchange" callback
 
     /// Create a handler for HTML event `pointerlockerror`.
-    let pointerlockerror (callback: UIEventArgs -> unit) : Attr =
+    let pointerlockerror (callback: EventArgs -> unit) : Attr =
         event "pointerlockerror" callback
 
     /// Create a handler for HTML event `readystatechange`.
-    let readystatechange (callback: UIEventArgs -> unit) : Attr =
+    let readystatechange (callback: EventArgs -> unit) : Attr =
         event "readystatechange" callback
 
     /// Create a handler for HTML event `scroll`.
-    let scroll (callback: UIEventArgs -> unit) : Attr =
+    let scroll (callback: EventArgs -> unit) : Attr =
         event "scroll" callback
 
 // END EVENTS
@@ -1359,7 +1360,7 @@ module bind =
     let private attr<'T, 'U> (valueName: string) (eventName: string) (value: 'T) (callback: 'U -> unit) =
         Attrs [
             valueName => value
-            on.event eventName (fun (e: UIChangeEventArgs) ->
+            on.event eventName (fun (e: ChangeEventArgs) ->
                 callback (unbox<'U> e.Value))
         ]
 

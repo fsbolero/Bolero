@@ -25,6 +25,7 @@ open System.IO
 open System.Text
 open System.Text.RegularExpressions
 open Microsoft.AspNetCore.Components
+open Microsoft.AspNetCore.Components.Web
 open HtmlAgilityPack
 
 /// Available value types for a `bind` attribute.
@@ -55,7 +56,7 @@ module HoleType =
         if t1 = t2 then t1 else
         match t1, t2 with
         | (String | Html | AttributeValue), (String | Html | AttributeValue) -> String
-        | Event _, Event _ -> Event typeof<UIEventArgs>
+        | Event _, Event _ -> Event typeof<EventArgs>
         | DataBinding valType, (String | Html | AttributeValue)
         | (String | Html | AttributeValue), DataBinding valType -> DataBinding valType
         | _ -> failwithf "Hole name used multiple times with incompatible types: %s" holeName
@@ -64,60 +65,60 @@ module HoleType =
     let EventArg (name: string) : Type =
         match name with
 // BEGIN EVENTS
-        | "onfocus" -> typeof<UIFocusEventArgs>
-        | "onblur" -> typeof<UIFocusEventArgs>
-        | "onfocusin" -> typeof<UIFocusEventArgs>
-        | "onfocusout" -> typeof<UIFocusEventArgs>
-        | "onmouseover" -> typeof<UIMouseEventArgs>
-        | "onmouseout" -> typeof<UIMouseEventArgs>
-        | "onmousemove" -> typeof<UIMouseEventArgs>
-        | "onmousedown" -> typeof<UIMouseEventArgs>
-        | "onmouseup" -> typeof<UIMouseEventArgs>
-        | "onclick" -> typeof<UIMouseEventArgs>
-        | "ondblclick" -> typeof<UIMouseEventArgs>
-        | "onwheel" -> typeof<UIMouseEventArgs>
-        | "onmousewheel" -> typeof<UIMouseEventArgs>
-        | "oncontextmenu" -> typeof<UIMouseEventArgs>
-        | "ondrag" -> typeof<UIDragEventArgs>
-        | "ondragend" -> typeof<UIDragEventArgs>
-        | "ondragenter" -> typeof<UIDragEventArgs>
-        | "ondragleave" -> typeof<UIDragEventArgs>
-        | "ondragover" -> typeof<UIDragEventArgs>
-        | "ondragstart" -> typeof<UIDragEventArgs>
-        | "ondrop" -> typeof<UIDragEventArgs>
-        | "onkeydown" -> typeof<UIKeyboardEventArgs>
-        | "onkeyup" -> typeof<UIKeyboardEventArgs>
-        | "onkeypress" -> typeof<UIKeyboardEventArgs>
-        | "onchange" -> typeof<UIChangeEventArgs>
-        | "oninput" -> typeof<UIChangeEventArgs>
-        | "oncopy" -> typeof<UIClipboardEventArgs>
-        | "oncut" -> typeof<UIClipboardEventArgs>
-        | "onpaste" -> typeof<UIClipboardEventArgs>
-        | "ontouchcancel" -> typeof<UITouchEventArgs>
-        | "ontouchend" -> typeof<UITouchEventArgs>
-        | "ontouchmove" -> typeof<UITouchEventArgs>
-        | "ontouchstart" -> typeof<UITouchEventArgs>
-        | "ontouchenter" -> typeof<UITouchEventArgs>
-        | "ontouchleave" -> typeof<UITouchEventArgs>
-        | "onpointercapture" -> typeof<UIPointerEventArgs>
-        | "onlostpointercapture" -> typeof<UIPointerEventArgs>
-        | "onpointercancel" -> typeof<UIPointerEventArgs>
-        | "onpointerdown" -> typeof<UIPointerEventArgs>
-        | "onpointerenter" -> typeof<UIPointerEventArgs>
-        | "onpointerleave" -> typeof<UIPointerEventArgs>
-        | "onpointermove" -> typeof<UIPointerEventArgs>
-        | "onpointerout" -> typeof<UIPointerEventArgs>
-        | "onpointerover" -> typeof<UIPointerEventArgs>
-        | "onpointerup" -> typeof<UIPointerEventArgs>
-        | "onloadstart" -> typeof<UIProgressEventArgs>
-        | "ontimeout" -> typeof<UIProgressEventArgs>
-        | "onabort" -> typeof<UIProgressEventArgs>
-        | "onload" -> typeof<UIProgressEventArgs>
-        | "onloadend" -> typeof<UIProgressEventArgs>
-        | "onprogress" -> typeof<UIProgressEventArgs>
-        | "onerror" -> typeof<UIProgressEventArgs>
+        | "onfocus" -> typeof<FocusEventArgs>
+        | "onblur" -> typeof<FocusEventArgs>
+        | "onfocusin" -> typeof<FocusEventArgs>
+        | "onfocusout" -> typeof<FocusEventArgs>
+        | "onmouseover" -> typeof<MouseEventArgs>
+        | "onmouseout" -> typeof<MouseEventArgs>
+        | "onmousemove" -> typeof<MouseEventArgs>
+        | "onmousedown" -> typeof<MouseEventArgs>
+        | "onmouseup" -> typeof<MouseEventArgs>
+        | "onclick" -> typeof<MouseEventArgs>
+        | "ondblclick" -> typeof<MouseEventArgs>
+        | "onwheel" -> typeof<MouseEventArgs>
+        | "onmousewheel" -> typeof<MouseEventArgs>
+        | "oncontextmenu" -> typeof<MouseEventArgs>
+        | "ondrag" -> typeof<DragEventArgs>
+        | "ondragend" -> typeof<DragEventArgs>
+        | "ondragenter" -> typeof<DragEventArgs>
+        | "ondragleave" -> typeof<DragEventArgs>
+        | "ondragover" -> typeof<DragEventArgs>
+        | "ondragstart" -> typeof<DragEventArgs>
+        | "ondrop" -> typeof<DragEventArgs>
+        | "onkeydown" -> typeof<KeyboardEventArgs>
+        | "onkeyup" -> typeof<KeyboardEventArgs>
+        | "onkeypress" -> typeof<KeyboardEventArgs>
+        | "onchange" -> typeof<ChangeEventArgs>
+        | "oninput" -> typeof<ChangeEventArgs>
+        | "oncopy" -> typeof<ClipboardEventArgs>
+        | "oncut" -> typeof<ClipboardEventArgs>
+        | "onpaste" -> typeof<ClipboardEventArgs>
+        | "ontouchcancel" -> typeof<TouchEventArgs>
+        | "ontouchend" -> typeof<TouchEventArgs>
+        | "ontouchmove" -> typeof<TouchEventArgs>
+        | "ontouchstart" -> typeof<TouchEventArgs>
+        | "ontouchenter" -> typeof<TouchEventArgs>
+        | "ontouchleave" -> typeof<TouchEventArgs>
+        | "onpointercapture" -> typeof<PointerEventArgs>
+        | "onlostpointercapture" -> typeof<PointerEventArgs>
+        | "onpointercancel" -> typeof<PointerEventArgs>
+        | "onpointerdown" -> typeof<PointerEventArgs>
+        | "onpointerenter" -> typeof<PointerEventArgs>
+        | "onpointerleave" -> typeof<PointerEventArgs>
+        | "onpointermove" -> typeof<PointerEventArgs>
+        | "onpointerout" -> typeof<PointerEventArgs>
+        | "onpointerover" -> typeof<PointerEventArgs>
+        | "onpointerup" -> typeof<PointerEventArgs>
+        | "onloadstart" -> typeof<ProgressEventArgs>
+        | "ontimeout" -> typeof<ProgressEventArgs>
+        | "onabort" -> typeof<ProgressEventArgs>
+        | "onload" -> typeof<ProgressEventArgs>
+        | "onloadend" -> typeof<ProgressEventArgs>
+        | "onprogress" -> typeof<ProgressEventArgs>
+        | "onerror" -> typeof<ProgressEventArgs>
 // END EVENTS
-        | _ -> typeof<UIEventArgs>
+        | _ -> typeof<EventArgs>
 
 /// Matches a ${HoleName} anywhere in a string.
 let HoleRE = Regex(@"\${(\w+)}", RegexOptions.Compiled)
