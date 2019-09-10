@@ -466,7 +466,6 @@ module private RouterImpl =
                         (ctor args, rest))
                 let mutable constant = Unchecked.defaultof<_>
                 match l with
-                | [] -> finalize []
                 | s :: rest when parser.constants.TryGetValue(s, &constant) ->
                     run constant rest
                 | l ->
