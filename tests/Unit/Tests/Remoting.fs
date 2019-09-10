@@ -11,12 +11,7 @@ open Bolero.Tests
 [<Category "Remoting"; NonParallelizable>]
 module Remoting =
 
-    let elt = NodeFixture()
-
-    [<OneTimeSetUp>]
-    let SetUp() =
-        elt.Init("test-fixture-remoting")
-
+    let elt = NodeFixture(By.Id "test-fixture-remoting")
 
     [<Ignore "Remoting test randomly fails; TODO fix">]
     [<Property(MaxTest = 10); NonParallelizable>]

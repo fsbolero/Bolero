@@ -7,16 +7,12 @@ open OpenQA.Selenium
 [<Category "HTML">]
 module Html =
 
-    let elt = NodeFixture()
+    let elt = NodeFixture(By.Id "test-fixture-html")
 
     let blur() =
         WebFixture.Driver
             .ExecuteScript("document.activeElement.blur()")
             |> ignore
-
-    [<OneTimeSetUp>]
-    let SetUp() =
-        elt.Init("test-fixture-html")
 
     [<Test>]
     let ``Element with id and text content``() =

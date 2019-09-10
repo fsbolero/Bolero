@@ -12,11 +12,7 @@ module Routing =
     open Bolero
     open System.Collections.Generic
 
-    let elt = NodeFixture()
-
-    [<OneTimeSetUp>]
-    let SetUp() =
-        elt.Init("test-fixture-routing")
+    let elt = NodeFixture(By.Id "test-fixture-routing")
 
     let links =
         Client.Routing.links

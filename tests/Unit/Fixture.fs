@@ -80,8 +80,9 @@ type WebFixture() =
 
             // Once both are started, browse and wait for the page to render.
             driver.Navigate().GoToUrl(url)
-            root <- WebFixture.MkWait(TimeSpan.FromSeconds(5.))
+            WebFixture.MkWait(TimeSpan.FromSeconds(5.))
                 .Until(fun d -> try d.FindElement(By.Id "test-fixture") with _ -> null)
+            |> ignore
         }
         |> Async.StartImmediateAsTask
         :> Task
@@ -105,30 +106,28 @@ type WebFixture() =
     static member Server = server
     static member Driver = driver
     static member Url = url
-    static member Root = root
+    static member Root() = driver.FindElement(By.Id "test-fixture")
 
-and NodeFixture() =
+and NodeFixture(parent: unit -> IWebElement, by: By) =
 
-    member val Root: IWebElement = null with get, set
+    new(by: By) = NodeFixture(WebFixture.Root, by)
 
-    /// Initialize this node fixture.
-    /// Must be called after WebFixture initialization.
-    member this.Init(id) =
-        this.Root <- WebFixture.Root.FindElement(By.Id id)
+    member this.Root() =
+        parent().FindElement(by)
 
     /// Get a node fixture nested in the root of this one.
     /// The returned fixture doesn't need to be `Init()`ed.
     member this.Inner(by) =
-        new NodeFixture(Root = this.Root.FindElement(by))
+        new NodeFixture(this.Root, by)
 
     /// Get child element by id.
     member this.ById(x) =
-        try this.Root.FindElement(By.Id x)
+        try this.Root().FindElement(By.Id x)
         with :? NoSuchElementException -> null
 
     /// Get child element by class.
     member this.ByClass(x) =
-        try this.Root.FindElement(By.ClassName x)
+        try this.Root().FindElement(By.ClassName x)
         with :? NoSuchElementException -> null
 
     /// Wait for the given callback to return a non-false non-null value.

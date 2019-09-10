@@ -7,11 +7,7 @@ open OpenQA.Selenium
 [<Category "Elmish">]
 module Elmish =
 
-    let elt = NodeFixture()
-
-    [<OneTimeSetUp>]
-    let SetUp() =
-        elt.Init("test-fixture-elmish")
+    let elt = NodeFixture(By.Id "test-fixture-elmish")
 
     [<Test>]
     let ``ProgramComponent is rendered``() =

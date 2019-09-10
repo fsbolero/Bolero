@@ -10,16 +10,12 @@ open OpenQA.Selenium.Support.UI
 [<Category "Templating">]
 module Templating =
 
-    let elt = NodeFixture()
+    let elt = NodeFixture(By.Id "test-fixture-templating")
 
     let blur() =
         WebFixture.Driver
             .ExecuteScript("document.activeElement.blur()")
             |> ignore
-
-    [<OneTimeSetUp>]
-    let SetUp() =
-        elt.Init("test-fixture-templating")
 
     [<Test>]
     let ``Inline template is instantiated``() =
