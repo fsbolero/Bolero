@@ -6,6 +6,5 @@ FsCheck.NUnit
 Selenium.WebDriver
 Selenium.WebDriver.ChromeDriver
 Microsoft.AspNetCore.Blazor.Server
-Microsoft.AspNetCore.Blazor.Build
 Selenium.Support
 Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation

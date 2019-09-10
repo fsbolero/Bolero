@@ -4,7 +4,6 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <IsPackable>false</IsPackable>
-    <BlazorLinkOnBuild>false</BlazorLinkOnBuild>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Utility.fs" />
@@ -16,6 +15,7 @@
     <Compile Include="Tests\Elmish.fs" />
     <Compile Include="Tests\Routing.fs" />
     <Compile Include="Tests\Remoting.fs" />
+    <Compile Include="Program.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
