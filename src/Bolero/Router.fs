@@ -25,7 +25,6 @@ namespace Bolero
 open System
 open System.Collections.Generic
 open System.Runtime.CompilerServices
-open System.Text
 open FSharp.Reflection
 open System.Runtime.InteropServices
 
@@ -96,6 +95,7 @@ type InvalidRouterKind =
     | IdenticalPath of UnionCaseInfo * UnionCaseInfo
     | RestNotLast of UnionCaseInfo
     | InvalidRestType of UnionCaseInfo
+    | MultiplePageModels of UnionCaseInfo
 
 exception InvalidRouter of kind: InvalidRouterKind with
     override this.Message =
@@ -125,6 +125,11 @@ exception InvalidRouter of kind: InvalidRouterKind with
             withCase case "{*rest} parameter must be the last fragment"
         | InvalidRouterKind.InvalidRestType case ->
             withCase case "{*rest} parameter must have type string, list or array"
+        | InvalidRouterKind.MultiplePageModels case ->
+            withCase case "multiple page models on the same case"
+
+[<CLIMutable>]
+type PageModel<'T> = { Model: 'T }
 
 [<AutoOpen>]
 module private RouterImpl =
@@ -352,7 +357,43 @@ module private RouterImpl =
 
     let fragmentParameterRE = Regex(@"^\{([?*]?)([a-zA-Z0-9_]+)\}$", RegexOptions.Compiled)
 
-    let parseEndPointCase getSegment (case: UnionCaseInfo) =
+    type UnionCase =
+        {
+            info: UnionCaseInfo
+            ctor: obj[] -> obj
+            segments: UnionParserSegment list
+        }
+
+    let isPageModel (ty: Type) =
+        ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<PageModel<_>>
+
+    let findPageModel (case: UnionCaseInfo) =
+        ((0, None), case.GetFields())
+        ||> Array.fold (fun (i, found) field ->
+            if isPageModel field.PropertyType then
+                match found with
+                | None -> i + 1, Some (i, field.PropertyType)
+                | Some _ -> fail (InvalidRouterKind.MultiplePageModels case)
+            else
+                i + 1, found)
+        |> snd
+
+    let getCtor (defaultPageModel: obj -> unit) (case: UnionCaseInfo) =
+        let ctor = FSharpValue.PreComputeUnionConstructor(case, true)
+        match findPageModel case with
+        | None -> ctor
+        | Some (i, ty) ->
+            let dummyArgs = Array.zeroCreate (case.GetFields().Length)
+            let model = FSharpValue.MakeRecord(ty, [|null|])
+            dummyArgs.[i] <- model
+            let dummy = ctor dummyArgs
+            defaultPageModel dummy
+            fun vals ->
+                vals.[i] <- model
+                ctor vals
+
+    let parseEndPointCase getSegment (defaultPageModel: obj -> unit) (case: UnionCaseInfo) =
+        let ctor = getCtor defaultPageModel case
         let fields = case.GetFields()
         let defaultFrags() =
             fields
@@ -368,12 +409,16 @@ module private RouterImpl =
             |> List.ofSeq
         match parseEndPointCasePath case with
         // EndPoint "/"
-        | [] -> defaultFrags()
+        | [] -> { info = case; ctor = ctor; segments = defaultFrags() }
         // EndPoint "/const"
-        | [root] when isConstantFragment root -> Constant root :: defaultFrags()
+        | [root] when isConstantFragment root ->
+            { info = case; ctor = ctor; segments = Constant root :: defaultFrags() }
         // EndPoint <complex_path>
         | frags ->
-            let unboundFields = HashSet(fields |> Array.map (fun f -> f.Name))
+            let unboundFields =
+                fields
+                |> Array.choose (fun f -> if isPageModel f.PropertyType then None else Some f.Name)
+                |> HashSet
             let fragCount = frags.Length
             let res =
                 frags
@@ -409,38 +454,35 @@ module private RouterImpl =
                 )
             if unboundFields.Count > 0 then
                 fail (InvalidRouterKind.MissingField(case, Seq.head unboundFields))
-            res
+            { info = case; ctor = ctor; segments = res }
 
-    let caseCtor (case: UnionCaseInfo) : UnionCaseInfo * (obj[] -> obj) =
-        case, FSharpValue.PreComputeUnionConstructor(case, true)
-
-    let rec mergeEndPointCaseFragments (cases: seq<UnionCaseInfo * list<UnionParserSegment>>) : UnionParser =
+    let rec mergeEndPointCaseFragments (cases: seq<UnionCase>) : UnionParser =
         let constants = Dictionary<string, _>()
         let mutable parameter = None
         let mutable final = None
-        cases |> Seq.iter (fun (case, p) ->
-            match p with
+        cases |> Seq.iter (fun case ->
+            match case.segments with
             | Constant s :: rest ->
                 let existing =
                     match constants.TryGetValue(s) with
                     | true, x -> x
                     | false, _ -> []
-                constants.[s] <- (case, rest) :: existing
+                constants.[s] <- { case with segments = rest } :: existing
             | Parameter param :: rest ->
                 match parameter with
                 | Some (case', param', ps) ->
                     if param.``type`` <> param'.``type`` then
-                        fail (InvalidRouterKind.ParameterTypeMismatch(case', param'.name, case, param.name))
+                        fail (InvalidRouterKind.ParameterTypeMismatch(case', param'.name, case.info, param.name))
                     if param.modifier <> param'.modifier then
-                        fail (InvalidRouterKind.ModifierMismatch(case', param'.name, case, param.name))
+                        fail (InvalidRouterKind.ModifierMismatch(case', param'.name, case.info, param.name))
                     let param = { param with index = param.index @ param'.index }
-                    parameter <- Some (case', param, (case, rest) :: ps)
+                    parameter <- Some (case', param, { case with segments = rest } :: ps)
                 | None ->
-                    parameter <- Some (case, param, [case, rest])
+                    parameter <- Some (case.info, param, [{ case with segments = rest }])
             | [] ->
                 match final with
-                | Some (case', _) -> fail (InvalidRouterKind.IdenticalPath(case, case'))
-                | None -> final <- Some (case, caseCtor case)
+                | Some (case', _) -> fail (InvalidRouterKind.IdenticalPath(case.info, case'))
+                | None -> final <- Some (case.info, case.ctor)
         )
         {
             constants = dict [
@@ -449,7 +491,7 @@ module private RouterImpl =
             ]
             parameter = parameter |> Option.map (fun (_, param, cases) ->
                 param, mergeEndPointCaseFragments cases)
-            finalize = final |> Option.map snd
+            finalize = final
         }
 
     let parseUnion cases : SegmentParser =
@@ -533,24 +575,24 @@ module private RouterImpl =
     let caseDector (case: UnionCaseInfo) : obj -> obj[] =
         FSharpValue.PreComputeUnionReader(case, true)
 
-    let writeUnionCase (case: UnionCaseInfo, path: list<UnionParserSegment>) =
-        let dector = caseDector case
+    let writeUnionCase (case: UnionCase) =
+        let dector = caseDector case.info
         fun o ->
             let vals = dector o
-            path |> List.collect (function
+            case.segments |> List.collect (function
                 | Constant s -> [s]
                 | Parameter({ modifier = Basic } as param) ->
-                    let (_, _, i) = param.index |> List.find (fun (case', _, _) -> case' = case)
+                    let (_, _, i) = param.index |> List.find (fun (case', _, _) -> case' = case.info)
                     param.segment.write vals.[i]
                 | Parameter({ modifier = Rest(_, decons) } as param) ->
-                    let (_, _, i) = param.index |> List.find (fun (case', _, _) -> case' = case)
+                    let (_, _, i) = param.index |> List.find (fun (case', _, _) -> case' = case.info)
                     [ for x in decons vals.[i] do yield! param.segment.write x ]
             )
 
-    let unionSegment (getSegment: Type -> Segment) (ty: Type) : Segment =
+    let unionSegment (getSegment: Type -> Segment) (defaultPageModel: obj -> unit) (ty: Type) : Segment =
         let cases =
             FSharpType.GetUnionCases(ty, true)
-            |> Array.map (fun c -> c, parseEndPointCase getSegment c)
+            |> Array.map (parseEndPointCase getSegment defaultPageModel)
         let write =
             let writers = Array.map writeUnionCase cases
             let tagReader = FSharpValue.PreComputeUnionTagReader(ty, true)
@@ -576,7 +618,7 @@ module private RouterImpl =
             write = writeConsecutiveTypes getSegment tys dector
         }
 
-    let rec getSegment (cache: Dictionary<Type, Segment>) (ty: Type) : Segment =
+    let rec getSegment (cache: Dictionary<Type, Segment>) (defaultPageModel: obj -> unit) (ty: Type) : Segment =
         match cache.TryGetValue(ty) with
         | true, x -> unbox x
         | false, _ ->
@@ -586,14 +628,14 @@ module private RouterImpl =
                 write = fun x -> (!segment).write x
             }
             cache.[ty] <- !segment
-            let getSegment = getSegment cache
+            let getSegment = getSegment cache ignore
             segment :=
                 if ty.IsArray && ty.GetArrayRank() = 1 then
                     arraySegment getSegment (ty.GetElementType())
                 elif ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<list<_>> then
                     listSegment getSegment (ty.GetGenericArguments().[0])
                 elif FSharpType.IsUnion(ty, true) then
-                    unionSegment getSegment ty
+                    unionSegment getSegment defaultPageModel ty
                 elif FSharpType.IsTuple(ty) then
                     tupleSegment getSegment ty
                 elif FSharpType.IsRecord(ty, true) then
@@ -609,11 +651,13 @@ module Router =
     /// Infer a router constructed around an endpoint type `'ep`.
     /// This type must be an F# union type, and its cases should use `EndPointAttribute`
     /// to declare how they match to a URI.
-    let infer<'ep, 'model, 'msg> (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) =
+    /// Inside `defaultPageModel`, call `Router.definePageModel` to indicate the page model to use
+    /// when switching to a new page.
+    let inferWithModel<'ep, 'model, 'msg> (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) (defaultPageModel: 'ep -> unit) =
         let ty = typeof<'ep>
         let cache = Dictionary()
         for KeyValue(k, v) in baseTypes do cache.Add(k, v)
-        let frag = getSegment cache ty
+        let frag = getSegment cache (unbox >> defaultPageModel) ty
         {
             getEndPoint = getEndPoint
             getRoute = fun ep ->
@@ -628,6 +672,17 @@ module Router =
                     | x, [] -> Some (unbox<'ep> x |> makeMessage)
                     | _ -> None)
         }
+
+    /// Infer a router constructed around an endpoint type `'ep`.
+    /// This type must be an F# union type, and its cases should use `EndPointAttribute`
+    /// to declare how they match to a URI.
+    let infer<'ep, 'model, 'msg> (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) =
+        inferWithModel makeMessage getEndPoint ignore
+
+    let noModel<'T> = { Model = Unchecked.defaultof<'T> }
+
+    let definePageModel (pageModel: PageModel<'T>) (value: 'T) =
+        pageModel.GetType().GetProperty("Model").SetValue(pageModel, value)
 
 [<Extension>]
 type RouterExtensions =

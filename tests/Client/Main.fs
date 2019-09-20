@@ -25,12 +25,11 @@ open Microsoft.JSInterop
 open Elmish
 open Bolero
 open Bolero.Html
-open System.Net.Http
 
 type Page =
     | [<EndPoint "/">] Form
     | [<EndPoint "/collection">] Collection
-    | [<EndPoint "/collection-item/{key}">] Item of key: int
+    | [<EndPoint "/collection-item/{key}">] Item of key: int * model: PageModel<int>
 
 type Item =
     {
@@ -78,7 +77,10 @@ let initModel _ =
         remoteResult = None
     }
 
-let router = Router.infer SetPage (fun m -> m.page)
+let defaultPageModel = function
+    | Form | Collection -> ()
+    | Item (_, m) -> Router.definePageModel m 10
+let router = Router.inferWithModel SetPage (fun m -> m.page) defaultPageModel
 
 type MyRemoting =
     {
@@ -170,7 +172,7 @@ type ViewItem() =
             .Value(v)
             .SetKey(fun _ -> dispatch (SetKeyOf k))
             .Remove(fun _ -> dispatch (RemoveItem k))
-            .Url(router.Link (Item k))
+            .Url(router.Link (Item (k, Router.noModel)))
             .Elt()
 
 let viewCollection model dispatch =
@@ -188,13 +190,19 @@ let viewCollection model dispatch =
         .Elt()
 
 type ViewItemPage() =
-    inherit ElmishComponent<int * string, Message>()
+    inherit ElmishComponent<int * string * int, Message>()
 
-    override this.View ((k, v)) dispatch =
+    override this.View ((k, v, m)) dispatch =
         concat [
             p [] [text ("Viewing page for item #" + string k)]
             p [] [text ("Text is: " + v)]
             p [] [a [router.HRef Collection] [text "Back to collection"]]
+            p [] [
+                text "Model: "
+                button [on.click (fun _ -> dispatch (SetPage (Item (k, { Model = m - 1 }))))] [text "-"]
+                textf "%i" m
+                button [on.click (fun _ -> dispatch (SetPage (Item (k, { Model = m + 1 }))))] [text "+"]
+            ]
         ]
 
 let view js model dispatch =
@@ -211,7 +219,7 @@ let view js model dispatch =
         cond model.page <| function
             | Form -> viewForm js model dispatch
             | Collection -> viewCollection model dispatch
-            | Item k -> ecomp<ViewItemPage,_,_> (k, model.items.[k]) dispatch
+            | Item (k, m) -> ecomp<ViewItemPage,_,_> (k, model.items.[k], m.Model) dispatch
     ]
 
 type MyApp() =
