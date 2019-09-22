@@ -287,6 +287,19 @@ module private RouterImpl =
             name: string
         }
 
+    /// Intermediate representation of a path segment.
+    type UnionParserSegment =
+        | Constant of string
+        | Parameter of Parameter
+
+    type UnionCase =
+        {
+            info: UnionCaseInfo
+            ctor: obj[] -> obj
+            argCount: int
+            segments: UnionParserSegment list
+        }
+
     /// The parser for a union type at a given point in the path.
     type UnionParser =
         {
@@ -295,13 +308,8 @@ module private RouterImpl =
             /// The recognized "/{parameter}" segment, if any.
             parameter: option<Parameter * UnionParser>
             /// The union case that parses correctly if the path ends here, if any.
-            finalize: option<UnionCaseInfo * (obj[] -> obj)>
+            finalize: option<UnionCase>
         }
-
-    /// Intermediate representation of a path segment.
-    type UnionParserSegment =
-        | Constant of string
-        | Parameter of Parameter
 
     let parseEndPointCasePath (case: UnionCaseInfo) : list<string> =
         case.GetCustomAttributes()
@@ -357,25 +365,19 @@ module private RouterImpl =
 
     let fragmentParameterRE = Regex(@"^\{([?*]?)([a-zA-Z0-9_]+)\}$", RegexOptions.Compiled)
 
-    type UnionCase =
-        {
-            info: UnionCaseInfo
-            ctor: obj[] -> obj
-            segments: UnionParserSegment list
-        }
-
     let isPageModel (ty: Type) =
         ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<PageModel<_>>
 
     let findPageModel (case: UnionCaseInfo) =
         ((0, None), case.GetFields())
         ||> Array.fold (fun (i, found) field ->
+            i + 1,
             if isPageModel field.PropertyType then
                 match found with
-                | None -> i + 1, Some (i, field.PropertyType)
+                | None -> Some (i, field.PropertyType)
                 | Some _ -> fail (InvalidRouterKind.MultiplePageModels case)
             else
-                i + 1, found)
+                found)
         |> snd
 
     let getCtor (defaultPageModel: obj -> unit) (case: UnionCaseInfo) =
@@ -411,10 +413,10 @@ module private RouterImpl =
             |> List.ofSeq
         match parseEndPointCasePath case with
         // EndPoint "/"
-        | [] -> { info = case; ctor = ctor; segments = defaultFrags() }
+        | [] -> { info = case; ctor = ctor; argCount = fields.Length; segments = defaultFrags() }
         // EndPoint "/const"
         | [root] when isConstantFragment root ->
-            { info = case; ctor = ctor; segments = Constant root :: defaultFrags() }
+            { info = case; ctor = ctor; argCount = fields.Length; segments = Constant root :: defaultFrags() }
         // EndPoint <complex_path>
         | frags ->
             let unboundFields =
@@ -456,7 +458,7 @@ module private RouterImpl =
                 )
             if unboundFields.Count > 0 then
                 fail (InvalidRouterKind.MissingField(case, Seq.head unboundFields))
-            { info = case; ctor = ctor; segments = res }
+            { info = case; ctor = ctor; argCount = fields.Length; segments = res }
 
     let rec mergeEndPointCaseFragments (cases: seq<UnionCase>) : UnionParser =
         let constants = Dictionary<string, _>()
@@ -483,8 +485,8 @@ module private RouterImpl =
                     parameter <- Some (case.info, param, [{ case with segments = rest }])
             | [] ->
                 match final with
-                | Some (case', _) -> fail (InvalidRouterKind.IdenticalPath(case.info, case'))
-                | None -> final <- Some (case.info, case.ctor)
+                | Some case' -> fail (InvalidRouterKind.IdenticalPath(case.info, case'.info))
+                | None -> final <- Some case
         )
         {
             constants = dict [
@@ -502,12 +504,12 @@ module private RouterImpl =
             let d = Dictionary<UnionCaseInfo, obj[]>()
             let rec run (parser: UnionParser) l =
                 let finalize rest =
-                    parser.finalize |> Option.map (fun (case, ctor) ->
+                    parser.finalize |> Option.map (fun case ->
                         let args =
-                            match d.TryGetValue(case) with
+                            match d.TryGetValue(case.info) with
                             | true, args -> args
-                            | false, _ -> [||]
-                        (ctor args, rest))
+                            | false, _ -> Array.zeroCreate case.argCount
+                        (case.ctor args, rest))
                 let mutable constant = Unchecked.defaultof<_>
                 match l with
                 | s :: rest when parser.constants.TryGetValue(s, &constant) ->
