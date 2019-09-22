@@ -167,7 +167,7 @@ type ProgramComponent<'model, 'msg>() =
             initModel, []
 
     override this.OnAfterRenderAsync(firstRender) =
-        if this.Router.IsSome && not navigationInterceptionEnabled && not firstRender then
+        if this.Router.IsSome && not navigationInterceptionEnabled then
             navigationInterceptionEnabled <- true
             this.NavigationInterception.EnableNavigationInterceptionAsync()
         else
