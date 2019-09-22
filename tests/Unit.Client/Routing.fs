@@ -45,6 +45,8 @@ type Page =
     | [<EndPoint "/with-rest-string/{*rest}">] WithRestString of rest: string
     | [<EndPoint "/with-rest-list/{*rest}">] WithRestList of rest: list<int>
     | [<EndPoint "/with-rest-array/{*rest}">] WithRestArray of rest: (int * string)[]
+    | [<EndPoint "/with-model">] WithModel of PageModel<int>
+    | [<EndPoint "/with-model-args/{arg}">] WithModelAndArgs of arg: int * PageModel<string>
 
 and InnerPage =
     | [<EndPoint "/">] InnerHome
@@ -109,6 +111,8 @@ let rec pageClass = function
     | WithRestString s -> sprintf "withreststring-%s" (s.Replace("/", "-"))
     | WithRestList l -> sprintf "withrestlist-%s" (l |> Seq.map string |> String.concat "-")
     | WithRestArray a -> sprintf "withrestarray-%s" (a |> Seq.map (fun (i, s) -> sprintf "%i-%s" i s) |> String.concat "-")
+    | WithModel _ -> "withmodel"
+    | WithModelAndArgs (a, _) -> sprintf "withmodelargs-%i" a
 
 let innerlinks =
     [
@@ -157,6 +161,8 @@ let baseLinks =
             "/with-rest-array",                 WithRestArray [||]
             "/with-rest-array/1/foo",           WithRestArray [|(1, "foo")|]
             "/with-rest-array/1/foo/2/bar",     WithRestArray [|(1, "foo"); (2, "bar")|]
+            "/with-model",                      WithModel { Model = 0 }
+            "/with-model-args/42",              WithModelAndArgs(42, { Model = "" })
         ]
         for link, page in innerlinks do
             yield "/with-union" + link,                     WithUnion page
