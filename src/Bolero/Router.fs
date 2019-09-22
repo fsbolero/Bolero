@@ -399,13 +399,15 @@ module private RouterImpl =
             fields
             |> Array.mapi (fun i p ->
                 let ty = p.PropertyType
-                Parameter {
+                if isPageModel ty then None else
+                Some <| Parameter {
                     index = [case, fields.Length, i]
                     ``type`` = ty
                     segment = getSegment ty
                     modifier = Basic
                     name = p.Name
                 })
+            |> Array.choose id
             |> List.ofSeq
         match parseEndPointCasePath case with
         // EndPoint "/"
