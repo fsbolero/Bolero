@@ -42,12 +42,13 @@ let testUploadUrl = getArgOpt "--push-tests"
 let verbosity = getFlag "--verbose" >> function
     | true -> "n"
     | false -> "m"
+let sourceLink = getFlag "--sourceLink"
 let buildArgs o =
-    sprintf "-c:%s -v:%s" (config o) (verbosity o)
+    sprintf "-c:%s -v:%s /p:SourceLinkCreate=%b" (config o) (verbosity o) (sourceLink o)
 
 Target.description "Run the compilation phase proper"
 Target.create "corebuild" (fun o ->
-    dotnet "build" "Bolero.sln %s" (buildArgs o)
+    dotnet "build" "Bolero.sln  %s" (buildArgs o)
 )
 
 let [<Literal>] tagsFile = slnDir + "/src/Bolero/tags.csv"

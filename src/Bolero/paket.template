@@ -1,5 +1,6 @@
 type project
 id Bolero
+projectUrl https://github.com/fsbolero/bolero
 description
     A set of tools and libraries to run F# applications in WebAssembly using Blazor
 authors
@@ -10,3 +11,4 @@ files
     bin/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Blazor.dll ==> typeproviders/fsharp41/netstandard2.0
     bin/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Components.dll ==> typeproviders/fsharp41/netstandard2.0
     bin/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Components.Web.dll ==> typeproviders/fsharp41/netstandard2.0
+include-pdbs true
