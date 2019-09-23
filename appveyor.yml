@@ -1,65 +1,48 @@
 version: build {build}
 
 image:
-- Visual Studio 2019
-# - Ubuntu
+  - Ubuntu
 
 build:
   verbosity: minimal
 
 branches:
   except:
-  - gh-pages
+    - gh-pages
 skip_tags: true
 
 init:
-- cmd: choco install dotnetcore-sdk --version 3.0.100-rc1-014190
-- git config --global core.autocrlf input
+  - git config --global core.autocrlf input
+  - sudo apt-get update
+  - sudo apt-get install -y dotnet-sdk-3.0
 
 before_build:
-- ps: |
-    dotnet tool install nbgv --tool-path .paket
-    $env:SEMVER = .paket/nbgv get-version -v SemVer2
-    Update-AppveyorBuild -Version "$env:SEMVER ($env:APPVEYOR_BUILD_ID)"
+  - dotnet tool install nbgv --tool-path .paket
+  - export SEMVER="$(.paket/nbgv get-version -v SemVer2)"
+  - appveyor UpdateBuild -Version "$SEMVER ($APPVEYOR_BUILD_ID)"
 
 build_script:
-- sh: BUILD_SCRIPT=./build.sh   # Use build.cmd on Windows, build.sh on Linux
-- ps: $env:NUGET_PACKAGES = "$env:APPVEYOR_BUILD_FOLDER\.nuget"
+  - export NUGET_PACKAGES="$APPVEYOR_BUILD_FOLDER/.nuget"
+
   # Chrome on AV is not latest
-- ps: |
-    dotnet tool install paket --tool-path .paket
-    .paket/paket add Selenium.WebDriver.ChromeDriver --version 76.0.3809.12600
-    dotnet restore
-- ps: '& $env:BUILD_SCRIPT -t pack -c Release -v "$env:SEMVER" --sourceLink /p:GhPages=true'
+  - dotnet tool install paket --tool-path .paket
+  - .paket/paket add Selenium.WebDriver.ChromeDriver --version 76.0.3809.12600
+  - dotnet restore
+
+  - '$BUILD_SCRIPT -t pack -c Release -v "$SEMVER" --sourceLink /p:GhPages=true'
 
 test_script:
-- ps: '& $env:BUILD_SCRIPT -s -t test -c Release --push-tests "https://ci.appveyor.com/api/testresults/mstest/$env:APPVEYOR_JOB_ID"'
+  - '$BUILD_SCRIPT -s -t test -c Release --push-tests "https://ci.appveyor.com/api/testresults/mstest/$APPVEYOR_JOB_ID"'
 
 environment:
-  BUILD_SCRIPT: ./build.cmd
+  BUILD_SCRIPT: ./build.sh
   GH_TOKEN:
     secure: dhFy1eZoqG4QPkKTuLFxix7QQMxaIyIpYjkvTU3CukYZz1CEOJeHfBSaT8tkPsGL
 
 # all builds on the AppVeyor NuGet feed
 artifacts:
-  - path: build\*.nupkg
+  - path: build/*.nupkg
     name: nuget
 
-for:
-
-# Publish pages to github.io only from master
-- branches:
-    only:
-    - master
-  on_success:
-  - ps: .\tools\gh-pages.ps1 -env appveyor
-
-# Only use cache on Windows build
-# (AV caches for each matrix item separately, and the cache is too large)
-# - matrix:
-#     only:
-#     - image: Visual Studio 2017
-#   cache:
-#   - .nuget
 cache:
-- .nuget
+  - .nuget
