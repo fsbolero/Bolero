@@ -8,3 +8,5 @@ files
     Bolero.Build.targets ==> build
     bin/Release/netstandard2.0/Bolero.Build.dll ==> tools
     bin/Release/netstandard2.0/Mono.Cecil.dll ==> tools
+excludeddependencies
+    nerdbank.gitversioning
