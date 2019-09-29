@@ -25,8 +25,8 @@ build_script:
   - export NUGET_PACKAGES="$APPVEYOR_BUILD_FOLDER/.nuget"
 
   # Chrome on AV is not latest
-  - dotnet tool install paket --tool-path .paket
-  - .paket/paket add Selenium.WebDriver.ChromeDriver --version 76.0.3809.12600
+  - dotnet tool restore
+  - dotnet paket add Selenium.WebDriver.ChromeDriver --version 76.0.3809.12600
   - dotnet restore
 
   - '$BUILD_SCRIPT -t pack -c Release -v "$SEMVER" --sourceLink /p:GhPages=true'

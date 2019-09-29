@@ -16,7 +16,7 @@ Bug reports and feature proposals should be submitted on [the issue tracker](htt
 
 In the instructions below, `build` means `./build.sh` on Linux and OSX, and `.\build.cmd` on Windows.
 
-Alternatively, you can install Fake globally with `dotnet tool install -g fake-cli`, and run `fake build`.
+Alternatively, you can restore the dotnet tools with `dotnet tools restore`, and then build with `dotnet fake build`.
 
 ### How to build
 

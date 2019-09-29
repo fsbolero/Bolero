@@ -33,10 +33,7 @@ open Utility
 
 let config = getArg "-c" "Debug"
 let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
-    CreateProcess.fromRawCommand ".paket/nbgv" ["get-version"; "-v"; "SemVer2"]
-    |> CreateProcess.redirectOutput
-    |> Proc.run
-    |> fun r -> r.Result.Output.Trim()
+    dotnetOutput "nbgv" "get-version -v SemVer2" |> List.head
 )
 let testUploadUrl = getArgOpt "--push-tests"
 let verbosity = getFlag "--verbose" >> function
@@ -48,7 +45,7 @@ let buildArgs o =
 
 Target.description "Run the compilation phase proper"
 Target.create "corebuild" (fun o ->
-    dotnet "build" "Bolero.sln  %s" (buildArgs o)
+    dotnet "build" "Bolero.sln %s" (buildArgs o)
 )
 
 let [<Literal>] tagsFile = slnDir + "/src/Bolero/tags.csv"
@@ -123,13 +120,7 @@ Target.create "build" (fun _ ->
 
 Target.description "Create the NuGet packages"
 Target.create "pack" (fun o ->
-    Fake.DotNet.Paket.pack (fun p ->
-        { p with
-            OutputPath = "build"
-            Version = version o
-            ToolPath = ".paket/paket"
-        }
-    )
+    dotnet "paket" "pack build --version %s" (version o)
 )
 
 Target.description "Run the Client test project"

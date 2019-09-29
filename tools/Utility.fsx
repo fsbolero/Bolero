@@ -33,24 +33,32 @@ open Fake.Core
 open Fake.DotNet
 open Fake.IO
 
+let rundotnet dir env redirectOutput cmd args =
+    let env =
+        (Process.createEnvironmentMap(), env)
+        ||> List.fold (fun map (k, v) -> Map.add k v map)
+    DotNet.exec
+        (DotNet.Options.withWorkingDirectory dir
+        >> DotNet.Options.withEnvironment env
+        >> DotNet.Options.withRedirectOutput redirectOutput)
+        cmd args
+
 let dotnet' dir env cmd args =
-    Printf.kprintf (fun args ->
-        let env =
-            (Process.createEnvironmentMap(), env)
-            ||> List.fold (fun map (k, v) -> Map.add k v map)
-        let r =
-            DotNet.exec
-                (DotNet.Options.withWorkingDirectory dir
-                >> DotNet.Options.withEnvironment env)
-                cmd args
-        for msg in r.Results do
-            eprintfn "%s" msg.Message
-        if not r.OK then
-            failwithf "dotnet %s failed" cmd
+    Printf.kprintf (rundotnet dir env false cmd >> fun r ->
+        if not r.OK then failwithf "dotnet %s failed" cmd
     ) args
 
 let dotnet cmd args =
     dotnet' slnDir [] cmd args
+
+let dotnetOutput' dir env cmd args =
+    Printf.kprintf (rundotnet dir env true cmd >> fun r ->
+        if not r.OK then failwithf "dotnet %s failed" cmd
+        r.Messages
+    ) args
+
+let dotnetOutput cmd args =
+    dotnetOutput' slnDir [] cmd args
 
 /// `cache f x` returns `f x` the first time,
 /// and re-returns the first result on subsequent calls.
