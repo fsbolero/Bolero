@@ -93,6 +93,8 @@ The project in this repository are structure as follows.
     * `Unit/`: The automated tests suite.  
         Can be run using `build -t test`.
 
+    * `Unit.Client/`: The client application for the automated tests suite.
+
     * `Client/`: A test client-side application.  
         Can be run using `build -t run-client`.
 
@@ -107,7 +109,7 @@ The project in this repository are structure as follows.
 
 ## Automated tests
 
-The automated tests are located in the `tests/Unit/` project. They use the following tools:
+The automated tests are located in the `tests/Unit/` and `tests/Unit.Client` project. They use the following tools:
 
 * [NUnit](https://nunit.org/) as the testing framework.
 
@@ -117,18 +119,20 @@ The automated tests are located in the `tests/Unit/` project. They use the follo
 
 UI tests are run as follows:
 
-* A web application is defined in the `Web` folder, using Blazor in server mode.
+* A Bolero application is defined in `tests/Unit.Client`.
 
-    * Test components are defined in `Web/App.*.fs`, one file per category.
+    * Test components are defined in `*.fs`, one file per category.
 
-    * Rendered components for each category are added to the root component in `Web/App.fs`.
+    * Rendered components for each category are added to the root component in `App.fs`.
 
-* This application and the browser are started during NUnit setup in `Web/Fixture.fs`.
+* The test project proper is `tests/Unit`.
 
-* Corresponding NUnit tests are defined in the `Tests` folder. They must be defined in the namespace `Bolero.Tests.Web` for NUnit setup to work properly. They can use `NodeFixture` to query elements. It must be initialized during NUnit setup. See for example the `SetUp` function in `Tests/Html.fs`.
+    * The Bolero application and the browser are started during NUnit setup in `Fixture.fs`.
+
+    * Corresponding NUnit tests are defined in the `Tests` folder. They must be defined in the namespace `Bolero.Tests.Web` for NUnit setup to work properly. They can use `NodeFixture` to query elements.
 
 So, in summary, a UI test category `Foo` consists of:
 
-* A Bolero component defined in `Web/App.Foo.fs` and added to `Web/App.fs`;
+* A Bolero component defined in `tests/Unit.Client/Foo.fs` and added to `tests/Unit.Client/App.fs`;
 
-* NUnit tests defined in `Tests/Foo.fs`, using `NodeFixture` to query and interact with the component.
+* NUnit tests defined in `tests/Unit/Foo.fs`, using `NodeFixture` to query and interact with the component.
