@@ -13,8 +13,6 @@ skip_tags: true
 
 init:
   - git config --global core.autocrlf input
-  - sudo apt-get update
-  - sudo apt-get install -y dotnet-sdk-3.0
 
 before_build:
   - dotnet tool install nbgv --tool-path .paket
