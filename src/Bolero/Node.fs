@@ -30,6 +30,7 @@ type Attr =
     | Attr of string * obj
     | Attrs of list<Attr>
     | Key of obj
+    | Classes of list<string>
 #if !IS_DESIGNTIME
     | ExplicitAttr of (Rendering.RenderTreeBuilder -> int -> obj -> unit)
     | Ref of Action<ElementReference>

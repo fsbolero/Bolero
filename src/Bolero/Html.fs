@@ -599,8 +599,8 @@ let wbr (attrs: list<Attr>) : Node =
 
 module attr =
     /// Create an HTML `class` attribute containing the given class names.
-    let classes (classes: list<string>) : Attr =
-        "class" => String.concat " " classes
+    let inline classes (classes: list<string>) : Attr =
+        Attr.Classes classes
 
     /// Bind an element reference.
     let inline ref (f: ElementReference -> unit) =

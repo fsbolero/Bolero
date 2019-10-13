@@ -156,24 +156,17 @@ let rec renderNode (currentComp: obj) (builder: RenderTreeBuilder) (matchCache: 
 and renderAttrs currentComp builder sequence attrs =
     // AddAttribute calls want to be just after the OpenElement/OpenComponent call,
     // so we make sure that AddElementReferenceCapture and SetKey are called last.
-    let rec run attrs =
-        ((sequence, None, None), attrs)
-        ||> List.fold (fun (sequence, ref, key) attr ->
-            match attr with
-            | Attr (name, value) ->
-                builder.AddAttribute(sequence, name, value)
-                (sequence + 1, ref, key)
-            | Attrs attrs ->
-                run attrs
-            | ExplicitAttr setAttr ->
-                setAttr builder sequence currentComp
-                (sequence + 1, ref, key)
-            | Ref ref ->
-                (sequence, Some ref, key)
-            | Key key ->
-                (sequence, ref, Some key)
-        )
-    let sequence, ref, key = run attrs
+    let mutable sequence = sequence
+    let mutable ref = None
+    let mutable key = None
+    let mutable classes = None
+    renderAttrsRec builder currentComp attrs &sequence &ref &key &classes
+    let sequence =
+        match classes with
+        | None -> sequence
+        | Some classes ->
+            builder.AddAttribute(sequence, "class", String.concat " " classes)
+            sequence + 1
     match key with
     | Some k -> builder.SetKey(k)
     | None -> ()
@@ -183,6 +176,27 @@ and renderAttrs currentComp builder sequence attrs =
         sequence + 1
     | None ->
         sequence
+
+and renderAttrsRec (builder: RenderTreeBuilder) currentComp attrs (sequence: _ byref) (ref: _ byref) (key: _ byref) (classes: _ byref) =
+    for attr in attrs do
+        match attr with
+        | Attr (name, value) ->
+            builder.AddAttribute(sequence, name, value)
+            sequence <- sequence + 1
+        | Attrs attrs ->
+            renderAttrsRec builder currentComp attrs &sequence &ref &key &classes
+        | ExplicitAttr setAttr ->
+            setAttr builder sequence currentComp
+            sequence <- sequence + 1
+        | Ref r ->
+            ref <- Some r
+        | Key k ->
+            key <- Some k
+        | Classes cls ->
+            classes <-
+                match classes with
+                | None -> Some cls
+                | Some cls' -> Some (List.distinct (cls @ cls'))
 
 let RenderNode currentComp builder (matchCache: Dictionary<Type, _>) node =
     let getMatchParams (ty: Type) =

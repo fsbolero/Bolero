@@ -167,12 +167,19 @@ let Tests() =
     div [attr.id "test-fixture-html"] [
         p [attr.id "element-with-id"] [text "Contents of element with id"]
         p [attr.id "element-with-htmlentity"] [text "Escaped <b>text</b> & content"]
-        span [
-            // The last of all `class` and `classes` sets the attribute.
-            attr.classes ["class-notset-1"]
-            attr.``class`` "class-notset-2"
-            attr.classes ["class-set-1"; "class-set-2"]
-        ] []
+        concat [
+            // `classes` takes priority over `class`.
+            span [
+                attr.classes ["class-set-1"]
+                attr.``class`` "class-notset-1"
+                attr.classes ["class-set-2"; "class-set-3"]
+            ] []
+            span [
+                attr.classes ["class-set-4"]
+                attr.``class`` "class-notset-2"
+            ] []
+            span [attr.``class`` "class-set-5"] []
+        ]
         RawHtml """<div class="raw-html-element">Unescape &lt;b&gt;text&lt;/b&gt; &amp; content</div>"""
         comp<NavLink> [
             attr.id "nav-link"

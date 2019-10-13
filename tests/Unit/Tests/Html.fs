@@ -27,11 +27,14 @@ module Html =
             elt.ById("element-with-htmlentity").Text)
 
     [<Test>]
-    let ``Element with id and classes``() =
-        Assert.IsNull(elt.ByClass("class-notset-1"))
-        Assert.IsNull(elt.ByClass("class-notset-2"))
-        Assert.IsNotNull(elt.ByClass("class-set-1"))
-        Assert.IsNotNull(elt.ByClass("class-set-2"))
+    let ``Element with classes``() =
+        Assert.IsNull(elt.ByClass("class-notset-1"), "class-notset-1")
+        Assert.IsNull(elt.ByClass("class-notset-2"), "class-notset-2")
+        Assert.IsNotNull(elt.ByClass("class-set-1"), "class-set-1")
+        Assert.IsNotNull(elt.ByClass("class-set-2"), "class-set-2")
+        Assert.IsNotNull(elt.ByClass("class-set-3"), "class-set-3")
+        Assert.IsNotNull(elt.ByClass("class-set-4"), "class-set-4")
+        Assert.IsNotNull(elt.ByClass("class-set-5"), "class-set-5")
 
     [<Test>]
     let ``Raw HTML``() =
