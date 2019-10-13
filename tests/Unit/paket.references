@@ -8,3 +8,4 @@ Selenium.WebDriver.ChromeDriver
 Microsoft.AspNetCore.Blazor.Server
 Selenium.Support
 Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation
+Unquote

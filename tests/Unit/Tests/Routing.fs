@@ -1,9 +1,9 @@
 namespace Bolero.Tests.Web
 
-open System.Threading
 open FSharp.Reflection
 open NUnit.Framework
 open OpenQA.Selenium
+open Swensen.Unquote
 open Bolero.Tests
 
 /// Blazor router integration.
@@ -31,8 +31,8 @@ module Routing =
         let res =
             try Some <| elt.Wait(fun () -> elt.ByClass(resCls))
             with :? WebDriverTimeoutException -> None
-        res |> Option.iter (fun res -> Assert.AreEqual(resCls, res.Text))
-        Assert.AreEqual(WebFixture.Url + url, WebFixture.Driver.Url)
+        res |> Option.iter (fun res -> test <@ res.Text = resCls @>)
+        test <@ WebFixture.Driver.Url = WebFixture.Url + url @>
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
     let ``Set by model``(linkCls: string, url: string, page: Client.Routing.Page) =
@@ -41,8 +41,8 @@ module Routing =
         let res =
             try Some <| elt.Wait(fun () -> elt.ByClass(resCls))
             with :? WebDriverTimeoutException -> None
-        res |> Option.iter (fun res -> Assert.AreEqual(resCls, res.Text))
-        Assert.AreEqual(WebFixture.Url + url, WebFixture.Driver.Url)
+        res |> Option.iter (fun res -> test <@ res.Text = resCls @>)
+        test <@ WebFixture.Driver.Url = WebFixture.Url + url @>
 
     let failingRouter<'T> (expectedError: UnionCaseInfo[] -> InvalidRouterKind) =
         TestCaseData(
@@ -89,7 +89,5 @@ module Routing =
 
     [<Test; TestCaseSource "failingRouters"; NonParallelizable>]
     let ``Invalid routers``(makeAndIgnoreRouter: unit -> unit, expectedError: InvalidRouterKind) =
-        Assert.AreEqual(
-            InvalidRouter expectedError,
-            Assert.Throws<InvalidRouter>(fun () -> makeAndIgnoreRouter())
-        )
+        raisesWith <@ makeAndIgnoreRouter() @>
+            (fun exn -> <@ exn = InvalidRouter expectedError @>)

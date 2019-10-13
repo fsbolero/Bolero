@@ -22,17 +22,20 @@ namespace Bolero.Tests
 
 open System
 open FsCheck
+open Swensen.Unquote
 
 [<AutoOpen>]
 module Utility =
-
-    let (.=.) left right = left = right |@ sprintf "\nActual: %A\nExpected: %A" left right
 
     let epsilon = 0.0001
 
     let (=~) left right = left - right < epsilon
 
-    let (.=~.) left right = left =~ right |@ sprintf "\nActual: %A\nExpected: %A" left right
+    let isNotNull x = not (isNull x)
+
+    let testNull x = test <@ isNull %x @>
+
+    let testNotNull x = test <@ isNotNull %x @>
 
     /// FsCheck-generated alphanumerical string.
     type Alphanum =

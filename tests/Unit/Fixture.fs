@@ -24,12 +24,15 @@ open System
 open System.Threading.Tasks
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Hosting
+open FSharp.Quotations
 open NUnit.Framework
 open OpenQA.Selenium
 open OpenQA.Selenium.Chrome
 // open OpenQA.Selenium.Firefox
 open OpenQA.Selenium.Remote
 open OpenQA.Selenium.Support.UI
+open Swensen.Unquote
+open Bolero.Tests
 
 /// Defines the setup/teardown for all tests that use the web server and Selenium.
 /// These web tests must be located in the namespace Bolero.Tests.Web
@@ -136,28 +139,22 @@ and NodeFixture(parent: unit -> IWebElement, by: By) =
             timeout |> Option.defaultWith (fun () -> TimeSpan.FromSeconds(5.)))
             .Until(fun _ -> cond())
 
-    /// NUnit assertion that the given condition eventually becomes non-null non-false.
-    member this.AssertEventually(cond, ?message, ?timeout) =
-        let run() =
-            match this.Wait(cond, ?timeout = timeout) |> box with
-            | :? bool as b -> Assert.IsTrue(b)
-            | x -> Assert.IsNotNull(x)
-        match message with
-        | None -> Assert.DoesNotThrow(TestDelegate run)
-        | Some m -> Assert.DoesNotThrow(TestDelegate run, m)
+    member private this.WaitOrFalse(f: unit -> bool) =
+        try this.Wait(f)
+        with :? WebDriverTimeoutException -> false
 
-    /// NUnit assertion that the actual value eventually becomes equal to the expected value.
-    member this.AssertAreEqualEventually(expected, getActual, ?message: string, ?timeout) =
-        let mutable actual = Unchecked.defaultof<_>
-        try this.Wait(
-                (fun () ->
-                    actual <- getActual()
-                    expected = actual),
-                ?timeout = timeout) |> ignore
-        with :? WebDriverTimeoutException -> ()
-        match message with
-        | None -> Assert.AreEqual(expected, actual)
-        | Some m -> Assert.AreEqual(expected, actual, m)
+    /// Assert that the given test eventually succeeds.
+    member this.Eventually(expr: Expr<bool>) =
+        if not (this.WaitOrFalse(fun () -> eval expr)) then
+            test expr
+
+    /// Assert that the given value is eventually null.
+    member this.EventuallyNull(expr: Expr<'T>) =
+        this.Eventually <@ isNull %expr @>
+
+    /// Assert that the given value is eventually non-null.
+    member this.EventuallyNotNull(expr: Expr<'T>) =
+        this.Eventually <@ isNotNull %expr @>
 
 [<AutoOpen>]
 module Extensions =

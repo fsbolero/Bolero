@@ -1,10 +1,10 @@
 namespace Bolero.Tests.Web
 
-open System.Threading.Tasks
 open NUnit.Framework
 open OpenQA.Selenium
 open FsCheck.NUnit
 open FsCheck
+open Swensen.Unquote
 open Bolero.Tests
 
 /// Server remote calls.
@@ -29,13 +29,11 @@ module Remoting =
         sprintf "%s => %s" k v @| [
             "remove" @| (
                 remBtn.Click()
-                let out = elt.Wait(fun () -> elt.ByClass("output-empty"))
-                not (isNull out)
+                testNotNull <@ elt.Wait(fun () -> elt.ByClass("output-empty")) @>
             )
             "add" @| (
                 addBtn.Click()
-                let out = elt.Wait(fun () -> elt.ByClass("output"))
-                out.Text = v
+                test <@ elt.Wait(fun () -> elt.ByClass("output")).Text = v @>
             )
         ]
 
@@ -45,12 +43,12 @@ module Remoting =
         username.Clear()
         username.SendKeys("someone")
         elt.ByClass("signin-button").Click()
-        elt.AssertAreEqualEventually("someone", fun () -> elt.ByClass("is-signedin").Text)
+        elt.Eventually <@ elt.ByClass("is-signedin").Text = "someone" @>
 
     [<Test; NonParallelizable>]
     let ``Authorized remote function fails when signed out`` () =
         elt.ByClass("signout-button").Click()
-        elt.AssertAreEqualEventually("<not logged in>", fun () -> elt.ByClass("is-signedin").Text)
+        elt.Eventually <@ elt.ByClass("is-signedin").Text = "<not logged in>" @>
 
     [<Test; NonParallelizable>]
     let ``Authorized remote function fails if role is missing`` () =
@@ -58,9 +56,9 @@ module Remoting =
         username.Clear()
         username.SendKeys("someone")
         elt.ByClass("signin-button").Click()
-        elt.AssertAreEqualEventually("someone", fun () -> elt.ByClass("is-signedin").Text)
+        elt.Eventually <@ elt.ByClass("is-signedin").Text = "someone" @>
         elt.ByClass("get-admin").Click()
-        elt.AssertAreEqualEventually("<not admin>", fun () -> elt.ByClass("is-admin").Text)
+        elt.Eventually <@ elt.ByClass("is-admin").Text = "<not admin>" @>
 
     [<Test; NonParallelizable>]
     let ``Authorized remote function succeeds if role is present`` () =
@@ -68,6 +66,6 @@ module Remoting =
         username.Clear()
         username.SendKeys("admin")
         elt.ByClass("signin-button").Click()
-        elt.AssertAreEqualEventually("admin", fun () -> elt.ByClass("is-signedin").Text)
+        elt.Eventually <@ elt.ByClass("is-signedin").Text = "admin" @>
         elt.ByClass("get-admin").Click()
-        elt.AssertAreEqualEventually("admin ok", fun () -> elt.ByClass("is-admin").Text)
+        elt.Eventually <@ elt.ByClass("is-admin").Text = "admin ok" @>

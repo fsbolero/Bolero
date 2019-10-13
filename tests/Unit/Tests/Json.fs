@@ -5,6 +5,7 @@ open System.Collections.Generic
 open NUnit.Framework
 open FsCheck.NUnit
 open FsCheck
+open Swensen.Unquote
 module J = Bolero.Json
 
 [<Category "JSON">]
@@ -14,197 +15,201 @@ module Json =
 
     [<Property>]
     let ``Serialize bool`` (x: bool) =
-        J.Serialize x .=. stringLow x
+        test <@ J.Serialize x = stringLow x @>
 
     [<Property>]
     let ``Deserialize bool`` (x: bool) =
-        J.Deserialize (stringLow x) .=. x
+        test <@ J.Deserialize (stringLow x) = x @>
 
     [<Property>]
     let ``Serialize int8`` (x: int8) =
-        J.Serialize x .=. string x
+        test <@ J.Serialize x = string x @>
 
     [<Property>]
     let ``Deserialize int8`` (x: int8) =
-        J.Deserialize (string x) .=. x
+        test <@ J.Deserialize (string x) = x @>
 
     [<Property>]
     let ``Serialize uint8`` (x: uint8) =
-        J.Serialize x .=. string x
+        test <@ J.Serialize x = string x @>
 
     [<Property>]
     let ``Deserialize uint8`` (x: uint8) =
-        J.Deserialize (string x) .=. x
+        test <@ J.Deserialize (string x) = x @>
 
     [<Property>]
     let ``Serialize int16`` (x: int16) =
-        J.Serialize x .=. string x
+        test <@ J.Serialize x = string x @>
 
     [<Property>]
     let ``Deserialize int16`` (x: int16) =
-        J.Deserialize (string x) .=. x
+        test <@ J.Deserialize (string x) = x @>
 
     [<Property>]
     let ``Serialize uint16`` (x: uint16) =
-        J.Serialize x .=. string x
+        test <@ J.Serialize x = string x @>
 
     [<Property>]
     let ``Deserialize uint16`` (x: uint16) =
-        J.Deserialize (string x) .=. x
+        test <@ J.Deserialize (string x) = x @>
 
     [<Property>]
     let ``Serialize int32`` (x: int32) =
-        J.Serialize x .=. string x
+        test <@ J.Serialize x = string x @>
 
     [<Property>]
     let ``Deserialize int32`` (x: int32) =
-        J.Deserialize (string x) .=. x
+        test <@ J.Deserialize (string x) = x @>
 
     [<Property>]
     let ``Serialize uint32`` (x: uint32) =
-        J.Serialize x .=. string x
+        test <@ J.Serialize x = string x @>
 
     [<Property>]
     let ``Deserialize uint32`` (x: uint32) =
-        J.Deserialize (string x) .=. x
+        test <@ J.Deserialize (string x) = x @>
 
     [<Property>]
     let ``Serialize int64`` (x: int64) =
-        J.Serialize x .=. string x
+        test <@ J.Serialize x = string x @>
 
     [<Property>]
     let ``Deserialize int64`` (x: int64) =
-        J.Deserialize (string x) .=. x
+        test <@ J.Deserialize (string x) = x @>
 
     [<Property>]
     let ``Serialize uint64`` (x: uint64) =
-        J.Serialize x .=. string x
+        test <@ J.Serialize x = string x @>
 
     [<Property>]
     let ``Deserialize uint64`` (x: uint64) =
-        J.Deserialize (string x) .=. x
+        test <@ J.Deserialize (string x) = x @>
 
     [<Property>]
     let ``Serialize float`` (NormalFloat x) =
-        J.Serialize x .=. string x
+        test <@ J.Serialize x = string x @>
 
     [<Property>]
     let ``Deserialize float`` (NormalFloat x) =
-        J.Deserialize (string x) .=~. x
+        test <@ J.Deserialize (string x) =~ x @>
 
     [<Property>]
     let ``Serialize pair`` (x: int, y: string as t) =
-        J.Encode t .=. J.Array [|J.Encode x; J.Encode y|]
+        test <@ J.Encode t = J.Array [|J.Encode x; J.Encode y|] @>
 
     [<Property>]
     let ``Deserialize pair`` (x: int, y: string as t) =
-        J.Decode (J.Array [|J.Encode x; J.Encode y|]) .=. t
+        test <@ J.Decode (J.Array [|J.Encode x; J.Encode y|]) = t @>
 
     [<Property>]
     let ``Serialize triple`` (x: int, y: string, z: bool as t) =
-        J.Encode t .=. J.Array [|J.Encode x; J.Encode y; J.Encode z|]
+        test <@ J.Encode t = J.Array [|J.Encode x; J.Encode y; J.Encode z|] @>
 
     [<Property>]
     let ``Deserialize triple`` (x: int, y: string, z: bool as t) =
-        J.Decode (J.Array [|J.Encode x; J.Encode y; J.Encode z|]) .=. t
+        test <@ J.Decode (J.Array [|J.Encode x; J.Encode y; J.Encode z|]) = t @>
 
     [<Property>]
     let ``Serialize list`` (l: list<int>) =
-        J.Encode l .=. J.Array [| for i in l -> J.Encode i |]
+        test <@ J.Encode l = J.Array [| for i in l -> J.Encode i |] @>
 
     [<Property>]
     let ``Deserialize list`` (l: list<int>) =
-        J.Decode (J.Array [| for i in l -> J.Encode i |]) .=. l
+        test <@ J.Decode (J.Array [| for i in l -> J.Encode i |]) = l @>
 
     [<Property>]
     let ``Serialize array`` (l: int[]) =
-        J.Encode l .=. J.Array [| for i in l -> J.Encode i |]
+        test <@ J.Encode l = J.Array [| for i in l -> J.Encode i |] @>
 
     [<Property>]
     let ``Deserialize array`` (l: int[]) =
-        J.Decode (J.Array [| for i in l -> J.Encode i |]) .=. l
+        test <@ J.Decode (J.Array [| for i in l -> J.Encode i |]) = l @>
 
     [<Property>]
     let ``Serialize queue`` (l: int[]) =
         let q = Queue(l)
-        J.Encode l .=. J.Array [| for i in q -> J.Encode i |]
+        test <@ J.Encode l = J.Array [| for i in q -> J.Encode i |] @>
 
     [<Property>]
     let ``Deserialize queue`` (l: int[]) =
         let q = Queue(l)
-        J.Decode (J.Array [| for i in q -> J.Encode i |]) .=. l
+        test <@ J.Decode (J.Array [| for i in q -> J.Encode i |]) = l @>
 
     [<Property>]
     let ``Serialize stack`` (l: int[]) =
         let s = Stack(l)
-        J.Encode l .=. J.Array (Array.rev [| for i in s -> J.Encode i |])
+        test <@ J.Encode l = J.Array (Array.rev [| for i in s -> J.Encode i |]) @>
 
     [<Property>]
     let ``Deserialize stack`` (l: int[]) =
         let s = Stack(l)
-        J.Decode (J.Array (Array.rev [| for i in s -> J.Encode i |])) .=. l
+        test <@ J.Decode (J.Array (Array.rev [| for i in s -> J.Encode i |])) = l @>
 
     [<Property>]
     let ``Serialize set`` (l: Set<int>) =
-        J.Encode l .=. J.Array [| for i in l -> J.Encode i |]
+        test <@ J.Encode l = J.Array [| for i in l -> J.Encode i |] @>
 
     [<Property>]
     let ``Deserialize set`` (l: Set<int>) =
-        J.Decode (J.Array [| for i in l -> J.Encode i |]) .=. l
+        test <@ J.Decode (J.Array [| for i in l -> J.Encode i |]) = l @>
 
     [<Property>]
     let ``Serialize string map`` (l: Map<string, int>) =
-        J.Encode l .=. J.Object [| for KeyValue(k, v) in l -> k, J.Encode v |]
+        test <@ J.Encode l = J.Object [| for KeyValue(k, v) in l -> k, J.Encode v |] @>
 
     [<Property>]
     let ``Deserialize string map`` (l: Map<string, int>) =
-        J.Decode (J.Object [| for KeyValue(k, v) in l -> k, J.Encode v |]) .=. l
+        test <@ J.Decode (J.Object [| for KeyValue(k, v) in l -> k, J.Encode v |]) = l @>
 
     [<Property>]
     let ``Serialize non-string map`` (l: Map<int, int>) =
-        J.Encode l .=. J.Array [| for KeyValue(k, v) in l -> J.Array [| J.Encode k; J.Encode v |] |]
+        test <@ J.Encode l = J.Array [| for KeyValue(k, v) in l -> J.Array [| J.Encode k; J.Encode v |] |] @>
 
     [<Property>]
     let ``Deserialize non-string map`` (l: Map<int, int>) =
-        J.Decode (J.Array [| for KeyValue(k, v) in l -> J.Array [| J.Encode k; J.Encode v |] |]) .=. l
+        test <@ J.Decode (J.Array [| for KeyValue(k, v) in l -> J.Array [| J.Encode k; J.Encode v |] |]) = l @>
 
     [<Property>]
     let ``Serialize string dictionary`` (l: Dictionary<string, int>) =
-        J.Encode l .=. J.Object [| for KeyValue(k, v) in l -> k, J.Encode v |]
+        test <@ J.Encode l = J.Object [| for KeyValue(k, v) in l -> k, J.Encode v |] @>
 
     [<Property>]
     let ``Deserialize string dictionary`` (l: Dictionary<string, int>) =
         J.Decode<Dictionary<string, int>>
             (J.Object [| for KeyValue(k, v) in l -> k, J.Encode v |])
-        |> Seq.forall (fun (KeyValue(k, v)) -> l.[k] = v)
+        |> Seq.iter (fun (KeyValue(k, v)) -> test <@ l.[k] = v @>)
 
     [<Property>]
     let ``Serialize non-string dictionary`` (l: Dictionary<int, int>) =
-        J.Encode l .=. J.Array [| for KeyValue(k, v) in l -> J.Array [| J.Encode k; J.Encode v |] |]
+        test <@ J.Encode l = J.Array [| for KeyValue(k, v) in l -> J.Array [| J.Encode k; J.Encode v |] |] @>
 
     [<Property>]
     let ``Deserialize non-string dictionary`` (l: Dictionary<int, int>) =
         J.Decode<Dictionary<int, int>>
             (J.Array [| for KeyValue(k, v) in l -> J.Array [| J.Encode k; J.Encode v |] |])
-        |> Seq.forall (fun (KeyValue(k, v)) -> l.[k] = v)
+        |> Seq.iter (fun (KeyValue(k, v)) -> test <@ l.[k] = v @>)
+
+    // We wrap `DateTime` in `ref` because otherwise the quotation tries and fails to use a `byref<DateTime>`.
 
     [<Property>]
     let ``Serialize UTC DateTime`` (d: DateTime) =
-        let d = d.ToUniversalTime()
-        J.Encode d .=. J.String (d.ToString("o"))
+        let d = ref (d.ToUniversalTime())
+        test <@ J.Encode !d = J.String ((!d).ToString("o")) @>
 
     [<Property>]
     let ``Deserialize UTC DateTime`` (d: DateTime) =
-        let d = d.ToUniversalTime()
-        J.Decode (J.String (d.ToString("o"))) .=. d
+        let d = ref (d.ToUniversalTime())
+        test <@ J.Decode (J.String ((!d).ToString("o"))) = !d @>
 
     [<Property>]
     let ``Serialize DateTimeOffset`` (d: DateTimeOffset) =
-        J.Encode d .=. J.String (d.ToString("o"))
+        let d = ref d
+        test <@ J.Encode !d = J.String ((!d).ToString("o")) @>
 
     [<Property>]
     let ``Deserialize DateTimeOffset`` (d: DateTimeOffset) =
-        J.Decode (J.String (d.ToString("o"))) .=. d
+        let d = ref d
+        test <@ J.Decode (J.String ((!d).ToString("o"))) = !d @>
 
     type SimpleRecord =
         {
@@ -217,11 +222,11 @@ module Json =
 
     [<Property>]
     let ``Serialize simple record`` (r: SimpleRecord) =
-        J.Encode r .=. SimpleRecord.Enc r
+        test <@ J.Encode r = SimpleRecord.Enc r @>
 
     [<Property>]
     let ``Deserialize simple record`` (r: SimpleRecord) =
-        J.Decode (SimpleRecord.Enc r) .=. r
+        test <@ J.Decode (SimpleRecord.Enc r) = r @>
 
     type RecordWithOption =
         {
@@ -239,11 +244,11 @@ module Json =
 
     [<Property>]
     let ``Serialize record with option field`` (r: RecordWithOption) =
-        J.Encode r .=. RecordWithOption.Enc r
+        test <@ J.Encode r = RecordWithOption.Enc r @>
 
     [<Property>]
     let ``Deserialize record with option field`` (r: RecordWithOption) =
-        J.Decode (RecordWithOption.Enc r) .=. r
+        test <@ J.Decode (RecordWithOption.Enc r) = r @>
 
     type RecordWithNamedFields =
         {
@@ -265,11 +270,11 @@ module Json =
 
     [<Property>]
     let ``Serialize record with named fields`` (r: RecordWithNamedFields) =
-        J.Encode r .=. RecordWithNamedFields.Enc r
+        test <@ J.Encode r = RecordWithNamedFields.Enc r @>
 
     [<Property>]
     let ``Deserialize record with named fields`` (r: RecordWithNamedFields) =
-        J.Decode (RecordWithNamedFields.Enc r) .=. r
+        test <@ J.Decode (RecordWithNamedFields.Enc r) = r @>
 
     type SimpleUnion =
         | Nullary
@@ -299,11 +304,11 @@ module Json =
 
     [<Property>]
     let ``Serialize simple union`` (u: SimpleUnion) =
-        J.Encode u .=. SimpleUnion.Enc u
+        test <@ J.Encode u = SimpleUnion.Enc u @>
 
     [<Property>]
     let ``Deserialize simple union`` (u: SimpleUnion) =
-        J.Decode (SimpleUnion.Enc u) .=. u
+        test <@ J.Decode (SimpleUnion.Enc u) = u @>
 
     [<J.NamedUnionCases>]
     type ImplicitDiscrUnion =
@@ -322,11 +327,11 @@ module Json =
 
     [<Property>]
     let ``Serialize union with parameterless NamedUnionCases`` (u: ImplicitDiscrUnion) =
-        J.Encode u .=. ImplicitDiscrUnion.Enc u
+        test <@ J.Encode u = ImplicitDiscrUnion.Enc u @>
 
     [<Property>]
     let ``Deserialize union with parameterless NamedUnionCases`` (u: ImplicitDiscrUnion) =
-        J.Decode (ImplicitDiscrUnion.Enc u) .=. u
+        test <@ J.Decode (ImplicitDiscrUnion.Enc u) = u @>
 
     [<J.NamedUnionCases "d">]
     type ExplicitDiscrUnion =
@@ -341,8 +346,8 @@ module Json =
 
     [<Property>]
     let ``Serialize union with NamedUnionCases`` (u: ExplicitDiscrUnion) =
-        J.Encode u .=. ExplicitDiscrUnion.Enc u
+        test <@ J.Encode u = ExplicitDiscrUnion.Enc u @>
 
     [<Property>]
     let ``Deserialize union with NamedUnionCases`` (u: ExplicitDiscrUnion) =
-        J.Decode (ExplicitDiscrUnion.Enc u) .=. u
+        test <@ J.Decode (ExplicitDiscrUnion.Enc u) = u @>
