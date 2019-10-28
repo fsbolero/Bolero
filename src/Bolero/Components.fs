@@ -117,7 +117,7 @@ type ProgramComponent<'model, 'msg>() =
         this.NavigationManager.ToBaseRelativePath(uri)
 
     member internal this.SetState(program, model, dispatch) =
-        if not <| obj.ReferenceEquals(model, oldModel) then
+        if this.ShouldRender() then
             this.ForceSetState(program, model, dispatch)
 
     member internal this.StateHasChanged() =
