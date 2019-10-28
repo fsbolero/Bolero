@@ -69,6 +69,9 @@ type ElmishComponent<'model, 'msg>() =
     /// The Elmish view function.
     abstract View : 'model -> Dispatch<'msg> -> Node    
 
+    override this.ShouldRender() =
+       this.ShouldRender(oldModel, this.Model)
+
     override this.Render() =
         oldModel <- this.Model
         this.View this.Model this.Dispatch
@@ -114,7 +117,7 @@ type ProgramComponent<'model, 'msg>() =
         this.NavigationManager.ToBaseRelativePath(uri)
 
     member internal this.SetState(program, model, dispatch) =
-        if this.ShouldRender() then
+        if this.ShouldRender(oldModel, model) then
             this.ForceSetState(program, model, dispatch)
 
     member internal this.StateHasChanged() =
