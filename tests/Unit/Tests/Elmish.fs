@@ -33,3 +33,8 @@ module Elmish =
         el.Clear()
         el.SendKeys("35")
         elt.Eventually <@ elt.ByClass("intValue-repeat").Text = "35" @>
+
+    [<Test>]
+    let ``ecomp passes attributes``() =
+        let el = elt.ByClass("intValue-input")
+        test <@ el.GetAttribute("class").Contains("intValue-extraClass") @>

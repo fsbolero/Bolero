@@ -62,8 +62,8 @@ let comp<'T when 'T :> IComponent> attrs children =
 
 /// Create a fragment from an Elmish component.
 let ecomp<'T, 'model, 'msg when 'T :> ElmishComponent<'model, 'msg>>
-        (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
-    comp<'T> ["Model" => model; "Dispatch" => dispatch] []
+        (attrs: list<Attr>) (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
+    comp<'T> (attrs @ ["Model" => model; "Dispatch" => dispatch]) []
 
 /// Create a navigation link which toggles its `active` class
 /// based on whether the current URI matches its `href`.

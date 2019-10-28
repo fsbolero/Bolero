@@ -150,7 +150,7 @@ let Display model dispatch =
         Tpl()
             .form(form)
             .refresh(fun _ -> dispatch RefreshItems)
-            .items(forEach model.items <| fun item -> ecomp<Item, _, _> item dispatch)
+            .items(forEach model.items <| fun item -> ecomp<Item, _, _> [attr.key item.Key] item dispatch)
             .error(
                 cond model.lastError <| function
                 | None -> empty

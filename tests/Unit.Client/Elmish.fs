@@ -20,6 +20,7 @@
 
 module Bolero.Tests.Client.Elmish
 
+open Microsoft.AspNetCore.Components
 open Bolero
 open Bolero.Html
 open Elmish
@@ -50,10 +51,13 @@ let update msg model =
 type IntInput() =
     inherit ElmishComponent<int, int>()
 
+    [<Parameter>]
+    member val ExtraClass = "" with get, set
+
     override this.View model dispatch =
         concat [
             input [
-                attr.classes ["intValue-input"]
+                attr.classes ["intValue-input"; this.ExtraClass]
                 attr.value model
                 on.input (fun e -> dispatch (int (e.Value :?> string)))
             ]
@@ -69,7 +73,7 @@ let view model dispatch =
             on.input (fun e -> dispatch (SetStringValue (e.Value :?> string)))
         ]
         span [attr.classes ["stringValue-repeat"]] [text model.stringValue]
-        ecomp<IntInput,_,_> model.intValue (SetIntValue >> dispatch)
+        ecomp<IntInput,_,_> ["ExtraClass" => "intValue-extraClass"] model.intValue (SetIntValue >> dispatch)
     ]
 
 type Test() =
