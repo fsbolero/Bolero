@@ -36,6 +36,12 @@ type Component() =
 
     let matchCache = Dictionary()
 
+    /// Compare the old model with the new to decide whether this component
+    /// needs to be re-rendered.
+    abstract ShouldRender : oldModel: 'model * newModel: 'model -> bool
+    default this.ShouldRender(oldModel, newModel) =
+        not <| obj.ReferenceEquals(oldModel, newModel)
+
     override this.BuildRenderTree(builder) =
         base.BuildRenderTree(builder)
         this.Render()
@@ -61,16 +67,7 @@ type ElmishComponent<'model, 'msg>() =
     member val Dispatch = Unchecked.defaultof<Dispatch<'msg>> with get, set
 
     /// The Elmish view function.
-    abstract View : 'model -> Dispatch<'msg> -> Node
-
-    /// Compare the old model with the new to decide whether this component
-    /// needs to be re-rendered.
-    abstract ShouldRender : oldModel: 'model * newModel: 'model -> bool
-    default this.ShouldRender(oldModel, newModel) =
-        not <| obj.ReferenceEquals(oldModel, newModel)
-
-    override this.ShouldRender() =
-       this.ShouldRender(oldModel, this.Model)
+    abstract View : 'model -> Dispatch<'msg> -> Node    
 
     override this.Render() =
         oldModel <- this.Model
