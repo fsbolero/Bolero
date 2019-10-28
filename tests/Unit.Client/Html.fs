@@ -171,14 +171,14 @@ let Tests() =
             // `classes` takes priority over `class`.
             span [
                 attr.classes ["class-set-1"]
-                attr.``class`` "class-notset-1"
-                attr.classes ["class-set-2"; "class-set-3"]
+                attr.``class`` "class-set-2"
+                attr.classes ["class-set-3"; "class-set-4"]
             ] []
             span [
-                attr.classes ["class-set-4"]
-                attr.``class`` "class-notset-2"
+                attr.classes ["class-set-5"]
+                attr.``class`` "class-set-6"
             ] []
-            span [attr.``class`` "class-set-5"] []
+            span [attr.``class`` "class-set-7"] []
         ]
         RawHtml """<div class="raw-html-element">Unescape &lt;b&gt;text&lt;/b&gt; &amp; content</div>"""
         comp<NavLink> [

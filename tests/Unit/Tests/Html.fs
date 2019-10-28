@@ -26,13 +26,13 @@ module Html =
 
     [<Test>]
     let ``Element with classes``() =
-        testNull <@ elt.ByClass("class-notset-1") @>
-        testNull <@ elt.ByClass("class-notset-2") @>
         testNotNull <@ elt.ByClass("class-set-1") @>
         testNotNull <@ elt.ByClass("class-set-2") @>
         testNotNull <@ elt.ByClass("class-set-3") @>
         testNotNull <@ elt.ByClass("class-set-4") @>
         testNotNull <@ elt.ByClass("class-set-5") @>
+        testNotNull <@ elt.ByClass("class-set-6") @>
+        testNotNull <@ elt.ByClass("class-set-7") @>
 
     [<Test>]
     let ``Raw HTML``() =

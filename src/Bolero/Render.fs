@@ -180,6 +180,12 @@ and renderAttrs currentComp builder sequence attrs =
 and renderAttrsRec (builder: RenderTreeBuilder) currentComp attrs (sequence: _ byref) (ref: _ byref) (key: _ byref) (classes: _ byref) =
     for attr in attrs do
         match attr with
+        | Attr ("class", (:? string as value)) ->
+            let cls = value.Split([|' '|], StringSplitOptions.RemoveEmptyEntries) |> List.ofSeq
+            classes <-
+                match classes with
+                | None -> Some cls
+                | Some cls' -> Some (List.distinct (cls @ cls'))
         | Attr (name, value) ->
             builder.AddAttribute(sequence, name, value)
             sequence <- sequence + 1
