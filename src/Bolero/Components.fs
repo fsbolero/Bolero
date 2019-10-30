@@ -36,12 +36,6 @@ type Component() =
 
     let matchCache = Dictionary()
 
-    /// Compare the old model with the new to decide whether this component
-    /// needs to be re-rendered.
-    abstract ShouldRender : oldModel: 'model * newModel: 'model -> bool
-    default this.ShouldRender(oldModel, newModel) =
-        not <| obj.ReferenceEquals(oldModel, newModel)
-
     override this.BuildRenderTree(builder) =
         base.BuildRenderTree(builder)
         this.Render()
@@ -50,10 +44,20 @@ type Component() =
     /// The rendered contents of the component.
     abstract Render : unit -> Node
 
+[<AbstractClass>]
+type Component<'model>() =
+    inherit Component()
+
+    /// Compare the old model with the new to decide whether this component
+    /// needs to be re-rendered.
+    abstract ShouldRender : oldModel: 'model * newModel: 'model -> bool
+    default this.ShouldRender(oldModel, newModel) =
+        not <| obj.ReferenceEquals(oldModel, newModel)
+
 /// A component that is part of an Elmish view.
 [<AbstractClass>]
 type ElmishComponent<'model, 'msg>() =
-    inherit Component()
+    inherit Component<'model>()
 
     let mutable oldModel = Unchecked.defaultof<'model>
 
@@ -82,7 +86,7 @@ type IProgramComponent =
 /// A component that runs an Elmish program.
 [<AbstractClass>]
 type ProgramComponent<'model, 'msg>() =
-    inherit Component()
+    inherit Component<'model>()
 
     let mutable oldModel = Unchecked.defaultof<'model>
     let mutable navigationInterceptionEnabled = false
