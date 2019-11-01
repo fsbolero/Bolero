@@ -157,35 +157,31 @@ and renderAttrs currentComp builder sequence attrs =
     // AddAttribute calls want to be just after the OpenElement/OpenComponent call,
     // so we make sure that AddElementReferenceCapture and SetKey are called last.
     let mutable sequence = sequence
-    let mutable ref = None
-    let mutable key = None
-    let mutable classes = None
+    let mutable ref = ValueNone
+    let mutable key = ValueNone
+    let mutable classes = ValueNone
     renderAttrsRec builder currentComp attrs &sequence &ref &key &classes
     let sequence =
         match classes with
-        | None -> sequence
-        | Some classes ->
+        | ValueNone -> sequence
+        | ValueSome classes ->
             builder.AddAttribute(sequence, "class", String.concat " " classes)
             sequence + 1
     match key with
-    | Some k -> builder.SetKey(k)
-    | None -> ()
+    | ValueSome k -> builder.SetKey(k)
+    | ValueNone -> ()
     match ref with
-    | Some r ->
+    | ValueSome r ->
         builder.AddElementReferenceCapture(sequence, r)
         sequence + 1
-    | None ->
+    | ValueNone ->
         sequence
 
 and renderAttrsRec (builder: RenderTreeBuilder) currentComp attrs (sequence: _ byref) (ref: _ byref) (key: _ byref) (classes: _ byref) =
     for attr in attrs do
         match attr with
         | Attr ("class", (:? string as value)) ->
-            let cls = value.Split([|' '|], StringSplitOptions.RemoveEmptyEntries) |> List.ofSeq
-            classes <-
-                match classes with
-                | None -> Some cls
-                | Some cls' -> Some (List.distinct (cls @ cls'))
+            classes <- ValueSome (value :: match classes with ValueSome x -> x | ValueNone -> [])
         | Attr (name, value) ->
             builder.AddAttribute(sequence, name, value)
             sequence <- sequence + 1
@@ -195,14 +191,11 @@ and renderAttrsRec (builder: RenderTreeBuilder) currentComp attrs (sequence: _ b
             setAttr builder sequence currentComp
             sequence <- sequence + 1
         | Ref r ->
-            ref <- Some r
+            ref <- ValueSome r
         | Key k ->
-            key <- Some k
+            key <- ValueSome k
         | Classes cls ->
-            classes <-
-                match classes with
-                | None -> Some cls
-                | Some cls' -> Some (List.distinct (cls @ cls'))
+            classes <- ValueSome (cls @ match classes with ValueSome x -> x | ValueNone -> [])
 
 let RenderNode currentComp builder (matchCache: Dictionary<Type, _>) node =
     let getMatchParams (ty: Type) =
