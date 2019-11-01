@@ -44,10 +44,20 @@ type Component() =
     /// The rendered contents of the component.
     abstract Render : unit -> Node
 
+[<AbstractClass>]
+type Component<'model>() =
+    inherit Component()
+
+    /// Compare the old model with the new to decide whether this component
+    /// needs to be re-rendered.
+    abstract ShouldRender : oldModel: 'model * newModel: 'model -> bool
+    default this.ShouldRender(oldModel, newModel) =
+        not <| obj.ReferenceEquals(oldModel, newModel)
+
 /// A component that is part of an Elmish view.
 [<AbstractClass>]
 type ElmishComponent<'model, 'msg>() =
-    inherit Component()
+    inherit Component<'model>()
 
     let mutable oldModel = Unchecked.defaultof<'model>
 
@@ -61,13 +71,7 @@ type ElmishComponent<'model, 'msg>() =
     member val Dispatch = Unchecked.defaultof<Dispatch<'msg>> with get, set
 
     /// The Elmish view function.
-    abstract View : 'model -> Dispatch<'msg> -> Node
-
-    /// Compare the old model with the new to decide whether this component
-    /// needs to be re-rendered.
-    abstract ShouldRender : oldModel: 'model * newModel: 'model -> bool
-    default this.ShouldRender(oldModel, newModel) =
-        not <| obj.ReferenceEquals(oldModel, newModel)
+    abstract View : 'model -> Dispatch<'msg> -> Node    
 
     override this.ShouldRender() =
        this.ShouldRender(oldModel, this.Model)
@@ -82,7 +86,7 @@ type IProgramComponent =
 /// A component that runs an Elmish program.
 [<AbstractClass>]
 type ProgramComponent<'model, 'msg>() =
-    inherit Component()
+    inherit Component<'model>()
 
     let mutable oldModel = Unchecked.defaultof<'model>
     let mutable navigationInterceptionEnabled = false
@@ -117,7 +121,7 @@ type ProgramComponent<'model, 'msg>() =
         this.NavigationManager.ToBaseRelativePath(uri)
 
     member internal this.SetState(program, model, dispatch) =
-        if not <| obj.ReferenceEquals(model, oldModel) then
+        if this.ShouldRender(oldModel, model) then
             this.ForceSetState(program, model, dispatch)
 
     member internal this.StateHasChanged() =
