@@ -153,14 +153,34 @@ let rec renderNode (currentComp: obj) (builder: RenderTreeBuilder) (matchCache: 
         sequence + (if hasChildren then 2 else 0)
 
 /// Render a list of attributes into `builder` at `sequence` number.
-and renderAttrs currentComp builder sequence attrs =
+and renderAttrs currentComp (builder: RenderTreeBuilder) sequence attrs =
     // AddAttribute calls want to be just after the OpenElement/OpenComponent call,
     // so we make sure that AddElementReferenceCapture and SetKey are called last.
-    let mutable sequence = sequence
-    let mutable ref = ValueNone
-    let mutable key = ValueNone
-    let mutable classes = ValueNone
-    renderAttrsRec builder currentComp attrs &sequence &ref &key &classes
+    let rec loop attrs sequence ref key classes =
+        match attrs with
+        | [] -> struct (sequence, ref, key, classes)
+        | attr :: attrs ->
+            match attr with
+            | Attr ("class", (:? string as value)) ->
+                let classes = ValueSome (value :: match classes with ValueSome x -> x | ValueNone -> [])
+                loop attrs sequence ref key classes
+            | Attr (name, value) ->
+                builder.AddAttribute(sequence, name, value)
+                loop attrs (sequence + 1) ref key classes
+            | Attrs attrs' ->
+                let struct (sequence, ref, key, classes) = loop attrs' sequence ref key classes
+                loop attrs sequence ref key classes
+            | ExplicitAttr setAttr ->
+                setAttr.Invoke(builder, sequence, currentComp)
+                loop attrs (sequence + 1) ref key classes
+            | Ref r ->
+                loop attrs sequence (ValueSome r) key classes
+            | Key k ->
+                loop attrs sequence ref (ValueSome k) classes
+            | Classes cls ->
+                let classes = ValueSome (cls @ match classes with ValueSome x -> x | ValueNone -> [])
+                loop attrs sequence ref key classes
+    let struct (sequence, ref, key, classes) = loop attrs sequence ValueNone ValueNone ValueNone
     let sequence =
         match classes with
         | ValueNone -> sequence
@@ -168,34 +188,13 @@ and renderAttrs currentComp builder sequence attrs =
             builder.AddAttribute(sequence, "class", String.concat " " classes)
             sequence + 1
     match key with
-    | ValueSome k -> builder.SetKey(k)
     | ValueNone -> ()
+    | ValueSome k -> builder.SetKey(k)
     match ref with
+    | ValueNone -> sequence
     | ValueSome r ->
         builder.AddElementReferenceCapture(sequence, r)
         sequence + 1
-    | ValueNone ->
-        sequence
-
-and renderAttrsRec (builder: RenderTreeBuilder) currentComp attrs (sequence: _ byref) (ref: _ byref) (key: _ byref) (classes: _ byref) =
-    for attr in attrs do
-        match attr with
-        | Attr ("class", (:? string as value)) ->
-            classes <- ValueSome (value :: match classes with ValueSome x -> x | ValueNone -> [])
-        | Attr (name, value) ->
-            builder.AddAttribute(sequence, name, value)
-            sequence <- sequence + 1
-        | Attrs attrs ->
-            renderAttrsRec builder currentComp attrs &sequence &ref &key &classes
-        | ExplicitAttr setAttr ->
-            setAttr builder sequence currentComp
-            sequence <- sequence + 1
-        | Ref r ->
-            ref <- ValueSome r
-        | Key k ->
-            key <- ValueSome k
-        | Classes cls ->
-            classes <- ValueSome (cls @ match classes with ValueSome x -> x | ValueNone -> [])
 
 let RenderNode currentComp builder (matchCache: Dictionary<Type, _>) node =
     let getMatchParams (ty: Type) =
