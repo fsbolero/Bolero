@@ -33,7 +33,7 @@ open Utility
 
 let config = getArg "-c" "Debug"
 let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
-    dotnetOutput "nbgv" "get-version -v SemVer2" |> List.head
+    dotnetOutput "nbgv" "get-version -v SemVer2"
 )
 let testUploadUrl = getArgOpt "--push-tests"
 let verbosity = getFlag "--verbose" >> function
@@ -120,7 +120,12 @@ Target.create "build" (fun _ ->
 
 Target.description "Create the NuGet packages"
 Target.create "pack" (fun o ->
-    dotnet "paket" "pack build --version %s" (version o)
+    Paket.pack <| fun p ->
+        { p with
+            OutputPath = "build"
+            Version = version o
+            ToolType = ToolType.CreateLocalTool()
+        }
 )
 
 Target.description "Run the Client test project"
