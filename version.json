@@ -1,12 +1,17 @@
 {
-    "$schema": "https://raw.githubusercontent.com/AArnott/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
-    "version": "0.9-preview9",
-    "nugetPackageVersion": {
-        "semVer": 2
-    },
-    "gitCommitIdShortAutoMinimum": 7,
-    "publicReleaseRefSpec": [
-        "^refs/heads/master$",
-        "^refs/heads/\\d+\\.\\d+$"
-    ]
+  "$schema": "https://raw.githubusercontent.com/AArnott/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
+  "version": "0.10-preview9",
+  "gitCommitIdShortAutoMinimum": 7,
+  "nuGetPackageVersion": {
+    "semVer": 2.0
+  },
+  "publicReleaseRefSpec": [
+    "^refs/heads/master$",
+    "^refs/heads/\\d+\\.\\d+$"
+  ],
+  "release": {
+    "branchName": "{version}",
+    "versionIncrement": "minor",
+    "firstUnstableTag": "preview9"
+  }
 }

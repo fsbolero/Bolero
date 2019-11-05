@@ -12,6 +12,9 @@ end_of_line = crlf
 [*.{fs,fsi,fsx,cs,dependencies,references,template,md}]
 indent_size = 4
 
+[*.json]
+insert_final_newline = false
+
 [.vscode/*.json]
 indent_size = 4
 
