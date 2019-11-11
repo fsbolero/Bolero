@@ -15,25 +15,18 @@ init:
   - git config --global core.autocrlf input
 
 before_build:
-  - dotnet tool install nbgv --tool-path .paket
-  - export SEMVER="$(.paket/nbgv get-version -v SemVer2)"
-  - appveyor UpdateBuild -Version "$SEMVER ($APPVEYOR_BUILD_ID)"
+  - dotnet tool restore
+  - export SEMVER="$(dotnet nbgv get-version -v SemVer2)"
+  - dotnet nbgv cloud
 
 build_script:
   - export NUGET_PACKAGES="$APPVEYOR_BUILD_FOLDER/.nuget"
-
-  # Chrome on AV is not latest
-  - dotnet tool restore
-  - dotnet paket add Selenium.WebDriver.ChromeDriver --version 76.0.3809.12600
-  - dotnet restore
-
-  - '$BUILD_SCRIPT -t pack -c Release -v "$SEMVER" --sourceLink /p:GhPages=true'
+  - ./build.sh -t pack -c Release -v "$SEMVER" --sourceLink /p:GhPages=true
 
 test_script:
-  - '$BUILD_SCRIPT -s -t test -c Release --push-tests "https://ci.appveyor.com/api/testresults/mstest/$APPVEYOR_JOB_ID"'
+  - ./build.sh -s -t test -c Release --push-tests "https://ci.appveyor.com/api/testresults/mstest/$APPVEYOR_JOB_ID"
 
 environment:
-  BUILD_SCRIPT: ./build.sh
   GH_TOKEN:
     secure: dhFy1eZoqG4QPkKTuLFxix7QQMxaIyIpYjkvTU3CukYZz1CEOJeHfBSaT8tkPsGL
 
