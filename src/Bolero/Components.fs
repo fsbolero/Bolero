@@ -106,8 +106,13 @@ and [<AbstractClass>]
     member val private Dispatch = ignore with get, set
     member val private Router = None : option<IRouter<'model, 'msg>> with get, set
 
-    /// The Elmish program to run.
+    /// The Elmish program to run. Either this or AsyncProgram must be overridden.
     abstract Program : Program<'model, 'msg>
+    default this.Program = Unchecked.defaultof<_>
+
+    /// The Elmish program to run. Either this or Program must be overridden.
+    abstract AsyncProgram : Async<Program<'model, 'msg>>
+    default this.AsyncProgram = async { return this.Program }
 
     interface IProgramComponent with
         member this.Services = this.Services
@@ -137,25 +142,32 @@ and [<AbstractClass>]
             let newUri = router.GetRoute model
             let oldUri = this.GetCurrentUri()
             if newUri <> oldUri then
-                this.NavigationManager.NavigateTo(newUri)
+                try this.NavigationManager.NavigateTo(newUri)
+                with _ -> () // fails if run in prerender
         )
 
     member this.Rerender() =
         this.ForceSetState(this.Program, oldModel, this.Dispatch)
 
-    override this.OnInitialized() =
-        base.OnInitialized()
-        let program = this.Program
-        let setDispatch dispatch =
-            this.Dispatch <- dispatch
-        { program with
-            setState = fun model dispatch ->
-                this.SetState(program, model, dispatch)
-            init = fun arg ->
-                let model, cmd = program.init arg
-                model, setDispatch :: cmd
+    member internal this._OnInitializedAsync() =
+        base.OnInitializedAsync()
+
+    override this.OnInitializedAsync() =
+        async {
+            do! this._OnInitializedAsync() |> Async.AwaitTask
+            let! program = this.AsyncProgram
+            let setDispatch dispatch =
+                this.Dispatch <- dispatch
+            { program with
+                setState = fun model dispatch ->
+                    this.SetState(program, model, dispatch)
+                init = fun arg ->
+                    let model, cmd = program.init arg
+                    model, setDispatch :: cmd
+            }
+            |> Program.runWith this
         }
-        |> Program.runWith this
+        |> Async.StartAsTask :> _
 
     member internal this.InitRouter
         (
@@ -164,7 +176,7 @@ and [<AbstractClass>]
             initModel: 'model
         ) =
         this.Router <- Some r
-        System.EventHandler<_> this.OnLocationChanged
+        EventHandler<_> this.OnLocationChanged
         |> this.NavigationManager.LocationChanged.AddHandler
         match r.SetRoute (this.GetCurrentUri()) with
         | Some msg ->
@@ -184,7 +196,7 @@ and [<AbstractClass>]
 
     interface System.IDisposable with
         member this.Dispose() =
-            System.EventHandler<_> this.OnLocationChanged
+            EventHandler<_> this.OnLocationChanged
             |> this.NavigationManager.LocationChanged.RemoveHandler
 
 type ElementReferenceBinder() =
