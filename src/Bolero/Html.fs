@@ -613,6 +613,9 @@ module attr =
     let key (k: obj) =
         Attr.Key k
 
+    /// Create an HTML `aria-X` attribute.
+    let inline aria name (v: obj) = ("aria-" + name) => v
+
 // BEGIN ATTRS
     /// Create an HTML `accept` attribute.
     let accept (v: obj) : Attr = "accept" => v
