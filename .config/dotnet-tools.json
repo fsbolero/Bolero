@@ -3,13 +3,13 @@
   "isRoot": true,
   "tools": {
     "paket": {
-      "version": "5.224.0",
+      "version": "5.238.1",
       "commands": [
         "paket"
       ]
     },
     "fake-cli": {
-      "version": "5.16.1",
+      "version": "5.18.3",
       "commands": [
         "fake"
       ]
