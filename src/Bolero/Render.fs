@@ -171,8 +171,8 @@ and renderAttrs currentComp (builder: RenderTreeBuilder) sequence attrs =
                 let struct (sequence, ref, key, classes) = loop attrs' sequence ref key classes
                 loop attrs sequence ref key classes
             | ExplicitAttr setAttr ->
-                setAttr.Invoke(builder, sequence, currentComp)
-                loop attrs (sequence + 1) ref key classes
+                let sequence = setAttr.Invoke(builder, sequence, currentComp)
+                loop attrs sequence ref key classes
             | Ref r ->
                 loop attrs sequence (ValueSome r) key classes
             | Key k ->

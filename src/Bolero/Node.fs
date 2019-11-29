@@ -32,7 +32,7 @@ type Attr =
     | Key of obj
     | Classes of list<string>
 #if !IS_DESIGNTIME
-    | ExplicitAttr of Action<Rendering.RenderTreeBuilder, int, obj>
+    | ExplicitAttr of Func<Rendering.RenderTreeBuilder, int, obj, int>
     | Ref of Action<ElementReference>
 #endif
 

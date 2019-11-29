@@ -978,14 +978,30 @@ module on =
     /// [omit]
     [<CompilerMessageAttribute("This method is intended for use in generated code only.", 10001, IsHidden=true, IsError=false)>]
     let inline eventInline< ^T, ^F when ^T :> EventArgs and ^F : (member Create : obj * Action< ^T> -> EventCallback< ^T>)> factory eventName (callback: ^T -> unit) : Attr =
-        ExplicitAttr (Action<_,_,_>(fun builder sequence receiver ->
+        ExplicitAttr (Func<_,_,_,_>(fun builder sequence receiver ->
             builder.AddAttribute< ^T>(sequence, "on" + eventName,
                 (^F : (member Create : obj * Action< ^T> -> EventCallback< ^T>)(factory, receiver, Action< ^T>(callback)))
-            )))
+            )
+            sequence + 1
+        ))
 
     /// Create a handler for a HTML event of type EventArgs.
     let inline event< ^T when ^T :> EventArgs> eventName (callback: ^T -> unit) =
         eventInline< ^T, _> EventCallback.Factory eventName callback
+
+    /// Prevent the default event behavior for a given HTML event.
+    let preventDefault eventName (value: bool) =
+        ExplicitAttr (Func<_,_,_,_>(fun builder sequence _receiver ->
+            builder.AddEventPreventDefaultAttribute(sequence, eventName, value)
+            sequence + 1
+        ))
+
+    /// Stop the propagation to parent elements of a given HTML event.
+    let stopPropagation eventName (value: bool) =
+        ExplicitAttr (Func<_,_,_,_>(fun builder sequence _receiver ->
+            builder.AddEventStopPropagationAttribute(sequence, eventName, value)
+            sequence + 1
+        ))
 
 // BEGIN EVENTS
     /// Create a handler for HTML event `focus`.
