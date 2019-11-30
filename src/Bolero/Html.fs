@@ -20,6 +20,8 @@
 
 module rec Bolero.Html
 
+open System.Threading.Tasks
+
 #nowarn "10001" // `event` calls `eventInline` which has custom warning
 
 open System
@@ -991,6 +993,24 @@ module on =
     /// Create a handler for a HTML event of type EventArgs.
     let inline event< ^T when ^T :> EventArgs> eventName (callback: ^T -> unit) =
         eventInline< ^T, _> EventCallback.Factory eventName callback
+
+    /// [omit]
+    [<CompilerMessageAttribute("This method is intended for use in generated code only.", 10001, IsHidden=true, IsError=false)>]
+    let inline eventInlineAsync< ^T, ^F when ^T :> EventArgs and ^F : (member Create : obj * Func< ^T, Task> -> EventCallback< ^T>)> factory eventName (callback: ^T -> Task) : Attr =
+        ExplicitAttr (Func<_,_,_,_>(fun builder sequence receiver ->
+            builder.AddAttribute< ^T>(sequence, "on" + eventName,
+                (^F : (member Create : obj * Func< ^T, Task> -> EventCallback< ^T>)(factory, receiver, Func< ^T, Task>(callback)))
+            )
+            sequence + 1
+        ))
+
+    /// Create an asynchronous handler for a HTML event of type EventArgs.
+    let inline asyncEvent< ^T when ^T :> EventArgs> eventName (callback: ^T -> Async<unit>) =
+        eventInlineAsync< ^T, _> EventCallback.Factory eventName (fun x -> Async.StartAsTask (callback x) :> Task)
+
+    /// Create an asynchronous handler for a HTML event of type EventArgs.
+    let inline eventAsync< ^T when ^T :> EventArgs> eventName (callback: ^T -> Task) =
+        eventInlineAsync< ^T, _> EventCallback.Factory eventName callback
 
     /// Prevent the default event behavior for a given HTML event.
     let preventDefault eventName (value: bool) =

@@ -148,18 +148,16 @@ type BindElementRef() =
             button [
                 attr.``class`` "element-ref"
                 attr.ref (fun r -> elt1 <- r)
-                on.click (fun _ ->
-                    this.JSRuntime.InvokeAsync("setContent", elt1, "ElementRef 1 is bound")
-                    |> ignore
+                on.eventAsync "click" (fun _ ->
+                    this.JSRuntime.InvokeAsync("setContent", elt1, "ElementRef 1 is bound").AsTask() :> _
                 )
             ] [text "Click me"]
             button [
                 attr.``class`` "element-ref-binder"
                 attr.bindRef elt2
-                on.click (fun _ ->
-                    this.JSRuntime.InvokeAsync("setContent", elt2.Ref, "ElementRef 2 is bound")
-                    |> ignore
-                )
+                on.asyncEvent "click" (fun _ -> async {
+                    do! this.JSRuntime.InvokeAsync("setContent", elt2.Ref, "ElementRef 2 is bound").AsTask() |> Async.AwaitTask
+                })
             ] [text "Click me"]
         ]
 
@@ -168,7 +166,6 @@ let Tests() =
         p [attr.id "element-with-id"] [text "Contents of element with id"]
         p [attr.id "element-with-htmlentity"] [text "Escaped <b>text</b> & content"]
         concat [
-            // `classes` takes priority over `class`.
             span [
                 attr.classes ["class-set-1"]
                 attr.``class`` "class-set-2"
