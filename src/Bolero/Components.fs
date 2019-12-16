@@ -48,18 +48,23 @@ type Component() =
 type Component<'model>() =
     inherit Component()
 
+    /// The optional custom equality check
+    // Uses default equality from base class
+    [<Parameter>]
+    member val Equal = (fun m1 m2 -> obj.ReferenceEquals(m1, m2)) with get, set
+
     /// Compare the old model with the new to decide whether this component
     /// needs to be re-rendered.
-    abstract ShouldRender : oldModel: 'model * newModel: 'model -> bool
+    abstract member ShouldRender : oldModel: 'model * newModel: 'model -> bool
     default this.ShouldRender(oldModel, newModel) =
-        not <| obj.ReferenceEquals(oldModel, newModel)
+        not <| this.Equal oldModel newModel
 
 /// A component that is part of an Elmish view.
 [<AbstractClass>]
 type ElmishComponent<'model, 'msg>() =
     inherit Component<'model>()
 
-    let mutable oldModel = Unchecked.defaultof<'model>
+    member val internal OldModel = Unchecked.defaultof<'model> with get, set
 
     /// The current value of the Elmish model.
     /// Can be just a part of the full program's model.
@@ -71,14 +76,23 @@ type ElmishComponent<'model, 'msg>() =
     member val Dispatch = Unchecked.defaultof<Dispatch<'msg>> with get, set
 
     /// The Elmish view function.
-    abstract View : 'model -> Dispatch<'msg> -> Node    
+    abstract View : 'model -> Dispatch<'msg> -> Node
 
     override this.ShouldRender() =
-       this.ShouldRender(oldModel, this.Model)
+        base.ShouldRender(this.OldModel, this.Model)
 
     override this.Render() =
-        oldModel <- this.Model
+        this.OldModel <- this.Model
         this.View this.Model this.Dispatch
+
+type LazyComponent<'model,'msg>() =
+    inherit ElmishComponent<'model,'msg>()
+
+    /// The view function
+    [<Parameter>]
+    member val ViewFunction = Unchecked.defaultof<'model -> Dispatch<'msg> -> Node> with get, set
+
+    override this.View model dispatch = this.ViewFunction model dispatch
 
 type IProgramComponent =
     abstract Services : System.IServiceProvider
@@ -108,7 +122,7 @@ and [<AbstractClass>]
 
     /// The Elmish program to run. Either this or AsyncProgram must be overridden.
     abstract Program : Program<'model, 'msg>
-    default this.Program = Unchecked.defaultof<_>
+    default _.Program = Unchecked.defaultof<_>
 
     /// The Elmish program to run. Either this or Program must be overridden.
     abstract AsyncProgram : Async<Program<'model, 'msg>>
@@ -131,7 +145,7 @@ and [<AbstractClass>]
         if this.ShouldRender(oldModel, model) then
             this.ForceSetState(program, model, dispatch)
 
-    member internal this.StateHasChanged() =
+    member internal _.StateHasChanged() =
         base.StateHasChanged()
 
     member private this.ForceSetState(program, model, dispatch) =
@@ -149,7 +163,7 @@ and [<AbstractClass>]
     member this.Rerender() =
         this.ForceSetState(this.Program, oldModel, this.Dispatch)
 
-    member internal this._OnInitializedAsync() =
+    member internal _._OnInitializedAsync() =
         base.OnInitializedAsync()
 
     override this.OnInitializedAsync() =
@@ -184,7 +198,7 @@ and [<AbstractClass>]
         | None ->
             initModel, []
 
-    override this.OnAfterRenderAsync(firstRender) =
+    override this.OnAfterRenderAsync(_) =
         if this.Router.IsSome && not navigationInterceptionEnabled then
             navigationInterceptionEnabled <- true
             this.NavigationInterception.EnableNavigationInterceptionAsync()
@@ -203,6 +217,6 @@ type ElementReferenceBinder() =
 
     let mutable ref = Unchecked.defaultof<ElementReference>
 
-    member this.Ref = ref
+    member _.Ref = ref
 
-    member internal this.SetRef(r) = ref <- r
+    member internal _.SetRef(r) = ref <- r
