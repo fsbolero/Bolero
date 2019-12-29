@@ -106,6 +106,7 @@ and [<AbstractClass>]
 
     let mutable oldModel = Unchecked.defaultof<'model>
     let mutable navigationInterceptionEnabled = false
+    let mutable dispatch = ignore<'msg>
 
     [<Inject>]
     member val NavigationManager = Unchecked.defaultof<NavigationManager> with get, set
@@ -117,7 +118,7 @@ and [<AbstractClass>]
     member val NavigationInterception = Unchecked.defaultof<INavigationInterception> with get, set
 
     member val private View = Empty with get, set
-    member val private Dispatch = ignore with get, set
+    member _.Dispatch = dispatch
     member val private Router = None : option<IRouter<'model, 'msg>> with get, set
 
     /// The Elmish program to run. Either this or AsyncProgram must be overridden.
@@ -135,7 +136,7 @@ and [<AbstractClass>]
         this.Router |> Option.iter (fun router ->
             let uri = this.NavigationManager.ToBaseRelativePath(e.Location)
             let route = router.SetRoute uri
-            Option.iter this.Dispatch route)
+            Option.iter dispatch route)
 
     member internal this.GetCurrentUri() =
         let uri = this.NavigationManager.Uri
@@ -161,7 +162,7 @@ and [<AbstractClass>]
         )
 
     member this.Rerender() =
-        this.ForceSetState(this.Program, oldModel, this.Dispatch)
+        this.ForceSetState(this.Program, oldModel, dispatch)
 
     member internal _._OnInitializedAsync() =
         base.OnInitializedAsync()
@@ -170,8 +171,8 @@ and [<AbstractClass>]
         async {
             do! this._OnInitializedAsync() |> Async.AwaitTask
             let! program = this.AsyncProgram
-            let setDispatch dispatch =
-                this.Dispatch <- dispatch
+            let setDispatch d =
+                dispatch <- d
             { program with
                 setState = fun model dispatch ->
                     this.SetState(program, model, dispatch)
