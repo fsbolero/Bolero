@@ -182,7 +182,7 @@ and [<AbstractClass>]
             }
             |> Program.runWith this
         }
-        |> Async.StartAsTask :> _
+        |> Async.StartImmediateAsTask :> _
 
     member internal this.InitRouter
         (

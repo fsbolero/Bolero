@@ -1032,7 +1032,7 @@ module on =
 
     /// Create an asynchronous handler for a HTML event of type EventArgs.
     let inline asyncEvent< ^T when ^T :> EventArgs> eventName (callback: ^T -> Async<unit>) =
-        eventInlineAsync< ^T, _> EventCallback.Factory eventName (fun x -> Async.StartAsTask (callback x) :> Task)
+        eventInlineAsync< ^T, _> EventCallback.Factory eventName (fun x -> Async.StartImmediateAsTask (callback x) :> Task)
 
     /// Create an asynchronous handler for a HTML event of type EventArgs.
     let inline eventAsync< ^T when ^T :> EventArgs> eventName (callback: ^T -> Task) =
