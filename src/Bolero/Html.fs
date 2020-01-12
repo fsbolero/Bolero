@@ -21,6 +21,7 @@
 module rec Bolero.Html
 
 open System.Threading.Tasks
+open System.Globalization
 
 #nowarn "10001" // `event` calls `eventInline` which has custom warning
 
@@ -1422,50 +1423,147 @@ module on =
 /// Two-way binding for HTML input elements.
 module bind =
 
-    let private attr<'T, 'U> (valueName: string) (eventName: string) (value: 'T) (callback: 'U -> unit) =
-        Attrs [
-            valueName => value
-            on.event eventName (fun (e: ChangeEventArgs) ->
-                callback (unbox<'U> e.Value))
-        ]
+    let inline binder'< ^T, ^F when ^F : (static member CreateBinder : EventCallbackFactory * obj * Action< ^T> * ^T * CultureInfo -> EventCallback<ChangeEventArgs>)>
+            (eventName: string) (currentValue: ^T) (callback: ^T -> unit) cultureInfo =
+        ExplicitAttr(Func<_,_,_,_>(fun builder sequence receiver ->
+            builder.AddAttribute(sequence, "on" + eventName,
+                (^F : (static member CreateBinder : EventCallbackFactory * obj * Action< ^T> * ^T * CultureInfo -> EventCallback<ChangeEventArgs>)
+                    (EventCallback.Factory, receiver, Action<_> callback, currentValue, cultureInfo)))
+            sequence + 1
+        ))
 
-    let inline private attrParseValue< ^T when ^T : (static member TryParse : string * byref< ^T> -> bool)>
-            (eventName: string) (value: ^T) (callback: ^T -> unit) =
-        attr< ^T, string> "value" eventName value (fun s ->
-            let mutable out = Unchecked.defaultof< ^T>
-            if (^T : (static member TryParse : string * byref< ^T> -> bool)(s, &out))
-            then callback out)
+    let inline binder< ^T> x = binder'< ^T, EventCallbackFactoryBinderExtensions> x
 
     /// Bind a boolean to the value of a checkbox.
-    let ``checked`` (value: bool) (callback: bool -> unit) =
-        attr<bool, bool> "checked" "change" value callback
+    let ``checked`` value callback = binder<bool> "change" value callback null
 
-    /// Bind a string to the value of an input.
+    /// Bind to the value of an input.
     /// The value is updated on the oninput event.
-    let input (value: string) (callback: string -> unit) =
-        attr<string, string> "value" "input" value callback
+    module input =
 
-    /// Bind a string to the value of an input.
+        /// Bind a string to the value of an input.
+        /// The value is updated on the oninput event.
+        let string value callback = binder<string> "input" value callback null
+
+        /// Bind an integer to the value of an input.
+        /// The value is updated on the oninput event.
+        let int value callback = binder<int> "input" value callback null
+
+        /// Bind an int64 to the value of an input.
+        /// The value is updated on the oninput event.
+        let int64 value callback = binder<int64> "input" value callback null
+
+        /// Bind a float to the value of an input.
+        /// The value is updated on the oninput event.
+        let float value callback = binder<float> "input" value callback null
+
+        /// Bind a float32 to the value of an input.
+        /// The value is updated on the oninput event.
+        let float32 value callback = binder<float32> "input" value callback null
+
+        /// Bind a DateTime to the value of an input.
+        /// The value is updated on the oninput event.
+        let dateTime value callback = binder<DateTime> "input" value callback null
+
+        /// Bind a DateTimeOffset to the value of an input.
+        /// The value is updated on the oninput event.
+        let dateTimeOffset value callback = binder<DateTimeOffset> "input" value callback null
+
+    /// Bind to the value of an input.
     /// The value is updated on the onchange event.
-    let change (value: string) (callback: string -> unit) =
-        attr<string, string> "value" "change" value callback
+    module change =
 
-    /// Bind an integer to the value of an input.
-    /// The value is updated on the oninput event.
-    let inputInt (value: int) (callback: int -> unit) =
-        attrParseValue<int> "input" value callback
+        /// Bind a string to the value of an input.
+        /// The value is updated on the onchange event.
+        let string value callback = binder<string> "change" value callback null
 
-    /// Bind an integer to the value of an input.
-    /// The value is updated on the onchange event.
-    let changeInt (value: int) (callback: int -> unit) =
-        attrParseValue<int> "change" value callback
+        /// Bind an integer to the value of an input.
+        /// The value is updated on the onchange event.
+        let int value callback = binder<int> "change" value callback null
 
-    /// Bind a float to the value of an input.
-    /// The value is updated on the oninput event.
-    let inputFloat (value: float) (callback: float -> unit) =
-        attrParseValue<float> "input" value callback
+        /// Bind an int64 to the value of an input.
+        /// The value is updated on the onchange event.
+        let int64 value callback = binder<int64> "change" value callback null
 
-    /// Bind a float to the value of an input.
-    /// The value is updated on the onchange event.
-    let changeFloat (value: float) (callback: float -> unit) =
-        attrParseValue<float> "change" value callback
+        /// Bind a float to the value of an input.
+        /// The value is updated on the onchange event.
+        let float value callback = binder<float> "change" value callback null
+
+        /// Bind a float32 to the value of an input.
+        /// The value is updated on the onchange event.
+        let float32 value callback = binder<float32> "change" value callback null
+
+        /// Bind a DateTime to the value of an input.
+        /// The value is updated on the onchange event.
+        let dateTime value callback = binder<DateTime> "change" value callback null
+
+        /// Bind a DateTimeOffset to the value of an input.
+        /// The value is updated on the onchange event.
+        let dateTimeOffset value callback = binder<DateTimeOffset> "change" value callback null
+
+    /// Bind to the value of an input and convert using the given CultureInfo.
+    module withCulture =
+
+        /// Bind to the value of an input.
+        /// The value is updated on the oninput event.
+        module input =
+
+            /// Bind a string to the value of an input.
+            /// The value is updated on the oninput event.
+            let string culture value callback = binder<string> "input" value callback culture
+
+            /// Bind an integer to the value of an input.
+            /// The value is updated on the oninput event.
+            let int culture value callback = binder<int> "input" value callback culture
+
+            /// Bind an int64 to the value of an input.
+            /// The value is updated on the oninput event.
+            let int64 culture value callback = binder<int64> "input" value callback culture
+
+            /// Bind a float to the value of an input.
+            /// The value is updated on the oninput event.
+            let float culture value callback = binder<float> "input" value callback culture
+
+            /// Bind a float32 to the value of an input.
+            /// The value is updated on the oninput event.
+            let float32 culture value callback = binder<float32> "input" value callback culture
+
+            /// Bind a DateTime to the value of an input.
+            /// The value is updated on the oninput event.
+            let dateTime culture value callback = binder<DateTime> "input" value callback culture
+
+            /// Bind a DateTimeOffset to the value of an input.
+            /// The value is updated on the oninput event.
+            let dateTimeOffset culture value callback = binder<DateTimeOffset> "input" value callback culture
+
+        /// Bind to the value of an input.
+        /// The value is updated on the onchange event.
+        module change =
+
+            /// Bind a string to the value of an input.
+            /// The value is updated on the onchange event.
+            let string culture value callback = binder<string> "change" value callback culture
+
+            /// Bind an integer to the value of an input.
+            /// The value is updated on the onchange event.
+            let int culture value callback = binder<int> "change" value callback culture
+
+            /// Bind an int64 to the value of an input.
+            /// The value is updated on the onchange event.
+            let int64 culture value callback = binder<int64> "change" value callback culture
+
+            /// Bind a float to the value of an input.
+            /// The value is updated on the onchange event.
+            let float culture value callback = binder<float> "change" value callback culture
+
+            /// Bind a float32 to the value of an input.
+            /// The value is updated on the onchange event.
+            let float32 culture value callback = binder<float32> "change" value callback culture
+
+            /// Bind a DateTime to the value of an input.
+            /// The value is updated on the onchange event.
+            let dateTime culture value callback = binder<DateTime> "change" value callback culture
+
+            /// Bind a DateTimeOffset to the value of an input.
+            /// The value is updated on the onchange event.
+            let dateTimeOffset culture value callback = binder<DateTimeOffset> "change" value callback culture

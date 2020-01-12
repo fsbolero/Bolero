@@ -151,7 +151,7 @@ let viewForm (js: IJSRuntime) model dispatch =
             input [
                 attr.``type`` "radio"
                 attr.name "my-radio-item"
-                bind.change (string ix) (fun _ -> dispatch (SetRadioItem ix))
+                bind.change.string (string ix) (fun _ -> dispatch (SetRadioItem ix))
             ]
         div [] [text (defaultArg model.submitted "")]
         (match model.submitted with

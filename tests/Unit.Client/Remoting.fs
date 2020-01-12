@@ -107,7 +107,7 @@ let remote model dispatch =
     concat [
         input [
             attr.classes ["signin-input"]
-            bind.input model.username (dispatch << SetUsername)
+            bind.input.string model.username (dispatch << SetUsername)
         ]
         button [
             attr.classes ["signin-button"]

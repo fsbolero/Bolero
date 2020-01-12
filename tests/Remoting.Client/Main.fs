@@ -161,7 +161,7 @@ let Display model dispatch =
         cond model.currentLogin <| function
         | None ->
             concat [
-                input [bind.change model.loginInput (dispatch << SetLoginInput)]
+                input [bind.change.string model.loginInput (dispatch << SetLoginInput)]
                 button [on.click (fun _ -> dispatch Login)] [text "Log in"]
             ]
         | Some login ->
@@ -173,7 +173,7 @@ let Display model dispatch =
         text "2 * "
         input [
             attr.``type`` "number"
-            bind.changeInt model.authDoubleInput (dispatch << SetAuthDoubleInput)
+            bind.change.int model.authDoubleInput (dispatch << SetAuthDoubleInput)
         ]
         text " = "
         button [on.click (fun _ -> dispatch SendAuthDouble)] [text "Send"]
