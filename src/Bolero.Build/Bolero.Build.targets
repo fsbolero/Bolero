@@ -8,7 +8,7 @@
   <Target Name="StripFSharp" BeforeTargets="_BlazorCopyFilesToOutputDirectory" DependsOnTargets="PrepareBlazorOutputs"
     Condition="'$(BoleroStripAssemblies)' != 'False'">
     <ItemGroup>
-      <BoleroStripAssemblies Include="@(BlazorItemOutput->WithMetadataValue('Extension', '.dll'))" />
+      <BoleroStripAssemblies Include="@(BlazorOutputWithTargetPath->WithMetadataValue('Extension', '.dll'))" />
     </ItemGroup>
     <BoleroTask Assemblies="@(BoleroStripAssemblies)" />
   </Target>

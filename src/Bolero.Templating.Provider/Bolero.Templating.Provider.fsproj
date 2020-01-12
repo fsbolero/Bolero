@@ -1,9 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <OutputPath>..\Bolero\bin\$(Configuration)\typeproviders\fsharp41</OutputPath>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <OutputPath>..\Bolero\bin\$(Configuration)</OutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <DefineConstants>IS_DESIGNTIME</DefineConstants>
+    <!-- <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath> -->
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../paket-files/fsprojects/FSharp.TypeProviders.SDK/src/ProvidedTypes.fsi"

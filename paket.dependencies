@@ -1,20 +1,20 @@
 version 5.216.0
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: netstandard2.0, netcoreapp3.1
+framework: auto-detect
 
 # Project references
 nuget FSharp.Core >= 4.5.0 lowest_matching: true
 nuget HtmlAgilityPack >= 1.8.0 lowest_matching: true
 nuget Elmish ~> 2.0 lowest_matching: true
 nuget TaskBuilder.fs >= 2.1.0 lowest_matching: true
-nuget Microsoft.AspNetCore.Blazor 3.1.0-preview3.19555.2
-nuget Microsoft.AspNetCore.Blazor.Build 3.1.0-preview3.19555.2
-nuget Microsoft.AspNetCore.Blazor.Server 3.1.0-preview3.19555.2
-nuget Microsoft.AspNetCore.Blazor.DevServer 3.1.0-preview3.19555.2
-nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation >= 3.0.0
-nuget System.Runtime.CompilerServices.Unsafe 4.7.0-preview3.19551.4
-nuget System.Text.Json >= 4.7.0-preview3.19551.4
+nuget Microsoft.AspNetCore.Blazor 3.1.0-preview4.19579.2
+nuget Microsoft.AspNetCore.Blazor.Build 3.1.0-preview4.19579.2
+nuget Microsoft.AspNetCore.Blazor.Server 3.1.0-preview4.19579.2
+nuget Microsoft.AspNetCore.Blazor.DevServer 3.1.0-preview4.19579.2
+nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation ~> 3.1.0 lowest_matching: true
+nuget System.Runtime.CompilerServices.Unsafe 4.7.0
+nuget System.Text.Json ~> 4.7.0 lowest_matching: true
 
 # Build and test references
 nuget FsCheck.NUnit ~> 2.12

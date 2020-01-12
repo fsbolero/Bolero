@@ -6,11 +6,13 @@ description
 authors
     Loic Denuziere
 files
-    bin/Release/typeproviders/fsharp41/netstandard2.0/Bolero.Templating.Provider.dll ==> typeproviders/fsharp41/netstandard2.0
-    bin/Release/typeproviders/fsharp41/netstandard2.0/HtmlAgilityPack.dll ==> typeproviders/fsharp41/netstandard2.0
-    bin/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Blazor.dll ==> typeproviders/fsharp41/netstandard2.0
-    bin/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Components.dll ==> typeproviders/fsharp41/netstandard2.0
-    bin/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Components.Web.dll ==> typeproviders/fsharp41/netstandard2.0
+    bin/Release/netstandard2.1/Bolero.Templating.Provider.dll ==> lib/netstandard2.1
+    bin/Release/netstandard2.1/HtmlAgilityPack.dll ==> lib/netstandard2.1
+    bin/Release/netstandard2.1/Microsoft.AspNetCore.Blazor.dll ==> lib/netstandard2.1
+    bin/Release/netstandard2.1/Microsoft.AspNetCore.Components.dll ==> lib/netstandard2.1
+    bin/Release/netstandard2.1/Microsoft.AspNetCore.Components.Web.dll ==> lib/netstandard2.1
 excludeddependencies
     nerdbank.gitversioning
 include-pdbs true
+references
+    Bolero.dll
