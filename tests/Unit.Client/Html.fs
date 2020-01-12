@@ -148,14 +148,14 @@ type BindElementRef() =
             button [
                 attr.``class`` "element-ref"
                 attr.ref (fun r -> elt1 <- r)
-                on.eventAsync "click" (fun _ ->
+                on.task.event "click" (fun _ ->
                     this.JSRuntime.InvokeAsync("setContent", elt1, "ElementRef 1 is bound").AsTask() :> _
                 )
             ] [text "Click me"]
             button [
                 attr.``class`` "element-ref-binder"
                 attr.bindRef elt2
-                on.asyncEvent "click" (fun _ -> async {
+                on.async.event "click" (fun _ -> async {
                     do! this.JSRuntime.InvokeAsync("setContent", elt2.Ref, "ElementRef 2 is bound").AsTask() |> Async.AwaitTask
                 })
             ] [text "Click me"]

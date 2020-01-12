@@ -1031,14 +1031,6 @@ module on =
             sequence + 1
         ))
 
-    /// Create an asynchronous handler for a HTML event of type EventArgs.
-    let inline asyncEvent< ^T when ^T :> EventArgs> eventName (callback: ^T -> Async<unit>) =
-        eventInlineAsync< ^T, _> EventCallback.Factory eventName (fun x -> Async.StartImmediateAsTask (callback x) :> Task)
-
-    /// Create an asynchronous handler for a HTML event of type EventArgs.
-    let inline eventAsync< ^T when ^T :> EventArgs> eventName (callback: ^T -> Task) =
-        eventInlineAsync< ^T, _> EventCallback.Factory eventName callback
-
     /// Prevent the default event behavior for a given HTML event.
     let preventDefault eventName (value: bool) =
         ExplicitAttr (Func<_,_,_,_>(fun builder sequence _receiver ->
@@ -1419,6 +1411,570 @@ module on =
         event "scroll" callback
 
 // END EVENTS
+
+    module async =
+
+        /// Create an asynchronous handler for a HTML event of type EventArgs.
+        let inline event< ^T when ^T :> EventArgs> eventName (callback: ^T -> Async<unit>) =
+            eventInlineAsync< ^T, _> EventCallback.Factory eventName (fun x -> Async.StartImmediateAsTask (callback x) :> Task)
+
+// BEGIN ASYNCEVENTS
+        /// Create an asynchronous handler for HTML event `focus`.
+        let focus (callback: FocusEventArgs -> Async<unit>) : Attr =
+            event "focus" callback
+        /// Create an asynchronous handler for HTML event `blur`.
+        let blur (callback: FocusEventArgs -> Async<unit>) : Attr =
+            event "blur" callback
+        /// Create an asynchronous handler for HTML event `focusin`.
+        let focusin (callback: FocusEventArgs -> Async<unit>) : Attr =
+            event "focusin" callback
+        /// Create an asynchronous handler for HTML event `focusout`.
+        let focusout (callback: FocusEventArgs -> Async<unit>) : Attr =
+            event "focusout" callback
+        /// Create an asynchronous handler for HTML event `mouseover`.
+        let mouseover (callback: MouseEventArgs -> Async<unit>) : Attr =
+            event "mouseover" callback
+        /// Create an asynchronous handler for HTML event `mouseout`.
+        let mouseout (callback: MouseEventArgs -> Async<unit>) : Attr =
+            event "mouseout" callback
+        /// Create an asynchronous handler for HTML event `mousemove`.
+        let mousemove (callback: MouseEventArgs -> Async<unit>) : Attr =
+            event "mousemove" callback
+        /// Create an asynchronous handler for HTML event `mousedown`.
+        let mousedown (callback: MouseEventArgs -> Async<unit>) : Attr =
+            event "mousedown" callback
+        /// Create an asynchronous handler for HTML event `mouseup`.
+        let mouseup (callback: MouseEventArgs -> Async<unit>) : Attr =
+            event "mouseup" callback
+        /// Create an asynchronous handler for HTML event `click`.
+        let click (callback: MouseEventArgs -> Async<unit>) : Attr =
+            event "click" callback
+        /// Create an asynchronous handler for HTML event `dblclick`.
+        let dblclick (callback: MouseEventArgs -> Async<unit>) : Attr =
+            event "dblclick" callback
+        /// Create an asynchronous handler for HTML event `wheel`.
+        let wheel (callback: MouseEventArgs -> Async<unit>) : Attr =
+            event "wheel" callback
+        /// Create an asynchronous handler for HTML event `mousewheel`.
+        let mousewheel (callback: MouseEventArgs -> Async<unit>) : Attr =
+            event "mousewheel" callback
+        /// Create an asynchronous handler for HTML event `contextmenu`.
+        let contextmenu (callback: MouseEventArgs -> Async<unit>) : Attr =
+            event "contextmenu" callback
+        /// Create an asynchronous handler for HTML event `drag`.
+        let drag (callback: DragEventArgs -> Async<unit>) : Attr =
+            event "drag" callback
+        /// Create an asynchronous handler for HTML event `dragend`.
+        let dragend (callback: DragEventArgs -> Async<unit>) : Attr =
+            event "dragend" callback
+        /// Create an asynchronous handler for HTML event `dragenter`.
+        let dragenter (callback: DragEventArgs -> Async<unit>) : Attr =
+            event "dragenter" callback
+        /// Create an asynchronous handler for HTML event `dragleave`.
+        let dragleave (callback: DragEventArgs -> Async<unit>) : Attr =
+            event "dragleave" callback
+        /// Create an asynchronous handler for HTML event `dragover`.
+        let dragover (callback: DragEventArgs -> Async<unit>) : Attr =
+            event "dragover" callback
+        /// Create an asynchronous handler for HTML event `dragstart`.
+        let dragstart (callback: DragEventArgs -> Async<unit>) : Attr =
+            event "dragstart" callback
+        /// Create an asynchronous handler for HTML event `drop`.
+        let drop (callback: DragEventArgs -> Async<unit>) : Attr =
+            event "drop" callback
+        /// Create an asynchronous handler for HTML event `keydown`.
+        let keydown (callback: KeyboardEventArgs -> Async<unit>) : Attr =
+            event "keydown" callback
+        /// Create an asynchronous handler for HTML event `keyup`.
+        let keyup (callback: KeyboardEventArgs -> Async<unit>) : Attr =
+            event "keyup" callback
+        /// Create an asynchronous handler for HTML event `keypress`.
+        let keypress (callback: KeyboardEventArgs -> Async<unit>) : Attr =
+            event "keypress" callback
+        /// Create an asynchronous handler for HTML event `change`.
+        let change (callback: ChangeEventArgs -> Async<unit>) : Attr =
+            event "change" callback
+        /// Create an asynchronous handler for HTML event `input`.
+        let input (callback: ChangeEventArgs -> Async<unit>) : Attr =
+            event "input" callback
+        /// Create an asynchronous handler for HTML event `invalid`.
+        let invalid (callback: EventArgs -> Async<unit>) : Attr =
+            event "invalid" callback
+        /// Create an asynchronous handler for HTML event `reset`.
+        let reset (callback: EventArgs -> Async<unit>) : Attr =
+            event "reset" callback
+        /// Create an asynchronous handler for HTML event `select`.
+        let select (callback: EventArgs -> Async<unit>) : Attr =
+            event "select" callback
+        /// Create an asynchronous handler for HTML event `selectstart`.
+        let selectstart (callback: EventArgs -> Async<unit>) : Attr =
+            event "selectstart" callback
+        /// Create an asynchronous handler for HTML event `selectionchange`.
+        let selectionchange (callback: EventArgs -> Async<unit>) : Attr =
+            event "selectionchange" callback
+        /// Create an asynchronous handler for HTML event `submit`.
+        let submit (callback: EventArgs -> Async<unit>) : Attr =
+            event "submit" callback
+        /// Create an asynchronous handler for HTML event `beforecopy`.
+        let beforecopy (callback: EventArgs -> Async<unit>) : Attr =
+            event "beforecopy" callback
+        /// Create an asynchronous handler for HTML event `beforecut`.
+        let beforecut (callback: EventArgs -> Async<unit>) : Attr =
+            event "beforecut" callback
+        /// Create an asynchronous handler for HTML event `beforepaste`.
+        let beforepaste (callback: EventArgs -> Async<unit>) : Attr =
+            event "beforepaste" callback
+        /// Create an asynchronous handler for HTML event `copy`.
+        let copy (callback: ClipboardEventArgs -> Async<unit>) : Attr =
+            event "copy" callback
+        /// Create an asynchronous handler for HTML event `cut`.
+        let cut (callback: ClipboardEventArgs -> Async<unit>) : Attr =
+            event "cut" callback
+        /// Create an asynchronous handler for HTML event `paste`.
+        let paste (callback: ClipboardEventArgs -> Async<unit>) : Attr =
+            event "paste" callback
+        /// Create an asynchronous handler for HTML event `touchcancel`.
+        let touchcancel (callback: TouchEventArgs -> Async<unit>) : Attr =
+            event "touchcancel" callback
+        /// Create an asynchronous handler for HTML event `touchend`.
+        let touchend (callback: TouchEventArgs -> Async<unit>) : Attr =
+            event "touchend" callback
+        /// Create an asynchronous handler for HTML event `touchmove`.
+        let touchmove (callback: TouchEventArgs -> Async<unit>) : Attr =
+            event "touchmove" callback
+        /// Create an asynchronous handler for HTML event `touchstart`.
+        let touchstart (callback: TouchEventArgs -> Async<unit>) : Attr =
+            event "touchstart" callback
+        /// Create an asynchronous handler for HTML event `touchenter`.
+        let touchenter (callback: TouchEventArgs -> Async<unit>) : Attr =
+            event "touchenter" callback
+        /// Create an asynchronous handler for HTML event `touchleave`.
+        let touchleave (callback: TouchEventArgs -> Async<unit>) : Attr =
+            event "touchleave" callback
+        /// Create an asynchronous handler for HTML event `pointercapture`.
+        let pointercapture (callback: PointerEventArgs -> Async<unit>) : Attr =
+            event "pointercapture" callback
+        /// Create an asynchronous handler for HTML event `lostpointercapture`.
+        let lostpointercapture (callback: PointerEventArgs -> Async<unit>) : Attr =
+            event "lostpointercapture" callback
+        /// Create an asynchronous handler for HTML event `pointercancel`.
+        let pointercancel (callback: PointerEventArgs -> Async<unit>) : Attr =
+            event "pointercancel" callback
+        /// Create an asynchronous handler for HTML event `pointerdown`.
+        let pointerdown (callback: PointerEventArgs -> Async<unit>) : Attr =
+            event "pointerdown" callback
+        /// Create an asynchronous handler for HTML event `pointerenter`.
+        let pointerenter (callback: PointerEventArgs -> Async<unit>) : Attr =
+            event "pointerenter" callback
+        /// Create an asynchronous handler for HTML event `pointerleave`.
+        let pointerleave (callback: PointerEventArgs -> Async<unit>) : Attr =
+            event "pointerleave" callback
+        /// Create an asynchronous handler for HTML event `pointermove`.
+        let pointermove (callback: PointerEventArgs -> Async<unit>) : Attr =
+            event "pointermove" callback
+        /// Create an asynchronous handler for HTML event `pointerout`.
+        let pointerout (callback: PointerEventArgs -> Async<unit>) : Attr =
+            event "pointerout" callback
+        /// Create an asynchronous handler for HTML event `pointerover`.
+        let pointerover (callback: PointerEventArgs -> Async<unit>) : Attr =
+            event "pointerover" callback
+        /// Create an asynchronous handler for HTML event `pointerup`.
+        let pointerup (callback: PointerEventArgs -> Async<unit>) : Attr =
+            event "pointerup" callback
+        /// Create an asynchronous handler for HTML event `canplay`.
+        let canplay (callback: EventArgs -> Async<unit>) : Attr =
+            event "canplay" callback
+        /// Create an asynchronous handler for HTML event `canplaythrough`.
+        let canplaythrough (callback: EventArgs -> Async<unit>) : Attr =
+            event "canplaythrough" callback
+        /// Create an asynchronous handler for HTML event `cuechange`.
+        let cuechange (callback: EventArgs -> Async<unit>) : Attr =
+            event "cuechange" callback
+        /// Create an asynchronous handler for HTML event `durationchange`.
+        let durationchange (callback: EventArgs -> Async<unit>) : Attr =
+            event "durationchange" callback
+        /// Create an asynchronous handler for HTML event `emptied`.
+        let emptied (callback: EventArgs -> Async<unit>) : Attr =
+            event "emptied" callback
+        /// Create an asynchronous handler for HTML event `pause`.
+        let pause (callback: EventArgs -> Async<unit>) : Attr =
+            event "pause" callback
+        /// Create an asynchronous handler for HTML event `play`.
+        let play (callback: EventArgs -> Async<unit>) : Attr =
+            event "play" callback
+        /// Create an asynchronous handler for HTML event `playing`.
+        let playing (callback: EventArgs -> Async<unit>) : Attr =
+            event "playing" callback
+        /// Create an asynchronous handler for HTML event `ratechange`.
+        let ratechange (callback: EventArgs -> Async<unit>) : Attr =
+            event "ratechange" callback
+        /// Create an asynchronous handler for HTML event `seeked`.
+        let seeked (callback: EventArgs -> Async<unit>) : Attr =
+            event "seeked" callback
+        /// Create an asynchronous handler for HTML event `seeking`.
+        let seeking (callback: EventArgs -> Async<unit>) : Attr =
+            event "seeking" callback
+        /// Create an asynchronous handler for HTML event `stalled`.
+        let stalled (callback: EventArgs -> Async<unit>) : Attr =
+            event "stalled" callback
+        /// Create an asynchronous handler for HTML event `stop`.
+        let stop (callback: EventArgs -> Async<unit>) : Attr =
+            event "stop" callback
+        /// Create an asynchronous handler for HTML event `suspend`.
+        let suspend (callback: EventArgs -> Async<unit>) : Attr =
+            event "suspend" callback
+        /// Create an asynchronous handler for HTML event `timeupdate`.
+        let timeupdate (callback: EventArgs -> Async<unit>) : Attr =
+            event "timeupdate" callback
+        /// Create an asynchronous handler for HTML event `volumechange`.
+        let volumechange (callback: EventArgs -> Async<unit>) : Attr =
+            event "volumechange" callback
+        /// Create an asynchronous handler for HTML event `waiting`.
+        let waiting (callback: EventArgs -> Async<unit>) : Attr =
+            event "waiting" callback
+        /// Create an asynchronous handler for HTML event `loadstart`.
+        let loadstart (callback: ProgressEventArgs -> Async<unit>) : Attr =
+            event "loadstart" callback
+        /// Create an asynchronous handler for HTML event `timeout`.
+        let timeout (callback: ProgressEventArgs -> Async<unit>) : Attr =
+            event "timeout" callback
+        /// Create an asynchronous handler for HTML event `abort`.
+        let abort (callback: ProgressEventArgs -> Async<unit>) : Attr =
+            event "abort" callback
+        /// Create an asynchronous handler for HTML event `load`.
+        let load (callback: ProgressEventArgs -> Async<unit>) : Attr =
+            event "load" callback
+        /// Create an asynchronous handler for HTML event `loadend`.
+        let loadend (callback: ProgressEventArgs -> Async<unit>) : Attr =
+            event "loadend" callback
+        /// Create an asynchronous handler for HTML event `progress`.
+        let progress (callback: ProgressEventArgs -> Async<unit>) : Attr =
+            event "progress" callback
+        /// Create an asynchronous handler for HTML event `error`.
+        let error (callback: ProgressEventArgs -> Async<unit>) : Attr =
+            event "error" callback
+        /// Create an asynchronous handler for HTML event `activate`.
+        let activate (callback: EventArgs -> Async<unit>) : Attr =
+            event "activate" callback
+        /// Create an asynchronous handler for HTML event `beforeactivate`.
+        let beforeactivate (callback: EventArgs -> Async<unit>) : Attr =
+            event "beforeactivate" callback
+        /// Create an asynchronous handler for HTML event `beforedeactivate`.
+        let beforedeactivate (callback: EventArgs -> Async<unit>) : Attr =
+            event "beforedeactivate" callback
+        /// Create an asynchronous handler for HTML event `deactivate`.
+        let deactivate (callback: EventArgs -> Async<unit>) : Attr =
+            event "deactivate" callback
+        /// Create an asynchronous handler for HTML event `ended`.
+        let ended (callback: EventArgs -> Async<unit>) : Attr =
+            event "ended" callback
+        /// Create an asynchronous handler for HTML event `fullscreenchange`.
+        let fullscreenchange (callback: EventArgs -> Async<unit>) : Attr =
+            event "fullscreenchange" callback
+        /// Create an asynchronous handler for HTML event `fullscreenerror`.
+        let fullscreenerror (callback: EventArgs -> Async<unit>) : Attr =
+            event "fullscreenerror" callback
+        /// Create an asynchronous handler for HTML event `loadeddata`.
+        let loadeddata (callback: EventArgs -> Async<unit>) : Attr =
+            event "loadeddata" callback
+        /// Create an asynchronous handler for HTML event `loadedmetadata`.
+        let loadedmetadata (callback: EventArgs -> Async<unit>) : Attr =
+            event "loadedmetadata" callback
+        /// Create an asynchronous handler for HTML event `pointerlockchange`.
+        let pointerlockchange (callback: EventArgs -> Async<unit>) : Attr =
+            event "pointerlockchange" callback
+        /// Create an asynchronous handler for HTML event `pointerlockerror`.
+        let pointerlockerror (callback: EventArgs -> Async<unit>) : Attr =
+            event "pointerlockerror" callback
+        /// Create an asynchronous handler for HTML event `readystatechange`.
+        let readystatechange (callback: EventArgs -> Async<unit>) : Attr =
+            event "readystatechange" callback
+        /// Create an asynchronous handler for HTML event `scroll`.
+        let scroll (callback: EventArgs -> Async<unit>) : Attr =
+            event "scroll" callback
+// END ASYNCEVENTS
+
+    module task =
+
+        /// Create an asynchronous handler for a HTML event of type EventArgs.
+        let inline event< ^T when ^T :> EventArgs> eventName (callback: ^T -> Task) =
+            eventInlineAsync< ^T, _> EventCallback.Factory eventName callback
+
+// BEGIN TASKEVENTS
+        /// Create an asynchronous handler for HTML event `focus`.
+        let focus (callback: FocusEventArgs -> Task) : Attr =
+            event "focus" callback
+        /// Create an asynchronous handler for HTML event `blur`.
+        let blur (callback: FocusEventArgs -> Task) : Attr =
+            event "blur" callback
+        /// Create an asynchronous handler for HTML event `focusin`.
+        let focusin (callback: FocusEventArgs -> Task) : Attr =
+            event "focusin" callback
+        /// Create an asynchronous handler for HTML event `focusout`.
+        let focusout (callback: FocusEventArgs -> Task) : Attr =
+            event "focusout" callback
+        /// Create an asynchronous handler for HTML event `mouseover`.
+        let mouseover (callback: MouseEventArgs -> Task) : Attr =
+            event "mouseover" callback
+        /// Create an asynchronous handler for HTML event `mouseout`.
+        let mouseout (callback: MouseEventArgs -> Task) : Attr =
+            event "mouseout" callback
+        /// Create an asynchronous handler for HTML event `mousemove`.
+        let mousemove (callback: MouseEventArgs -> Task) : Attr =
+            event "mousemove" callback
+        /// Create an asynchronous handler for HTML event `mousedown`.
+        let mousedown (callback: MouseEventArgs -> Task) : Attr =
+            event "mousedown" callback
+        /// Create an asynchronous handler for HTML event `mouseup`.
+        let mouseup (callback: MouseEventArgs -> Task) : Attr =
+            event "mouseup" callback
+        /// Create an asynchronous handler for HTML event `click`.
+        let click (callback: MouseEventArgs -> Task) : Attr =
+            event "click" callback
+        /// Create an asynchronous handler for HTML event `dblclick`.
+        let dblclick (callback: MouseEventArgs -> Task) : Attr =
+            event "dblclick" callback
+        /// Create an asynchronous handler for HTML event `wheel`.
+        let wheel (callback: MouseEventArgs -> Task) : Attr =
+            event "wheel" callback
+        /// Create an asynchronous handler for HTML event `mousewheel`.
+        let mousewheel (callback: MouseEventArgs -> Task) : Attr =
+            event "mousewheel" callback
+        /// Create an asynchronous handler for HTML event `contextmenu`.
+        let contextmenu (callback: MouseEventArgs -> Task) : Attr =
+            event "contextmenu" callback
+        /// Create an asynchronous handler for HTML event `drag`.
+        let drag (callback: DragEventArgs -> Task) : Attr =
+            event "drag" callback
+        /// Create an asynchronous handler for HTML event `dragend`.
+        let dragend (callback: DragEventArgs -> Task) : Attr =
+            event "dragend" callback
+        /// Create an asynchronous handler for HTML event `dragenter`.
+        let dragenter (callback: DragEventArgs -> Task) : Attr =
+            event "dragenter" callback
+        /// Create an asynchronous handler for HTML event `dragleave`.
+        let dragleave (callback: DragEventArgs -> Task) : Attr =
+            event "dragleave" callback
+        /// Create an asynchronous handler for HTML event `dragover`.
+        let dragover (callback: DragEventArgs -> Task) : Attr =
+            event "dragover" callback
+        /// Create an asynchronous handler for HTML event `dragstart`.
+        let dragstart (callback: DragEventArgs -> Task) : Attr =
+            event "dragstart" callback
+        /// Create an asynchronous handler for HTML event `drop`.
+        let drop (callback: DragEventArgs -> Task) : Attr =
+            event "drop" callback
+        /// Create an asynchronous handler for HTML event `keydown`.
+        let keydown (callback: KeyboardEventArgs -> Task) : Attr =
+            event "keydown" callback
+        /// Create an asynchronous handler for HTML event `keyup`.
+        let keyup (callback: KeyboardEventArgs -> Task) : Attr =
+            event "keyup" callback
+        /// Create an asynchronous handler for HTML event `keypress`.
+        let keypress (callback: KeyboardEventArgs -> Task) : Attr =
+            event "keypress" callback
+        /// Create an asynchronous handler for HTML event `change`.
+        let change (callback: ChangeEventArgs -> Task) : Attr =
+            event "change" callback
+        /// Create an asynchronous handler for HTML event `input`.
+        let input (callback: ChangeEventArgs -> Task) : Attr =
+            event "input" callback
+        /// Create an asynchronous handler for HTML event `invalid`.
+        let invalid (callback: EventArgs -> Task) : Attr =
+            event "invalid" callback
+        /// Create an asynchronous handler for HTML event `reset`.
+        let reset (callback: EventArgs -> Task) : Attr =
+            event "reset" callback
+        /// Create an asynchronous handler for HTML event `select`.
+        let select (callback: EventArgs -> Task) : Attr =
+            event "select" callback
+        /// Create an asynchronous handler for HTML event `selectstart`.
+        let selectstart (callback: EventArgs -> Task) : Attr =
+            event "selectstart" callback
+        /// Create an asynchronous handler for HTML event `selectionchange`.
+        let selectionchange (callback: EventArgs -> Task) : Attr =
+            event "selectionchange" callback
+        /// Create an asynchronous handler for HTML event `submit`.
+        let submit (callback: EventArgs -> Task) : Attr =
+            event "submit" callback
+        /// Create an asynchronous handler for HTML event `beforecopy`.
+        let beforecopy (callback: EventArgs -> Task) : Attr =
+            event "beforecopy" callback
+        /// Create an asynchronous handler for HTML event `beforecut`.
+        let beforecut (callback: EventArgs -> Task) : Attr =
+            event "beforecut" callback
+        /// Create an asynchronous handler for HTML event `beforepaste`.
+        let beforepaste (callback: EventArgs -> Task) : Attr =
+            event "beforepaste" callback
+        /// Create an asynchronous handler for HTML event `copy`.
+        let copy (callback: ClipboardEventArgs -> Task) : Attr =
+            event "copy" callback
+        /// Create an asynchronous handler for HTML event `cut`.
+        let cut (callback: ClipboardEventArgs -> Task) : Attr =
+            event "cut" callback
+        /// Create an asynchronous handler for HTML event `paste`.
+        let paste (callback: ClipboardEventArgs -> Task) : Attr =
+            event "paste" callback
+        /// Create an asynchronous handler for HTML event `touchcancel`.
+        let touchcancel (callback: TouchEventArgs -> Task) : Attr =
+            event "touchcancel" callback
+        /// Create an asynchronous handler for HTML event `touchend`.
+        let touchend (callback: TouchEventArgs -> Task) : Attr =
+            event "touchend" callback
+        /// Create an asynchronous handler for HTML event `touchmove`.
+        let touchmove (callback: TouchEventArgs -> Task) : Attr =
+            event "touchmove" callback
+        /// Create an asynchronous handler for HTML event `touchstart`.
+        let touchstart (callback: TouchEventArgs -> Task) : Attr =
+            event "touchstart" callback
+        /// Create an asynchronous handler for HTML event `touchenter`.
+        let touchenter (callback: TouchEventArgs -> Task) : Attr =
+            event "touchenter" callback
+        /// Create an asynchronous handler for HTML event `touchleave`.
+        let touchleave (callback: TouchEventArgs -> Task) : Attr =
+            event "touchleave" callback
+        /// Create an asynchronous handler for HTML event `pointercapture`.
+        let pointercapture (callback: PointerEventArgs -> Task) : Attr =
+            event "pointercapture" callback
+        /// Create an asynchronous handler for HTML event `lostpointercapture`.
+        let lostpointercapture (callback: PointerEventArgs -> Task) : Attr =
+            event "lostpointercapture" callback
+        /// Create an asynchronous handler for HTML event `pointercancel`.
+        let pointercancel (callback: PointerEventArgs -> Task) : Attr =
+            event "pointercancel" callback
+        /// Create an asynchronous handler for HTML event `pointerdown`.
+        let pointerdown (callback: PointerEventArgs -> Task) : Attr =
+            event "pointerdown" callback
+        /// Create an asynchronous handler for HTML event `pointerenter`.
+        let pointerenter (callback: PointerEventArgs -> Task) : Attr =
+            event "pointerenter" callback
+        /// Create an asynchronous handler for HTML event `pointerleave`.
+        let pointerleave (callback: PointerEventArgs -> Task) : Attr =
+            event "pointerleave" callback
+        /// Create an asynchronous handler for HTML event `pointermove`.
+        let pointermove (callback: PointerEventArgs -> Task) : Attr =
+            event "pointermove" callback
+        /// Create an asynchronous handler for HTML event `pointerout`.
+        let pointerout (callback: PointerEventArgs -> Task) : Attr =
+            event "pointerout" callback
+        /// Create an asynchronous handler for HTML event `pointerover`.
+        let pointerover (callback: PointerEventArgs -> Task) : Attr =
+            event "pointerover" callback
+        /// Create an asynchronous handler for HTML event `pointerup`.
+        let pointerup (callback: PointerEventArgs -> Task) : Attr =
+            event "pointerup" callback
+        /// Create an asynchronous handler for HTML event `canplay`.
+        let canplay (callback: EventArgs -> Task) : Attr =
+            event "canplay" callback
+        /// Create an asynchronous handler for HTML event `canplaythrough`.
+        let canplaythrough (callback: EventArgs -> Task) : Attr =
+            event "canplaythrough" callback
+        /// Create an asynchronous handler for HTML event `cuechange`.
+        let cuechange (callback: EventArgs -> Task) : Attr =
+            event "cuechange" callback
+        /// Create an asynchronous handler for HTML event `durationchange`.
+        let durationchange (callback: EventArgs -> Task) : Attr =
+            event "durationchange" callback
+        /// Create an asynchronous handler for HTML event `emptied`.
+        let emptied (callback: EventArgs -> Task) : Attr =
+            event "emptied" callback
+        /// Create an asynchronous handler for HTML event `pause`.
+        let pause (callback: EventArgs -> Task) : Attr =
+            event "pause" callback
+        /// Create an asynchronous handler for HTML event `play`.
+        let play (callback: EventArgs -> Task) : Attr =
+            event "play" callback
+        /// Create an asynchronous handler for HTML event `playing`.
+        let playing (callback: EventArgs -> Task) : Attr =
+            event "playing" callback
+        /// Create an asynchronous handler for HTML event `ratechange`.
+        let ratechange (callback: EventArgs -> Task) : Attr =
+            event "ratechange" callback
+        /// Create an asynchronous handler for HTML event `seeked`.
+        let seeked (callback: EventArgs -> Task) : Attr =
+            event "seeked" callback
+        /// Create an asynchronous handler for HTML event `seeking`.
+        let seeking (callback: EventArgs -> Task) : Attr =
+            event "seeking" callback
+        /// Create an asynchronous handler for HTML event `stalled`.
+        let stalled (callback: EventArgs -> Task) : Attr =
+            event "stalled" callback
+        /// Create an asynchronous handler for HTML event `stop`.
+        let stop (callback: EventArgs -> Task) : Attr =
+            event "stop" callback
+        /// Create an asynchronous handler for HTML event `suspend`.
+        let suspend (callback: EventArgs -> Task) : Attr =
+            event "suspend" callback
+        /// Create an asynchronous handler for HTML event `timeupdate`.
+        let timeupdate (callback: EventArgs -> Task) : Attr =
+            event "timeupdate" callback
+        /// Create an asynchronous handler for HTML event `volumechange`.
+        let volumechange (callback: EventArgs -> Task) : Attr =
+            event "volumechange" callback
+        /// Create an asynchronous handler for HTML event `waiting`.
+        let waiting (callback: EventArgs -> Task) : Attr =
+            event "waiting" callback
+        /// Create an asynchronous handler for HTML event `loadstart`.
+        let loadstart (callback: ProgressEventArgs -> Task) : Attr =
+            event "loadstart" callback
+        /// Create an asynchronous handler for HTML event `timeout`.
+        let timeout (callback: ProgressEventArgs -> Task) : Attr =
+            event "timeout" callback
+        /// Create an asynchronous handler for HTML event `abort`.
+        let abort (callback: ProgressEventArgs -> Task) : Attr =
+            event "abort" callback
+        /// Create an asynchronous handler for HTML event `load`.
+        let load (callback: ProgressEventArgs -> Task) : Attr =
+            event "load" callback
+        /// Create an asynchronous handler for HTML event `loadend`.
+        let loadend (callback: ProgressEventArgs -> Task) : Attr =
+            event "loadend" callback
+        /// Create an asynchronous handler for HTML event `progress`.
+        let progress (callback: ProgressEventArgs -> Task) : Attr =
+            event "progress" callback
+        /// Create an asynchronous handler for HTML event `error`.
+        let error (callback: ProgressEventArgs -> Task) : Attr =
+            event "error" callback
+        /// Create an asynchronous handler for HTML event `activate`.
+        let activate (callback: EventArgs -> Task) : Attr =
+            event "activate" callback
+        /// Create an asynchronous handler for HTML event `beforeactivate`.
+        let beforeactivate (callback: EventArgs -> Task) : Attr =
+            event "beforeactivate" callback
+        /// Create an asynchronous handler for HTML event `beforedeactivate`.
+        let beforedeactivate (callback: EventArgs -> Task) : Attr =
+            event "beforedeactivate" callback
+        /// Create an asynchronous handler for HTML event `deactivate`.
+        let deactivate (callback: EventArgs -> Task) : Attr =
+            event "deactivate" callback
+        /// Create an asynchronous handler for HTML event `ended`.
+        let ended (callback: EventArgs -> Task) : Attr =
+            event "ended" callback
+        /// Create an asynchronous handler for HTML event `fullscreenchange`.
+        let fullscreenchange (callback: EventArgs -> Task) : Attr =
+            event "fullscreenchange" callback
+        /// Create an asynchronous handler for HTML event `fullscreenerror`.
+        let fullscreenerror (callback: EventArgs -> Task) : Attr =
+            event "fullscreenerror" callback
+        /// Create an asynchronous handler for HTML event `loadeddata`.
+        let loadeddata (callback: EventArgs -> Task) : Attr =
+            event "loadeddata" callback
+        /// Create an asynchronous handler for HTML event `loadedmetadata`.
+        let loadedmetadata (callback: EventArgs -> Task) : Attr =
+            event "loadedmetadata" callback
+        /// Create an asynchronous handler for HTML event `pointerlockchange`.
+        let pointerlockchange (callback: EventArgs -> Task) : Attr =
+            event "pointerlockchange" callback
+        /// Create an asynchronous handler for HTML event `pointerlockerror`.
+        let pointerlockerror (callback: EventArgs -> Task) : Attr =
+            event "pointerlockerror" callback
+        /// Create an asynchronous handler for HTML event `readystatechange`.
+        let readystatechange (callback: EventArgs -> Task) : Attr =
+            event "readystatechange" callback
+        /// Create an asynchronous handler for HTML event `scroll`.
+        let scroll (callback: EventArgs -> Task) : Attr =
+            event "scroll" callback
+// END TASKEVENTS
 
 /// Two-way binding for HTML input elements.
 module bind =

@@ -102,6 +102,18 @@ Target.create "tags" (fun _ ->
              .AppendLine(sprintf """        event "%s" callback""" esc)
              .AppendLine()
         )
+        >> replace (Events.GetSample().Rows) "ASYNCEVENTS" (fun s event ->
+            let esc = escapeDashes event.Name
+            s.AppendLine(sprintf """        /// Create an asynchronous handler for HTML event `%s`.""" event.Name)
+             .AppendLine(sprintf """        let %s (callback: %sEventArgs -> Async<unit>) : Attr =""" esc event.Type)
+             .AppendLine(sprintf """            event "%s" callback""" esc)
+        )
+        >> replace (Events.GetSample().Rows) "TASKEVENTS" (fun s event ->
+            let esc = escapeDashes event.Name
+            s.AppendLine(sprintf """        /// Create an asynchronous handler for HTML event `%s`.""" event.Name)
+             .AppendLine(sprintf """        let %s (callback: %sEventArgs -> Task) : Attr =""" esc event.Type)
+             .AppendLine(sprintf """            event "%s" callback""" esc)
+        )
     )
     runTags "src/Bolero.Templating.Provider/Parsing.fs" (
         replace (Events.GetSample().Rows) "EVENTS" (fun s event ->
