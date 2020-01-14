@@ -2017,6 +2017,10 @@ module bind =
         /// The value is updated on the oninput event.
         let float32 value callback = binder<float32> "input" value callback null
 
+        /// Bind a decimal to the value of an input.
+        /// The value is updated on the oninput event.
+        let decimal value callback = binder<decimal> "input" value callback null
+
         /// Bind a DateTime to the value of an input.
         /// The value is updated on the oninput event.
         let dateTime value callback = binder<DateTime> "input" value callback null
@@ -2048,6 +2052,10 @@ module bind =
         /// Bind a float32 to the value of an input.
         /// The value is updated on the onchange event.
         let float32 value callback = binder<float32> "change" value callback null
+
+        /// Bind a decimal to the value of an input.
+        /// The value is updated on the onchange event.
+        let decimal value callback = binder<decimal> "change" value callback null
 
         /// Bind a DateTime to the value of an input.
         /// The value is updated on the onchange event.
@@ -2084,6 +2092,10 @@ module bind =
             /// The value is updated on the oninput event.
             let float32 culture value callback = binder<float32> "input" value callback culture
 
+            /// Bind a decimal to the value of an input.
+            /// The value is updated on the oninput event.
+            let decimal culture value callback = binder<decimal> "input" value callback culture
+
             /// Bind a DateTime to the value of an input.
             /// The value is updated on the oninput event.
             let dateTime culture value callback = binder<DateTime> "input" value callback culture
@@ -2115,6 +2127,10 @@ module bind =
             /// Bind a float32 to the value of an input.
             /// The value is updated on the onchange event.
             let float32 culture value callback = binder<float32> "change" value callback culture
+
+            /// Bind a decimal to the value of an input.
+            /// The value is updated on the onchange event.
+            let decimal culture value callback = binder<decimal> "change" value callback culture
 
             /// Bind a DateTime to the value of an input.
             /// The value is updated on the onchange event.
