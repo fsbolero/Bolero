@@ -8,7 +8,6 @@ authors
 files
     bin/Release/netstandard2.1/Bolero.Templating.Provider.dll ==> lib/netstandard2.1
     bin/Release/netstandard2.1/HtmlAgilityPack.dll ==> lib/netstandard2.1
-    bin/Release/netstandard2.1/Microsoft.AspNetCore.Blazor.dll ==> lib/netstandard2.1
     bin/Release/netstandard2.1/Microsoft.AspNetCore.Components.dll ==> lib/netstandard2.1
     bin/Release/netstandard2.1/Microsoft.AspNetCore.Components.Web.dll ==> lib/netstandard2.1
 excludeddependencies

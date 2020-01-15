@@ -1,3 +1,4 @@
 FSharp.Core
 HtmlAgilityPack
-Microsoft.AspNetCore.Blazor
+Microsoft.AspNetCore.Components
+Microsoft.AspNetCore.Components.Web
