@@ -33,7 +33,8 @@ open Utility
 
 let config = getArg "-c" "Debug"
 let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
-    dotnetOutput "nbgv" "get-version -v SemVer2"
+    let s = dotnetOutput "nbgv" "get-version -v SemVer2"
+    s.Trim()
 )
 let testUploadUrl = getArgOpt "--push-tests"
 let verbosity = getFlag "--verbose" >> function
