@@ -3,7 +3,7 @@ source https://api.nuget.org/v3/index.json
 storage: none
 framework: netstandard2.0, netstandard2.1, netcoreapp3.1
 
-# Project references
+# Project references, they should all be either exact versions or lowest_matching: true
 nuget FSharp.Core >= 4.5.0 lowest_matching: true
 nuget HtmlAgilityPack >= 1.8.0 lowest_matching: true
 nuget Elmish ~> 2.0 lowest_matching: true
@@ -12,11 +12,11 @@ nuget Microsoft.AspNetCore.Blazor 3.1.0-preview4.19579.2
 nuget Microsoft.AspNetCore.Blazor.Build 3.1.0-preview4.19579.2
 nuget Microsoft.AspNetCore.Blazor.Server 3.1.0-preview4.19579.2
 nuget Microsoft.AspNetCore.Blazor.DevServer 3.1.0-preview4.19579.2
-nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation ~> 3.1.0 lowest_matching: true
-nuget Microsoft.AspNetCore.Components framework: netstandard2.0,netstandard2.1
-nuget Microsoft.AspNetCore.Components.Web framework: netstandard2.0,netstandard2.1
-nuget System.Runtime.CompilerServices.Unsafe 4.7.0
-nuget System.Text.Json ~> 4.7.0 lowest_matching: true
+nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation >= 3.1.0 lowest_matching: true
+nuget Microsoft.AspNetCore.Components >= 3.1.0 lowest_matching: true, framework: netstandard2.0,netstandard2.1
+nuget Microsoft.AspNetCore.Components.Web >= 3.1.0 lowest_matching: true, framework: netstandard2.0,netstandard2.1
+nuget System.Runtime.CompilerServices.Unsafe >= 4.7.0 lowest_matching: true
+nuget System.Text.Json >= 4.7.0 lowest_matching: true
 
 # Build and test references
 nuget FsCheck.NUnit ~> 2.12
