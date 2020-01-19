@@ -85,18 +85,12 @@ type Startup(config: IConfiguration) =
             .UseRemoting()
             .UseStaticFiles()
             .UseRouting()
+            .UseClientSideBlazorFiles<Client.MyApp>()
             |> ignore
 
-        let serverSide = config.GetValue<bool>("serverSide", false)
-        if serverSide then
-            app.UseEndpoints(fun endpoints ->
-                    endpoints.MapBlazorHub() |> ignore
-                    endpoints.MapFallbackToPage("/_Host") |> ignore)
-        else
-            app.UseClientSideBlazorFiles<Client.Startup>()
-                .UseEndpoints(fun endpoints ->
-                    endpoints.MapDefaultControllerRoute() |> ignore
-                    endpoints.MapFallbackToClientSideBlazor<Client.Startup>("index.html") |> ignore)
+        app.UseEndpoints(fun endpoints ->
+            endpoints.MapBlazorHub() |> ignore
+            endpoints.MapFallbackToPage("/_Host") |> ignore)
         |> ignore
 
         if env.IsDevelopment() then
