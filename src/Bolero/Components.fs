@@ -106,6 +106,7 @@ and [<AbstractClass>]
 
     let mutable oldModel = Unchecked.defaultof<'model>
     let mutable navigationInterceptionEnabled = false
+    let mutable view = Node.Empty
     let mutable dispatch = ignore<'msg>
 
     [<Inject>]
@@ -117,17 +118,12 @@ and [<AbstractClass>]
     [<Inject>]
     member val NavigationInterception = Unchecked.defaultof<INavigationInterception> with get, set
 
-    member val private View = Empty with get, set
     member _.Dispatch = dispatch
     member val private Router = None : option<IRouter<'model, 'msg>> with get, set
 
     /// The Elmish program to run. Either this or AsyncProgram must be overridden.
     abstract Program : Program<'model, 'msg>
     default _.Program = Unchecked.defaultof<_>
-
-    /// The Elmish program to run. Either this or Program must be overridden.
-    abstract AsyncProgram : Async<Program<'model, 'msg>>
-    default this.AsyncProgram = async { return this.Program }
 
     interface IProgramComponent with
         member this.Services = this.Services
@@ -150,7 +146,7 @@ and [<AbstractClass>]
         base.StateHasChanged()
 
     member private this.ForceSetState(program, model, dispatch) =
-        this.View <- program.view model dispatch
+        view <- program.view model dispatch
         oldModel <- model
         this.InvokeAsync(this.StateHasChanged) |> ignore
         this.Router |> Option.iter (fun router ->
@@ -164,25 +160,22 @@ and [<AbstractClass>]
     member this.Rerender() =
         this.ForceSetState(this.Program, oldModel, dispatch)
 
-    member internal _._OnInitializedAsync() =
-        base.OnInitializedAsync()
+    member internal _._OnInitialized() =
+        base.OnInitialized()
 
-    override this.OnInitializedAsync() =
-        async {
-            do! this._OnInitializedAsync() |> Async.AwaitTask
-            let! program = this.AsyncProgram
-            let setDispatch d =
-                dispatch <- d
-            { program with
-                setState = fun model dispatch ->
-                    this.SetState(program, model, dispatch)
-                init = fun arg ->
-                    let model, cmd = program.init arg
-                    model, setDispatch :: cmd
-            }
-            |> Program.runWith this
+    override this.OnInitialized() =
+        this._OnInitialized()
+        let program = this.Program
+        let setDispatch d =
+            dispatch <- d
+        { program with
+            setState = fun model dispatch ->
+                this.SetState(program, model, dispatch)
+            init = fun arg ->
+                let model, cmd = program.init arg
+                model, setDispatch :: cmd
         }
-        |> Async.StartImmediateAsTask :> _
+        |> Program.runWith this
 
     member internal this.InitRouter
         (
@@ -207,7 +200,7 @@ and [<AbstractClass>]
             Task.CompletedTask
 
     override this.Render() =
-        this.View
+        view
 
     interface System.IDisposable with
         member this.Dispose() =

@@ -183,15 +183,12 @@ let Display model dispatch =
 type MyApp() =
     inherit ProgramComponent<Model, Message>()
 
-    override this.AsyncProgram = async {
+    override this.Program =
         let myApi = this.Remote<MyApi>()
-        let! _init = myApi.getItems()
-        return Program.mkProgram (fun _ -> InitModel, Cmd.batch [
+        Program.mkProgram (fun _ -> InitModel, Cmd.batch [
             Cmd.ofMsg RefreshItems
             Cmd.ofMsg GetLogin
         ]) (Update myApi) Display
-        |> Program.withConsoleTrace
-    }
 
 
 
