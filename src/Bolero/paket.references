@@ -3,4 +3,5 @@ Mono.WebAssembly.Interop
 FSharp.Core
 Microsoft.AspNetCore.Blazor
 Elmish
+group buildandtest
 Nerdbank.GitVersioning

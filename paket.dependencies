@@ -2,26 +2,36 @@ version 5.216.0
 source https://api.nuget.org/v3/index.json
 storage: none
 framework: netstandard2.0, netstandard2.1, netcoreapp3.1
+lowest_matching: true
+strategy: min
 
-# Project references, they should all be either exact versions or lowest_matching: true
-nuget FSharp.Core >= 4.5.0 lowest_matching: true
-nuget HtmlAgilityPack >= 1.8.0 lowest_matching: true
-nuget Elmish ~> 2.0 lowest_matching: true
-nuget TaskBuilder.fs >= 2.1.0 lowest_matching: true
+nuget FSharp.Core >= 4.5.0
+nuget HtmlAgilityPack >= 1.8.0
+nuget Elmish ~> 2.0
+nuget TaskBuilder.fs >= 2.1.0
 nuget Microsoft.AspNetCore.Blazor 3.1.0-preview4.19579.2
 nuget Microsoft.AspNetCore.Blazor.Build 3.1.0-preview4.19579.2
 nuget Microsoft.AspNetCore.Blazor.Server 3.1.0-preview4.19579.2
 nuget Microsoft.AspNetCore.Blazor.DevServer 3.1.0-preview4.19579.2
-nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation >= 3.1.0 lowest_matching: true
-nuget Microsoft.AspNetCore.Components >= 3.1.0 lowest_matching: true, framework: netstandard2.0,netstandard2.1
-nuget Microsoft.AspNetCore.Components.Web >= 3.1.0 lowest_matching: true, framework: netstandard2.0,netstandard2.1
-nuget System.Runtime.CompilerServices.Unsafe >= 4.7.0 lowest_matching: true
-nuget System.Text.Json >= 4.7.0 lowest_matching: true
+nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation >= 3.1.0
+nuget Microsoft.AspNetCore.Components >= 3.1.0 framework: netstandard2.0
+nuget Microsoft.AspNetCore.Components.Web >= 3.1.0 framework: netstandard2.0
+nuget System.Runtime.CompilerServices.Unsafe >= 4.7.0
+nuget System.Text.Json >= 4.7.0
+nuget System.Threading.Tasks.Extensions >= 4.5.3
+github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
+github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 
-# Build and test references
+group buildandtest
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: netstandard2.0, netstandard2.1, netcoreapp3.1
+
 nuget FsCheck.NUnit ~> 2.12
 nuget Microsoft.NET.Test.Sdk 15.8.0
 nuget Microsoft.Build.Utilities.Core ~> 15.0
+nuget Microsoft.AspNetCore.Blazor.Server 3.1.0-preview4.19579.2
+nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation >= 3.1.0
 nuget Mono.Cecil ~> 0.10.0
 nuget nunit ~> 3.10
 nuget NUnit3TestAdapter ~> 3.10
@@ -29,8 +39,6 @@ nuget Selenium.Support
 nuget Selenium.WebDriver
 nuget Selenium.WebDriver.ChromeDriver
 # nuget Selenium.WebDriver.GeckoDriver.Win64
-github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
-github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 nuget Nerdbank.GitVersioning copy_local: true
 nuget Unquote
 

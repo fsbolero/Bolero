@@ -1,11 +1,11 @@
+group buildandtest
+Microsoft.AspNetCore.Blazor.Server
+Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation
+FsCheck.NUnit
 nunit
 NUnit3TestAdapter
 Microsoft.NET.Test.Sdk
-FSharp.Core
-FsCheck.NUnit
+Selenium.Support
 Selenium.WebDriver
 Selenium.WebDriver.ChromeDriver
-Microsoft.AspNetCore.Blazor.Server
-Selenium.Support
-Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation
 Unquote
