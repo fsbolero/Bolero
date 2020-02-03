@@ -86,11 +86,9 @@ type Startup(config: IConfiguration) =
             .UseStaticFiles()
             .UseRouting()
             .UseClientSideBlazorFiles<Client.MyApp>()
-            |> ignore
-
-        app.UseEndpoints(fun endpoints ->
-            endpoints.MapBlazorHub() |> ignore
-            endpoints.MapFallbackToPage("/_Host") |> ignore)
+            .UseEndpoints(fun endpoints ->
+                endpoints.MapBlazorHub() |> ignore
+                endpoints.MapFallbackToPage("/_Host") |> ignore)
         |> ignore
 
         if env.IsDevelopment() then

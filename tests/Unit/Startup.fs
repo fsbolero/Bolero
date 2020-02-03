@@ -88,8 +88,8 @@ type Startup() =
                     endpoints.MapBlazorHub() |> ignore
                     endpoints.MapFallbackToPage("/_Host") |> ignore)
         else
-            app.UseClientSideBlazorFiles<Client.Startup>()
+            app.UseClientSideBlazorFiles<Client.Tests>()
                 .UseEndpoints(fun endpoints ->
                     endpoints.MapDefaultControllerRoute() |> ignore
-                    endpoints.MapFallbackToClientSideBlazor<Client.Startup>("index.html") |> ignore)
+                    endpoints.MapFallbackToClientSideBlazor<Client.Tests>("index.html") |> ignore)
         |> ignore
