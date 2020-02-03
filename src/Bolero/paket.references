@@ -1,7 +1,6 @@
-Microsoft.JSInterop
-Mono.WebAssembly.Interop
+Microsoft.JSInterop.WebAssembly
 FSharp.Core
-Microsoft.AspNetCore.Blazor
+Microsoft.AspNetCore.Components.WebAssembly
 Elmish
 group buildandtest
 Nerdbank.GitVersioning

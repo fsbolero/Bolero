@@ -44,8 +44,6 @@ type WebFixture() =
 
     static let mutable driver = Unchecked.defaultof<RemoteWebDriver>
 
-    static let mutable root = Unchecked.defaultof<IWebElement>
-
     static let url = "http://localhost:51608"
 
     static let startChrome() =
@@ -74,6 +72,7 @@ type WebFixture() =
                 async {
                     server <- WebHost.CreateDefaultBuilder([||])
                         .UseContentRoot(__SOURCE_DIRECTORY__)
+                        .UseStaticWebAssets()
                         .UseStartup<Startup>()
                         .UseUrls(url)
                         .Build()

@@ -37,7 +37,7 @@ type Startup() =
             .UseDeveloperExceptionPage()
             .UseStaticFiles()
             .UseRouting()
-            .UseClientSideBlazorFiles<Client.Main.MyApp>()
+            .UseBlazorFrameworkFiles()
             .UseEndpoints(fun endpoints ->
                 endpoints.MapBlazorHub() |> ignore
                 endpoints.MapFallbackToPage("/_Host") |> ignore)

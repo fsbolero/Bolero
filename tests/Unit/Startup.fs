@@ -25,6 +25,9 @@ open System.Security.Claims
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
+open Microsoft.AspNetCore.Hosting
+open Microsoft.AspNetCore.Http
+open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Bolero.Remoting.Server
 open Bolero.Tests
@@ -66,7 +69,7 @@ type Startup() =
         }
 
     member this.ConfigureServices(services: IServiceCollection) =
-        services.AddMvc().AddRazorRuntimeCompilation() |> ignore
+        services.AddControllersWithViews().AddRazorRuntimeCompilation() |> ignore
         services
             .AddAuthorization()
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -76,20 +79,18 @@ type Startup() =
             .AddServerSideBlazor()
         |> ignore
 
-    member this.Configure(app: IApplicationBuilder) =
+    member this.Configure(app: IApplicationBuilder, env: IWebHostEnvironment, config: IConfiguration) =
         let serverSide = false
         app .UseAuthentication()
             .UseRemoting()
             .UseStaticFiles()
             .UseRouting()
-            |> ignore
-        if serverSide then
-            app.UseEndpoints(fun endpoints ->
+            .UseBlazorFrameworkFiles()
+            .UseEndpoints(fun endpoints ->
+                if serverSide then
                     endpoints.MapBlazorHub() |> ignore
-                    endpoints.MapFallbackToPage("/_Host") |> ignore)
-        else
-            app.UseClientSideBlazorFiles<Client.Tests>()
-                .UseEndpoints(fun endpoints ->
-                    endpoints.MapDefaultControllerRoute() |> ignore
-                    endpoints.MapFallbackToClientSideBlazor<Client.Tests>("index.html") |> ignore)
+                    endpoints.MapFallbackToPage("/_Host") |> ignore
+                else
+                    endpoints.MapControllers() |> ignore
+                    endpoints.MapFallbackToFile("index.html") |> ignore)
         |> ignore

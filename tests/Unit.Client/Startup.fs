@@ -21,7 +21,7 @@
 // ASP.NET Core and Blazor startup for web tests.
 namespace Bolero.Tests.Client
 
-open Microsoft.AspNetCore.Blazor.Hosting
+open Microsoft.AspNetCore.Components.WebAssembly.Hosting
 open Bolero.Remoting.Client
 
 module Program =

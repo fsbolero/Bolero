@@ -20,7 +20,7 @@
 
 namespace Bolero.Test.Client
 
-open Microsoft.AspNetCore.Blazor.Hosting
+open Microsoft.AspNetCore.Components.WebAssembly.Hosting
 
 module Program =
     [<EntryPoint>]
