@@ -30,5 +30,5 @@ module Program =
         let builder = WebAssemblyHostBuilder.CreateDefault(args)
         builder.RootComponents.Add<Tests>("#app")
         builder.Services.AddRemoting() |> ignore
-        builder.Build().RunAsync() |> ignore
+        builder.Build().RunAsync().Start()
         0

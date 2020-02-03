@@ -27,5 +27,5 @@ module Program =
     let Main args =
         let builder = WebAssemblyHostBuilder.CreateDefault(args)
         builder.RootComponents.Add<Main.MyApp>("#main")
-        builder.Build().RunAsync() |> ignore
+        builder.Build().RunAsync().Start()
         0
