@@ -53,6 +53,7 @@ type Model =
         items: Map<int, string>
         remoteResult: option<string>
         radioItem: option<int>
+        checkbox: bool
         page: Page
         nonLazyValue: int
         lazyModel: LazyModel
@@ -67,6 +68,7 @@ type Message =
     | AddKey
     | SetRevOrder of rev: bool
     | SetRadioItem of int
+    | SetCheckbox of bool
     | SetPage of Page
     | IncNonLazyVal
     | IncLazyVal
@@ -85,6 +87,7 @@ let initModel _ =
             3, "it's 3"
         ]
         radioItem = None
+        checkbox = false
         page = Form
         remoteResult = None
         nonLazyValue = 0
@@ -116,6 +119,7 @@ let update message model =
             { model with items = items }, []
     | SetRevOrder rev -> { model with revOrder = rev }, []
     | SetRadioItem i -> { model with radioItem = Some i }, []
+    | SetCheckbox b -> { model with checkbox = b }, []
     | SetPage p -> { model with page = p }, []
     | IncNonLazyVal -> { model with nonLazyValue = model.nonLazyValue + 1 }, []
     | IncLazyVal -> { model with lazyModel = { model.lazyModel with LazyModel.value = model.lazyModel.value + 1 } }, []
@@ -154,6 +158,20 @@ let viewForm (js: IJSRuntime) model dispatch =
                 bind.change.string (string ix) (fun _ -> dispatch (SetRadioItem ix))
             ]
         div [] [text (defaultArg model.submitted "")]
+        div [] [label [] [
+            input [
+                attr.``type`` "checkbox"
+                bind.``checked`` model.checkbox (fun v -> dispatch (SetCheckbox v))
+            ]
+            text "Checkbox (should be in sync with the one below)"
+        ]]
+        div [] [label [] [
+            input [
+                attr.``type`` "checkbox"
+                bind.``checked`` model.checkbox (fun v -> dispatch (SetCheckbox v))
+            ]
+            text "Checkbox (should be in sync with the one above)"
+        ]]
         (match model.submitted with
         | Some s ->
             concat [
