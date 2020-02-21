@@ -138,6 +138,7 @@ type Binds() =
                     attr.``class`` ("bind-radio-" + string v)
                     bind.change.string (string v) (fun _ -> this.radioState <- v)
                 ]
+            input [attr.``class`` "bind-radio-0"; bind.input.int this.radioState (fun x -> this.radioState <- x)]
             span [attr.``class`` "bind-radio-out"] [textf "%i" this.radioState]
         ]
 
