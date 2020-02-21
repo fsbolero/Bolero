@@ -102,6 +102,7 @@ module Html =
 
         inp.SendKeys("ABC")
         elt.Eventually <@ elt.ByClass("bind-input-out").Text = "ABC" @>
+        elt.Eventually <@ elt.ByClass("bind-input-2").GetAttribute("value") = "ABC" @>
 
     [<Test>]
     let ``bind.change``() =
@@ -111,6 +112,7 @@ module Html =
         inp.SendKeys("DEF")
         blur()
         elt.Eventually <@ elt.ByClass("bind-change-out").Text = "DEF" @>
+        elt.Eventually <@ elt.ByClass("bind-change-2").GetAttribute("value") = "DEF" @>
 
     [<Test>]
     let ``bind.inputInt``() =
@@ -119,6 +121,8 @@ module Html =
 
         inp.SendKeys("123")
         elt.Eventually <@ elt.ByClass("bind-input-int-out").Text = "123" @>
+        elt.Eventually <@ elt.ByClass("bind-input-int-2").GetAttribute("value") = "123" @>
+
     [<Test>]
     let ``bind.changeInt``() =
         let inp = elt.ByClass("bind-change-int")
@@ -127,6 +131,7 @@ module Html =
         inp.SendKeys("456")
         blur()
         elt.Eventually <@ elt.ByClass("bind-change-int-out").Text = "456" @>
+        elt.Eventually <@ elt.ByClass("bind-change-int-2").GetAttribute("value") = "456" @>
 
     [<Test>]
     let ``bind.inputFloat``() =
@@ -135,6 +140,7 @@ module Html =
 
         inp.SendKeys("1234.5")
         elt.Eventually <@ elt.ByClass("bind-input-float-out").Text.TrimEnd('0') = "1234.5" @>
+        elt.Eventually <@ elt.ByClass("bind-input-float-2").GetAttribute("value").TrimEnd('0') = "1234.5" @>
 
     [<Test>]
     let ``bind.changeFloat``() =
@@ -144,18 +150,22 @@ module Html =
         inp.SendKeys("54.321")
         blur()
         elt.Eventually <@ elt.ByClass("bind-change-float-out").Text.TrimEnd('0') = "54.321" @>
+        elt.Eventually <@ elt.ByClass("bind-change-float-2").GetAttribute("value").TrimEnd('0') = "54.321" @>
 
     [<Test>]
     let ``bind.checked``() =
         let inp = elt.ByClass("bind-checked")
         let out = elt.ByClass("bind-checked-out")
+        let inp2 = elt.ByClass("bind-checked-2")
         test <@ out.Text = "false" @>
 
         inp.Click()
         elt.Eventually <@ out.Text = "true" @>
+        elt.Eventually <@ inp2.GetAttribute("value") = "true" @>
 
         inp.Click()
         elt.Eventually <@ out.Text = "false" @>
+        elt.Eventually <@ inp2.GetAttribute("value") = "false" @>
 
     [<Test>]
     let ``bind.change radio``() =
@@ -164,6 +174,8 @@ module Html =
             let inp = elt.ByClass("bind-radio-" + string v)
             inp.Click()
             elt.Eventually <@ out.Text = string v @>
+            for other in 1..10 do
+                elt.Eventually <@ elt.ByClass("bind-radio-" + string other).GetAttribute("value") = string v @>
 
     [<Test>]
     let ElementRefBinder() =

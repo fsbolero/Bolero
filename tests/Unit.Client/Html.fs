@@ -111,18 +111,25 @@ type Binds() =
     override this.Render() =
         concat [
             input [attr.``class`` "bind-input"; bind.input.string this.inputState (fun x -> this.inputState <- x)]
+            input [attr.``class`` "bind-input-2"; bind.input.string this.inputState (fun x -> this.inputState <- x)]
             span [attr.``class`` "bind-input-out"] [text this.inputState]
             input [attr.``class`` "bind-change"; bind.change.string this.changeState (fun x -> this.changeState <- x)]
+            input [attr.``class`` "bind-change-2"; bind.change.string this.changeState (fun x -> this.changeState <- x)]
             span [attr.``class`` "bind-change-out"] [text this.changeState]
             input [attr.``type`` "number"; attr.``class`` "bind-input-int"; bind.input.int this.inputIntState (fun x -> this.inputIntState <- x)]
+            input [attr.``type`` "number"; attr.``class`` "bind-input-int-2"; bind.input.int this.inputIntState (fun x -> this.inputIntState <- x)]
             span [attr.``class`` "bind-input-int-out"] [textf "%i" this.inputIntState]
             input [attr.``type`` "number"; attr.``class`` "bind-change-int"; bind.change.int this.changeIntState (fun x -> this.changeIntState <- x)]
+            input [attr.``type`` "number"; attr.``class`` "bind-change-int-2"; bind.change.int this.changeIntState (fun x -> this.changeIntState <- x)]
             span [attr.``class`` "bind-change-int-out"] [textf "%i" this.changeIntState]
             input [attr.``type`` "number"; attr.``class`` "bind-input-float"; bind.input.float this.inputFloatState (fun x -> this.inputFloatState <- x)]
+            input [attr.``type`` "number"; attr.``class`` "bind-input-float-2"; bind.input.float this.inputFloatState (fun x -> this.inputFloatState <- x)]
             span [attr.``class`` "bind-input-float-out"] [textf "%f" this.inputFloatState]
             input [attr.``type`` "number"; attr.``class`` "bind-change-float"; bind.change.float this.changeFloatState (fun x -> this.changeFloatState <- x)]
+            input [attr.``type`` "number"; attr.``class`` "bind-change-float-2"; bind.change.float this.changeFloatState (fun x -> this.changeFloatState <- x)]
             span [attr.``class`` "bind-change-float-out"] [textf "%f" this.changeFloatState]
             input [attr.``type`` "checkbox"; attr.``class`` "bind-checked"; bind.``checked`` this.checkedState (fun x -> this.checkedState <- x)]
+            input [attr.``type`` "checkbox"; attr.``class`` "bind-checked-2"; bind.``checked`` this.checkedState (fun x -> this.checkedState <- x)]
             span [attr.``class`` "bind-checked-out"] [textf "%b" this.checkedState]
             forEach {1..10} <| fun v ->
                 input [
