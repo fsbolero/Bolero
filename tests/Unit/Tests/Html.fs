@@ -1,5 +1,6 @@
 namespace Bolero.Tests.Web
 
+open System
 open NUnit.Framework
 open OpenQA.Selenium
 open Swensen.Unquote
@@ -161,11 +162,11 @@ module Html =
 
         inp.Click()
         elt.Eventually <@ out.Text = "true" @>
-        elt.Eventually <@ inp2.GetProperty("checked") = "true" @>
+        elt.Eventually <@ inp2.GetProperty("checked").Equals("true", StringComparison.OrdinalIgnoreCase) @>
 
         inp.Click()
         elt.Eventually <@ out.Text = "false" @>
-        elt.Eventually <@ inp2.GetProperty("checked") = "false" @>
+        elt.Eventually <@ inp2.GetProperty("checked").Equals("false", StringComparison.OrdinalIgnoreCase) @>
 
     [<Test>]
     let ``bind.change radio``() =
