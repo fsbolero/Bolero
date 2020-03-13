@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\src\Bolero.Build\bin\$(Configuration)\netstandard2.0\Bolero.Build.dll</BoleroTaskAssemblyPath>
+    <RazorLangVersion>3.0</RazorLangVersion>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />

@@ -174,4 +174,4 @@ type ClientRemotingExtensions =
     [<Extension>]
     static member AddRemoting(services: IServiceCollection) =
         services.TryAddSingleton<IRemoteProvider, ClientRemoteProvider>()
-        services
+        services.AddBaseAddressHttpClient()

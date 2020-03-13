@@ -85,17 +85,15 @@ type Startup(config: IConfiguration) =
             .UseRemoting()
             .UseStaticFiles()
             .UseRouting()
-            .UseClientSideBlazorFiles<Client.MyApp>()
-            |> ignore
-
-        app.UseEndpoints(fun endpoints ->
-            endpoints.MapBlazorHub() |> ignore
-            endpoints.MapFallbackToPage("/_Host") |> ignore)
+            .UseBlazorFrameworkFiles()
+            .UseEndpoints(fun endpoints ->
+                endpoints.MapBlazorHub() |> ignore
+                endpoints.MapFallbackToPage("/_Host") |> ignore)
         |> ignore
 
         if env.IsDevelopment() then
             app.UseDeveloperExceptionPage()
-                .UseBlazorDebugging()
+                .UseWebAssemblyDebugging()
                 |> ignore
 
 module Main =

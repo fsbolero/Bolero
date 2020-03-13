@@ -192,24 +192,13 @@ type MyApp() =
 
 
 
-open Microsoft.Extensions.DependencyInjection
-open Microsoft.AspNetCore.Components.Builder
-open Microsoft.AspNetCore.Blazor.Hosting
-
-type Startup() =
-
-    member __.ConfigureServices(services: IServiceCollection) =
-        services.AddRemoting()
-        |> ignore
-
-    member __.Configure(app: IComponentsApplicationBuilder) =
-        app.AddComponent<MyApp>("#main")
+open Microsoft.AspNetCore.Components.WebAssembly.Hosting
 
 module Program =
     [<EntryPoint>]
     let Main args =
-        BlazorWebAssemblyHost.CreateDefaultBuilder()
-            .UseBlazorStartup<Startup>()
-            .Build()
-            .Run()
+        let builder = WebAssemblyHostBuilder.CreateDefault(args)
+        builder.RootComponents.Add<MyApp>("#main")
+        builder.Services.AddRemoting() |> ignore
+        builder.Build().RunAsync() |> ignore
         0

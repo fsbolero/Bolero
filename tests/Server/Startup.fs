@@ -20,7 +20,6 @@
 
 namespace Bolero.Test.Server
 
-open System.Text.Encodings.Web
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
@@ -38,10 +37,10 @@ type Startup() =
             .UseDeveloperExceptionPage()
             .UseStaticFiles()
             .UseRouting()
+            .UseBlazorFrameworkFiles()
             .UseEndpoints(fun endpoints ->
                 endpoints.MapBlazorHub() |> ignore
-                endpoints.MapFallbackToPage("/_Host") |> ignore
-            )
+                endpoints.MapFallbackToPage("/_Host") |> ignore)
         |> ignore
 
 module Program =

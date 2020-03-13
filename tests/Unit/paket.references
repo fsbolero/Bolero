@@ -1,5 +1,5 @@
 group buildandtest
-Microsoft.AspNetCore.Blazor.Server
+Microsoft.AspNetCore.Components.WebAssembly.Server
 Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation
 FsCheck.NUnit
 nunit
