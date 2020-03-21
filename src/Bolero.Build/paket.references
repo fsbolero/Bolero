@@ -1,4 +1,3 @@
-group buildandtest
 Microsoft.Build.Utilities.Core
 Mono.Cecil
 Nerdbank.GitVersioning
