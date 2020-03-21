@@ -1,4 +1,3 @@
-group buildandtest
 Microsoft.AspNetCore.Components.WebAssembly.Server
 Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation
 FsCheck.NUnit
