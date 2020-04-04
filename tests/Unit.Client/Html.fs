@@ -157,7 +157,7 @@ type BindElementRef() =
                 attr.``class`` "element-ref"
                 attr.ref (fun r -> elt1 <- r)
                 on.task.event "click" (fun _ ->
-                    this.JSRuntime.InvokeAsync("setContent", elt1, "ElementRef 1 is bound").AsTask() :> _
+                    this.JSRuntime.InvokeVoidAsync("setContent", elt1, "ElementRef 1 is bound").AsTask()
                 )
             ] [text "Click me"]
             button [

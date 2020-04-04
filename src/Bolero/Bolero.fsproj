@@ -15,6 +15,7 @@
     <Compile Include="Json.fs" />
     <Compile Include="Remoting.fs" />
     <Compile Include="Remoting.Client.fs" />
+    <Compile Include="Cmd.fs" />
     <Compile Include="Program.fs" />
     <Compile Include="Html.fs" />
     <None Include="paket.references" />
