@@ -94,6 +94,11 @@ let lazyComp3 (viewFunction: ('model1 * 'model2') -> Elmish.Dispatch<'msg> -> No
 let lazyComp3With (equal: ('model1 * 'model2) -> ('model1 * 'model2) -> bool) (viewFunction: ('model1 * 'model2') -> Elmish.Dispatch<'msg> -> Node) (model1: 'model1) (model2: 'model2) (dispatch: Elmish.Dispatch<'msg>) =
     comp<LazyComponent<('model1 * 'model2),'msg>> ["Model" => (model1, model2); "Dispatch" => dispatch; "ViewFunction" => viewFunction; "Equal" => equal; ] []
 
+/// Create a fragment with a lazily rendered view function and custom equality on model field
+let lazyCompBy (equal: 'model -> 'a) (viewFunction: 'model -> Node) (model: 'model) =
+    let equal' model1 model2 = (equal model1) = (equal model2)
+    lazyCompWith equal' viewFunction model
+
 /// Create a navigation link which toggles its `active` class
 /// based on whether the current URI matches its `href`.
 let navLink (``match``: Routing.NavLinkMatch) attrs children =
