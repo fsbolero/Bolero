@@ -41,6 +41,7 @@ type Item =
 type LazyModel =
     {
         value: int
+        value2: int
         nonEqVal: string
     }
 
@@ -91,7 +92,7 @@ let initModel _ =
         page = Form
         remoteResult = None
         nonLazyValue = 0
-        lazyModel = { LazyModel.value = 0; nonEqVal = "I'm not tested in custom equality"; }
+        lazyModel = { LazyModel.value = 0; value2 = 0; nonEqVal = "I'm not tested in custom equality"; }
     }
 
 let defaultPageModel = function
@@ -122,7 +123,7 @@ let update message model =
     | SetCheckbox b -> { model with checkbox = b }, []
     | SetPage p -> { model with page = p }, []
     | IncNonLazyVal -> { model with nonLazyValue = model.nonLazyValue + 1 }, []
-    | IncLazyVal -> { model with lazyModel = { model.lazyModel with LazyModel.value = model.lazyModel.value + 1 } }, []
+    | IncLazyVal -> { model with lazyModel = { model.lazyModel with LazyModel.value = model.lazyModel.value + 1; value2 = model.lazyModel.value2 + 1 } }, []
     | SetLazyNonEqVal s -> { model with lazyModel = { model.lazyModel with LazyModel.nonEqVal = s } }, []
 
 // ondblclick's handler uses UIMouseEventArgs properties to check that we do generate specific UI*EventArgs.
@@ -265,6 +266,7 @@ let viewLazy model dispatch =
         p [] [text (sprintf "Non-lazy value: %i, re-render random number check: %i" model.nonLazyValue (System.Random().Next()))]
         p [] [lazyComp lazyViewFunction model.lazyModel]
         p [] [lazyCompWith (fun m1 m2 -> m1.value = m2.value) lazyViewFunction model.lazyModel]
+        p [] [lazyCompBy (fun m -> (m.value, m.value2)) lazyViewFunction model.lazyModel]
     ]
 
 let view js model dispatch =
