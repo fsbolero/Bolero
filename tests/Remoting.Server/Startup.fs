@@ -30,6 +30,7 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Bolero.Remoting.Server
+open Bolero.Server.RazorHost
 
 type MyApiHandler(log: ILogger<MyApiHandler>, ctx: IRemoteContext) =
     inherit RemoteHandler<Client.MyApi>()
@@ -77,6 +78,7 @@ type Startup(config: IConfiguration) =
             |> ignore
         services
             .AddRemoting<MyApiHandler>()
+            .AddBoleroHost()
             .AddServerSideBlazor()
         |> ignore
 

@@ -5,11 +5,11 @@
     <BlazorLinkOnBuild>false</BlazorLinkOnBuild>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="HostModel.fs" />
     <Compile Include="Startup.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Bolero.Server\Bolero.Server.fsproj" />
     <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />
     <ProjectReference Include="..\Client\Client.fsproj" />
   </ItemGroup>
