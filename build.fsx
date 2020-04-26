@@ -33,8 +33,25 @@ open Utility
 
 let config = getArg "-c" "Debug"
 let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
-    let s = dotnetOutput "nbgv" "get-version -v SemVer2"
-    s.Trim()
+    let v =
+        let s = dotnetOutput "nbgv" "get-version -v SemVer2"
+        s.Trim()
+    if BuildServer.buildServer = BuildServer.LocalBuild then
+        let p = "Bolero." + v
+        let currentVer =
+            Directory.EnumerateFiles ("build", p + ".local.*")
+            |> Seq.choose (fun dir ->
+                let n = Path.GetFileName dir
+                let v = n.Substring(p.Length + ".local.".Length)
+                match System.Numerics.BigInteger.TryParse(v) with
+                | true, v -> Some v
+                | _ ->
+                    eprintfn "Could not parse '%s' to a bigint to retrieve the latest version (from '%s')" v dir
+                    None)
+            |> Seq.append [ 0I ]
+            |> Seq.max
+        v + ".local." + string (currentVer + 1I)
+    else v
 )
 let testUploadUrl = getArgOpt "--push-tests"
 let verbosity = getFlag "--verbose" >> function
