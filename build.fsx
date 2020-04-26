@@ -42,7 +42,8 @@ let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
             Directory.EnumerateFiles ("build", p + ".local.*")
             |> Seq.choose (fun dir ->
                 let n = Path.GetFileName dir
-                let v = n.Substring(p.Length + ".local.".Length)
+                let l = p.Length + ".local.".Length
+                let v = n.Substring(l, n.Length - l - ".nupkg".Length)
                 match System.Numerics.BigInteger.TryParse(v) with
                 | true, v -> Some v
                 | _ ->
