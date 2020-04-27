@@ -37,13 +37,12 @@ let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
         let s = dotnetOutput "nbgv" "get-version -v SemVer2"
         s.Trim()
     if BuildServer.buildServer = BuildServer.LocalBuild then
-        let p = "Bolero." + v
+        let p = "Bolero." + v + if v.Contains("-") then ".local." else "-local."
         let currentVer =
-            Directory.EnumerateFiles ("build", p + ".local.*")
+            Directory.EnumerateFiles ("build", p + "*")
             |> Seq.choose (fun dir ->
                 let n = Path.GetFileName dir
-                let l = p.Length + ".local.".Length
-                let v = n.Substring(l, n.Length - l - ".nupkg".Length)
+                let v = n.Substring(p.Length, n.Length - p.Length - ".nupkg".Length)
                 match System.Numerics.BigInteger.TryParse(v) with
                 | true, v -> Some v
                 | _ ->

@@ -18,7 +18,8 @@
 //
 // $end{copyright}
 
-module rec Bolero.Html
+/// Create HTML elements, attributes and event handlers.
+module Bolero.Html
 
 open System.Threading.Tasks
 open System.Globalization
