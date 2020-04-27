@@ -29,7 +29,8 @@ open Microsoft.JSInterop
 open Elmish
 open Bolero.Render
 
-/// A component built from `Html.Node`s.
+/// Base class for components built from `Bolero.Node`s.
+/// [category: Components]
 [<AbstractClass>]
 type Component() =
     inherit ComponentBase()
@@ -44,6 +45,8 @@ type Component() =
     /// The rendered contents of the component.
     abstract Render : unit -> Node
 
+/// Base class for components with a typed model.
+/// [category: Components]
 [<AbstractClass>]
 type Component<'model>() =
     inherit Component()
@@ -59,7 +62,8 @@ type Component<'model>() =
     default this.ShouldRender(oldModel, newModel) =
         not <| this.Equal oldModel newModel
 
-/// A component that is part of an Elmish view.
+/// Base class for components that are part of an Elmish view.
+/// [category: Components]
 [<AbstractClass>]
 type ElmishComponent<'model, 'msg>() =
     inherit Component<'model>()
@@ -85,6 +89,7 @@ type ElmishComponent<'model, 'msg>() =
         this.OldModel <- this.Model
         this.View this.Model this.Dispatch
 
+/// [omit]
 type LazyComponent<'model,'msg>() =
     inherit ElmishComponent<'model,'msg>()
 
@@ -94,12 +99,15 @@ type LazyComponent<'model,'msg>() =
 
     override this.View model dispatch = this.ViewFunction model dispatch
 
+/// [omit]
 type IProgramComponent =
     abstract Services : System.IServiceProvider
 
+/// [omit]
 type Program<'model, 'msg> = Program<ProgramComponent<'model, 'msg>, 'model, 'msg, Node>
 
-/// A component that runs an Elmish program.
+/// Base class for components that run an Elmish program.
+/// [category: Components]
 and [<AbstractClass>]
     ProgramComponent<'model, 'msg>() =
     inherit Component<'model>()
@@ -109,15 +117,21 @@ and [<AbstractClass>]
     let mutable view = Node.Empty
     let mutable dispatch = ignore<'msg>
 
+    /// [omit]
     [<Inject>]
     member val NavigationManager = Unchecked.defaultof<NavigationManager> with get, set
+    /// [omit]
     [<Inject>]
     member val Services = Unchecked.defaultof<System.IServiceProvider> with get, set
+    /// The JavaScript interoperation runtime.
     [<Inject>]
     member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
+    /// [omit]
     [<Inject>]
     member val NavigationInterception = Unchecked.defaultof<INavigationInterception> with get, set
 
+    /// The component's dispatch method.
+    /// This property is initialized during the component's OnInitialized phase.
     member _.Dispatch = dispatch
     member val private Router = None : option<IRouter<'model, 'msg>> with get, set
 
@@ -207,10 +221,15 @@ and [<AbstractClass>]
             EventHandler<_> this.OnLocationChanged
             |> this.NavigationManager.LocationChanged.RemoveHandler
 
+/// A utility to bind a reference to a rendered HTML element.
+/// See https://fsbolero.io/docs/Blazor#html-element-references
+/// [category: HTML]
 type ElementReferenceBinder() =
 
     let mutable ref = Unchecked.defaultof<ElementReference>
 
+    /// The element reference.
+    /// This object must be bound using `Bolero.Html.attr.bindRef` before using this property.
     member _.Ref = ref
 
     member internal _.SetRef(r) = ref <- r

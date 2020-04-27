@@ -34,20 +34,28 @@ open Bolero
 open Bolero.Remoting
 open System.Text
 
+/// [omit]
 type IRemoteHandler =
     abstract Handler : IRemoteService
 
+/// [omit]
 [<AbstractClass>]
 type RemoteHandler<'T when 'T :> IRemoteService>() =
     abstract Handler : 'T
     interface IRemoteHandler with
         member this.Handler = this.Handler :> IRemoteService
 
+/// The context to inject in a remote service to authorize remote functions.
 type IRemoteContext =
     inherit IHttpContextAccessor
+
+    /// Indicate that a remote function is only available to authenticated users.
     abstract Authorize<'req, 'resp> : ('req -> Async<'resp>) -> ('req -> Async<'resp>)
+
+    /// Indicate that a remote function is available to users that match the given requirements.
     abstract AuthorizeWith<'req, 'resp> : seq<IAuthorizeData> -> ('req -> Async<'resp>) -> ('req -> Async<'resp>)
 
+/// [omit]
 type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationService, authPolicyProvider: IAuthorizationPolicyProvider) =
 
     let authorizeWith authData f =
@@ -146,6 +154,7 @@ type internal ServerRemoteProvider(services: seq<RemotingService>) =
         member this.GetService<'T when 'T :> IRemoteService>() =
             this.GetService<'T>()
 
+/// Extension methods to enable support for remoting in the ASP.NET Core server side.
 [<Extension>]
 type ServerRemotingExtensions =
 
@@ -162,30 +171,37 @@ type ServerRemotingExtensions =
             let basePath = basePath handler
             RemotingService(basePath, typeof<'T>, handler))
 
+    /// Add a remote service at the given path.
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: IRemoteContext -> 'T) =
         ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), handler)
 
+    /// Add a remote service at the given path.
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: 'T) =
         ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), (fun _ -> handler))
 
+    /// Add a remote service at the given path.
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: IRemoteContext -> 'T) =
         ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), handler)
 
+    /// Add a remote service at the given path.
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: 'T) =
         ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), (fun _ -> handler))
 
+    /// Add a remote service.
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: IRemoteContext -> 'T) =
         ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), handler)
 
+    /// Add a remote service.
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: 'T) =
         ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), (fun _ -> handler))
 
+    /// Add a remote service using dependency injection.
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteHandler>(this: IServiceCollection) =
         ServerRemotingExtensions.AddRemotingImpl(this.AddSingleton<'T>(), fun services ->

@@ -45,6 +45,7 @@ type RemoteResponse<'resp> =
         | Unauthorized -> None
 
 /// Provides remote service implementations when running in WebAssembly.
+/// [omit]
 type ClientRemoteProvider(http: HttpClient) =
 
     let normalizeBasePath (basePath: string) =
@@ -116,6 +117,7 @@ type ClientRemoteProvider(http: HttpClient) =
             basePath := normalizeBasePath proxy.BasePath
             proxy
 
+/// Extension methods to enable support for remoting in ProgramComponent.
 [<Extension>]
 type ClientRemotingExtensions =
 

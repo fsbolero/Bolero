@@ -27,9 +27,11 @@ open Microsoft.Extensions.DependencyInjection
 open FSharp.Reflection
 open Bolero
 
+/// Exception thrown when a remote function fails to authorize a call.
 exception RemoteUnauthorizedException with
     override this.Message = "Unauthorized remote operation"
 
+/// Exception thrown on the client when a remote call fails.
 exception RemoteException of HttpResponseMessage
 
 /// Indicate that this type is a remote service, served at the given base URL path.
@@ -41,6 +43,7 @@ type IRemoteProvider =
     abstract GetService<'T> : basePath: string -> 'T
     abstract GetService<'T when 'T :> IRemoteService> : unit -> 'T
 
+/// [omit]
 type RemoteMethodDefinition =
     {
         Name: string
@@ -49,9 +52,11 @@ type RemoteMethodDefinition =
         ReturnType: Type
     }
 
+/// Extension methods to retrieve remote services from a program component.
 [<Extension>]
 type RemotingExtensions =
 
+    /// [omit]
     [<Extension>]
     static member RemoteProvider(this: IProgramComponent) =
         this.Services.GetRequiredService<IRemoteProvider>()
@@ -66,6 +71,7 @@ type RemotingExtensions =
     static member Remote<'T when 'T :> IRemoteService>(this: IProgramComponent) =
         this.RemoteProvider().GetService<'T>()
 
+    /// [omit]
     static member ExtractRemoteMethods(ty: Type) : Result<RemoteMethodDefinition[], list<string>> =
         if not (FSharpType.IsRecord ty) then
             Error [sprintf "Remote type must be a record: %s" ty.FullName]

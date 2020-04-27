@@ -28,6 +28,7 @@ open Microsoft.JSInterop
 open Elmish
 open Bolero.Remoting
 
+/// Elmish commands for Async and Task jobs, remote calls and JavaScript interop.
 module Cmd =
 
     // This should be in Elmish really.

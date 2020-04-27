@@ -29,6 +29,7 @@ open FSharp.Reflection
 open System.Runtime.InteropServices
 
 /// A router that binds page navigation with Elmish.
+/// [category: Routing]
 type IRouter<'model, 'msg> =
     /// Get the uri corresponding to `model`.
     abstract GetRoute : model: 'model -> string
@@ -37,6 +38,7 @@ type IRouter<'model, 'msg> =
     abstract SetRoute : uri: string -> option<'msg>
 
 /// A simple hand-written router.
+/// [category: Routing]
 type Router<'model, 'msg> =
     {
         /// Get the uri corresponding to `model`.
@@ -50,6 +52,7 @@ type Router<'model, 'msg> =
         member this.SetRoute(uri) = this.setRoute uri
 
 /// A simple router where the endpoint corresponds to a value easily gettable from the model.
+/// [category: Routing]
 type Router<'ep, 'model, 'msg> =
     {
         getEndPoint: 'model -> 'ep
@@ -65,6 +68,7 @@ type Router<'ep, 'model, 'msg> =
         member this.SetRoute(uri) = this.setRoute uri
 
 /// Declare how an F# union case matches to a URI.
+/// [category: Routing]
 [<AttributeUsage(AttributeTargets.Property, AllowMultiple = false)>]
 type EndPointAttribute(endpoint: string) =
     inherit Attribute()
@@ -77,12 +81,15 @@ type EndPointAttribute(endpoint: string) =
 /// Declare that the given field of an F# union case matches the entire
 /// remainder of the URL path.
 /// If field is unspecified, this applies to the last field of the case.
+/// [category: Routing]
 [<AttributeUsage(AttributeTargets.Property, AllowMultiple = false)>]
 type WildcardAttribute([<Optional>] field: string) =
     inherit Attribute()
 
     member this.Field = field
 
+/// The kinds of invalid router.
+/// [category: Routing]
 [<RequireQualifiedAccess>]
 type InvalidRouterKind =
     | UnsupportedType of Type
@@ -97,6 +104,8 @@ type InvalidRouterKind =
     | InvalidRestType of UnionCaseInfo
     | MultiplePageModels of UnionCaseInfo
 
+/// Exception thrown when a router is incorrectly defined.
+/// [category: Routing]
 exception InvalidRouter of kind: InvalidRouterKind with
     override this.Message =
         let withCase (case: UnionCaseInfo) =
@@ -128,6 +137,9 @@ exception InvalidRouter of kind: InvalidRouterKind with
         | InvalidRouterKind.MultiplePageModels case ->
             withCase case "multiple page models on the same case"
 
+/// A wrapper type to include a model in a router page type.
+/// See https://fsbolero.io/docs/Routing#page-models
+/// [category: Routing]
 [<CLIMutable>]
 type PageModel<'T> = { Model: 'T }
 
@@ -650,6 +662,7 @@ module private RouterImpl =
             !segment
 
 /// Functions for building Routers that bind page navigation with Elmish.
+/// [category: Routing]
 module Router =
 
     /// Infer a router constructed around an endpoint type `'ep`.
@@ -688,9 +701,11 @@ module Router =
     let definePageModel (pageModel: PageModel<'T>) (value: 'T) =
         pageModel.GetType().GetProperty("Model").SetValue(pageModel, value)
 
+/// [category: Routing]
 [<Extension>]
 type RouterExtensions =
 
+    /// Create an HTML href attribute pointing to the given endpoint.
     [<Extension>]
     static member HRef(this: Router<'ep, _, _>, endpoint: 'ep) : Attr =
         Attr("href", this.Link endpoint)

@@ -26,17 +26,26 @@ open Microsoft.AspNetCore.Components
 #endif
 
 /// HTML attribute or Blazor component parameter.
+/// Use `Bolero.Html.attr` or `(=>)` to create attributes.
+/// [category: HTML]
 type Attr =
+    /// [omit]
     | Attr of string * obj
+    /// [omit]
     | Attrs of list<Attr>
+    /// [omit]
     | Key of obj
+    /// [omit]
     | Classes of list<string>
 #if !IS_DESIGNTIME
+    /// [omit]
     | ExplicitAttr of Func<Rendering.RenderTreeBuilder, int, obj, int>
+    /// [omit]
     | Ref of Action<ElementReference>
 #endif
 
 /// HTML fragment.
+/// [category: HTML]
 type Node =
     /// An empty HTML fragment.
     | Empty
@@ -62,6 +71,7 @@ type Node =
 // so the following needs to be excluded from the TP.
 // See https://github.com/fsprojects/FSharp.TypeProviders.SDK/issues/274
 #if !IS_DESIGNTIME
+    /// A single Blazor component, statically typed.
     static member BlazorComponent<'T when 'T :> IComponent>(attrs, children) =
         Node.Component(typeof<'T>, attrs, children)
 #endif

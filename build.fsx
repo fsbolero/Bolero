@@ -102,6 +102,7 @@ Target.create "tags" (fun _ ->
             let childrenArg = if tag.CanHaveChildren then " (children: list<Node>)" else ""
             let childrenVal = if tag.CanHaveChildren then "children" else "[]"
             s.AppendLine(sprintf """/// Create an HTML `<%s>` element.""" tag.Name)
+             .AppendLine(        """/// [category: HTML tag names]""")
              .AppendLine(sprintf """let %s (attrs: list<Attr>)%s : Node =""" ident childrenArg)
              .AppendLine(sprintf """    elt "%s" attrs %s""" tag.Name childrenVal)
              .AppendLine()

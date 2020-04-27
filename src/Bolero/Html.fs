@@ -19,6 +19,7 @@
 // $end{copyright}
 
 /// Create HTML elements, attributes and event handlers.
+/// [category: HTML]
 module Bolero.Html
 
 open System.Threading.Tasks
@@ -31,25 +32,32 @@ open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Web
 
 /// Create an HTML text node.
+/// [category: HTML elements]
 let text str = Text str
 
 /// Create an HTML text node using formatting.
+/// [category: HTML elements]
 let textf format = Printf.kprintf text format
 
 /// Create an HTML element.
+/// [category: HTML elements]
 let elt name attrs children = Node.Elt(name, attrs, children)
 
 /// Create an empty HTML fragment.
+/// [category: HTML elements]
 let empty = Empty
 
 /// Concatenate HTML fragments.
+/// [category: HTML elements]
 let concat nodes = Concat nodes
 
 /// Create an HTML attribute.
+/// [category: HTML elements]
 let (=>) name value = Attr(name, box value)
 
 /// Create a conditional fragment. `matching` must be either a boolean or an F# union.
 /// If it's a union, `mkNode` must only match on the case.
+/// [category: HTML elements]
 let cond<'T> (matching: 'T) (mkNode: 'T -> Node) =
     if typeof<'T> = typeof<bool> then
         Node.Cond(unbox<bool> matching, mkNode matching)
@@ -57,591 +65,736 @@ let cond<'T> (matching: 'T) (mkNode: 'T -> Node) =
         Node.Match(typeof<'T>, matching, mkNode matching)
 
 /// Create a fragment that concatenates nodes for each item in a sequence.
+/// [category: HTML elements]
 let forEach<'T> (items: seq<'T>) (mkNode: 'T -> Node) =
     Node.ForEach [for n in items -> mkNode n]
 
 /// Create a fragment from a Blazor component.
+/// [category: Components]
 let comp<'T when 'T :> IComponent> attrs children =
     Node.BlazorComponent<'T>(attrs, children)
 
 /// Create a fragment from an Elmish component.
+/// [category: Components]
 let ecomp<'T, 'model, 'msg when 'T :> ElmishComponent<'model, 'msg>>
         (attrs: list<Attr>) (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
     comp<'T> (attrs @ ["Model" => model; "Dispatch" => dispatch]) []
 
-/// Create a fragment with a lazily rendered view function
+/// Create a fragment with a lazily rendered view function.
+/// [category: Components]
 let lazyComp (viewFunction: 'model -> Node) (model: 'model) =
     let viewFunction' : 'model -> Elmish.Dispatch<'msg> -> Node = fun m _ -> viewFunction m
     comp<LazyComponent<'model,_>> ["Model" => model; "ViewFunction" => viewFunction'; ][]
 
-/// Create a fragment with a lazily rendered view function and a custom equality
+/// Create a fragment with a lazily rendered view function and a custom equality.
+/// [category: Components]
 let lazyCompWith (equal: 'model -> 'model -> bool) (viewFunction: 'model -> Node) (model: 'model) =
     let viewFunction' : 'model -> Elmish.Dispatch<'msg> -> Node = fun m _ -> viewFunction m
     comp<LazyComponent<'model,_>> ["Model" => model; "ViewFunction" => viewFunction'; "Equal" => equal; ] []
 
-/// Create a fragment with a lazily rendered view function
+/// Create a fragment with a lazily rendered view function.
+/// [category: Components]
 let lazyComp2 (viewFunction: 'model -> Elmish.Dispatch<'msg> -> Node) (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
     comp<LazyComponent<'model,'msg>> ["Model" => model; "Dispatch" => dispatch; "ViewFunction" => viewFunction; ] []
 
-/// Create a fragment with a lazily rendered view function and a custom equality
+/// Create a fragment with a lazily rendered view function and a custom equality.
+/// [category: Components]
 let lazyComp2With (equal: 'model -> 'model -> bool) (viewFunction: 'model -> Elmish.Dispatch<'msg> -> Node) (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
     comp<LazyComponent<'model,'msg>> ["Model" => model; "Dispatch" => dispatch; "ViewFunction" => viewFunction; "Equal" => equal; ] []
 
-// Create a fragment with a lazily rendered view function
+/// Create a fragment with a lazily rendered view function.
+/// [category: Components]
 let lazyComp3 (viewFunction: ('model1 * 'model2') -> Elmish.Dispatch<'msg> -> Node) (model1: 'model1) (model2: 'model2) (dispatch: Elmish.Dispatch<'msg>) =
     comp<LazyComponent<('model1 * 'model2),'msg>> ["Model" => (model1, model2); "Dispatch" => dispatch; "ViewFunction" => viewFunction; ] []
 
-/// Create a fragment with a lazily rendered view function and a custom equality
+/// Create a fragment with a lazily rendered view function and a custom equality.
+/// [category: Components]
 let lazyComp3With (equal: ('model1 * 'model2) -> ('model1 * 'model2) -> bool) (viewFunction: ('model1 * 'model2') -> Elmish.Dispatch<'msg> -> Node) (model1: 'model1) (model2: 'model2) (dispatch: Elmish.Dispatch<'msg>) =
     comp<LazyComponent<('model1 * 'model2),'msg>> ["Model" => (model1, model2); "Dispatch" => dispatch; "ViewFunction" => viewFunction; "Equal" => equal; ] []
 
-/// Create a fragment with a lazily rendered view function and custom equality on model field
+/// Create a fragment with a lazily rendered view function and custom equality on model field.
+/// [category: Components]
 let lazyCompBy (equal: 'model -> 'a) (viewFunction: 'model -> Node) (model: 'model) =
     let equal' model1 model2 = (equal model1) = (equal model2)
     lazyCompWith equal' viewFunction model
 
-/// Create a fragment with a lazily rendered view function and custom equality on model field
+/// Create a fragment with a lazily rendered view function and custom equality on model field.
+/// [category: Components]
 let lazyComp2By (equal: 'model -> 'a) (viewFunction: 'model -> Elmish.Dispatch<'msg> -> Node) (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
     let equal' model1 model2 = (equal model1) = (equal model2)
     lazyComp2With equal' viewFunction model dispatch
 
-/// Create a fragment with a lazily rendered view function and custom equality on model field
+/// Create a fragment with a lazily rendered view function and custom equality on model field.
+/// [category: Components]
 let lazyComp3By (equal: ('model1 * 'model2) -> 'a) (viewFunction: ('model1 * 'model2) -> Elmish.Dispatch<'msg> -> Node) (model1: 'model1) (model2: 'model2) (dispatch: Elmish.Dispatch<'msg>) =
     let equal' (model11, model12) (model21, model22) = (equal (model11, model12)) = (equal (model21, model22))
     lazyComp3With equal' viewFunction model1 model2 dispatch
 
 /// Create a navigation link which toggles its `active` class
 /// based on whether the current URI matches its `href`.
+/// [category: Components]
 let navLink (``match``: Routing.NavLinkMatch) attrs children =
     comp<Routing.NavLink> (("Match" => ``match``) :: attrs) children
 
 // BEGIN TAGS
 /// Create an HTML `<a>` element.
+/// [category: HTML tag names]
 let a (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "a" attrs children
 
 /// Create an HTML `<abbr>` element.
+/// [category: HTML tag names]
 let abbr (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "abbr" attrs children
 
 /// Create an HTML `<acronym>` element.
+/// [category: HTML tag names]
 let acronym (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "acronym" attrs children
 
 /// Create an HTML `<address>` element.
+/// [category: HTML tag names]
 let address (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "address" attrs children
 
 /// Create an HTML `<applet>` element.
+/// [category: HTML tag names]
 let applet (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "applet" attrs children
 
 /// Create an HTML `<area>` element.
+/// [category: HTML tag names]
 let area (attrs: list<Attr>) : Node =
     elt "area" attrs []
 
 /// Create an HTML `<article>` element.
+/// [category: HTML tag names]
 let article (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "article" attrs children
 
 /// Create an HTML `<aside>` element.
+/// [category: HTML tag names]
 let aside (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "aside" attrs children
 
 /// Create an HTML `<audio>` element.
+/// [category: HTML tag names]
 let audio (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "audio" attrs children
 
 /// Create an HTML `<b>` element.
+/// [category: HTML tag names]
 let b (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "b" attrs children
 
 /// Create an HTML `<base>` element.
+/// [category: HTML tag names]
 let ``base`` (attrs: list<Attr>) : Node =
     elt "base" attrs []
 
 /// Create an HTML `<basefont>` element.
+/// [category: HTML tag names]
 let basefont (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "basefont" attrs children
 
 /// Create an HTML `<bdi>` element.
+/// [category: HTML tag names]
 let bdi (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "bdi" attrs children
 
 /// Create an HTML `<bdo>` element.
+/// [category: HTML tag names]
 let bdo (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "bdo" attrs children
 
 /// Create an HTML `<big>` element.
+/// [category: HTML tag names]
 let big (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "big" attrs children
 
 /// Create an HTML `<blockquote>` element.
+/// [category: HTML tag names]
 let blockquote (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "blockquote" attrs children
 
 /// Create an HTML `<body>` element.
+/// [category: HTML tag names]
 let body (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "body" attrs children
 
 /// Create an HTML `<br>` element.
+/// [category: HTML tag names]
 let br (attrs: list<Attr>) : Node =
     elt "br" attrs []
 
 /// Create an HTML `<button>` element.
+/// [category: HTML tag names]
 let button (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "button" attrs children
 
 /// Create an HTML `<canvas>` element.
+/// [category: HTML tag names]
 let canvas (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "canvas" attrs children
 
 /// Create an HTML `<caption>` element.
+/// [category: HTML tag names]
 let caption (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "caption" attrs children
 
 /// Create an HTML `<center>` element.
+/// [category: HTML tag names]
 let center (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "center" attrs children
 
 /// Create an HTML `<cite>` element.
+/// [category: HTML tag names]
 let cite (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "cite" attrs children
 
 /// Create an HTML `<code>` element.
+/// [category: HTML tag names]
 let code (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "code" attrs children
 
 /// Create an HTML `<col>` element.
+/// [category: HTML tag names]
 let col (attrs: list<Attr>) : Node =
     elt "col" attrs []
 
 /// Create an HTML `<colgroup>` element.
+/// [category: HTML tag names]
 let colgroup (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "colgroup" attrs children
 
 /// Create an HTML `<content>` element.
+/// [category: HTML tag names]
 let content (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "content" attrs children
 
 /// Create an HTML `<data>` element.
+/// [category: HTML tag names]
 let data (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "data" attrs children
 
 /// Create an HTML `<datalist>` element.
+/// [category: HTML tag names]
 let datalist (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "datalist" attrs children
 
 /// Create an HTML `<dd>` element.
+/// [category: HTML tag names]
 let dd (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "dd" attrs children
 
 /// Create an HTML `<del>` element.
+/// [category: HTML tag names]
 let del (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "del" attrs children
 
 /// Create an HTML `<details>` element.
+/// [category: HTML tag names]
 let details (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "details" attrs children
 
 /// Create an HTML `<dfn>` element.
+/// [category: HTML tag names]
 let dfn (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "dfn" attrs children
 
 /// Create an HTML `<dialog>` element.
+/// [category: HTML tag names]
 let dialog (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "dialog" attrs children
 
 /// Create an HTML `<dir>` element.
+/// [category: HTML tag names]
 let dir (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "dir" attrs children
 
 /// Create an HTML `<div>` element.
+/// [category: HTML tag names]
 let div (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "div" attrs children
 
 /// Create an HTML `<dl>` element.
+/// [category: HTML tag names]
 let dl (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "dl" attrs children
 
 /// Create an HTML `<dt>` element.
+/// [category: HTML tag names]
 let dt (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "dt" attrs children
 
 /// Create an HTML `<element>` element.
+/// [category: HTML tag names]
 let element (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "element" attrs children
 
 /// Create an HTML `<em>` element.
+/// [category: HTML tag names]
 let em (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "em" attrs children
 
 /// Create an HTML `<embed>` element.
+/// [category: HTML tag names]
 let embed (attrs: list<Attr>) : Node =
     elt "embed" attrs []
 
 /// Create an HTML `<fieldset>` element.
+/// [category: HTML tag names]
 let fieldset (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "fieldset" attrs children
 
 /// Create an HTML `<figcaption>` element.
+/// [category: HTML tag names]
 let figcaption (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "figcaption" attrs children
 
 /// Create an HTML `<figure>` element.
+/// [category: HTML tag names]
 let figure (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "figure" attrs children
 
 /// Create an HTML `<font>` element.
+/// [category: HTML tag names]
 let font (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "font" attrs children
 
 /// Create an HTML `<footer>` element.
+/// [category: HTML tag names]
 let footer (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "footer" attrs children
 
 /// Create an HTML `<form>` element.
+/// [category: HTML tag names]
 let form (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "form" attrs children
 
 /// Create an HTML `<frame>` element.
+/// [category: HTML tag names]
 let frame (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "frame" attrs children
 
 /// Create an HTML `<frameset>` element.
+/// [category: HTML tag names]
 let frameset (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "frameset" attrs children
 
 /// Create an HTML `<h1>` element.
+/// [category: HTML tag names]
 let h1 (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "h1" attrs children
 
 /// Create an HTML `<h2>` element.
+/// [category: HTML tag names]
 let h2 (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "h2" attrs children
 
 /// Create an HTML `<h3>` element.
+/// [category: HTML tag names]
 let h3 (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "h3" attrs children
 
 /// Create an HTML `<h4>` element.
+/// [category: HTML tag names]
 let h4 (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "h4" attrs children
 
 /// Create an HTML `<h5>` element.
+/// [category: HTML tag names]
 let h5 (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "h5" attrs children
 
 /// Create an HTML `<h6>` element.
+/// [category: HTML tag names]
 let h6 (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "h6" attrs children
 
 /// Create an HTML `<head>` element.
+/// [category: HTML tag names]
 let head (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "head" attrs children
 
 /// Create an HTML `<header>` element.
+/// [category: HTML tag names]
 let header (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "header" attrs children
 
 /// Create an HTML `<hr>` element.
+/// [category: HTML tag names]
 let hr (attrs: list<Attr>) : Node =
     elt "hr" attrs []
 
 /// Create an HTML `<html>` element.
+/// [category: HTML tag names]
 let html (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "html" attrs children
 
 /// Create an HTML `<i>` element.
+/// [category: HTML tag names]
 let i (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "i" attrs children
 
 /// Create an HTML `<iframe>` element.
+/// [category: HTML tag names]
 let iframe (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "iframe" attrs children
 
 /// Create an HTML `<img>` element.
+/// [category: HTML tag names]
 let img (attrs: list<Attr>) : Node =
     elt "img" attrs []
 
 /// Create an HTML `<input>` element.
+/// [category: HTML tag names]
 let input (attrs: list<Attr>) : Node =
     elt "input" attrs []
 
 /// Create an HTML `<ins>` element.
+/// [category: HTML tag names]
 let ins (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "ins" attrs children
 
 /// Create an HTML `<kbd>` element.
+/// [category: HTML tag names]
 let kbd (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "kbd" attrs children
 
 /// Create an HTML `<label>` element.
+/// [category: HTML tag names]
 let label (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "label" attrs children
 
 /// Create an HTML `<legend>` element.
+/// [category: HTML tag names]
 let legend (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "legend" attrs children
 
 /// Create an HTML `<li>` element.
+/// [category: HTML tag names]
 let li (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "li" attrs children
 
 /// Create an HTML `<link>` element.
+/// [category: HTML tag names]
 let link (attrs: list<Attr>) : Node =
     elt "link" attrs []
 
 /// Create an HTML `<main>` element.
+/// [category: HTML tag names]
 let main (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "main" attrs children
 
 /// Create an HTML `<map>` element.
+/// [category: HTML tag names]
 let map (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "map" attrs children
 
 /// Create an HTML `<mark>` element.
+/// [category: HTML tag names]
 let mark (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "mark" attrs children
 
 /// Create an HTML `<menu>` element.
+/// [category: HTML tag names]
 let menu (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "menu" attrs children
 
 /// Create an HTML `<menuitem>` element.
+/// [category: HTML tag names]
 let menuitem (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "menuitem" attrs children
 
 /// Create an HTML `<meta>` element.
+/// [category: HTML tag names]
 let meta (attrs: list<Attr>) : Node =
     elt "meta" attrs []
 
 /// Create an HTML `<meter>` element.
+/// [category: HTML tag names]
 let meter (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "meter" attrs children
 
 /// Create an HTML `<nav>` element.
+/// [category: HTML tag names]
 let nav (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "nav" attrs children
 
 /// Create an HTML `<noembed>` element.
+/// [category: HTML tag names]
 let noembed (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "noembed" attrs children
 
 /// Create an HTML `<noframes>` element.
+/// [category: HTML tag names]
 let noframes (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "noframes" attrs children
 
 /// Create an HTML `<noscript>` element.
+/// [category: HTML tag names]
 let noscript (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "noscript" attrs children
 
 /// Create an HTML `<object>` element.
+/// [category: HTML tag names]
 let object (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "object" attrs children
 
 /// Create an HTML `<ol>` element.
+/// [category: HTML tag names]
 let ol (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "ol" attrs children
 
 /// Create an HTML `<optgroup>` element.
+/// [category: HTML tag names]
 let optgroup (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "optgroup" attrs children
 
 /// Create an HTML `<option>` element.
+/// [category: HTML tag names]
 let option (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "option" attrs children
 
 /// Create an HTML `<output>` element.
+/// [category: HTML tag names]
 let output (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "output" attrs children
 
 /// Create an HTML `<p>` element.
+/// [category: HTML tag names]
 let p (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "p" attrs children
 
 /// Create an HTML `<param>` element.
+/// [category: HTML tag names]
 let param (attrs: list<Attr>) : Node =
     elt "param" attrs []
 
 /// Create an HTML `<picture>` element.
+/// [category: HTML tag names]
 let picture (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "picture" attrs children
 
 /// Create an HTML `<pre>` element.
+/// [category: HTML tag names]
 let pre (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "pre" attrs children
 
 /// Create an HTML `<progress>` element.
+/// [category: HTML tag names]
 let progress (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "progress" attrs children
 
 /// Create an HTML `<q>` element.
+/// [category: HTML tag names]
 let q (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "q" attrs children
 
 /// Create an HTML `<rb>` element.
+/// [category: HTML tag names]
 let rb (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "rb" attrs children
 
 /// Create an HTML `<rp>` element.
+/// [category: HTML tag names]
 let rp (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "rp" attrs children
 
 /// Create an HTML `<rt>` element.
+/// [category: HTML tag names]
 let rt (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "rt" attrs children
 
 /// Create an HTML `<rtc>` element.
+/// [category: HTML tag names]
 let rtc (attrs: list<Attr>) : Node =
     elt "rtc" attrs []
 
 /// Create an HTML `<ruby>` element.
+/// [category: HTML tag names]
 let ruby (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "ruby" attrs children
 
 /// Create an HTML `<s>` element.
+/// [category: HTML tag names]
 let s (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "s" attrs children
 
 /// Create an HTML `<samp>` element.
+/// [category: HTML tag names]
 let samp (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "samp" attrs children
 
 /// Create an HTML `<script>` element.
+/// [category: HTML tag names]
 let script (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "script" attrs children
 
 /// Create an HTML `<section>` element.
+/// [category: HTML tag names]
 let section (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "section" attrs children
 
 /// Create an HTML `<select>` element.
+/// [category: HTML tag names]
 let select (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "select" attrs children
 
 /// Create an HTML `<shadow>` element.
+/// [category: HTML tag names]
 let shadow (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "shadow" attrs children
 
 /// Create an HTML `<slot>` element.
+/// [category: HTML tag names]
 let slot (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "slot" attrs children
 
 /// Create an HTML `<small>` element.
+/// [category: HTML tag names]
 let small (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "small" attrs children
 
 /// Create an HTML `<source>` element.
+/// [category: HTML tag names]
 let source (attrs: list<Attr>) : Node =
     elt "source" attrs []
 
 /// Create an HTML `<span>` element.
+/// [category: HTML tag names]
 let span (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "span" attrs children
 
 /// Create an HTML `<strike>` element.
+/// [category: HTML tag names]
 let strike (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "strike" attrs children
 
 /// Create an HTML `<strong>` element.
+/// [category: HTML tag names]
 let strong (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "strong" attrs children
 
 /// Create an HTML `<style>` element.
+/// [category: HTML tag names]
 let style (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "style" attrs children
 
 /// Create an HTML `<sub>` element.
+/// [category: HTML tag names]
 let sub (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "sub" attrs children
 
 /// Create an HTML `<summary>` element.
+/// [category: HTML tag names]
 let summary (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "summary" attrs children
 
 /// Create an HTML `<sup>` element.
+/// [category: HTML tag names]
 let sup (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "sup" attrs children
 
 /// Create an HTML `<svg>` element.
+/// [category: HTML tag names]
 let svg (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "svg" attrs children
 
 /// Create an HTML `<table>` element.
+/// [category: HTML tag names]
 let table (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "table" attrs children
 
 /// Create an HTML `<tbody>` element.
+/// [category: HTML tag names]
 let tbody (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "tbody" attrs children
 
 /// Create an HTML `<td>` element.
+/// [category: HTML tag names]
 let td (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "td" attrs children
 
 /// Create an HTML `<template>` element.
+/// [category: HTML tag names]
 let template (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "template" attrs children
 
 /// Create an HTML `<textarea>` element.
+/// [category: HTML tag names]
 let textarea (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "textarea" attrs children
 
 /// Create an HTML `<tfoot>` element.
+/// [category: HTML tag names]
 let tfoot (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "tfoot" attrs children
 
 /// Create an HTML `<th>` element.
+/// [category: HTML tag names]
 let th (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "th" attrs children
 
 /// Create an HTML `<thead>` element.
+/// [category: HTML tag names]
 let thead (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "thead" attrs children
 
 /// Create an HTML `<time>` element.
+/// [category: HTML tag names]
 let time (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "time" attrs children
 
 /// Create an HTML `<title>` element.
+/// [category: HTML tag names]
 let title (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "title" attrs children
 
 /// Create an HTML `<tr>` element.
+/// [category: HTML tag names]
 let tr (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "tr" attrs children
 
 /// Create an HTML `<track>` element.
+/// [category: HTML tag names]
 let track (attrs: list<Attr>) : Node =
     elt "track" attrs []
 
 /// Create an HTML `<tt>` element.
+/// [category: HTML tag names]
 let tt (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "tt" attrs children
 
 /// Create an HTML `<u>` element.
+/// [category: HTML tag names]
 let u (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "u" attrs children
 
 /// Create an HTML `<ul>` element.
+/// [category: HTML tag names]
 let ul (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "ul" attrs children
 
 /// Create an HTML `<var>` element.
+/// [category: HTML tag names]
 let var (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "var" attrs children
 
 /// Create an HTML `<video>` element.
+/// [category: HTML tag names]
 let video (attrs: list<Attr>) (children: list<Node>) : Node =
     elt "video" attrs children
 
 /// Create an HTML `<wbr>` element.
+/// [category: HTML tag names]
 let wbr (attrs: list<Attr>) : Node =
     elt "wbr" attrs []
 
 // END TAGS
 
+/// HTML attributes.
 module attr =
     /// Create an HTML `class` attribute containing the given class names.
     let inline classes (classes: list<string>) : Attr =
@@ -1021,6 +1174,7 @@ module attr =
 
 // END ATTRS
 
+/// Event handlers.
 module on =
 
     /// [omit]
@@ -1428,6 +1582,7 @@ module on =
 
 // END EVENTS
 
+    /// Event handlers returning type `Async<unit>`.
     module async =
 
         /// Create an asynchronous handler for a HTML event of type EventArgs.
@@ -1710,6 +1865,7 @@ module on =
             event "scroll" callback
 // END ASYNCEVENTS
 
+    /// Event handlers returning type `Task`.
     module task =
 
         /// Create an asynchronous handler for a HTML event of type EventArgs.
@@ -1995,6 +2151,8 @@ module on =
 /// Two-way binding for HTML input elements.
 module bind =
 
+
+    /// [omit]
     let inline binder< ^T, ^F, ^B, ^O
                         when ^F : (static member CreateBinder : EventCallbackFactory * obj * Action< ^T> * ^T * CultureInfo -> EventCallback<ChangeEventArgs>)
                         and ^B : (static member FormatValue : ^T * CultureInfo -> ^O)>

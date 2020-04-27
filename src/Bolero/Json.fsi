@@ -18,6 +18,8 @@
 //
 // $end{copyright}
 
+/// Customize JSON serialization for remoting.
+/// [category: Remoting]
 module Bolero.Json
 
 open System

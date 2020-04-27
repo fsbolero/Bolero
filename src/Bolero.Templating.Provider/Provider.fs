@@ -36,10 +36,9 @@ type Template (cfg: TypeProviderConfig) as this =
 
     do try
         let templateTy = ProvidedTypeDefinition(thisAssembly, rootNamespace, "Template", None, isErased = false)
-        templateTy.DefineStaticParameters(
-            [
-                ProvidedStaticParameter("pathOrHtml", typeof<string>)
-            ], fun typename pars ->
+        let sp = ProvidedStaticParameter("pathOrHtml", typeof<string>)
+        sp.AddXmlDoc("The path to an HTML file, or an HTML string directly.")
+        templateTy.DefineStaticParameters([sp], fun typename pars ->
             let asm = ProvidedAssembly()
             match pars with
             | [| :? string as pathOrHtml |] ->
@@ -51,6 +50,9 @@ type Template (cfg: TypeProviderConfig) as this =
                 ty
             | x -> failwithf "Unexpected parameter values: %A" x
         )
+        templateTy.AddXmlDoc("\
+            Provide content from a template HTML file.\n\
+            [category: HTML]")
         this.AddNamespace(rootNamespace, [templateTy])
         with exn ->
             // Put the full error, including stack, in the message

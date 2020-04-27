@@ -18,6 +18,8 @@
 //
 // $end{copyright}
 
+/// Functions to enable the router in an Elmish program.
+/// [category: Routing]
 module Bolero.Program
 
 open Elmish

@@ -18,6 +18,7 @@
 //
 // $end{copyright}
 
+/// [omit]
 module Bolero.Render
 
 open System
