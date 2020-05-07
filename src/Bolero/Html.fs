@@ -840,6 +840,19 @@ module attr =
                 builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Func<'T, Task>(value)))
                 sequence + 1))
 
+    /// Create an attribute whose value is an HTML fragment.
+    /// Use this function for Blazor component attributes of type `RenderFragment`.
+    let fragment name node =
+        FragmentAttr (name, fun f ->
+            box <| RenderFragment(fun rt -> f rt node))
+
+    /// Create an attribute whose value is a parameterized HTML fragment.
+    /// Use this function for Blazor component attributes of type `RenderFragment<T>`.
+    let fragmentWith name node =
+        FragmentAttr (name, fun f ->
+            box <| RenderFragment<_>(fun ctx ->
+                RenderFragment(fun rt -> f rt (node ctx))))
+
 // BEGIN ATTRS
     /// Create an HTML `accept` attribute.
     let accept (v: obj) : Attr = "accept" => v

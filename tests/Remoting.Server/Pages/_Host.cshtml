@@ -11,6 +11,7 @@
 </head>
 <body>
   <div id="main">@(await Html.RenderComponentAsync<Bolero.Tests.Remoting.Client.MyApp>(RenderMode.ServerPrerendered))</div>
+  <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
   <script src="_framework/blazor.@(Model.IsServer ? "server" : "webassembly").js"></script>
 </body>
 </html>

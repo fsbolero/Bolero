@@ -22,6 +22,7 @@ module Bolero.Tests.Remoting.Client
 
 open System
 open System.Collections.Generic
+open Microsoft.AspNetCore.Components.Authorization
 open Bolero
 open Bolero.Html
 open Bolero.Remoting
@@ -179,6 +180,16 @@ let Display model dispatch =
         text " = "
         button [on.click (fun _ -> dispatch SendAuthDouble)] [text "Send"]
         text model.authDoubleResult
+        comp<CascadingAuthenticationState> [] [
+            comp<AuthorizeView> [
+                attr.fragmentWith "Authorized" <| fun (context: AuthenticationState) ->
+                    printfn "Rendering Authorized"
+                    div [] [textf "You're authorized! Welcome %s" context.User.Identity.Name]
+                attr.fragmentWith "NotAuthorized" <| fun (_: AuthenticationState) ->
+                    printfn "Rendering NotAuthorized"
+                    div [] [text "You're not authorized :("]
+            ] []
+        ]
     ]
 
 type MyApp() =
@@ -195,6 +206,16 @@ type MyApp() =
 open System.Net.Http
 open Microsoft.AspNetCore.Components.WebAssembly.Hosting
 open Microsoft.Extensions.DependencyInjection
+open System.Security.Claims
+open System.Threading.Tasks
+
+type DummyAuthProvider() =
+    inherit AuthenticationStateProvider()
+
+    override _.GetAuthenticationStateAsync() =
+        let identity = ClaimsIdentity([|Claim(ClaimTypes.Name, "loic")|], "Fake auth type")
+        let user = ClaimsPrincipal(identity)
+        Task.FromResult(AuthenticationState(user))
 
 module Program =
     [<EntryPoint>]
@@ -203,5 +224,7 @@ module Program =
         builder.RootComponents.Add<MyApp>("#main")
         builder.Services.AddRemoting() |> ignore
         builder.Services.AddSingleton(new HttpClient(BaseAddress = Uri(builder.HostEnvironment.BaseAddress))) |> ignore
+        builder.Services.AddScoped<AuthenticationStateProvider, DummyAuthProvider>() |> ignore
+        builder.Services.AddAuthorizationCore() |> ignore
         builder.Build().RunAsync() |> ignore
         0

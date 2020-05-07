@@ -20,11 +20,13 @@
 
 module Bolero.Tests.Client.Remoting
 
+open Microsoft.AspNetCore.Components.Authorization
 open Bolero
 open Bolero.Html
 open Bolero.Remoting
 open Bolero.Remoting.Client
 open Elmish
+open Microsoft.AspNetCore.Components
 
 type RemoteApi =
     {
@@ -150,6 +152,14 @@ let view model dispatch =
         cond model.error <| function
         | None -> empty
         | Some e -> p [] [textf "%A" e]
+        comp<AuthorizeView> [
+            attr.fragmentWith "Authorized" <| fun (context: AuthenticationState) ->
+                printfn "Rendering Authorized"
+                div [] [textf "You're authorized! Welcome %s" context.User.Identity.Name]
+            attr.fragmentWith "NotAuthorized" <| fun (_: AuthenticationState) ->
+                printfn "Rendering NotAuthorized"
+                div [] [text "You're not authorized :("]
+        ] []
     ]
 
 type Test() =

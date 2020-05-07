@@ -41,12 +41,14 @@ type Attr =
     /// [omit]
     | ExplicitAttr of Func<Rendering.RenderTreeBuilder, int, obj, int>
     /// [omit]
+    | FragmentAttr of string * ((Rendering.RenderTreeBuilder -> Node -> unit) -> obj)
+    /// [omit]
     | Ref of Action<ElementReference>
 #endif
 
 /// HTML fragment.
 /// [category: HTML]
-type Node =
+and Node =
     /// An empty HTML fragment.
     | Empty
     /// A concatenation of several HTML fragments.

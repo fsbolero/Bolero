@@ -135,14 +135,14 @@ let rec renderNode (currentComp: obj) (builder: RenderTreeBuilder) (matchCache: 
     | Elt (name, attrs, children) ->
         builder.OpenElement(sequence, name)
         let sequence = sequence + 1
-        let sequence = renderAttrs currentComp builder sequence attrs
+        let sequence = renderAttrs currentComp builder matchCache sequence attrs
         let sequence = List.fold (renderNode currentComp builder matchCache) sequence children
         builder.CloseElement()
         sequence
     | Component (comp, attrs, children) ->
         builder.OpenComponent(sequence, comp)
         let sequence = sequence + 1
-        let sequence = renderAttrs currentComp builder sequence attrs
+        let sequence = renderAttrs currentComp builder matchCache sequence attrs
         let hasChildren = not (List.isEmpty children)
         if hasChildren then
             let frag = RenderFragment(fun builder ->
@@ -154,7 +154,7 @@ let rec renderNode (currentComp: obj) (builder: RenderTreeBuilder) (matchCache: 
         sequence + (if hasChildren then 2 else 0)
 
 /// Render a list of attributes into `builder` at `sequence` number.
-and renderAttrs currentComp (builder: RenderTreeBuilder) sequence attrs =
+and renderAttrs currentComp (builder: RenderTreeBuilder) matchCache sequence attrs =
     // AddAttribute calls want to be just after the OpenElement/OpenComponent call,
     // so we make sure that AddElementReferenceCapture and SetKey are called last.
     let rec loop attrs sequence ref key classes =
@@ -174,6 +174,10 @@ and renderAttrs currentComp (builder: RenderTreeBuilder) sequence attrs =
             | ExplicitAttr setAttr ->
                 let sequence = setAttr.Invoke(builder, sequence, currentComp)
                 loop attrs sequence ref key classes
+            | FragmentAttr (name, render) ->
+                builder.AddAttribute(sequence, name, render (fun tb node ->
+                    renderNode currentComp tb matchCache 0 node |> ignore))
+                loop attrs (sequence + 1) ref key classes
             | Ref r ->
                 loop attrs sequence (ValueSome r) key classes
             | Key k ->
