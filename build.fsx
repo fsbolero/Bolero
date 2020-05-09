@@ -109,7 +109,10 @@ Target.create "tags" (fun _ ->
         )
         >> replace (Attrs.GetSample().Rows) "ATTRS" (fun s attr ->
             let esc = escapeDashes attr.Name
-            let ident = if attr.NeedsEscape then "``" + esc + "``" else esc
+            let ident =
+                if attr.NeedsRename then esc + "'"
+                elif attr.NeedsEscape then "``" + esc + "``"
+                else esc
             s.AppendLine(sprintf """    /// Create an HTML `%s` attribute.""" attr.Name)
              .AppendLine(sprintf """    let %s (v: obj) : Attr = "%s" => v""" ident attr.Name)
              .AppendLine()

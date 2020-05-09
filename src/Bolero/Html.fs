@@ -25,8 +25,6 @@ module Bolero.Html
 open System.Threading.Tasks
 open System.Globalization
 
-#nowarn "10001" // `event` calls `eventInline` which has custom warning
-
 open System
 open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Web
@@ -814,6 +812,34 @@ module attr =
     /// Create an HTML `aria-X` attribute.
     let inline aria name (v: obj) = ("aria-" + name) => v
 
+    /// Create an attribute whose value is a callback.
+    /// Use this function for Blazor component attributes of type `EventCallback<T>`.
+    /// Note: for HTML event handlers, prefer functions from the module `on`.
+    let callback<'T> (name: string) (value: 'T -> unit) =
+        ExplicitAttr (Func<_,_,_,_>(fun builder sequence receiver ->
+            builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Action<'T>(value)))
+            sequence + 1))
+
+    module async =
+
+        /// Create an attribute whose value is an asynchronous callback.
+        /// Use this function for Blazor component attributes of type `EventCallback<T>`.
+        /// Note: for HTML event handlers, prefer functions from the module `on.async`.
+        let callback<'T> (name: string) (value: 'T -> Async<unit>) =
+            ExplicitAttr (Func<_,_,_,_>(fun builder sequence receiver ->
+                builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Func<'T, Task>(fun x -> Async.StartImmediateAsTask (value x) :> Task)))
+                sequence + 1))
+
+    module task =
+
+        /// Create an attribute whose value is an asynchronous callback.
+        /// Use this function for Blazor component attributes of type `EventCallback<T>`.
+        /// Note: for HTML event handlers, prefer functions from the module `on.task`.
+        let callback<'T> (name: string) (value: 'T -> Task) =
+            ExplicitAttr (Func<_,_,_,_>(fun builder sequence receiver ->
+                builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Func<'T, Task>(value)))
+                sequence + 1))
+
 // BEGIN ATTRS
     /// Create an HTML `accept` attribute.
     let accept (v: obj) : Attr = "accept" => v
@@ -837,7 +863,7 @@ module attr =
     let alt (v: obj) : Attr = "alt" => v
 
     /// Create an HTML `async` attribute.
-    let async (v: obj) : Attr = "async" => v
+    let async' (v: obj) : Attr = "async" => v
 
     /// Create an HTML `autocapitalize` attribute.
     let autocapitalize (v: obj) : Attr = "autocapitalize" => v
@@ -1177,29 +1203,9 @@ module attr =
 /// Event handlers.
 module on =
 
-    /// [omit]
-    [<CompilerMessageAttribute("This method is intended for use in generated code only.", 10001, IsHidden=true, IsError=false)>]
-    let inline eventInline< ^T, ^F when ^T :> EventArgs and ^F : (member Create : obj * Action< ^T> -> EventCallback< ^T>)> factory eventName (callback: ^T -> unit) : Attr =
-        ExplicitAttr (Func<_,_,_,_>(fun builder sequence receiver ->
-            builder.AddAttribute< ^T>(sequence, "on" + eventName,
-                (^F : (member Create : obj * Action< ^T> -> EventCallback< ^T>)(factory, receiver, Action< ^T>(callback)))
-            )
-            sequence + 1
-        ))
-
     /// Create a handler for a HTML event of type EventArgs.
-    let inline event< ^T when ^T :> EventArgs> eventName (callback: ^T -> unit) =
-        eventInline< ^T, _> EventCallback.Factory eventName callback
-
-    /// [omit]
-    [<CompilerMessageAttribute("This method is intended for use in generated code only.", 10001, IsHidden=true, IsError=false)>]
-    let inline eventInlineAsync< ^T, ^F when ^T :> EventArgs and ^F : (member Create : obj * Func< ^T, Task> -> EventCallback< ^T>)> factory eventName (callback: ^T -> Task) : Attr =
-        ExplicitAttr (Func<_,_,_,_>(fun builder sequence receiver ->
-            builder.AddAttribute< ^T>(sequence, "on" + eventName,
-                (^F : (member Create : obj * Func< ^T, Task> -> EventCallback< ^T>)(factory, receiver, Func< ^T, Task>(callback)))
-            )
-            sequence + 1
-        ))
+    let event<'T when 'T :> EventArgs> eventName (callback: ^T -> unit) =
+        attr.callback<'T> ("on" + eventName) callback
 
     /// Prevent the default event behavior for a given HTML event.
     let preventDefault eventName (value: bool) =
@@ -1586,8 +1592,8 @@ module on =
     module async =
 
         /// Create an asynchronous handler for a HTML event of type EventArgs.
-        let inline event< ^T when ^T :> EventArgs> eventName (callback: ^T -> Async<unit>) =
-            eventInlineAsync< ^T, _> EventCallback.Factory eventName (fun x -> Async.StartImmediateAsTask (callback x) :> Task)
+        let event<'T> eventName (callback: 'T -> Async<unit>) =
+            attr.async.callback<'T> ("on" + eventName) callback
 
 // BEGIN ASYNCEVENTS
         /// Create an asynchronous handler for HTML event `focus`.
@@ -1869,8 +1875,8 @@ module on =
     module task =
 
         /// Create an asynchronous handler for a HTML event of type EventArgs.
-        let inline event< ^T when ^T :> EventArgs> eventName (callback: ^T -> Task) =
-            eventInlineAsync< ^T, _> EventCallback.Factory eventName callback
+        let event<'T> eventName (callback: 'T -> Task) =
+            attr.task.callback<'T> ("on" + eventName) callback
 
 // BEGIN TASKEVENTS
         /// Create an asynchronous handler for HTML event `focus`.
