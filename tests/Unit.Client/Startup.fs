@@ -21,7 +21,10 @@
 // ASP.NET Core and Blazor startup for web tests.
 namespace Bolero.Tests.Client
 
+open System
+open System.Net.Http
 open Microsoft.AspNetCore.Components.WebAssembly.Hosting
+open Microsoft.Extensions.DependencyInjection
 open Bolero.Remoting.Client
 
 module Program =
@@ -30,5 +33,6 @@ module Program =
         let builder = WebAssemblyHostBuilder.CreateDefault(args)
         builder.RootComponents.Add<Tests>("#app")
         builder.Services.AddRemoting() |> ignore
+        builder.Services.AddSingleton(new HttpClient(BaseAddress = Uri(builder.HostEnvironment.BaseAddress))) |> ignore
         builder.Build().RunAsync() |> ignore
         0

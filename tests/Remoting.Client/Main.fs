@@ -20,6 +20,7 @@
 
 module Bolero.Tests.Remoting.Client
 
+open System
 open System.Collections.Generic
 open Bolero
 open Bolero.Html
@@ -191,8 +192,9 @@ type MyApp() =
         ]) (Update myApi) Display
 
 
-
+open System.Net.Http
 open Microsoft.AspNetCore.Components.WebAssembly.Hosting
+open Microsoft.Extensions.DependencyInjection
 
 module Program =
     [<EntryPoint>]
@@ -200,5 +202,6 @@ module Program =
         let builder = WebAssemblyHostBuilder.CreateDefault(args)
         builder.RootComponents.Add<MyApp>("#main")
         builder.Services.AddRemoting() |> ignore
+        builder.Services.AddSingleton(new HttpClient(BaseAddress = Uri(builder.HostEnvironment.BaseAddress))) |> ignore
         builder.Build().RunAsync() |> ignore
         0
