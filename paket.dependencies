@@ -10,13 +10,11 @@ nuget Microsoft.AspNetCore.Components.Authorization
 nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication
 nuget Microsoft.Extensions.Configuration.Binder
 nuget TaskBuilder.fs >= 2.1.0
-nuget Microsoft.AspNetCore.Components.WebAssembly 3.2.0-rc1.20223.4
-nuget Microsoft.AspNetCore.Components.WebAssembly.Build 3.2.0-rc1.20223.4
-nuget Microsoft.AspNetCore.Components.WebAssembly.Server 3.2.0-rc1.20223.4 copy_local: true
-nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer 3.2.0-rc1.20223.4 copy_local: true
-nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation >= 3.1.2 lowest_matching: true, strategy: min
-nuget System.Runtime.CompilerServices.Unsafe >= 4.7.1
-nuget Microsoft.NETCore.Platforms 3.1.0
+nuget Microsoft.AspNetCore.Components.WebAssembly
+nuget Microsoft.AspNetCore.Components.WebAssembly.Build
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server
+nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer
+nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 
