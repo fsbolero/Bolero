@@ -33,7 +33,7 @@ nuget nunit ~> 3.10
 nuget NUnit3TestAdapter ~> 3.10
 nuget Selenium.Support
 nuget Selenium.WebDriver
-nuget Selenium.WebDriver.ChromeDriver
+nuget Selenium.WebDriver.ChromeDriver 83.0.4103.3900-beta
 # nuget Selenium.WebDriver.GeckoDriver.Win64
 nuget Nerdbank.GitVersioning copy_local: true
 nuget Unquote
