@@ -23,9 +23,20 @@ namespace Bolero.Tests.Client
 
 open System
 open System.Net.Http
+open System.Security.Claims
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Components.WebAssembly.Hosting
+open Microsoft.AspNetCore.Components.Authorization
 open Microsoft.Extensions.DependencyInjection
 open Bolero.Remoting.Client
+
+type DummyAuthProvider() =
+    inherit AuthenticationStateProvider()
+
+    override _.GetAuthenticationStateAsync() =
+        let identity = ClaimsIdentity([|Claim(ClaimTypes.Name, "loic")|], "Fake auth type")
+        let user = ClaimsPrincipal(identity)
+        Task.FromResult(AuthenticationState(user))
 
 module Program =
     [<EntryPoint>]
@@ -34,5 +45,7 @@ module Program =
         builder.RootComponents.Add<Tests>("#app")
         builder.Services.AddRemoting() |> ignore
         builder.Services.AddSingleton(new HttpClient(BaseAddress = Uri(builder.HostEnvironment.BaseAddress))) |> ignore
+        builder.Services.AddScoped<AuthenticationStateProvider, DummyAuthProvider>() |> ignore
+        builder.Services.AddAuthorizationCore() |> ignore
         builder.Build().RunAsync() |> ignore
         0

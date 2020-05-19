@@ -2,3 +2,4 @@ Microsoft.AspNetCore.Components.WebAssembly.Build
 FSharp.Core
 Elmish
 Microsoft.AspNetCore.Components.Authorization
+Microsoft.AspNetCore.Components.WebAssembly.Authentication
