@@ -1,7 +1,7 @@
 @page "/"
 @namespace Bolero.Tests.Web
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-
+@using Bolero.Server.RazorHost
+@inject IBoleroHostConfig BoleroHostConfig
 <!DOCTYPE html>
 <html>
 <head>
@@ -9,7 +9,7 @@
   <meta charset="utf-8">
 </head>
 <body>
-  <div id="app">@(await Html.RenderComponentAsync<Bolero.Tests.Client.Tests>(RenderMode.ServerPrerendered))</div>
+  <div id="app">@(await Html.RenderComponentAsync<Bolero.Tests.Client.Tests>(BoleroHostConfig))</div>
   <script>
     // Used by ElementBinder test:
     function setContent(element, value) {
@@ -17,6 +17,6 @@
     }
   </script>
   <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
-  <script src="_framework/blazor.server.js"></script>
+  @Html.RenderBoleroScript(BoleroHostConfig)
 </body>
 </html>

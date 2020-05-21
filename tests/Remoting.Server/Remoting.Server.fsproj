@@ -5,7 +5,6 @@
     <BlazorLinkOnBuild>false</BlazorLinkOnBuild>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="HostModel.fs" />
     <Compile Include="Startup.fs" />
     <None Include="paket.references" />
   </ItemGroup>

@@ -26,10 +26,10 @@ open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Bolero.Remoting.Server
+open Bolero.Server.RazorHost
 open Bolero.Tests
 
 type Startup() =
@@ -76,6 +76,7 @@ type Startup() =
                 .AddCookie()
                 .Services
             .AddRemoting(remoteHandler)
+            .AddBoleroHost()
             .AddServerSideBlazor()
         |> ignore
 
