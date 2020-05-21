@@ -28,6 +28,7 @@ open System.Net
 open System.Net.Http
 open System.Runtime.CompilerServices
 open System.Text
+open Microsoft.AspNetCore.Components.WebAssembly.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.DependencyInjection.Extensions
 open FSharp.Reflection
@@ -46,7 +47,9 @@ type RemoteResponse<'resp> =
 
 /// Provides remote service implementations when running in WebAssembly.
 /// [omit]
-type ClientRemoteProvider(http: HttpClient) =
+type ClientRemoteProvider(httpClientFactory: IHttpClientFactory) =
+
+    let http = httpClientFactory.CreateClient("Bolero.Remoting.Client.ClientRemoteProvider")
 
     let normalizeBasePath (basePath: string) =
         let baseAddress = http.BaseAddress.OriginalString
@@ -123,5 +126,12 @@ type ClientRemotingExtensions =
 
     /// Enable support for remoting in ProgramComponent.
     [<Extension>]
-    static member AddRemoting(services: IServiceCollection) =
+    static member AddRemoting(services: IServiceCollection, env: IWebAssemblyHostEnvironment) =
+        ClientRemotingExtensions.AddRemoting(services, fun httpClient ->
+            httpClient.BaseAddress <- Uri(env.BaseAddress))
+
+    /// Enable support for remoting in ProgramComponent with the given HttpClient configuration.
+    [<Extension>]
+    static member AddRemoting(services: IServiceCollection, configureHttpClient: HttpClient -> unit) : IHttpClientBuilder =
         services.TryAddSingleton<IRemoteProvider, ClientRemoteProvider>()
+        services.AddHttpClient("Bolero.Remoting.Client.ClientRemoteProvider", configureHttpClient)
