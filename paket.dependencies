@@ -9,8 +9,9 @@ nuget Elmish ~> 2.0
 nuget Microsoft.AspNetCore.Components.Authorization
 nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication
 nuget Microsoft.Extensions.Configuration.Binder
+nuget Microsoft.Extensions.Http >= 3.1.0
 nuget TaskBuilder.fs >= 2.1.0
-nuget Microsoft.AspNetCore.Components.WebAssembly
+nuget Microsoft.AspNetCore.Components.WebAssembly >= 3.2.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Build
 nuget Microsoft.AspNetCore.Components.WebAssembly.Server
 nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer

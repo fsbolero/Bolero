@@ -43,8 +43,7 @@ module Program =
     let Main args =
         let builder = WebAssemblyHostBuilder.CreateDefault(args)
         builder.RootComponents.Add<Tests>("#app")
-        builder.Services.AddRemoting() |> ignore
-        builder.Services.AddSingleton(new HttpClient(BaseAddress = Uri(builder.HostEnvironment.BaseAddress))) |> ignore
+        builder.Services.AddRemoting(builder.HostEnvironment) |> ignore
         builder.Services.AddScoped<AuthenticationStateProvider, DummyAuthProvider>() |> ignore
         builder.Services.AddAuthorizationCore() |> ignore
         builder.Build().RunAsync() |> ignore
