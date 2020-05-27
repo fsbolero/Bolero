@@ -12,7 +12,6 @@ branches:
 skip_tags: true
 
 init:
-  - sudo apt update && sudo apt upgrade -y dotnet-sdk-3.1
   - git config --global core.autocrlf input
 
 before_build:
