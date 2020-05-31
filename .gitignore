@@ -2,6 +2,7 @@ bin/
 obj/
 .vs/
 *.user
+.idea/
 .ionide/
 paket-files/
 packages/
