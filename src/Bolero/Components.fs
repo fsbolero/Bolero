@@ -164,7 +164,7 @@ and [<AbstractClass>]
         oldModel <- model
         this.InvokeAsync(this.StateHasChanged) |> ignore
         this.Router |> Option.iter (fun router ->
-            let newUri = router.GetRoute model
+            let newUri = router.GetRoute(model).TrimStart('/')
             let oldUri = this.GetCurrentUri()
             if newUri <> oldUri then
                 try this.NavigationManager.NavigateTo(newUri)

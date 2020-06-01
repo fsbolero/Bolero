@@ -43,8 +43,13 @@ type MyApi =
     interface IRemoteService with
         member this.BasePath = "/myapi"
 
+type Page =
+    | Home
+    | Custom of int
+
 type Model =
     {
+        page: Page
         currentKey: int
         currentValue: string
         items : Map<int, string>
@@ -57,6 +62,7 @@ type Model =
 
 let InitModel =
     {
+        page = Home
         currentKey = 0
         currentValue = ""
         items = Map.empty
@@ -68,6 +74,7 @@ let InitModel =
     }
 
 type Message =
+    | SetPage of Page
     | SetCurrentKey of int
     | SetCurrentValue of string
     | RefreshItems
@@ -87,6 +94,8 @@ type Message =
 
 let Update (myApi: MyApi) msg model =
     match msg with
+    | SetPage p ->
+        { model with page = p }, []
     | SetCurrentKey i ->
         { model with currentKey = i }, []
     | SetCurrentValue v ->
@@ -127,6 +136,19 @@ let Update (myApi: MyApi) msg model =
         { model with authDoubleResult = "Error: you must be logged in" }, []
     | Exn exn ->
         { model with lastError = Some (string exn) }, []
+
+let router : Router<Page, Model, Message> =
+    {
+        getEndPoint = fun m -> m.page
+        getRoute = function
+            | Home -> "/"
+            | Custom i -> sprintf "/custom/%i" i
+        setRoute = fun s ->
+            match s.Trim('/').Split('/') with
+            | [||] -> Some (SetPage Home)
+            | [|"custom"; i|] -> Some (SetPage (Custom (int i)))
+            | _ -> None
+    }
 
 type Tpl = Template<"main.html">
 type Form = Template<"subdir/form.html">
@@ -180,6 +202,11 @@ let Display model dispatch =
         text " = "
         button [on.click (fun _ -> dispatch SendAuthDouble)] [text "Send"]
         text model.authDoubleResult
+        div [] [
+            a [router.HRef Home] [text "Goto: home"]
+            br []
+            a [router.HRef (Custom 123)] [text "Goto: custom 123"]
+        ]
         comp<CascadingAuthenticationState> [] [
             comp<AuthorizeView> [
                 attr.fragmentWith "Authorized" <| fun (context: AuthenticationState) ->
@@ -201,9 +228,9 @@ type MyApp() =
             Cmd.ofMsg RefreshItems
             Cmd.ofMsg GetLogin
         ]) (Update myApi) Display
+        |> Program.withRouter router
 
 
-open System.Net.Http
 open Microsoft.AspNetCore.Components.WebAssembly.Hosting
 open Microsoft.Extensions.DependencyInjection
 open System.Security.Claims
