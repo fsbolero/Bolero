@@ -152,6 +152,9 @@ let rec renderNode (currentComp: obj) (builder: RenderTreeBuilder) (matchCache: 
             builder.AddAttribute(sequence, "ChildContent", frag)
         builder.CloseComponent()
         sequence + (if hasChildren then 2 else 0)
+    | Fragment frag ->
+        builder.AddContent(sequence, frag)
+        sequence + 1
 
 /// Render a list of attributes into `builder` at `sequence` number.
 and renderAttrs currentComp (builder: RenderTreeBuilder) matchCache sequence attrs =

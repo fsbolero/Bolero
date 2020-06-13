@@ -67,6 +67,10 @@ let cond<'T> (matching: 'T) (mkNode: 'T -> Node) =
 let forEach<'T> (items: seq<'T>) (mkNode: 'T -> Node) =
     Node.ForEach [for n in items -> mkNode n]
 
+/// Create a node from a Blazor RenderFragment.
+let fragment (frag: RenderFragment) =
+    Node.Fragment frag
+
 /// Create a fragment from a Blazor component.
 /// [category: Components]
 let comp<'T when 'T :> IComponent> attrs children =

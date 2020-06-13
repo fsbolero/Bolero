@@ -63,6 +63,8 @@ and Node =
     | Match of unionType: Type * value: obj * node: Node
     /// A list of similarly structured fragments.
     | ForEach of list<Node>
+    /// A Blazor fragment.
+    | Fragment of RenderFragment
 
     /// A single Blazor component, statically typed.
     static member BlazorComponent<'T when 'T :> IComponent>(attrs, children) =
