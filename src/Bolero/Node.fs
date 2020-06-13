@@ -21,9 +21,7 @@
 namespace Bolero
 
 open System
-#if !IS_DESIGNTIME
 open Microsoft.AspNetCore.Components
-#endif
 
 /// HTML attribute or Blazor component parameter.
 /// Use `Bolero.Html.attr` or `(=>)` to create attributes.
@@ -37,14 +35,12 @@ type Attr =
     | Key of obj
     /// [omit]
     | Classes of list<string>
-#if !IS_DESIGNTIME
     /// [omit]
     | ExplicitAttr of Func<Rendering.RenderTreeBuilder, int, obj, int>
     /// [omit]
     | FragmentAttr of string * ((Rendering.RenderTreeBuilder -> Node -> unit) -> obj)
     /// [omit]
     | Ref of Action<ElementReference>
-#endif
 
 /// HTML fragment.
 /// [category: HTML]
@@ -68,12 +64,6 @@ and Node =
     /// A list of similarly structured fragments.
     | ForEach of list<Node>
 
-// The type provider includes this file.
-// TPs fail if the TPDTC references an external type in a signature,
-// so the following needs to be excluded from the TP.
-// See https://github.com/fsprojects/FSharp.TypeProviders.SDK/issues/274
-#if !IS_DESIGNTIME
     /// A single Blazor component, statically typed.
     static member BlazorComponent<'T when 'T :> IComponent>(attrs, children) =
         Node.Component(typeof<'T>, attrs, children)
-#endif
