@@ -79,7 +79,7 @@ type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationServic
         member __.Authorize f = authorizeWith [AuthorizeAttribute()] f
         member __.AuthorizeWith authData f = authorizeWith authData f
 
-type internal RemotingService(basePath: PathString, ty: System.Type, handler: obj) as this =
+type internal RemotingService(basePath: PathString, ty: System.Type, handler: obj, configureSerialization: option<JsonSerializerOptions -> unit>) as this =
 
     let flags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
 
@@ -103,7 +103,9 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
     let methods = dict [for m in methodData -> m.Name, makeHandler m]
 
     let serOptions = JsonSerializerOptions()
-    do serOptions.Converters.Add(JsonFSharpConverter())
+    do match configureSerialization with
+        | None -> serOptions.Converters.Add(JsonFSharpConverter())
+        | Some f -> f serOptions
 
     member val ServerSideService = handler
 
@@ -162,49 +164,49 @@ type ServerRemotingExtensions =
             .AddTransient<IRemoteProvider, ServerRemoteProvider>()
             .AddHttpContextAccessor()
 
-    static member private AddRemotingImpl<'T when 'T : not struct>(this: IServiceCollection, basePath: 'T -> PathString, handler: IRemoteContext -> 'T) =
+    static member private AddRemotingImpl<'T when 'T : not struct>(this: IServiceCollection, basePath: 'T -> PathString, handler: IRemoteContext -> 'T, configureSerialization: option<JsonSerializerOptions -> unit>) =
         ServerRemotingExtensions.AddRemotingImpl(this, fun services ->
             let ctx = services.GetRequiredService<IRemoteContext>()
             let handler = handler ctx
             let basePath = basePath handler
-            RemotingService(basePath, typeof<'T>, handler))
+            RemotingService(basePath, typeof<'T>, handler, configureSerialization))
 
     /// Add a remote service at the given path.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: IRemoteContext -> 'T) =
-        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), handler)
+    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: IRemoteContext -> 'T, ?configureSerialization) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), handler, configureSerialization)
 
     /// Add a remote service at the given path.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: 'T) =
-        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), (fun _ -> handler))
+    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: 'T, ?configureSerialization) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), (fun _ -> handler), configureSerialization)
 
     /// Add a remote service at the given path.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: IRemoteContext -> 'T) =
-        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), handler)
+    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: IRemoteContext -> 'T, ?configureSerialization) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), handler, configureSerialization)
 
     /// Add a remote service at the given path.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: 'T) =
-        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), (fun _ -> handler))
+    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: 'T, ?configureSerialization) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), (fun _ -> handler), configureSerialization)
 
     /// Add a remote service.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: IRemoteContext -> 'T) =
-        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), handler)
+    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: IRemoteContext -> 'T, ?configureSerialization) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), handler, configureSerialization)
 
     /// Add a remote service.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: 'T) =
-        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), (fun _ -> handler))
+    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: 'T, ?configureSerialization) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), (fun _ -> handler), configureSerialization)
 
     /// Add a remote service using dependency injection.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteHandler>(this: IServiceCollection) =
+    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteHandler>(this: IServiceCollection, ?configureSerialization) =
         ServerRemotingExtensions.AddRemotingImpl(this.AddSingleton<'T>(), fun services ->
             let handler = services.GetRequiredService<'T>().Handler
-            RemotingService(PathString handler.BasePath, handler.GetType(), handler))
+            RemotingService(PathString handler.BasePath, handler.GetType(), handler, configureSerialization))
 
     [<Extension>]
     static member UseRemoting(this: IApplicationBuilder) =

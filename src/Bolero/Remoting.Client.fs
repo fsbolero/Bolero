@@ -49,12 +49,14 @@ type RemoteResponse<'resp> =
 
 /// Provides remote service implementations when running in WebAssembly.
 /// [omit]
-type ClientRemoteProvider(httpClientFactory: IHttpClientFactory) =
+type ClientRemoteProvider(httpClientFactory: IHttpClientFactory, configureSerialization: option<JsonSerializerOptions -> unit>) =
 
     let http = httpClientFactory.CreateClient("Bolero.Remoting.Client.ClientRemoteProvider")
 
     let serOptions = JsonSerializerOptions()
-    do serOptions.Converters.Add(JsonFSharpConverter())
+    do match configureSerialization with
+        | None -> serOptions.Converters.Add(JsonFSharpConverter())
+        | Some f -> f serOptions
 
     let normalizeBasePath (basePath: string) =
         let baseAddress = http.BaseAddress.OriginalString
@@ -124,12 +126,14 @@ type ClientRemotingExtensions =
 
     /// Enable support for remoting in ProgramComponent.
     [<Extension>]
-    static member AddRemoting(services: IServiceCollection, env: IWebAssemblyHostEnvironment) =
-        ClientRemotingExtensions.AddRemoting(services, fun httpClient ->
-            httpClient.BaseAddress <- Uri(env.BaseAddress))
+    static member AddRemoting(services: IServiceCollection, env: IWebAssemblyHostEnvironment, ?configureSerialization: JsonSerializerOptions -> unit) =
+        ClientRemotingExtensions.AddRemoting(services,
+            (fun httpClient -> httpClient.BaseAddress <- Uri(env.BaseAddress)),
+            ?configureSerialization = configureSerialization)
 
     /// Enable support for remoting in ProgramComponent with the given HttpClient configuration.
     [<Extension>]
-    static member AddRemoting(services: IServiceCollection, configureHttpClient: HttpClient -> unit) : IHttpClientBuilder =
-        services.TryAddSingleton<IRemoteProvider, ClientRemoteProvider>()
+    static member AddRemoting(services: IServiceCollection, configureHttpClient: HttpClient -> unit, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
+        services.TryAddSingleton<IRemoteProvider>(fun services ->
+            ClientRemoteProvider(services.GetRequiredService<IHttpClientFactory>(), configureSerialization) :> IRemoteProvider)
         services.AddHttpClient("Bolero.Remoting.Client.ClientRemoteProvider", configureHttpClient)
