@@ -28,6 +28,8 @@ open System.Net
 open System.Net.Http
 open System.Runtime.CompilerServices
 open System.Text
+open System.Text.Json
+open System.Text.Json.Serialization
 open Microsoft.AspNetCore.Components.WebAssembly.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.DependencyInjection.Extensions
@@ -51,6 +53,9 @@ type ClientRemoteProvider(httpClientFactory: IHttpClientFactory) =
 
     let http = httpClientFactory.CreateClient("Bolero.Remoting.Client.ClientRemoteProvider")
 
+    let serOptions = JsonSerializerOptions()
+    do serOptions.Converters.Add(JsonFSharpConverter())
+
     let normalizeBasePath (basePath: string) =
         let baseAddress = http.BaseAddress.OriginalString
         let sb = StringBuilder(baseAddress)
@@ -62,13 +67,7 @@ type ClientRemoteProvider(httpClientFactory: IHttpClientFactory) =
         sb.ToString()
 
     let send (method: HttpMethod) (requestUri: string) (content: obj) =
-        let content =
-            match content with
-            | null ->
-                Json.Raw.Stringify Json.Null
-            | content ->
-                Json.GetEncoder (content.GetType()) content
-                |> Json.Raw.Stringify
+        let content = JsonSerializer.Serialize(content, serOptions)
         new HttpRequestMessage(method, requestUri,
             Content = new StringContent(content, Encoding.UTF8, "application/json")
         )
@@ -80,8 +79,7 @@ type ClientRemoteProvider(httpClientFactory: IHttpClientFactory) =
         match resp.StatusCode with
         | HttpStatusCode.OK ->
             let! respBody = resp.Content.ReadAsStreamAsync() |> Async.AwaitTask
-            use reader = new StreamReader(respBody)
-            return Json.Read<'T> reader
+            return! JsonSerializer.DeserializeAsync<'T>(respBody, serOptions).AsTask() |> Async.AwaitTask
         | HttpStatusCode.Unauthorized ->
             return raise RemoteUnauthorizedException
         | _ ->

@@ -10,7 +10,7 @@
   <base href="/" />
 </head>
 <body>
-  <div id="main">@(await Html.RenderComponentAsync<Bolero.Test.Remoting.Main.MyApp>(BoleroHostConfig))</div>
+  <div id="main">@(await Html.RenderComponentAsync<Bolero.Tests.Remoting.Client.MyApp>(BoleroHostConfig))</div>
   <script src="_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"></script>
   @Html.RenderBoleroScript(BoleroHostConfig)
 </body>

@@ -24,6 +24,9 @@ open System
 open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
+open System.Text
+open System.Text.Json
+open System.Text.Json.Serialization
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
@@ -32,7 +35,6 @@ open Microsoft.Extensions.DependencyInjection
 open FSharp.Control.Tasks.V2
 open Bolero
 open Bolero.Remoting
-open System.Text
 
 /// [omit]
 type IRemoteHandler =
@@ -77,20 +79,17 @@ type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationServic
         member __.Authorize f = authorizeWith [AuthorizeAttribute()] f
         member __.AuthorizeWith authData f = authorizeWith authData f
 
-type internal RemotingService(basePath: PathString, ty: System.Type, handler: obj) =
+type internal RemotingService(basePath: PathString, ty: System.Type, handler: obj) as this =
 
-    let flags = BindingFlags.Public ||| BindingFlags.NonPublic
-    let staticFlags = flags ||| BindingFlags.Static
+    let flags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
 
     let makeHandler (method: RemoteMethodDefinition) =
         let meth = ty.GetProperty(method.Name).GetValue(handler)
         let output =
-            typeof<RemotingService>.GetMethod("InvokeForClientSide", staticFlags)
+            typeof<RemotingService>.GetMethod("InvokeForClientSide", flags)
                 .MakeGenericMethod(method.ArgumentType, method.ReturnType)
-        let decoder = Json.GetDecoder method.ArgumentType
-        let encoder = Json.GetEncoder method.ReturnType
         fun (ctx: HttpContext) ->
-            output.Invoke(null, [|decoder; encoder; meth; ctx|]) :?> Task
+            output.Invoke(this, [|meth; ctx|]) :?> Task
 
     let methodData =
         match RemotingExtensions.ExtractRemoteMethods ty with
@@ -103,18 +102,17 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
 
     let methods = dict [for m in methodData -> m.Name, makeHandler m]
 
+    let serOptions = JsonSerializerOptions()
+    do serOptions.Converters.Add(JsonFSharpConverter())
+
     member val ServerSideService = handler
 
-    static member private InvokeForClientSide<'req, 'resp>(decoder: Json.Decoder<obj>, encoder: Json.Encoder<obj>, func: 'req -> Async<'resp>, ctx: HttpContext) : Task =
+    member private _.InvokeForClientSide<'req, 'resp>(func: 'req -> Async<'resp>, ctx: HttpContext) : Task =
         task {
-            use reader = new StreamReader(ctx.Request.Body)
-            let! body = reader.ReadToEndAsync()
-            let arg = Json.Raw.Parse body |> decoder :?> 'req
+            let! arg = JsonSerializer.DeserializeAsync<'req>(ctx.Request.Body, serOptions).AsTask()
             try
                 let! x = func arg
-                let v = encoder x
-                let json = Json.Raw.Stringify v
-                return! ctx.Response.WriteAsync(json, Encoding.UTF8)
+                return! JsonSerializer.SerializeAsync<'resp>(ctx.Response.Body, x, serOptions)
             with RemoteUnauthorizedException ->
                 ctx.Response.StatusCode <- StatusCodes.Status401Unauthorized
                 // TODO: allow customizing based on what failed?
