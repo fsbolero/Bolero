@@ -161,8 +161,8 @@ let baseLinks =
             "/with-rest-array",                 WithRestArray [||]
             "/with-rest-array/1/foo",           WithRestArray [|(1, "foo")|]
             "/with-rest-array/1/foo/2/bar",     WithRestArray [|(1, "foo"); (2, "bar")|]
-            "/with-model",                      WithModel { Model = 0 }
-            "/with-model-args/42",              WithModelAndArgs(42, { Model = "" })
+            "/with-model",                      WithModel { Model = Unchecked.defaultof<_> }
+            "/with-model-args/42",              WithModelAndArgs(42, { Model = Unchecked.defaultof<_> })
         ]
         for link, page in innerlinks do
             yield "/with-union" + link,                     WithUnion page
@@ -186,9 +186,7 @@ let view model dispatch =
                 attr.value (router.Link page)
                 on.click (fun _ -> dispatch (SetPage page))
             ] [text url]
-        yield cond model.page <| fun x ->
-            let cls = pageClass x
-            span [attr.classes [cls]] [text cls]
+        yield span [attr.classes ["current-page"]] [textf "%A" model.page]
     ]
 
 type Test() =
