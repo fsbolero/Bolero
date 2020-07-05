@@ -9,7 +9,6 @@
     <Compile Include="Utility.fs" />
     <Compile Include="Startup.fs" />
     <Compile Include="Fixture.fs" />
-    <Compile Include="Tests\Json.fs" />
     <Compile Include="Tests\Html.fs" />
     <Compile Include="Tests\Templating.fs" />
     <Compile Include="Tests\Elmish.fs" />

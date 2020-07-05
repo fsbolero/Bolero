@@ -4,6 +4,7 @@ storage: none
 framework: netstandard2.0, netstandard2.1, netcoreapp3.1
 
 nuget FSharp.Core >= 4.5.2 lowest_matching: true, strategy: min
+nuget FSharp.SystemTextJson
 nuget HtmlAgilityPack >= 1.11
 nuget Elmish ~> 2.0
 nuget Microsoft.AspNetCore.Components.Authorization

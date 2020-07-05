@@ -28,6 +28,8 @@ open System.Net
 open System.Net.Http
 open System.Runtime.CompilerServices
 open System.Text
+open System.Text.Json
+open System.Text.Json.Serialization
 open Microsoft.AspNetCore.Components.WebAssembly.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.DependencyInjection.Extensions
@@ -47,9 +49,14 @@ type RemoteResponse<'resp> =
 
 /// Provides remote service implementations when running in WebAssembly.
 /// [omit]
-type ClientRemoteProvider(httpClientFactory: IHttpClientFactory) =
+type ClientRemoteProvider(httpClientFactory: IHttpClientFactory, configureSerialization: option<JsonSerializerOptions -> unit>) =
 
     let http = httpClientFactory.CreateClient("Bolero.Remoting.Client.ClientRemoteProvider")
+
+    let serOptions = JsonSerializerOptions()
+    do match configureSerialization with
+        | None -> serOptions.Converters.Add(JsonFSharpConverter())
+        | Some f -> f serOptions
 
     let normalizeBasePath (basePath: string) =
         let baseAddress = http.BaseAddress.OriginalString
@@ -62,13 +69,7 @@ type ClientRemoteProvider(httpClientFactory: IHttpClientFactory) =
         sb.ToString()
 
     let send (method: HttpMethod) (requestUri: string) (content: obj) =
-        let content =
-            match content with
-            | null ->
-                Json.Raw.Stringify Json.Null
-            | content ->
-                Json.GetEncoder (content.GetType()) content
-                |> Json.Raw.Stringify
+        let content = JsonSerializer.Serialize(content, serOptions)
         new HttpRequestMessage(method, requestUri,
             Content = new StringContent(content, Encoding.UTF8, "application/json")
         )
@@ -80,8 +81,7 @@ type ClientRemoteProvider(httpClientFactory: IHttpClientFactory) =
         match resp.StatusCode with
         | HttpStatusCode.OK ->
             let! respBody = resp.Content.ReadAsStreamAsync() |> Async.AwaitTask
-            use reader = new StreamReader(respBody)
-            return Json.Read<'T> reader
+            return! JsonSerializer.DeserializeAsync<'T>(respBody, serOptions).AsTask() |> Async.AwaitTask
         | HttpStatusCode.Unauthorized ->
             return raise RemoteUnauthorizedException
         | _ ->
@@ -126,12 +126,14 @@ type ClientRemotingExtensions =
 
     /// Enable support for remoting in ProgramComponent.
     [<Extension>]
-    static member AddRemoting(services: IServiceCollection, env: IWebAssemblyHostEnvironment) =
-        ClientRemotingExtensions.AddRemoting(services, fun httpClient ->
-            httpClient.BaseAddress <- Uri(env.BaseAddress))
+    static member AddRemoting(services: IServiceCollection, env: IWebAssemblyHostEnvironment, ?configureSerialization: JsonSerializerOptions -> unit) =
+        ClientRemotingExtensions.AddRemoting(services,
+            (fun httpClient -> httpClient.BaseAddress <- Uri(env.BaseAddress)),
+            ?configureSerialization = configureSerialization)
 
     /// Enable support for remoting in ProgramComponent with the given HttpClient configuration.
     [<Extension>]
-    static member AddRemoting(services: IServiceCollection, configureHttpClient: HttpClient -> unit) : IHttpClientBuilder =
-        services.TryAddSingleton<IRemoteProvider, ClientRemoteProvider>()
+    static member AddRemoting(services: IServiceCollection, configureHttpClient: HttpClient -> unit, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
+        services.TryAddSingleton<IRemoteProvider>(fun services ->
+            ClientRemoteProvider(services.GetRequiredService<IHttpClientFactory>(), configureSerialization) :> IRemoteProvider)
         services.AddHttpClient("Bolero.Remoting.Client.ClientRemoteProvider", configureHttpClient)

@@ -24,6 +24,9 @@ open System
 open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
+open System.Text
+open System.Text.Json
+open System.Text.Json.Serialization
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
@@ -32,7 +35,6 @@ open Microsoft.Extensions.DependencyInjection
 open FSharp.Control.Tasks.V2
 open Bolero
 open Bolero.Remoting
-open System.Text
 
 /// [omit]
 type IRemoteHandler =
@@ -77,20 +79,17 @@ type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationServic
         member __.Authorize f = authorizeWith [AuthorizeAttribute()] f
         member __.AuthorizeWith authData f = authorizeWith authData f
 
-type internal RemotingService(basePath: PathString, ty: System.Type, handler: obj) =
+type internal RemotingService(basePath: PathString, ty: System.Type, handler: obj, configureSerialization: option<JsonSerializerOptions -> unit>) as this =
 
-    let flags = BindingFlags.Public ||| BindingFlags.NonPublic
-    let staticFlags = flags ||| BindingFlags.Static
+    let flags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
 
     let makeHandler (method: RemoteMethodDefinition) =
         let meth = ty.GetProperty(method.Name).GetValue(handler)
         let output =
-            typeof<RemotingService>.GetMethod("InvokeForClientSide", staticFlags)
+            typeof<RemotingService>.GetMethod("InvokeForClientSide", flags)
                 .MakeGenericMethod(method.ArgumentType, method.ReturnType)
-        let decoder = Json.GetDecoder method.ArgumentType
-        let encoder = Json.GetEncoder method.ReturnType
         fun (ctx: HttpContext) ->
-            output.Invoke(null, [|decoder; encoder; meth; ctx|]) :?> Task
+            output.Invoke(this, [|meth; ctx|]) :?> Task
 
     let methodData =
         match RemotingExtensions.ExtractRemoteMethods ty with
@@ -103,18 +102,19 @@ type internal RemotingService(basePath: PathString, ty: System.Type, handler: ob
 
     let methods = dict [for m in methodData -> m.Name, makeHandler m]
 
+    let serOptions = JsonSerializerOptions()
+    do match configureSerialization with
+        | None -> serOptions.Converters.Add(JsonFSharpConverter())
+        | Some f -> f serOptions
+
     member val ServerSideService = handler
 
-    static member private InvokeForClientSide<'req, 'resp>(decoder: Json.Decoder<obj>, encoder: Json.Encoder<obj>, func: 'req -> Async<'resp>, ctx: HttpContext) : Task =
+    member private _.InvokeForClientSide<'req, 'resp>(func: 'req -> Async<'resp>, ctx: HttpContext) : Task =
         task {
-            use reader = new StreamReader(ctx.Request.Body)
-            let! body = reader.ReadToEndAsync()
-            let arg = Json.Raw.Parse body |> decoder :?> 'req
+            let! arg = JsonSerializer.DeserializeAsync<'req>(ctx.Request.Body, serOptions).AsTask()
             try
                 let! x = func arg
-                let v = encoder x
-                let json = Json.Raw.Stringify v
-                return! ctx.Response.WriteAsync(json, Encoding.UTF8)
+                return! JsonSerializer.SerializeAsync<'resp>(ctx.Response.Body, x, serOptions)
             with RemoteUnauthorizedException ->
                 ctx.Response.StatusCode <- StatusCodes.Status401Unauthorized
                 // TODO: allow customizing based on what failed?
@@ -164,49 +164,49 @@ type ServerRemotingExtensions =
             .AddTransient<IRemoteProvider, ServerRemoteProvider>()
             .AddHttpContextAccessor()
 
-    static member private AddRemotingImpl<'T when 'T : not struct>(this: IServiceCollection, basePath: 'T -> PathString, handler: IRemoteContext -> 'T) =
+    static member private AddRemotingImpl<'T when 'T : not struct>(this: IServiceCollection, basePath: 'T -> PathString, handler: IRemoteContext -> 'T, configureSerialization: option<JsonSerializerOptions -> unit>) =
         ServerRemotingExtensions.AddRemotingImpl(this, fun services ->
             let ctx = services.GetRequiredService<IRemoteContext>()
             let handler = handler ctx
             let basePath = basePath handler
-            RemotingService(basePath, typeof<'T>, handler))
+            RemotingService(basePath, typeof<'T>, handler, configureSerialization))
 
     /// Add a remote service at the given path.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: IRemoteContext -> 'T) =
-        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), handler)
+    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: IRemoteContext -> 'T, ?configureSerialization) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), handler, configureSerialization)
 
     /// Add a remote service at the given path.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: 'T) =
-        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), (fun _ -> handler))
+    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: 'T, ?configureSerialization) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), (fun _ -> handler), configureSerialization)
 
     /// Add a remote service at the given path.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: IRemoteContext -> 'T) =
-        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), handler)
+    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: IRemoteContext -> 'T, ?configureSerialization) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), handler, configureSerialization)
 
     /// Add a remote service at the given path.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: 'T) =
-        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), (fun _ -> handler))
+    static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: 'T, ?configureSerialization) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), (fun _ -> handler), configureSerialization)
 
     /// Add a remote service.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: IRemoteContext -> 'T) =
-        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), handler)
+    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: IRemoteContext -> 'T, ?configureSerialization) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), handler, configureSerialization)
 
     /// Add a remote service.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: 'T) =
-        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), (fun _ -> handler))
+    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: 'T, ?configureSerialization) =
+        ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), (fun _ -> handler), configureSerialization)
 
     /// Add a remote service using dependency injection.
     [<Extension>]
-    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteHandler>(this: IServiceCollection) =
+    static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteHandler>(this: IServiceCollection, ?configureSerialization) =
         ServerRemotingExtensions.AddRemotingImpl(this.AddSingleton<'T>(), fun services ->
             let handler = services.GetRequiredService<'T>().Handler
-            RemotingService(PathString handler.BasePath, handler.GetType(), handler))
+            RemotingService(PathString handler.BasePath, handler.GetType(), handler, configureSerialization))
 
     [<Extension>]
     static member UseRemoting(this: IApplicationBuilder) =

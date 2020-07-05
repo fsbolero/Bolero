@@ -1,3 +1,4 @@
 FSharp.Core
 TaskBuilder.fs
 Nerdbank.GitVersioning
+FSharp.SystemTextJson
