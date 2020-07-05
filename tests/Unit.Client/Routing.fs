@@ -133,6 +133,7 @@ let baseLinks =
             "/no-arg",                          NoArg
             "/with-arg/foo",                    WithArg "foo"
             "/with-arg/bar",                    WithArg "bar"
+            "/with-arg/%E6%97%A5%E6%9C%AC%E8%AA%9E", WithArg "日本語"
             "/with-arg/",                       WithArg ""
             "/with-args/foo/1",                 WithArgs("foo", 1)
             "/with-args/bar/2",                 WithArgs("bar", 2)

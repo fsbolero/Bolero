@@ -24,9 +24,10 @@ namespace Bolero
 
 open System
 open System.Collections.Generic
+open System.Net
 open System.Runtime.CompilerServices
-open FSharp.Reflection
 open System.Runtime.InteropServices
+open FSharp.Reflection
 
 /// A router that binds page navigation with Elmish.
 /// [category: Routing]
@@ -185,8 +186,8 @@ module private RouterImpl =
         typeof<string>, {
             parse = function
                 | [] -> None
-                | x :: rest -> Some (box x, rest)
-            write = unbox<string> >> List.singleton
+                | x :: rest -> Some (box (WebUtility.UrlDecode x), rest)
+            write = fun x -> [WebUtility.UrlEncode(unbox x)]
         }
         typeof<bool>, {
             parse = defaultBaseTypeParser<bool>
