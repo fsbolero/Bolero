@@ -1,5 +1,6 @@
 namespace Bolero.Tests.Web
 
+open System.Text.RegularExpressions
 open FSharp.Reflection
 open NUnit.Framework
 open OpenQA.Selenium
@@ -15,33 +16,27 @@ module Routing =
     let elt = NodeFixture(By.Id "test-fixture-routing")
 
     let links =
+        let re = Regex("\s+")
         Client.Routing.links
         |> List.map (fun (url, page) ->
             let cls = Client.Routing.pageClass page
-            TestCaseData(cls, url, page).SetArgDisplayNames(
+            let print = re.Replace(sprintf "%A" page, " ")
+            TestCaseData(cls, url, page, print).SetArgDisplayNames(
                 (string page)
                     // Replace parentheses with unicode ones for nicer display in VS test explorer
                     .Replace("(", "❨")
                     .Replace(")", "❩")))
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
-    let ``Click link``(linkCls: string, url: string, page: Client.Routing.Page) =
+    let ``Click link``(linkCls: string, url: string, page: Client.Routing.Page, print: string) =
         elt.ByClass("link-" + linkCls).Click()
-        let resCls = Client.Routing.pageClass page
-        let res =
-            try Some <| elt.Wait(fun () -> elt.ByClass(resCls))
-            with :? WebDriverTimeoutException -> None
-        res |> Option.iter (fun res -> test <@ res.Text = resCls @>)
+        elt.Eventually <@ elt.ByClass("current-page").Text = print @>
         test <@ WebFixture.Driver.Url = WebFixture.Url + url @>
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
-    let ``Set by model``(linkCls: string, url: string, page: Client.Routing.Page) =
+    let ``Set by model``(linkCls: string, url: string, page: Client.Routing.Page, print: string) =
         elt.ByClass("btn-" + linkCls).Click()
-        let resCls = Client.Routing.pageClass page
-        let res =
-            try Some <| elt.Wait(fun () -> elt.ByClass(resCls))
-            with :? WebDriverTimeoutException -> None
-        res |> Option.iter (fun res -> test <@ res.Text = resCls @>)
+        elt.Eventually <@ elt.ByClass("current-page").Text = print @>
         test <@ WebFixture.Driver.Url = WebFixture.Url + url @>
 
     let failingRouter<'T> (expectedError: UnionCaseInfo[] -> InvalidRouterKind) =
