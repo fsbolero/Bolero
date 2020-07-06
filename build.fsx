@@ -39,7 +39,10 @@ let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
     if BuildServer.buildServer = BuildServer.LocalBuild then
         let p = "Bolero." + v + if v.Contains("-") then ".local." else "-local."
         let currentVer =
-            Directory.EnumerateFiles ("build", p + "*")
+            if Directory.Exists "build" then
+                Directory.EnumerateFiles ("build", p + "*")
+            else
+                Seq.empty
             |> Seq.choose (fun dir ->
                 let n = Path.GetFileName dir
                 let v = n.Substring(p.Length, n.Length - p.Length - ".nupkg".Length)
