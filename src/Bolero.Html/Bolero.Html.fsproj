@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <RootNamespace>Bolero</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Html.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Bolero\Bolero.fsproj" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

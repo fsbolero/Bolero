@@ -98,7 +98,7 @@ let runTags filename apply =
 
 Target.description "Generate HTML tags and attributes from CSV"
 Target.create "tags" (fun _ ->
-    runTags "src/Bolero/Html.fs" (
+    runTags "src/Bolero.Html/Html.fs" (
         replace (Tags.GetSample().Rows) "TAGS" (fun s tag ->
             let esc = escapeDashes tag.Name
             let ident = if tag.NeedsEscape then "``" + esc + "``" else esc
@@ -106,7 +106,7 @@ Target.create "tags" (fun _ ->
             let childrenVal = if tag.CanHaveChildren then "children" else "[]"
             s.AppendLine(sprintf """/// Create an HTML `<%s>` element.""" tag.Name)
              .AppendLine(        """/// [category: HTML tag names]""")
-             .AppendLine(sprintf """let %s (attrs: list<Attr>)%s : Node =""" ident childrenArg)
+             .AppendLine(sprintf """let inline %s (attrs: list<Attr>)%s : Node =""" ident childrenArg)
              .AppendLine(sprintf """    elt "%s" attrs %s""" tag.Name childrenVal)
              .AppendLine()
         )
@@ -117,27 +117,27 @@ Target.create "tags" (fun _ ->
                 elif attr.NeedsEscape then "``" + esc + "``"
                 else esc
             s.AppendLine(sprintf """    /// Create an HTML `%s` attribute.""" attr.Name)
-             .AppendLine(sprintf """    let %s (v: obj) : Attr = "%s" => v""" ident attr.Name)
+             .AppendLine(sprintf """    let inline %s (v: obj) : Attr = "%s" => v""" ident attr.Name)
              .AppendLine()
         )
         >> replace (Events.GetSample().Rows) "EVENTS" (fun s event ->
             let esc = escapeDashes event.Name
             s.AppendLine(sprintf """    /// Create a handler for HTML event `%s`.""" event.Name)
-             .AppendLine(sprintf """    let %s (callback: %sEventArgs -> unit) : Attr =""" esc event.Type)
-             .AppendLine(sprintf """        event "%s" callback""" esc)
+             .AppendLine(sprintf """    let inline %s (callback: %sEventArgs -> unit) : Attr =""" esc event.Type)
+             .AppendLine(sprintf """        attr.callback<%sEventArgs> ("on%s") callback""" event.Type esc)
              .AppendLine()
         )
         >> replace (Events.GetSample().Rows) "ASYNCEVENTS" (fun s event ->
             let esc = escapeDashes event.Name
             s.AppendLine(sprintf """        /// Create an asynchronous handler for HTML event `%s`.""" event.Name)
-             .AppendLine(sprintf """        let %s (callback: %sEventArgs -> Async<unit>) : Attr =""" esc event.Type)
-             .AppendLine(sprintf """            event "%s" callback""" esc)
+             .AppendLine(sprintf """        let inline %s (callback: %sEventArgs -> Async<unit>) : Attr =""" esc event.Type)
+             .AppendLine(sprintf """            attr.async.callback<%sEventArgs> "on%s" callback""" event.Type esc)
         )
         >> replace (Events.GetSample().Rows) "TASKEVENTS" (fun s event ->
             let esc = escapeDashes event.Name
             s.AppendLine(sprintf """        /// Create an asynchronous handler for HTML event `%s`.""" event.Name)
-             .AppendLine(sprintf """        let %s (callback: %sEventArgs -> Task) : Attr =""" esc event.Type)
-             .AppendLine(sprintf """            event "%s" callback""" esc)
+             .AppendLine(sprintf """        let inline %s (callback: %sEventArgs -> Task) : Attr =""" esc event.Type)
+             .AppendLine(sprintf """            attr.task.callback<%sEventArgs> "on%s" callback""" event.Type esc)
         )
     )
     runTags "src/Bolero.Templating.Provider/Parsing.fs" (

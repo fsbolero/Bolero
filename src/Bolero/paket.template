@@ -10,8 +10,10 @@ files
     bin/Release/netstandard2.1/HtmlAgilityPack.dll ==> lib/netstandard2.1
     bin/Release/netstandard2.1/Microsoft.AspNetCore.Components.dll ==> lib/netstandard2.1
     bin/Release/netstandard2.1/Microsoft.AspNetCore.Components.Web.dll ==> lib/netstandard2.1
+    ../Bolero.Html/bin/Release/netstandard2.1/Bolero.Html.dll ==> lib/netstandard2.1
 excludeddependencies
     nerdbank.gitversioning
 include-pdbs true
 references
     Bolero.dll
+    Bolero.Html.dll

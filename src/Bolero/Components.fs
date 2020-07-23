@@ -28,6 +28,7 @@ open Microsoft.AspNetCore.Components.Routing
 open Microsoft.JSInterop
 open Elmish
 open Bolero.Render
+open System.Runtime.CompilerServices
 
 /// Base class for components built from `Bolero.Node`s.
 /// [category: Components]
