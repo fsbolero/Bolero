@@ -137,16 +137,16 @@ type SecretPw = Template<"""<div>
                                 <input type="number" bind="${Value}" />
                             </div>""">
 
-let btnRef = ElementReferenceBinder()
+let btnRef = HtmlRef()
 
 let viewForm (js: IJSRuntime) model dispatch =
     div [] [
         input [attr.value model.input; on.change (fun e -> dispatch (SetInput (unbox e.Value)))]
         input [
-            attr.bindRef btnRef
+            attr.ref btnRef
             attr.``type`` "submit"
             on.click (fun _ ->
-                js.InvokeAsync("console.log", btnRef.Ref) |> ignore
+                js.InvokeAsync("console.log", btnRef.Value) |> ignore
                 dispatch Submit
             )
             attr.style (if model.input = "" then "color:gray;" else null)

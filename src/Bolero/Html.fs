@@ -802,13 +802,14 @@ module attr =
     let inline classes (classes: list<string>) : Attr =
         Attr.Classes classes
 
-    /// Bind an element reference.
-    let inline ref (f: ElementReference -> unit) =
-        Attr.Ref (Action<ElementReference>(f))
+    /// Bind an element or component reference.
+    let inline ref (r: Ref<'T>) =
+        Attr.Ref r
 
     /// Bind an element reference.
-    let bindRef (refBinder: ElementReferenceBinder) =
-        ref refBinder.SetRef
+    [<Obsolete "Use attr.ref.">]
+    let inline bindRef (r: Ref<'T>) =
+        Attr.Ref r
 
     let key (k: obj) =
         Attr.Key k

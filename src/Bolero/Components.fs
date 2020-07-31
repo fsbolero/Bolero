@@ -221,15 +221,31 @@ and [<AbstractClass>]
             EventHandler<_> this.OnLocationChanged
             |> this.NavigationManager.LocationChanged.RemoveHandler
 
+/// A utility to bind a reference to a rendered component.
+/// See https://fsbolero.io/docs/Blazor#html-element-references
+/// [category: HTML]
+type Ref<'T>() =
+    inherit Ref()
+
+    /// The element or component reference.
+    member val Value = Unchecked.defaultof<'T> with get, set
+
+    override this.Render(builder, sequence) =
+        builder.AddComponentReferenceCapture(sequence, fun v -> this.Value <- unbox<'T> v)
+        sequence + 1
+
 /// A utility to bind a reference to a rendered HTML element.
 /// See https://fsbolero.io/docs/Blazor#html-element-references
 /// [category: HTML]
-type ElementReferenceBinder() =
+type HtmlRef() =
+    inherit Ref<ElementReference>()
 
-    let mutable ref = Unchecked.defaultof<ElementReference>
+    override this.Render(builder, sequence) =
+        builder.AddElementReferenceCapture(sequence, fun v -> this.Value <- v)
+        sequence + 1
 
-    /// The element reference.
-    /// This object must be bound using `Bolero.Html.attr.bindRef` before using this property.
-    member _.Ref = ref
-
-    member internal _.SetRef(r) = ref <- r
+/// A utility to bind a reference to a rendered HTML element.
+/// See https://fsbolero.io/docs/Blazor#html-element-references
+/// [category: HTML]
+[<Obsolete "Use HtmlRef.">]
+type ElementReferenceBinder = HtmlRef

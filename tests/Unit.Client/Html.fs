@@ -145,28 +145,32 @@ type Binds() =
 type BindElementRef() =
     inherit Component()
 
-    let mutable elt1 = Unchecked.defaultof<ElementReference>
-    let elt2 = ElementReferenceBinder()
+    let elt = HtmlRef()
 
     [<Inject>]
     member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
 
     override this.Render() =
+        button [
+            attr.``class`` "element-ref"
+            attr.ref elt
+            on.task.event "click" (fun _ ->
+                this.JSRuntime.InvokeVoidAsync("setContent", elt.Value, "ElementRef is bound").AsTask())
+        ] [text "Click me"]
+
+type BindComponentRef() =
+    inherit Component()
+
+    let cmp = Ref<NavLink>()
+    let mutable txt = "Click me"
+
+    override _.Render() =
         concat [
+            navLink NavLinkMatch.All [attr.ref cmp; "ActiveClass" => "component-ref-is-bound"] []
             button [
-                attr.``class`` "element-ref"
-                attr.ref (fun r -> elt1 <- r)
-                on.task.event "click" (fun _ ->
-                    this.JSRuntime.InvokeVoidAsync("setContent", elt1, "ElementRef 1 is bound").AsTask()
-                )
-            ] [text "Click me"]
-            button [
-                attr.``class`` "element-ref-binder"
-                attr.bindRef elt2
-                on.async.event "click" (fun _ -> async {
-                    do! this.JSRuntime.InvokeAsync("setContent", elt2.Ref, "ElementRef 2 is bound").AsTask() |> Async.AwaitTask
-                })
-            ] [text "Click me"]
+                attr.``class`` "component-ref"
+                on.event "click" (fun _ -> txt <- cmp.Value.ActiveClass)
+            ] [text txt]
         ]
 
 let Tests() =
@@ -194,4 +198,5 @@ let Tests() =
         comp<BoleroComponent> ["Ident" => "bolero-component"] []
         comp<Binds> [] []
         comp<BindElementRef> [] []
+        comp<BindComponentRef> [] []
     ]

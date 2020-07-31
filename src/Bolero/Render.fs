@@ -200,9 +200,7 @@ and renderAttrs currentComp (builder: RenderTreeBuilder) matchCache sequence att
     | ValueSome k -> builder.SetKey(k)
     match ref with
     | ValueNone -> sequence
-    | ValueSome r ->
-        builder.AddElementReferenceCapture(sequence, r)
-        sequence + 1
+    | ValueSome r -> r.Render(builder, sequence)
 
 let RenderNode currentComp builder (matchCache: Dictionary<Type, _>) node =
     let getMatchParams (ty: Type) =

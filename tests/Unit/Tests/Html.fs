@@ -183,9 +183,11 @@ module Html =
         let btn = elt.ByClass("element-ref")
         testNotNull <@ btn @>
         btn.Click()
-        elt.Eventually <@ btn.Text = "ElementRef 1 is bound" @>
+        elt.Eventually <@ btn.Text = "ElementRef is bound" @>
 
-        let btn = elt.ByClass("element-ref-binder")
+    [<Test>]
+    let ComponentRefBinder() =
+        let btn = elt.ByClass("component-ref")
         testNotNull <@ btn @>
         btn.Click()
-        elt.Eventually <@ btn.Text = "ElementRef 2 is bound" @>
+        elt.Eventually <@ btn.Text = "component-ref-is-bound" @>
