@@ -40,7 +40,7 @@ type Attr =
     /// [omit]
     | FragmentAttr of string * ((Rendering.RenderTreeBuilder -> Node -> unit) -> obj)
     /// [omit]
-    | Ref of Action<ElementReference>
+    | Ref of Ref
 
 /// HTML fragment.
 /// [category: HTML]
@@ -69,3 +69,7 @@ and Node =
     /// A single Blazor component, statically typed.
     static member BlazorComponent<'T when 'T :> IComponent>(attrs, children) =
         Node.Component(typeof<'T>, attrs, children)
+
+and [<AbstractClass>] Ref() =
+    /// [omit]
+    abstract Render : Rendering.RenderTreeBuilder * int -> int
