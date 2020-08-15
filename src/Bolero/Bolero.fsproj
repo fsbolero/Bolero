@@ -15,7 +15,6 @@
     <Compile Include="Remoting.Client.fs" />
     <Compile Include="Cmd.fs" />
     <Compile Include="Program.fs" />
-    <Compile Include="Html.fs" />
     <None Include="paket.references" />
     <None Include="paket.template" />
   </ItemGroup>

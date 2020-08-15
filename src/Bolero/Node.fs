@@ -73,3 +73,9 @@ and Node =
 and [<AbstractClass>] Ref() =
     /// [omit]
     abstract Render : Rendering.RenderTreeBuilder * int -> int
+
+module Html =
+
+    /// Create an empty HTML fragment.
+    /// [category: HTML elements]
+    let empty = Empty
