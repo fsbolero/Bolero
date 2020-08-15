@@ -11,6 +11,8 @@
 </head>
 <body>
   <div id="main">@(await Html.RenderComponentAsync<Bolero.Test.Client.Main.MyApp>(BoleroHostConfig))</div>
+  <hr />
+  <a href="/external-link">Non-routed link (this link must point to a separate static page)</a>
   @Html.RenderBoleroScript(BoleroHostConfig)
 </body>
 </html>

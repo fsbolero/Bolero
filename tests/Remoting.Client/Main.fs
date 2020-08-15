@@ -145,7 +145,7 @@ let router : Router<Page, Model, Message> =
             | Custom i -> sprintf "/custom/%i" i
         setRoute = fun s ->
             match s.Trim('/').Split('/') with
-            | [||] -> Some (SetPage Home)
+            | [|""|] -> Some (SetPage Home)
             | [|"custom"; i|] -> Some (SetPage (Custom (int i)))
             | _ -> None
     }

@@ -20,6 +20,8 @@
 
 namespace Bolero.Test.Server
 
+open System
+open System.Text
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
@@ -41,6 +43,10 @@ type Startup() =
             .UseRouting()
             .UseBlazorFrameworkFiles()
             .UseEndpoints(fun endpoints ->
+                endpoints.MapGet("/external-link", fun ctx ->
+                    let body = "This is a static non-Bolero page" |> Encoding.UTF8.GetBytes
+                    ctx.Response.Body.WriteAsync(ReadOnlyMemory body).AsTask()
+                ) |> ignore
                 endpoints.MapBlazorHub() |> ignore
                 endpoints.MapFallbackToPage("/_Host") |> ignore)
         |> ignore

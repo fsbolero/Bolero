@@ -25,10 +25,10 @@ open System.Collections.Generic
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Routing
+open Microsoft.Extensions.Logging
 open Microsoft.JSInterop
 open Elmish
 open Bolero.Render
-open System.Runtime.CompilerServices
 
 /// Base class for components built from `Bolero.Node`s.
 /// [category: Components]
@@ -130,6 +130,8 @@ and [<AbstractClass>]
     /// [omit]
     [<Inject>]
     member val NavigationInterception = Unchecked.defaultof<INavigationInterception> with get, set
+    [<Inject>]
+    member val private Log = Unchecked.defaultof<ILogger<ProgramComponent<'model, 'msg>>> with get, set
 
     /// The component's dispatch method.
     /// This property is initialized during the component's OnInitialized phase.
@@ -146,8 +148,15 @@ and [<AbstractClass>]
     member private this.OnLocationChanged (_: obj) (e: LocationChangedEventArgs) =
         this.Router |> Option.iter (fun router ->
             let uri = this.NavigationManager.ToBaseRelativePath(e.Location)
-            let route = router.SetRoute uri
-            Option.iter dispatch route)
+            match router.SetRoute uri with
+            | Some route -> dispatch route
+            | None ->
+                // Based on https://github.com/dotnet/aspnetcore/blob/a9026f1e0ff2000eaf918aa0ec07f8d701f80dd6/src/Components/Components/src/Routing/Router.cs#L192-L205
+                if e.IsNavigationIntercepted then
+                    this.Log.LogInformation("Navigating to external address: {0}", e.Location)
+                    this.NavigationManager.NavigateTo(e.Location, forceLoad = true)
+                else
+                    this.Log.LogInformation("No route found for this path: {0}", uri))
 
     member internal this.GetCurrentUri() =
         let uri = this.NavigationManager.Uri
