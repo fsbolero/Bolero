@@ -2,8 +2,8 @@ STORAGE: NONE
 RESTRICTION: || (== netcoreapp3.1) (== netstandard2.0) (== netstandard2.1)
 NUGET
   remote: https://api.nuget.org/v3/index.json
-    Elmish (2.0.3)
-      FSharp.Core (>= 4.5.2)
+    Elmish (3.1)
+      FSharp.Core (>= 4.6.2)
     FsCheck (2.14.2)
       FSharp.Core (>= 4.2.3)
     FsCheck.NUnit (2.14.2)
@@ -639,8 +639,8 @@ NUGET
       FSharp.Core (>= 4.2.3)
 GITHUB
   remote: fsprojects/FSharp.TypeProviders.SDK
-    src/ProvidedTypes.fs (b45779c1571b54a2bc6bafa12690a8d9763150d1)
-    src/ProvidedTypes.fsi (b45779c1571b54a2bc6bafa12690a8d9763150d1)
+    src/ProvidedTypes.fs (579c6474805c99be5a764a9521e3a59fd28e9d7a)
+    src/ProvidedTypes.fsi (579c6474805c99be5a764a9521e3a59fd28e9d7a)
 GROUP fake
 STORAGE: NONE
 RESTRICTION: == netstandard2.0

@@ -117,6 +117,7 @@ and [<AbstractClass>]
     let mutable navigationInterceptionEnabled = false
     let mutable view = Node.Empty
     let mutable dispatch = ignore<'msg>
+    let mutable update = fun _ x -> x, Cmd.none
 
     /// [omit]
     [<Inject>]
@@ -170,7 +171,7 @@ and [<AbstractClass>]
         base.StateHasChanged()
 
     member private this.ForceSetState(program, model, dispatch) =
-        view <- program.view model dispatch
+        view <- Program.view program model dispatch
         oldModel <- model
         this.InvokeAsync(this.StateHasChanged) |> ignore
         this.Router |> Option.iter (fun router ->
@@ -192,13 +193,16 @@ and [<AbstractClass>]
         let program = this.Program
         let setDispatch d =
             dispatch <- d
-        { program with
-            setState = fun model dispatch ->
-                this.SetState(program, model, dispatch)
-            init = fun arg ->
-                let model, cmd = program.init arg
-                model, setDispatch :: cmd
-        }
+        program
+        |> Program.map
+            (fun init arg ->
+                let model, cmd = init arg
+                model, setDispatch :: cmd)
+            (fun u -> update <- u; u)
+            id
+            (fun _ model dispatch ->
+                this.SetState(program, model, dispatch))
+            id
         |> Program.runWith this
 
     member internal this.InitRouter
@@ -212,7 +216,7 @@ and [<AbstractClass>]
         |> this.NavigationManager.LocationChanged.AddHandler
         match r.SetRoute (this.GetCurrentUri()) with
         | Some msg ->
-            program.update msg initModel
+            update msg initModel
         | None ->
             initModel, []
 
