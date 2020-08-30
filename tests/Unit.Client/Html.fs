@@ -166,7 +166,8 @@ type BindComponentRef() =
 
     override _.Render() =
         concat [
-            navLink NavLinkMatch.All [attr.ref cmp; "ActiveClass" => "component-ref-is-bound"] []
+            navLink NavLinkMatch.All [attr.ref cmp; "ActiveClass" => "component-ref-is-bound"; attr.``class`` "nav-link" ] [
+                 text "Home" ]
             button [
                 attr.``class`` "component-ref"
                 on.event "click" (fun _ -> txt <- cmp.Value.ActiveClass)

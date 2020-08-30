@@ -191,3 +191,8 @@ module Html =
         testNotNull <@ btn @>
         btn.Click()
         elt.Eventually <@ btn.Text = "component-ref-is-bound" @>
+
+    [<Test>]
+    let ComponentRefBinderRendersChildren() =
+        let nav = elt.ByClass("nav-link")
+        test <@ nav.Text = "Home" @>
