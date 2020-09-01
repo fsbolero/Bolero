@@ -102,25 +102,25 @@ let Update (myApi: MyApi) msg model =
         { model with currentValue = v }, []
     | RefreshItems ->
         model,
-        Cmd.ofAsync myApi.getItems () ItemsRefreshed Exn
+        Cmd.OfAsync.either myApi.getItems () ItemsRefreshed Exn
     | AddItem ->
         model,
-        Cmd.ofAsync myApi.setItem (model.currentKey, model.currentValue)
+        Cmd.OfAsync.either myApi.setItem (model.currentKey, model.currentValue)
             (fun () -> RefreshItems) Exn
     | RemoveItem k ->
         model,
-        Cmd.ofAsync myApi.removeItem k
+        Cmd.OfAsync.either myApi.removeItem k
             (fun () -> RefreshItems) Exn
     | ItemsRefreshed items ->
         { model with items = items; lastError = None }, []
     | GetLogin ->
-        model, Cmd.ofAuthorized myApi.getLogin () LoggedIn Exn
+        model, Cmd.OfAuthorized.either myApi.getLogin () LoggedIn Exn
     | SetLoginInput s ->
         { model with loginInput = s }, []
     | Login ->
-        model, Cmd.ofAsync myApi.login model.loginInput (fun _ -> GetLogin) Exn
+        model, Cmd.OfAsync.either myApi.login model.loginInput (fun _ -> GetLogin) Exn
     | Logout ->
-        model, Cmd.ofAsync myApi.logout () (fun () -> LoggedOut) Exn
+        model, Cmd.OfAsync.either myApi.logout () (fun () -> LoggedOut) Exn
     | LoggedIn res ->
         let error = if res.IsNone then Some "Failed to retrieve login: user not authenticated" else None
         { model with currentLogin = res; lastError = error }, []
@@ -129,7 +129,7 @@ let Update (myApi: MyApi) msg model =
     | SetAuthDoubleInput i ->
         { model with authDoubleInput = i }, []
     | SendAuthDouble ->
-        model, Cmd.ofAsync myApi.authDouble model.authDoubleInput RecvAuthDouble Exn
+        model, Cmd.OfAsync.either myApi.authDouble model.authDoubleInput RecvAuthDouble Exn
     | RecvAuthDouble v ->
         { model with authDoubleResult = string v }, []
     | Exn RemoteUnauthorizedException ->
