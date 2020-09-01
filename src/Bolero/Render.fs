@@ -106,6 +106,11 @@ and RenderFragment(f: RenderTreeBuilder -> unit) =
         w.ToString()
 #endif
 
+let renderRef builder sequence (ref: voption<Ref>) =
+    match ref with
+    | ValueNone -> sequence
+    | ValueSome r -> r.Render(builder, sequence)
+
 /// Render `node` into `builder` at `sequence` number.
 let rec renderNode (currentComp: obj) (builder: RenderTreeBuilder) (matchCache: Type -> int * (obj -> int)) sequence node =
     match node with
@@ -135,14 +140,15 @@ let rec renderNode (currentComp: obj) (builder: RenderTreeBuilder) (matchCache: 
     | Elt (name, attrs, children) ->
         builder.OpenElement(sequence, name)
         let sequence = sequence + 1
-        let sequence = renderAttrs currentComp builder matchCache sequence attrs
+        let sequence, ref = renderAttrs currentComp builder matchCache sequence attrs
+        let sequence = renderRef builder sequence ref
         let sequence = List.fold (renderNode currentComp builder matchCache) sequence children
         builder.CloseElement()
         sequence
     | Component (comp, attrs, children) ->
         builder.OpenComponent(sequence, comp)
         let sequence = sequence + 1
-        let sequence = renderAttrs currentComp builder matchCache sequence attrs
+        let sequence, ref = renderAttrs currentComp builder matchCache sequence attrs
         let hasChildren = not (List.isEmpty children)
         if hasChildren then
             let frag = RenderFragment(fun builder ->
@@ -150,8 +156,10 @@ let rec renderNode (currentComp: obj) (builder: RenderTreeBuilder) (matchCache: 
                     List.fold (renderNode currentComp builder matchCache) 0 children
                     |> ignore)))
             builder.AddAttribute(sequence, "ChildContent", frag)
+        let sequence = sequence + (if hasChildren then 2 else 0)
+        let sequence = renderRef builder sequence ref
         builder.CloseComponent()
-        sequence + (if hasChildren then 2 else 0)
+        sequence
     | Fragment frag ->
         builder.AddContent(sequence, frag)
         sequence + 1
@@ -198,9 +206,8 @@ and renderAttrs currentComp (builder: RenderTreeBuilder) matchCache sequence att
     match key with
     | ValueNone -> ()
     | ValueSome k -> builder.SetKey(k)
-    match ref with
-    | ValueNone -> sequence
-    | ValueSome r -> r.Render(builder, sequence)
+
+    (sequence, ref)
 
 let RenderNode currentComp builder (matchCache: Dictionary<Type, _>) node =
     let getMatchParams (ty: Type) =
