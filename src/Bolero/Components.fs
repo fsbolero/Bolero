@@ -84,7 +84,7 @@ type ElmishComponent<'model, 'msg>() =
     abstract View : 'model -> Dispatch<'msg> -> Node
 
     override this.ShouldRender() =
-        base.ShouldRender(this.OldModel, this.Model)
+        this.ShouldRender(this.OldModel, this.Model)
 
     override this.Render() =
         this.OldModel <- this.Model
