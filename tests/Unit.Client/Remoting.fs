@@ -90,19 +90,19 @@ let update api msg model =
     | SetKey x -> { model with key = x }, []
     | SetValue x -> { model with value = x }, []
     | Received x -> { model with received = x }, []
-    | Add -> model, Cmd.ofAsync api.setValue (model.key, model.value) (fun () -> Get model.key) Error
-    | Remove -> model, Cmd.ofAsync api.removeValue model.key (fun () -> Get model.key) Error
-    | Get k -> model, Cmd.ofAsync api.getValue k Received Error
+    | Add -> model, Cmd.OfAsync.either api.setValue (model.key, model.value) (fun () -> Get model.key) Error
+    | Remove -> model, Cmd.OfAsync.either api.removeValue model.key (fun () -> Get model.key) Error
+    | Get k -> model, Cmd.OfAsync.either api.getValue k Received Error
     | Error exn -> { model with error = Some exn }, []
 
     | SetUsername x -> { model with username = x }, []
-    | SendSignIn -> model, Cmd.ofAsync api.signIn model.username (fun () -> RecvSignIn) Error
+    | SendSignIn -> model, Cmd.OfAsync.either api.signIn model.username (fun () -> RecvSignIn) Error
     | RecvSignIn -> model, Cmd.ofMsg SendGetUsername
-    | SendSignOut -> model, Cmd.ofAsync api.signOut () (fun () -> RecvSignOut) Error
+    | SendSignOut -> model, Cmd.OfAsync.either api.signOut () (fun () -> RecvSignOut) Error
     | RecvSignOut -> { model with signedInAs = None }, []
-    | SendGetUsername -> model, Cmd.ofAuthorized api.getUsername () RecvGetUsername Error
+    | SendGetUsername -> model, Cmd.OfAuthorized.either api.getUsername () RecvGetUsername Error
     | RecvGetUsername resp -> { model with signedInAs = resp }, []
-    | SendGetAdmin -> model, Cmd.ofAuthorized api.getAdmin () RecvGetAdmin Error
+    | SendGetAdmin -> model, Cmd.OfAuthorized.either api.getAdmin () RecvGetAdmin Error
     | RecvGetAdmin resp -> { model with getAdmin = resp }, []
 
 let remote model dispatch =
