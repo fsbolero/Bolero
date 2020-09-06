@@ -28,13 +28,15 @@ open Elmish
 let withRouter
         (router: IRouter<'model, 'msg>)
         (program: Program<'model, 'msg>) =
+    let mutable update = Unchecked.defaultof<_>
     program
     |> Program.map
         (fun init comp ->
             let model, initCmd = init comp
-            let model, compCmd = comp.InitRouter(router, program, model)
+            let model, compCmd = comp.InitRouter(router, update, model)
             model, initCmd @ compCmd)
-        id id id id
+        (fun u -> update <- u; u)
+        id id id
 
 /// Attach a router inferred from `makeMessage` and `getEndPoint` to `program`
 /// when it is run as the `Program` of a `ProgramComponent`.

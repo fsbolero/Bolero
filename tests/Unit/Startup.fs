@@ -25,8 +25,6 @@ open System.Security.Claims
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
-open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Bolero.Remoting.Server
 open Bolero.Server.RazorHost
@@ -80,7 +78,7 @@ type Startup() =
             .AddServerSideBlazor()
         |> ignore
 
-    member this.Configure(app: IApplicationBuilder, env: IWebHostEnvironment, config: IConfiguration) =
+    member this.Configure(app: IApplicationBuilder) =
         let serverSide = false
         app .UseAuthentication()
             .UseRemoting()

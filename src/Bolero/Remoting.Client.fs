@@ -23,7 +23,6 @@ namespace Bolero.Remoting.Client
 #nowarn "44" // Ignore obsoleteness of RemoteResponse
 
 open System
-open System.IO
 open System.Net
 open System.Net.Http
 open System.Runtime.CompilerServices
@@ -34,7 +33,6 @@ open Microsoft.AspNetCore.Components.WebAssembly.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.DependencyInjection.Extensions
 open FSharp.Reflection
-open Bolero
 open Bolero.Remoting
 
 [<Obsolete "Use Cmd.ofAuthorized / performAuthorized">]

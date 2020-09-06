@@ -1,12 +1,11 @@
-using System;
 using System.IO;
 using Mono.Cecil;
 
 namespace Bolero.Build
 {
-    class AssemblyResolver : IAssemblyResolver
+    internal class AssemblyResolver : IAssemblyResolver
     {
-        readonly string basePath;
+        private readonly string basePath;
 
         public AssemblyResolver(string basePath)
         {

@@ -120,7 +120,7 @@ and NodeFixture(parent: unit -> IWebElement, by: By) =
     /// Get a node fixture nested in the root of this one.
     /// The returned fixture doesn't need to be `Init()`ed.
     member this.Inner(by) =
-        new NodeFixture(this.Root, by)
+        NodeFixture(this.Root, by)
 
     /// Get child element by id.
     member this.ById(x) =

@@ -21,10 +21,8 @@
 namespace Bolero.Remoting.Server
 
 open System
-open System.IO
 open System.Reflection
 open System.Runtime.CompilerServices
-open System.Text
 open System.Text.Json
 open System.Text.Json.Serialization
 open System.Threading.Tasks
@@ -33,7 +31,6 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open FSharp.Control.Tasks.V2
-open Bolero
 open Bolero.Remoting
 
 /// [omit]
@@ -79,10 +76,9 @@ type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationServic
         member __.Authorize f = authorizeWith [AuthorizeAttribute()] f
         member __.AuthorizeWith authData f = authorizeWith authData f
 
-type internal RemotingService(basePath: PathString, ty: System.Type, handler: obj, configureSerialization: option<JsonSerializerOptions -> unit>) as this =
+type internal RemotingService(basePath: PathString, ty: Type, handler: obj, configureSerialization: option<JsonSerializerOptions -> unit>) as this =
 
     let flags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
-
     let makeHandler (method: RemoteMethodDefinition) =
         let meth = ty.GetProperty(method.Name).GetValue(handler)
         let output =

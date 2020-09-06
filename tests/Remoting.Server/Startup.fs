@@ -25,7 +25,6 @@ open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
@@ -69,7 +68,7 @@ type MyApiHandler(log: ILogger<MyApiHandler>, ctx: IRemoteContext) =
             }
         }
 
-type Startup(config: IConfiguration) =
+type Startup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
         services.AddMvc().AddRazorRuntimeCompilation() |> ignore

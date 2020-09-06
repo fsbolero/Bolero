@@ -27,14 +27,13 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Bolero.Server.RazorHost
-open Bolero.Test
 
 type Startup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
         services.AddMvc().AddRazorRuntimeCompilation() |> ignore
         services.AddServerSideBlazor() |> ignore
-        services.AddBoleroHost() |> ignore
+        services.AddBoleroHost(server = false) |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
         app

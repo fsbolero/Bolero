@@ -102,7 +102,7 @@ type LazyComponent<'model,'msg>() =
 
 /// [omit]
 type IProgramComponent =
-    abstract Services : System.IServiceProvider
+    abstract Services : IServiceProvider
 
 /// [omit]
 type Program<'model, 'msg> = Program<ProgramComponent<'model, 'msg>, 'model, 'msg, Node>
@@ -114,17 +114,16 @@ and [<AbstractClass>]
     inherit Component<'model>()
 
     let mutable oldModel = Unchecked.defaultof<'model>
-    let mutable navigationInterceptionEnabled = false
     let mutable view = Node.Empty
     let mutable dispatch = ignore<'msg>
-    let mutable update = fun _ x -> x, Cmd.none
+    let mutable router = None : option<IRouter<'model, 'msg>>
 
     /// [omit]
     [<Inject>]
     member val NavigationManager = Unchecked.defaultof<NavigationManager> with get, set
     /// [omit]
     [<Inject>]
-    member val Services = Unchecked.defaultof<System.IServiceProvider> with get, set
+    member val Services = Unchecked.defaultof<IServiceProvider> with get, set
     /// The JavaScript interoperation runtime.
     [<Inject>]
     member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
@@ -137,17 +136,15 @@ and [<AbstractClass>]
     /// The component's dispatch method.
     /// This property is initialized during the component's OnInitialized phase.
     member _.Dispatch = dispatch
-    member val private Router = None : option<IRouter<'model, 'msg>> with get, set
 
-    /// The Elmish program to run. Either this or AsyncProgram must be overridden.
+    /// The Elmish program to run.
     abstract Program : Program<'model, 'msg>
-    default _.Program = Unchecked.defaultof<_>
 
     interface IProgramComponent with
         member this.Services = this.Services
 
     member private this.OnLocationChanged (_: obj) (e: LocationChangedEventArgs) =
-        this.Router |> Option.iter (fun router ->
+        router |> Option.iter (fun router ->
             let uri = this.NavigationManager.ToBaseRelativePath(e.Location)
             match router.SetRoute uri with
             | Some route -> dispatch route
@@ -174,7 +171,7 @@ and [<AbstractClass>]
         view <- Program.view program model dispatch
         oldModel <- model
         this.InvokeAsync(this.StateHasChanged) |> ignore
-        this.Router |> Option.iter (fun router ->
+        router |> Option.iter (fun router ->
             let newUri = router.GetRoute(model).TrimStart('/')
             let oldUri = this.GetCurrentUri()
             if newUri <> oldUri then
@@ -198,8 +195,7 @@ and [<AbstractClass>]
             (fun init arg ->
                 let model, cmd = init arg
                 model, setDispatch :: cmd)
-            (fun u -> update <- u; u)
-            id
+            id id
             (fun _ model dispatch ->
                 this.SetState(program, model, dispatch))
             id
@@ -208,10 +204,10 @@ and [<AbstractClass>]
     member internal this.InitRouter
         (
             r: IRouter<'model, 'msg>,
-            program: Program<'model, 'msg>,
+            update: 'msg -> 'model -> 'model * Cmd<'msg>,
             initModel: 'model
         ) =
-        this.Router <- Some r
+        router <- Some r
         EventHandler<_> this.OnLocationChanged
         |> this.NavigationManager.LocationChanged.AddHandler
         match r.SetRoute (this.GetCurrentUri()) with
@@ -220,9 +216,8 @@ and [<AbstractClass>]
         | None ->
             initModel, []
 
-    override this.OnAfterRenderAsync(_) =
-        if this.Router.IsSome && not navigationInterceptionEnabled then
-            navigationInterceptionEnabled <- true
+    override this.OnAfterRenderAsync(firstRender) =
+        if router.IsSome && firstRender then
             this.NavigationInterception.EnableNavigationInterceptionAsync()
         else
             Task.CompletedTask
@@ -230,7 +225,7 @@ and [<AbstractClass>]
     override this.Render() =
         view
 
-    interface System.IDisposable with
+    interface IDisposable with
         member this.Dispose() =
             EventHandler<_> this.OnLocationChanged
             |> this.NavigationManager.LocationChanged.RemoveHandler

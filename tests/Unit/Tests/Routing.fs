@@ -21,20 +21,20 @@ module Routing =
         |> List.map (fun (url, page) ->
             let cls = Client.Routing.pageClass page
             let print = re.Replace(sprintf "%A" page, " ")
-            TestCaseData(cls, url, page, print).SetArgDisplayNames(
+            TestCaseData(cls, url, print).SetArgDisplayNames(
                 (string page)
                     // Replace parentheses with unicode ones for nicer display in VS test explorer
                     .Replace("(", "❨")
                     .Replace(")", "❩")))
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
-    let ``Click link``(linkCls: string, url: string, page: Client.Routing.Page, print: string) =
+    let ``Click link``(linkCls: string, url: string, print: string) =
         elt.ByClass("link-" + linkCls).Click()
         elt.Eventually <@ elt.ByClass("current-page").Text = print @>
         test <@ WebFixture.Driver.Url = WebFixture.Url + url @>
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
-    let ``Set by model``(linkCls: string, url: string, page: Client.Routing.Page, print: string) =
+    let ``Set by model``(linkCls: string, url: string, print: string) =
         elt.ByClass("btn-" + linkCls).Click()
         elt.Eventually <@ elt.ByClass("current-page").Text = print @>
         test <@ WebFixture.Driver.Url = WebFixture.Url + url @>

@@ -21,8 +21,6 @@
 // ASP.NET Core and Blazor startup for web tests.
 namespace Bolero.Tests.Client
 
-open System
-open System.Net.Http
 open System.Security.Claims
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Components.WebAssembly.Hosting

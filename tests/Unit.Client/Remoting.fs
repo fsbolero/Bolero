@@ -26,7 +26,6 @@ open Bolero.Html
 open Bolero.Remoting
 open Bolero.Remoting.Client
 open Elmish
-open Microsoft.AspNetCore.Components
 
 type RemoteApi =
     {

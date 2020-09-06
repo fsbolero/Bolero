@@ -32,7 +32,7 @@ open Bolero.Templating.ConvertExpr
 let getThis (args: list<Expr>) : Expr<TemplateNode> =
     TExpr.Coerce<TemplateNode>(args.[0])
 
-let MakeCtor (holes: Parsing.Vars) (containerTy: ProvidedTypeDefinition) =
+let MakeCtor (holes: Parsing.Vars) =
     ProvidedConstructor([], fun args ->
         let holes = TExpr.Array<obj> [
             for KeyValue(_, type') in holes ->
@@ -106,7 +106,7 @@ let MakeHoleMethods (holeName: string) (holeType: Parsing.HoleType) (index: int)
                     %this @@>) :> MemberInfo
     ]
 
-let MakeFinalMethod (filename: option<string>) (subtemplatename: option<string>) (content: Parsing.Parsed) =
+let MakeFinalMethod (filename: option<string>) (subTemplateName: option<string>) (content: Parsing.Parsed) =
     ProvidedMethod("Elt", [], typeof<Node>, fun args ->
         let this = getThis args
         let directExpr =
@@ -124,21 +124,21 @@ let MakeFinalMethod (filename: option<string>) (subtemplatename: option<string>)
             directExpr
         | Some filename ->
             let varNames = TExpr.Array [for KeyValue(k, _) in content.Vars -> <@ k @>]
-            let subtemplatename = Option.toObj subtemplatename
+            let subTemplateName = Option.toObj subTemplateName
             <@@ let vars = Map.ofArray (Array.zip %varNames (%this).Holes)
-                match TemplateCache.client.RequestTemplate(filename, subtemplatename) with
+                match TemplateCache.client.RequestTemplate(filename, subTemplateName) with
                 | Some f -> f vars
                 | None -> %%directExpr @@>
     )
 
 /// Populate the members of the provided type for one template.
-let PopulateOne (filename: option<string>) (subtemplatename: option<string>) (ty: ProvidedTypeDefinition) (content: Parsing.Parsed) =
+let PopulateOne (filename: option<string>) (subTemp: option<string>) (ty: ProvidedTypeDefinition) (content: Parsing.Parsed) =
     ty.AddMembers [
-        yield MakeCtor content.Vars ty :> MemberInfo
+        yield MakeCtor content.Vars :> MemberInfo
         yield! content.Vars |> Seq.mapi (fun i (KeyValue(name, type')) ->
             MakeHoleMethods name type' i ty
         ) |> Seq.concat
-        yield MakeFinalMethod filename subtemplatename content :> MemberInfo
+        yield MakeFinalMethod filename subTemp content :> MemberInfo
     ]
 
 /// Populate the members of the provided type for a root template and its nested templates.

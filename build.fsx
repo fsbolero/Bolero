@@ -84,7 +84,7 @@ let replace rows marker writeItem input =
     Regex(sprintf """(?<=// BEGIN %s\r?\n)(?:\w|\W)*(?=// END %s)""" marker marker,
         RegexOptions.Multiline)
         .Replace(input, fun _ ->
-            let s = new StringBuilder()
+            let s = StringBuilder()
             for tag in rows do
                 writeItem s tag |> ignore
             s.ToString()
