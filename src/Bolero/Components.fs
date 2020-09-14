@@ -118,7 +118,6 @@ and [<AbstractClass>]
     let mutable runProgramLoop = fun () -> ()
     let mutable dispatch = ignore<'msg>
     let mutable router = None : option<IRouter<'model, 'msg>>
-    let mutable update = fun _ x -> x, Cmd.none
     let mutable setState = fun program model dispatch ->
         view <- Program.view program model dispatch
         oldModel <- model
@@ -191,8 +190,7 @@ and [<AbstractClass>]
                 (fun init arg ->
                     let model, cmd = init arg
                     model, setDispatch :: cmd)
-                (fun u -> update <- u; u)
-                id
+                id id
                 (fun _ model dispatch -> setState program model dispatch)
                 id
         runProgramLoop <- Program'.runFirstRender this program

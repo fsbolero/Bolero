@@ -20,7 +20,6 @@
 
 module Bolero.Tests.Remoting.Client
 
-open System
 open System.Collections.Generic
 open Microsoft.AspNetCore.Components.Authorization
 open Bolero

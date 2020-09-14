@@ -2,7 +2,7 @@
 // https://github.com/elmish/elmish/issues/210
 // As soon as the above issue is solved, this file can go.
 namespace Elmish
-open System
+open System.Reflection
 
 [<Struct>]
 type internal RingState<'item> =
@@ -58,18 +58,11 @@ module internal Program' =
             cmd |> List.iter (fun call -> try call dispatch with ex -> onError ex)
 
     let runFirstRender (arg: 'arg) (program: Program<'arg, 'model, 'msg, 'view>) =
+        let ty = typeof<Program<'arg, 'model, 'msg, 'view>>
         // An ugly way to extract init and update because they're private
-        let mutable init = Unchecked.defaultof<_>
-        let mutable update = Unchecked.defaultof<_>
-        let mutable subscribe = Unchecked.defaultof<_>
-        let program =
-            program
-            |> Program.map
-                (fun i -> init <- i; i)
-                (fun u -> update <- u; u)
-                id
-                id
-                (fun s -> subscribe <- s; s)
+        let init = ty.GetProperty("init", BindingFlags.NonPublic ||| BindingFlags.Instance).GetValue(program) :?> _
+        let update = ty.GetProperty("update", BindingFlags.NonPublic ||| BindingFlags.Instance).GetValue(program) :?> _
+        let subscribe = ty.GetProperty("subscribe", BindingFlags.NonPublic ||| BindingFlags.Instance).GetValue(program) :?> _
 
         let (model,cmd) = init arg
         let rb = RingBuffer 10
