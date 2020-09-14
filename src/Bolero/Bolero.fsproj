@@ -10,6 +10,7 @@
     <Compile Include="TemplatingInternals.fs" />
     <Compile Include="Render.fs" />
     <Compile Include="Router.fs" />
+    <Compile Include="ProgramRun.fs" />
     <Compile Include="Components.fs" />
     <Compile Include="Remoting.fs" />
     <Compile Include="Remoting.Client.fs" />

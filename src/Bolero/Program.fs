@@ -22,21 +22,21 @@
 /// [category: Routing]
 module Bolero.Program
 
+open System.Reflection
 open Elmish
 
 /// Attach `router` to `program` when it is run as the `Program` of a `ProgramComponent`.
 let withRouter
         (router: IRouter<'model, 'msg>)
         (program: Program<'model, 'msg>) =
-    let mutable update = Unchecked.defaultof<_>
     program
     |> Program.map
         (fun init comp ->
             let model, initCmd = init comp
+            let update = typeof<Program<'model, 'msg>>.GetProperty("update", BindingFlags.NonPublic ||| BindingFlags.Instance).GetValue(program) :?> _
             let model, compCmd = comp.InitRouter(router, update, model)
             model, initCmd @ compCmd)
-        (fun u -> update <- u; u)
-        id id id
+        id id id id
 
 /// Attach a router inferred from `makeMessage` and `getEndPoint` to `program`
 /// when it is run as the `Program` of a `ProgramComponent`.

@@ -115,8 +115,12 @@ and [<AbstractClass>]
 
     let mutable oldModel = Unchecked.defaultof<'model>
     let mutable view = Node.Empty
+    let mutable runProgramLoop = fun () -> ()
     let mutable dispatch = ignore<'msg>
     let mutable router = None : option<IRouter<'model, 'msg>>
+    let mutable setState = fun program model dispatch ->
+        view <- Program.view program model dispatch
+        oldModel <- model
 
     /// [omit]
     [<Inject>]
@@ -160,10 +164,6 @@ and [<AbstractClass>]
         let uri = this.NavigationManager.Uri
         this.NavigationManager.ToBaseRelativePath(uri)
 
-    member internal this.SetState(program, model, dispatch) =
-        if this.ShouldRender(oldModel, model) then
-            this.ForceSetState(program, model, dispatch)
-
     member internal _.StateHasChanged() =
         base.StateHasChanged()
 
@@ -179,27 +179,24 @@ and [<AbstractClass>]
                 with _ -> () // fails if run in prerender
         )
 
-    member this.Rerender() =
-        this.ForceSetState(this.Program, oldModel, dispatch)
-
-    member internal _._OnInitialized() =
-        base.OnInitialized()
-
     override this.OnInitialized() =
-        this._OnInitialized()
-        let program = this.Program
+        base.OnInitialized()
         let setDispatch d =
             dispatch <- d
-        program
-        |> Program.map
-            (fun init arg ->
-                let model, cmd = init arg
-                model, setDispatch :: cmd)
-            id id
-            (fun _ model dispatch ->
-                this.SetState(program, model, dispatch))
-            id
-        |> Program.runWith this
+        let mutable program = this.Program
+        program <-
+            program
+            |> Program.map
+                (fun init arg ->
+                    let model, cmd = init arg
+                    model, setDispatch :: cmd)
+                id id
+                (fun _ model dispatch -> setState program model dispatch)
+                id
+        runProgramLoop <- Program'.runFirstRender this program
+        setState <- fun program model dispatch ->
+            if this.ShouldRender(oldModel, model) then
+                this.ForceSetState(program, model, dispatch)
 
     member internal this.InitRouter
         (
@@ -217,8 +214,12 @@ and [<AbstractClass>]
             initModel, []
 
     override this.OnAfterRenderAsync(firstRender) =
-        if router.IsSome && firstRender then
-            this.NavigationInterception.EnableNavigationInterceptionAsync()
+        if firstRender then
+            runProgramLoop()
+            if router.IsSome then
+                this.NavigationInterception.EnableNavigationInterceptionAsync()
+            else
+                Task.CompletedTask
         else
             Task.CompletedTask
 
