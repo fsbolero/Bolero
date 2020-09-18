@@ -6,7 +6,7 @@ framework: netstandard2.0, netstandard2.1, netcoreapp3.1
 nuget FSharp.Core >= 4.5.2 lowest_matching: true, strategy: min
 nuget FSharp.SystemTextJson >= 0.11.13
 nuget HtmlAgilityPack >= 1.11
-nuget Elmish ~> 3.0
+nuget Elmish >= 3.1
 nuget Microsoft.AspNetCore.Components.Authorization
 nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication
 nuget Microsoft.Extensions.Configuration.Binder
