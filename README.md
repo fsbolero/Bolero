@@ -14,7 +14,6 @@ It includes:
 * **Remoting**: define asynchronous functions running on the server and simply call them from the client.
 * F#-specific **optimizations**: Bolero strips F# signature data from assemblies to reduce the size of the served application.
 
-Bolero is an early stage project, and Blazor itself is considered experimental, so expect the API to fluctuate.
 
 ## Getting started with Bolero
 
