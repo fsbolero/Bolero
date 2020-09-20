@@ -113,14 +113,15 @@ and [<AbstractClass>]
     ProgramComponent<'model, 'msg>() =
     inherit Component<'model>()
 
-    let mutable oldModel = Unchecked.defaultof<'model>
+    let mutable oldModel = None
     let mutable view = Node.Empty
     let mutable runProgramLoop = fun () -> ()
     let mutable dispatch = ignore<'msg>
+    let mutable program = Unchecked.defaultof<Program<'model, 'msg>>
     let mutable router = None : option<IRouter<'model, 'msg>>
-    let mutable setState = fun program model dispatch ->
+    let mutable setState = fun model dispatch ->
         view <- Program.view program model dispatch
-        oldModel <- model
+        oldModel <- Some model
 
     /// [omit]
     [<Inject>]
@@ -167,9 +168,9 @@ and [<AbstractClass>]
     member internal _.StateHasChanged() =
         base.StateHasChanged()
 
-    member private this.ForceSetState(program, model, dispatch) =
+    member private this.ForceSetState(model, dispatch) =
         view <- Program.view program model dispatch
-        oldModel <- model
+        oldModel <- Some model
         this.InvokeAsync(this.StateHasChanged) |> ignore
         router |> Option.iter (fun router ->
             let newUri = router.GetRoute(model).TrimStart('/')
@@ -183,20 +184,20 @@ and [<AbstractClass>]
         base.OnInitialized()
         let setDispatch d =
             dispatch <- d
-        let mutable program = this.Program
         program <-
-            program
+            this.Program
             |> Program.map
                 (fun init arg ->
                     let model, cmd = init arg
                     model, setDispatch :: cmd)
                 id id
-                (fun _ model dispatch -> setState program model dispatch)
+                (fun _ model dispatch -> setState model dispatch)
                 id
         runProgramLoop <- Program'.runFirstRender this program
-        setState <- fun program model dispatch ->
-            if this.ShouldRender(oldModel, model) then
-                this.ForceSetState(program, model, dispatch)
+        setState <- fun model dispatch ->
+            match oldModel with
+            | Some oldModel when this.ShouldRender(oldModel, model) -> this.ForceSetState(model, dispatch)
+            | _ -> ()
 
     member internal this.InitRouter
         (
@@ -225,6 +226,13 @@ and [<AbstractClass>]
 
     override this.Render() =
         view
+
+    member this.Rerender() =
+        match oldModel with
+        | None -> ()
+        | Some model ->
+            oldModel <- None
+            this.ForceSetState(model, dispatch)
 
     interface IDisposable with
         member this.Dispose() =
