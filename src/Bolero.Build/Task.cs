@@ -28,7 +28,7 @@ namespace Bolero.Build {
 
     public class BoleroTask : Task {
 
-        public ITaskItem[] Assemblies { get; set; }
+        public ITaskItem[] AssembliesDir { get; set; }
 
         private void StripFile(string f) {
             var anyChanged = false;
@@ -60,14 +60,21 @@ namespace Bolero.Build {
         }
 
         public override bool Execute() {
-            foreach (var asm in Assemblies) {
-                try {
-                    StripFile(asm.ItemSpec);
-                } catch (Exception exn) {
-                    Log.LogError("Bolero failed to strip F# metadata from {0}: {1}",
-                        Path.GetFileName(asm.ItemSpec), exn.Message);
-                    Log.LogMessage("{0}", exn);
-                    return false;
+            foreach (var dir in AssembliesDir)
+            {
+                foreach (var asm in Directory.GetFiles(dir.ItemSpec))
+                {
+                    try
+                    {
+                        StripFile(asm);
+                    }
+                    catch (Exception exn)
+                    {
+                        Log.LogError("Bolero failed to strip F# metadata from {0}: {1}",
+                                     Path.GetFileName(dir.ItemSpec), exn.Message);
+                        Log.LogMessage("{0}", exn);
+                        return false;
+                    }
                 }
             }
             return true;
