@@ -12,6 +12,12 @@ branches:
 skip_tags: true
 
 init:
+  - |
+      mkdir $HOME/dotnet
+      pushd $HOME/dotnet
+      curl -H 'Cache-Control: no-cache' -L https://aka.ms/install-dotnet-preview -o install-dotnet-preview.sh
+      sudo bash install-dotnet-preview.sh || sudo apt install -y --allow-downgrades ./dotnet_packages/*
+      popd
   - git config --global core.autocrlf input
 
 before_build:
