@@ -196,10 +196,17 @@ let uploadTests (url: string) =
     use c = new WebClient()
     c.UploadFile(url, results.FullName) |> ignore
 
-Target.description "Run the unit tests"
-Target.create "test" (fun o ->
+let unitTests o =
     try dotnet' "tests/Unit" [] "test" "--logger:trx %s" (buildArgs o)
     finally Option.iter uploadTests (testUploadUrl o)
+
+let publishTests o =
+    dotnet' "tests/Server" [] "publish" "%s" (buildArgs o)
+
+Target.description "Run the unit tests"
+Target.create "test" (fun o ->
+    unitTests o
+    publishTests o
 )
 
 Target.description "Run the unit tests waiting for a debugger to connect"
