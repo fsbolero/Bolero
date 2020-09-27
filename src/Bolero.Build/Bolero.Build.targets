@@ -5,11 +5,12 @@
   </PropertyGroup>
   <UsingTask AssemblyFile="$(BoleroTaskAssemblyPath)" TaskName="Bolero.Build.BoleroTask"
     Condition="'$(BoleroStripAssemblies)' != 'False'" />
-  <Target Name="StripFSharp" BeforeTargets="_BlazorCopyFilesToOutputDirectory" DependsOnTargets="PrepareBlazorOutputs"
-    Condition="'$(BoleroStripAssemblies)' != 'False'">
-    <ItemGroup>
-      <BoleroStripAssemblies Include="@(BlazorOutputWithTargetPath->WithMetadataValue('Extension', '.dll'))" />
-    </ItemGroup>
-    <BoleroTask Assemblies="@(BoleroStripAssemblies)" />
-  </Target>
+  <!-- TODO PrepareBlazorOutputs doesn't exist anymore -->
+  <!-- <Target Name="StripFSharp" BeforeTargets="_BlazorCopyFilesToOutputDirectory" DependsOnTargets="PrepareBlazorOutputs" -->
+  <!--   Condition="'$(BoleroStripAssemblies)' != 'False'"> -->
+  <!--   <ItemGroup> -->
+  <!--     <BoleroStripAssemblies Include="@(BlazorOutputWithTargetPath->WithMetadataValue('Extension', '.dll'))" /> -->
+  <!--   </ItemGroup> -->
+  <!--   <BoleroTask Assemblies="@(BoleroStripAssemblies)" /> -->
+  <!-- </Target> -->
 </Project>

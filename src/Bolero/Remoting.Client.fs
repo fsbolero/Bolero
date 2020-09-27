@@ -31,7 +31,6 @@ open System.Text.Json
 open System.Text.Json.Serialization
 open Microsoft.AspNetCore.Components.WebAssembly.Hosting
 open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.DependencyInjection.Extensions
 open FSharp.Reflection
 open Bolero.Remoting
 
@@ -45,16 +44,16 @@ type RemoteResponse<'resp> =
         | Success x -> Some x
         | Unauthorized -> None
 
+[<AllowNullLiteral>]
+type IConfigureSerialization =
+    abstract ConfigureSerialization: JsonSerializerOptions -> unit
+
 /// Provides remote service implementations when running in WebAssembly.
 /// [omit]
-type ClientRemoteProvider(httpClientFactory: IHttpClientFactory, configureSerialization: option<JsonSerializerOptions -> unit>) =
-
-    let http = httpClientFactory.CreateClient("Bolero.Remoting.Client.ClientRemoteProvider")
+type ClientRemoteProvider(http: HttpClient, configureSerialization: IConfigureSerialization) =
 
     let serOptions = JsonSerializerOptions()
-    do match configureSerialization with
-        | None -> serOptions.Converters.Add(JsonFSharpConverter())
-        | Some f -> f serOptions
+    do configureSerialization.ConfigureSerialization(serOptions)
 
     let normalizeBasePath (basePath: string) =
         let baseAddress = http.BaseAddress.OriginalString
@@ -132,6 +131,11 @@ type ClientRemotingExtensions =
     /// Enable support for remoting in ProgramComponent with the given HttpClient configuration.
     [<Extension>]
     static member AddRemoting(services: IServiceCollection, configureHttpClient: HttpClient -> unit, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
-        services.TryAddSingleton<IRemoteProvider>(fun services ->
-            ClientRemoteProvider(services.GetRequiredService<IHttpClientFactory>(), configureSerialization) :> IRemoteProvider)
-        services.AddHttpClient("Bolero.Remoting.Client.ClientRemoteProvider", configureHttpClient)
+        services.AddSingleton({
+            new IConfigureSerialization with
+                member _.ConfigureSerialization(serOptions) =
+                    match configureSerialization with
+                    | None -> serOptions.Converters.Add(JsonFSharpConverter())
+                    | Some f -> f serOptions
+        }) |> ignore
+        services.AddHttpClient<IRemoteProvider, ClientRemoteProvider>(configureHttpClient)
