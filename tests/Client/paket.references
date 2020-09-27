@@ -1,5 +1,4 @@
 Microsoft.AspNetCore.Components.WebAssembly
-Microsoft.AspNetCore.Components.WebAssembly.Build
 Microsoft.AspNetCore.Components.WebAssembly.DevServer
 FSharp.Core
 Elmish

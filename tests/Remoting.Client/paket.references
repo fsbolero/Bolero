@@ -1,7 +1,7 @@
-Microsoft.AspNetCore.Components.WebAssembly.Build
 Microsoft.AspNetCore.Components.WebAssembly.DevServer
 FSharp.Core
 Elmish
 Microsoft.AspNetCore.Components.Authorization
+Microsoft.AspNetCore.Components.WebAssembly
 Microsoft.AspNetCore.Components.WebAssembly.Authentication
 Microsoft.Extensions.Configuration.Binder
