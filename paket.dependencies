@@ -7,18 +7,18 @@ nuget FSharp.Core >= 5.0 lowest_matching: true
 nuget FSharp.SystemTextJson >= 0.14.8
 nuget HtmlAgilityPack >= 1.11
 nuget Elmish ~> 3.1 lowest_matching: true, strategy: min
-nuget Microsoft.AspNetCore.Components.Authorization ~> 5.0 prerelease
-nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 5.0 prerelease
-nuget Microsoft.Extensions.Configuration.Binder ~> 5.0 prerelease
-nuget Microsoft.Extensions.Http ~> 5.0 prerelease
+nuget Microsoft.AspNetCore.Components.Authorization ~> 5.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 5.0
+nuget Microsoft.Extensions.Configuration.Binder ~> 5.0
+nuget Microsoft.Extensions.Http ~> 5.0
 nuget TaskBuilder.fs >= 2.1.0
-nuget Microsoft.AspNetCore.Components ~> 5.0 prerelease
-nuget Microsoft.AspNetCore.Components.Web ~> 5.0 prerelease
-nuget Microsoft.AspNetCore.Components.WebAssembly ~> 5.0 prerelease
-nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 5.0 prerelease
-nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 5.0 prerelease
-nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation ~> 5.0 prerelease
-nuget System.Text.Json ~> 5.0 prerelease
+nuget Microsoft.AspNetCore.Components ~> 5.0
+nuget Microsoft.AspNetCore.Components.Web ~> 5.0
+nuget Microsoft.AspNetCore.Components.WebAssembly ~> 5.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 5.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 5.0
+nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation ~> 5.0
+nuget System.Text.Json ~> 5.0
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 
