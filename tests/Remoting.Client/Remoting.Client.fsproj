@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\src\Bolero.Build\bin\$(Configuration)\net5.0\Bolero.Build.dll</BoleroTaskAssemblyPath>
+    <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\src\Bolero.Build\bin\$(Configuration)\netstandard2.0\Bolero.Build.dll</BoleroTaskAssemblyPath>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Bolero.Html\Bolero.Html.fsproj" />

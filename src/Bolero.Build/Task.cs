@@ -64,16 +64,18 @@ namespace Bolero.Build {
             {
                 foreach (var asm in Directory.GetFiles(dir.ItemSpec))
                 {
-                    try
+                    if (Path.GetExtension(asm).Equals(".dll", StringComparison.OrdinalIgnoreCase))
                     {
-                        StripFile(asm);
-                    }
-                    catch (Exception exn)
-                    {
-                        Log.LogError("Bolero failed to strip F# metadata from {0}: {1}",
-                                     Path.GetFileName(dir.ItemSpec), exn.Message);
-                        Log.LogMessage("{0}", exn);
-                        return false;
+                        try
+                        {
+                            StripFile(asm);
+                        }
+                        catch (Exception exn)
+                        {
+                            Log.LogError("Bolero failed to strip F# metadata from {0}: {1}", asm, exn.Message);
+                            Log.LogMessage("{0}", exn);
+                            return false;
+                        }
                     }
                 }
             }
