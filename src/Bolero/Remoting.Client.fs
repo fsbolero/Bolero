@@ -28,7 +28,6 @@ open System.Net.Http
 open System.Runtime.CompilerServices
 open System.Text
 open System.Text.Json
-open System.Text.Json.Serialization
 open Microsoft.AspNetCore.Components.WebAssembly.Hosting
 open Microsoft.Extensions.DependencyInjection
 open FSharp.Reflection
@@ -135,7 +134,7 @@ type ClientRemotingExtensions =
             new IConfigureSerialization with
                 member _.ConfigureSerialization(serOptions) =
                     match configureSerialization with
-                    | None -> serOptions.Converters.Add(JsonFSharpConverter())
+                    | None -> ()
                     | Some f -> f serOptions
         }) |> ignore
         services.AddHttpClient<IRemoteProvider, ClientRemoteProvider>(configureHttpClient)
