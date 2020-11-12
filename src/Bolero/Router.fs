@@ -398,7 +398,11 @@ module private RouterImpl =
         match findPageModel case with
         | None -> ctor
         | Some (i, ty) ->
-            let dummyArgs = Array.zeroCreate (case.GetFields().Length)
+            let fields = case.GetFields()
+            let dummyArgs = Array.zeroCreate fields.Length
+            fields |> Array.iteri (fun i field ->
+                if field.PropertyType.IsValueType then
+                    dummyArgs.[i] <- Activator.CreateInstance(field.PropertyType, true))
             let model = FSharpValue.MakeRecord(ty, [|null|])
             dummyArgs.[i] <- model
             let dummy = ctor dummyArgs

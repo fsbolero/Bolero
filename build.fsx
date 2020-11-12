@@ -18,7 +18,14 @@
 //
 // $end{copyright}
 
-#r "paket: groupref fake //"
+#r "paket:
+nuget Fake.Core.Target
+nuget Fake.IO.FileSystem
+nuget Fake.DotNet.AssemblyInfoFile
+nuget Fake.DotNet.Cli
+nuget Fake.DotNet.Paket
+nuget FSharp.Data ~> 3.0-beta
+//"
 #load "tools/Utility.fsx"
 
 open System.IO
@@ -66,6 +73,7 @@ let buildArgs o =
 
 Target.description "Run the compilation phase proper"
 Target.create "corebuild" (fun o ->
+    dotnet "paket" "restore"
     dotnet "build" "Bolero.sln %s" (buildArgs o)
 )
 
@@ -188,10 +196,17 @@ let uploadTests (url: string) =
     use c = new WebClient()
     c.UploadFile(url, results.FullName) |> ignore
 
-Target.description "Run the unit tests"
-Target.create "test" (fun o ->
+let unitTests o =
     try dotnet' "tests/Unit" [] "test" "--logger:trx %s" (buildArgs o)
     finally Option.iter uploadTests (testUploadUrl o)
+
+let publishTests o =
+    dotnet' "tests/Server" [] "publish" "%s" (buildArgs o)
+
+Target.description "Run the unit tests"
+Target.create "test" (fun o ->
+    unitTests o
+    publishTests o
 )
 
 Target.description "Run the unit tests waiting for a debugger to connect"
