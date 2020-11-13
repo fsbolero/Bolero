@@ -26,7 +26,7 @@ module Remoting =
         keyInp.SendKeys(k + Keys.End)
         valInp.Clear()
         valInp.SendKeys(v + Keys.End)
-        sprintf "%s => %s" k v @| [
+        $"{k} => {v}" @| [
             "remove" @| (
                 remBtn.Click()
                 testNotNull <@ elt.Wait(fun () -> elt.ByClass("output-empty")) @>

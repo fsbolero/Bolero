@@ -150,11 +150,11 @@ let view model dispatch =
         remote model dispatch
         cond model.error <| function
         | None -> empty
-        | Some e -> p [] [textf "%A" e]
+        | Some e -> p [] [text $"{e}"]
         comp<CascadingAuthenticationState> [] [
             comp<AuthorizeView> [
                 attr.fragmentWith "Authorized" <| fun (context: AuthenticationState) ->
-                    div [] [textf "You're authorized! Welcome %s" context.User.Identity.Name]
+                    div [] [text $"You're authorized! Welcome {context.User.Identity.Name}"]
                 attr.fragmentWith "NotAuthorized" <| fun (_: AuthenticationState) ->
                     div [] [text "You're not authorized :("]
             ] []

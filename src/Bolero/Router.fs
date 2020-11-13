@@ -109,28 +109,25 @@ type InvalidRouterKind =
 /// [category: Routing]
 exception InvalidRouter of kind: InvalidRouterKind with
     override this.Message =
-        let withCase (case: UnionCaseInfo) =
-            sprintf "Invalid router defined for union case %s.%s: %s"
-                case.DeclaringType.FullName case.Name
+        let withCase (case: UnionCaseInfo) s =
+            $"Invalid router defined for union case {case.DeclaringType.FullName}.{case.Name}: %s{s}"
         match this.kind with
         | InvalidRouterKind.UnsupportedType ty ->
             "Unsupported route type: " + ty.FullName
         | InvalidRouterKind.ParameterSyntax(case, field) ->
-            withCase case ("Invalid parameter syntax: " + field)
+            withCase case $"Invalid parameter syntax: {field}"
         | InvalidRouterKind.DuplicateField(case, field) ->
-            withCase case ("Field duplicated in the path: " + field)
+            withCase case $"Field duplicated in the path: {field}"
         | InvalidRouterKind.UnknownField(case, field) ->
-            withCase case ("Unknown field in the path: " + field)
+            withCase case $"Unknown field in the path: {field}"
         | InvalidRouterKind.MissingField(case, field) ->
-            withCase case ("Missing field in the path: " + field)
+            withCase case $"Missing field in the path: {field}"
         | InvalidRouterKind.ParameterTypeMismatch(case, field, otherCase, otherField) ->
-            withCase case (sprintf "Parameter %s at the same path position as %s's %s but has a different type"
-                field otherCase.Name otherField)
+            withCase case $"Parameter {field} at the same path position as {otherCase.Name}'s {otherField} but has a different type"
         | InvalidRouterKind.ModifierMismatch(case, field, otherCase, otherField) ->
-            withCase case (sprintf "Parameter %s at the same path position as %s's %s but has a different modifier"
-                field otherCase.Name otherField)
+            withCase case $"Parameter {field} at the same path position as {otherCase.Name}'s {otherField} but has a different modifier"
         | InvalidRouterKind.IdenticalPath(case, otherCase) ->
-            withCase case ("Matches the exact same path as " + otherCase.Name)
+            withCase case $"Matches the exact same path as {otherCase.Name}"
         | InvalidRouterKind.RestNotLast case ->
             withCase case "{*rest} parameter must be the last fragment"
         | InvalidRouterKind.InvalidRestType case ->

@@ -111,7 +111,7 @@ let update message model =
     | Submit -> { model with submitted = Some model.input }, []
     | RemoveItem k -> { model with items = Map.filter (fun k' _ -> k' <> k) model.items }, []
     | SetAddKey i -> { model with addKey = i }, []
-    | AddKey -> { model with items = Map.add model.addKey (sprintf "it's %i" model.addKey) model.items }, []
+    | AddKey -> { model with items = Map.add model.addKey $"it's {model.addKey}" model.items }, []
     | SetKeyOf k ->
         match Map.tryFind k model.items with
         | None -> model, []
@@ -151,7 +151,7 @@ let viewForm (js: IJSRuntime) model dispatch =
             )
             attr.style (if model.input = "" then "color:gray;" else null)
         ]
-        div [] [textf "selected radio item: %A" model.radioItem]
+        div [] [text $"selected radio item: {model.radioItem}"]
         forEach {1..10} <| fun ix ->
             input [
                 attr.``type`` "radio"
@@ -181,7 +181,7 @@ let viewForm (js: IJSRuntime) model dispatch =
                         SecretPw()
                             .Kind(b [] [text "secret"])
                             .Clear(fun _ -> dispatch (SetInput ""))
-                            .DblClick(fun e -> dispatch (SetInput (sprintf "(%f, %f)" e.ClientX e.ClientY)))
+                            .DblClick(fun e -> dispatch (SetInput $"({e.ClientX}, {e.ClientY})"))
                             .Input(model.input, fun s -> dispatch (SetInput s))
                             .Value(model.addKey, fun k -> dispatch (SetAddKey k))
                             .Elt()
@@ -236,13 +236,13 @@ type ViewItemPage() =
             p [] [
                 text "Model: "
                 button [on.click (fun _ -> dispatch (SetPage (Item (k, { Model = m - 1 }))))] [text "-"]
-                textf "%i" m
+                text $"{m}"
                 button [on.click (fun _ -> dispatch (SetPage (Item (k, { Model = m + 1 }))))] [text "+"]
             ]
         ]
 
 let viewLazy model dispatch =
-    let lazyViewFunction = (fun m -> text (sprintf "Lazy values: (%i,%s), re-render random number check: %i" m.value m.nonEqVal (System.Random().Next())))
+    let lazyViewFunction = (fun m -> text $"Lazy values: ({m.value},{m.nonEqVal}), re-render random number check: {System.Random().Next()}")
     div [] [
         pre [] [
             text """
@@ -250,8 +250,8 @@ let viewLazy model dispatch =
     div [] [
         p [] [button [on.click (fun _ -> dispatch IncNonLazyVal)] [text "Increase non-lazy value"]]
         p [] [button [on.click (fun _ -> dispatch IncLazyVal)] [text "Increase lazy value"]]
-        p [] [text (sprintf "Non-lazy value: %i, re-render random number check: %i" model.nonLazyValue (System.Random().Next()))]
-        p [] [lazyComp (fun m -> text (sprintf "Lazy value: %i, re-render random number check: %i" m.value (System.Random().Next()))) model.lazyModel]
+        p [] [text $"Non-lazy value: {model.nonLazyValue}, re-render random number check: {System.Random().Next()}"]
+        p [] [lazyComp (fun m -> text $"Lazy values: ({m.value},{m.nonEqVal}), re-render random number check: {System.Random().Next()}") model.lazyModel]
     ]
             """
         ]
@@ -263,7 +263,7 @@ let viewLazy model dispatch =
                 on.change (fun e -> e.Value |> string |> SetLazyNonEqVal |> dispatch)
             ]
         ]
-        p [] [text (sprintf "Non-lazy value: %i, re-render random number check: %i" model.nonLazyValue (System.Random().Next()))]
+        p [] [text $"Non-lazy value: {model.nonLazyValue}, re-render random number check: {System.Random().Next()}"]
         p [] [lazyComp lazyViewFunction model.lazyModel]
         p [] [lazyCompWith (fun m1 m2 -> m1.value = m2.value) lazyViewFunction model.lazyModel]
         p [] [lazyCompBy (fun m -> (m.value, m.value2)) lazyViewFunction model.lazyModel]
@@ -295,5 +295,5 @@ type MyApp() =
     override this.Program =
         Program.mkProgram (fun _ -> initModel(), []) update (view this.JSRuntime)
         //|> Program.withConsoleTrace
-        |> Program.withErrorHandler (fun (msg, exn) -> printfn "%s: %A" msg exn)
+        |> Program.withErrorHandler (fun (msg, exn) -> printfn $"{msg}: {exn}")
         |> Program.withRouter router

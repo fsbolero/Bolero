@@ -63,8 +63,8 @@ type EventTester() =
     /// Must be a method because StateHasChanged is protected,
     /// and therefore not visible to lambdas.
     member this.OnClick(id, e: MouseEventArgs) =
-        currentState <- sprintf "clicked %i" id
-        lastPosition <- sprintf "%f,%f" e.ClientX e.ClientY
+        currentState <- $"clicked {id}"
+        lastPosition <- $"{e.ClientX},{e.ClientY}"
         this.StateHasChanged()
 
     override this.Render() =

@@ -59,7 +59,7 @@ let WrapExpr (innerType: Parsing.HoleType) (outerType: Parsing.HoleType) (expr: 
         <@@ Node.Text ((%%expr: obj * Action<ChangeEventArgs>).Item1.ToString()) @@>
     | Parsing.AttributeValue, Parsing.DataBinding _ ->
         <@@ (%%expr: obj * Action<ChangeEventArgs>).Item1.ToString() @@>
-    | a, b -> failwithf "Hole name used multiple times with incompatible types (%A, %A)" a b
+    | a, b -> failwith $"Hole name used multiple times with incompatible types ({a}, {b})"
     |> Some
 
 /// Map an expression's vars from its parent, wrapping the expression in let declarations.
@@ -87,7 +87,7 @@ let rec ConvertAttrTextPart (vars: Map<string, Expr>) (text: Parsing.Expr) : Exp
     | Parsing.WrapVars (subst, text) ->
         WrapAndConvert vars subst ConvertAttrTextPart text
     | Parsing.Fst _ | Parsing.Snd _ | Parsing.Attr _ | Parsing.Elt _ ->
-        failwithf "Invalid text: %A" text
+        failwith $"Invalid text: {text}"
 
 let rec ConvertAttrValue (vars: Map<string, Expr>) (text: Parsing.Expr) : Expr<obj> =
     let box e = Expr.Coerce(e, typeof<obj>) |> Expr.Cast
@@ -106,7 +106,7 @@ let rec ConvertAttrValue (vars: Map<string, Expr>) (text: Parsing.Expr) : Expr<o
     | Parsing.WrapVars (subst, text) ->
         WrapAndConvert vars subst ConvertAttrValue text
     | Parsing.Attr _ | Parsing.Elt _ ->
-        failwithf "Invalid attr value: %A" text
+        failwith $"Invalid attr value: {text}"
 
 let rec ConvertAttr (vars: Map<string, Expr>) (attr: Parsing.Expr) : Expr<Attr> =
     match attr with
@@ -121,7 +121,7 @@ let rec ConvertAttr (vars: Map<string, Expr>) (attr: Parsing.Expr) : Expr<Attr> 
     | Parsing.WrapVars (subst, attr) ->
         WrapAndConvert vars subst ConvertAttr attr
     | Parsing.Fst _ | Parsing.Snd _ | Parsing.PlainHtml _ | Parsing.Elt _ ->
-        failwithf "Invalid attribute: %A" attr
+        failwith $"Invalid attribute: {attr}"
 
 let rec ConvertNode (vars: Map<string, Expr>) (node: Parsing.Expr) : Expr<Node> =
     match node with
@@ -139,5 +139,5 @@ let rec ConvertNode (vars: Map<string, Expr>) (node: Parsing.Expr) : Expr<Node> 
     | Parsing.WrapVars (subst, node) ->
         WrapAndConvert vars subst ConvertNode node
     | Parsing.Fst _ | Parsing.Snd _ | Parsing.Attr _ ->
-        failwithf "Invalid node: %A" node
+        failwith $"Invalid node: {node}"
 

@@ -74,7 +74,7 @@ type RemotingExtensions =
     /// [omit]
     static member ExtractRemoteMethods(ty: Type) : Result<RemoteMethodDefinition[], list<string>> =
         if not (FSharpType.IsRecord ty) then
-            Error [sprintf "Remote type must be a record: %s" ty.FullName]
+            Error [$"Remote type must be a record: {ty.FullName}"]
         else
         let fields = FSharpType.GetRecordFields(ty, true)
         (fields, Ok [])

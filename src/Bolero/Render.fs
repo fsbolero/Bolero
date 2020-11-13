@@ -38,35 +38,31 @@ type ElementReference = Microsoft.AspNetCore.Components.ElementReference
 type RenderTreeBuilder(b: BlazorTreeBuilder, indent: int, out: TextWriter) =
     let mutable indent = indent
 
-    let write fmt =
-            Printf.kprintf (fun s ->
-                out.Write(Array.create (indent * 2) ' ')
-                out.Write(s)
-                out.Flush()
-            ) fmt
+    let write (s: string) =
+        out.Write(Array.create (indent * 2) ' ')
+        out.Write(s)
+        out.Flush()
 
-    let writen fmt =
-            Printf.kprintf (fun s ->
-                out.Write(Array.create (indent * 2) ' ')
-                out.WriteLine(s)
-                out.Flush()
-            ) fmt
+    let writen (s: string) =
+        out.Write(Array.create (indent * 2) ' ')
+        out.WriteLine(s)
+        out.Flush()
 
     member this.AddContent(sequence: int, text: string) =
         if not (isNull b) then b.AddContent(sequence, text)
-        writen "Text %i %s" sequence text
+        writen $"Text {sequence} {text}"
 
     member this.AddContent(sequence: int, frag: RenderFragment) =
         if not (isNull b) then b.AddContent(sequence, frag.Frag)
-        write "Frag %i\n%s" sequence (frag.Show(indent + 1))
+        write $"Frag {sequence}\n{frag.Show(indent + 1)}"
 
     member this.AddMarkupContent(sequence: int, markup: string) =
         if not (isNull b) then b.AddMarkupContent(sequence, markup)
-        writen "Markup %i %s" sequence markup
+        writen $"Markup {sequence} {markup}"
 
     member this.OpenElement(sequence: int, name: string) =
         if not (isNull b) then b.OpenElement(sequence, name)
-        writen "OpenElt %i %s" sequence name
+        writen $"OpenElt {sequence} {name}"
         indent <- indent + 1
 
     member this.CloseElement() =
@@ -76,7 +72,7 @@ type RenderTreeBuilder(b: BlazorTreeBuilder, indent: int, out: TextWriter) =
 
     member this.OpenComponent(sequence: int, ty: Type) =
         if not (isNull b) then b.OpenComponent(sequence, ty)
-        writen "OpenComp %i %s" sequence ty.FullName
+        writen $"OpenComp {sequence} {ty.FullName}"
         indent <- indent + 1
 
     member this.CloseComponent() =
@@ -88,14 +84,14 @@ type RenderTreeBuilder(b: BlazorTreeBuilder, indent: int, out: TextWriter) =
         match value with
         | :? RenderFragment as f ->
             if not (isNull b) then b.AddAttribute(sequence, name, f.Frag)
-            writen "Attr %i %s\n%s" sequence name (f.Show(indent + 1))
+            writen $"Attr {sequence} {name}\n{f.Show(indent + 1)}"
         | value ->
             if not (isNull b) then b.AddAttribute(sequence, name, value)
-            writen "Attr %i %s %A" sequence name value
+            writen $"Attr {sequence} {name} {value}"
 
     member this.AddElementReferenceCapture(sequence: int, r: Action<ElementReference>) =
         b.AddElementReferenceCapture(sequence, r)
-        writen "ElementReference %i" sequence
+        writen $"ElementReference {sequence}"
 
 and RenderFragment(f: RenderTreeBuilder -> unit) =
     member this.Frag : BlazorFragment =

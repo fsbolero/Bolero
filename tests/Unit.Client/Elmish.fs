@@ -61,7 +61,7 @@ type IntInput() =
                 attr.value model
                 on.input (fun e -> dispatch (int (e.Value :?> string)))
             ]
-            span [attr.classes ["intValue-repeat"]] [textf "%i" model]
+            span [attr.classes ["intValue-repeat"]] [text $"{model}"]
         ]
 
 let view model dispatch =

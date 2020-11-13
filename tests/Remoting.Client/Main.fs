@@ -141,7 +141,7 @@ let router : Router<Page, Model, Message> =
         getEndPoint = fun m -> m.page
         getRoute = function
             | Home -> "/"
-            | Custom i -> sprintf "/custom/%i" i
+            | Custom i -> $"/custom/{i}"
         setRoute = fun s ->
             match s.Trim('/').Split('/') with
             | [|""|] -> Some (SetPage Home)
@@ -189,7 +189,7 @@ let Display model dispatch =
             ]
         | Some login ->
             concat [
-                textf "Logged in as %s" login
+                text "Logged in as {login}"
                 button [on.click (fun _ -> dispatch Logout)] [text "Log out"]
             ]
         hr []
@@ -210,7 +210,7 @@ let Display model dispatch =
             comp<AuthorizeView> [
                 attr.fragmentWith "Authorized" <| fun (context: AuthenticationState) ->
                     printfn "Rendering Authorized"
-                    div [] [textf "You're authorized! Welcome %s" context.User.Identity.Name]
+                    div [] [text $"You're authorized! Welcome {context.User.Identity.Name}"]
                 attr.fragmentWith "NotAuthorized" <| fun (_: AuthenticationState) ->
                     printfn "Rendering NotAuthorized"
                     div [] [text "You're not authorized :("]

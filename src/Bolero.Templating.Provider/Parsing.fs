@@ -59,7 +59,7 @@ module HoleType =
         | Event _, Event _ -> Event typeof<EventArgs>
         | DataBinding valType, (String | Html | AttributeValue)
         | (String | Html | AttributeValue), DataBinding valType -> DataBinding valType
-        | _ -> failwithf "Hole name used multiple times with incompatible types: %s" holeName
+        | _ -> failwith $"Hole name used multiple times with incompatible types: {holeName}"
 
     /// Get the .NET type of the event handler argument for the given event name.
     let EventArg (name: string) : Type =
@@ -359,7 +359,7 @@ let ParseDoc (filename: option<string>) (doc: HtmlDocument) : ParsedTemplates =
         |> Seq.map (fun n ->
             match n.GetAttributeValue("id", null) with
             | null ->
-                failwithf "Nested template must have an id" // at %i:%i" n.Line n.LinePosition
+                failwith "Nested template must have an id" // at {n.Line}:{n.LinePosition}"
             | id ->
                 let parsed = ParseOneTemplate n.ChildNodes
                 n.Remove()

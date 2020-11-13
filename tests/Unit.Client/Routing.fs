@@ -23,6 +23,7 @@ module Bolero.Tests.Client.Routing
 open Bolero
 open Bolero.Html
 open Elmish
+open Bolero
 
 type Page =
     | [<EndPoint "/">] Home
@@ -81,38 +82,38 @@ let update msg model =
 let router =
     try Router.infer SetPage (fun m -> m.page)
     with e ->
-        eprintfn "ROUTER ERROR: %A" e
+        eprintfn $"ROUTER ERROR: {e}"
         reraise()
 
 let innerPageClass = function
     | InnerHome -> "home"
     | InnerNoArg -> "noarg"
-    | InnerWithArg x -> sprintf "witharg-%s" x
-    | InnerWithArgs(x, y) -> sprintf "withargs-%s-%i" x y
+    | InnerWithArg x -> $"witharg-{x}"
+    | InnerWithArgs(x, y) -> $"withargs-{x}-{y}"
 
 let rec pageClass = function
     | Home -> "home"
     | NoArg -> "noarg"
-    | WithArg x -> sprintf "witharg-%s" x
-    | WithArgs(x, y) -> sprintf "withargs-%s-%i" x y
-    | WithUnion u -> "withunion-" + innerPageClass u
-    | WithUnionNotTerminal(u, s) -> sprintf "withunion2-%s-%s" (innerPageClass u) s
-    | WithNestedUnion u -> sprintf "withnested-%s" (pageClass u)
-    | WithTuple(x, y, z) -> sprintf "withtuple-%i-%s-%b" x y z
-    | WithRecord { x = x; y = y; z = z } -> sprintf "withrecord-%i-%s-%b" x (innerPageClass y) z
-    | WithList l -> sprintf "withlist-%s" (String.concat "-" [for i, s in l -> sprintf "%i-%s" i s])
-    | WithArray a -> sprintf "witharray-%s" (String.concat "-" [for i, s in a -> sprintf "%i-%s" i s])
-    | WithPath s -> sprintf "withpath-%s" s
-    | WithPathAndSuffix s -> sprintf "withpathsuffix-%s" s
-    | WithPathAndSuffix2(s, i) -> sprintf "withpathsuffix2-%s-%i" s i
-    | WithPathAndSuffix3 s -> sprintf "withpathsuffix3-%s" s
+    | WithArg x -> $"witharg-{x}"
+    | WithArgs(x, y) -> $"withargs-{x}-{y}"
+    | WithUnion u -> $"withunion-{innerPageClass u}"
+    | WithUnionNotTerminal(u, s) -> $"withunion2-{innerPageClass u}-{s}"
+    | WithNestedUnion u -> $"withnested-{pageClass u}"
+    | WithTuple(x, y, z) -> $"withtuple-{x}-{y}-{z}"
+    | WithRecord { x = x; y = y; z = z } -> $"withrecord-{x}-{innerPageClass y}-{z}"
+    | WithList l -> $"""withlist-{String.concat "-" [for i, s in l -> $"{i}-{s}"]}"""
+    | WithArray a -> $"""witharray-{String.concat "-" [for i, s in a -> $"{i}-{s}"]}"""
+    | WithPath s -> $"withpath-{s}"
+    | WithPathAndSuffix s -> $"withpathsuffix-{s}"
+    | WithPathAndSuffix2(s, i) -> $"withpathsuffix2-{s}-{i}"
+    | WithPathAndSuffix3 s -> $"withpathsuffix3-{s}"
     | WithPathConstant -> "withpathconstant"
-    | WithPathRecord { x = x; y = y; z = z } -> sprintf "withpathrecord-%i-%s-%b" x (innerPageClass y) z
-    | WithRestString s -> sprintf "withreststring-%s" (s.Replace("/", "-"))
-    | WithRestList l -> sprintf "withrestlist-%s" (l |> Seq.map string |> String.concat "-")
-    | WithRestArray a -> sprintf "withrestarray-%s" (a |> Seq.map (fun (i, s) -> sprintf "%i-%s" i s) |> String.concat "-")
+    | WithPathRecord { x = x; y = y; z = z } -> $"withpathrecord-{x}-{innerPageClass y}-{z}"
+    | WithRestString s -> $"""withreststring-{s.Replace("/", "-")}"""
+    | WithRestList l -> $"""withrestlist-{l |> Seq.map string |> String.concat "-"}"""
+    | WithRestArray a -> $"""withrestarray-{a |> Seq.map (fun (i, s) -> $"{i}-{s}") |> String.concat "-"}"""
     | WithModel _ -> "withmodel"
-    | WithModelAndArgs (a, _) -> sprintf "withmodelargs-%i" a
+    | WithModelAndArgs (a, _) -> $"withmodelargs-{a}"
 
 let innerlinks =
     [
@@ -181,13 +182,13 @@ let view model dispatch =
     concat [
         for url, page in links do
             let cls = pageClass page
-            yield a [attr.classes ["link-" + cls]; router.HRef page] [text url]
+            yield a [attr.classes [$"link-{cls}"]; router.HRef page] [text url]
             yield button [
-                attr.classes ["btn-" + cls]
+                attr.classes [$"btn-{cls}"]
                 attr.value (router.Link page)
                 on.click (fun _ -> dispatch (SetPage page))
             ] [text url]
-        yield span [attr.classes ["current-page"]] [textf "%A" model.page]
+        yield span [attr.classes ["current-page"]] [text $"{model.page}"]
     ]
 
 type Test() =

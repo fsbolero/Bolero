@@ -20,7 +20,7 @@ module Routing =
         Client.Routing.links
         |> List.map (fun (url, page) ->
             let cls = Client.Routing.pageClass page
-            let print = re.Replace(sprintf "%A" page, " ")
+            let print = re.Replace($"{page}", " ")
             TestCaseData(cls, url, print).SetArgDisplayNames(
                 (string page)
                     // Replace parentheses with unicode ones for nicer display in VS test explorer

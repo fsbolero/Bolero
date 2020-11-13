@@ -53,7 +53,7 @@ type Startup() =
                 try
                     do! ctx.HttpContext.AsyncSignIn(username, claims = claims)
                 with exn ->
-                    printfn "%A" exn
+                    printfn $"{exn}"
             }
             signOut = fun () -> async {
                 return! ctx.HttpContext.AsyncSignOut()

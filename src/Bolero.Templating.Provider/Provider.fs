@@ -48,7 +48,7 @@ type Template (cfg: TypeProviderConfig) as this =
                 CodeGen.Populate ty pathOrHtml cfg.ResolutionFolder
                 asm.AddTypes([ty])
                 ty
-            | x -> failwithf "Unexpected parameter values: %A" x
+            | x -> failwith $"Unexpected parameter values: {x}"
         )
         templateTy.AddXmlDoc("\
             Provide content from a template HTML file.\n\
@@ -57,4 +57,4 @@ type Template (cfg: TypeProviderConfig) as this =
         with exn ->
             // Put the full error, including stack, in the message
             // so that it shows up in the compiler output.
-            failwithf "%A" exn
+            failwith $"{exn}"

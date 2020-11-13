@@ -115,36 +115,36 @@ module Templating =
     [<TestCase("-onchange")>]
     let ``Bind string to normal input``(cls: string) =
         let elt = elt.Inner(By.ClassName "binds")
-        let inp = elt.ByClass(sprintf "input%s1-1" cls)
+        let inp = elt.ByClass($"input{cls}1-1")
         inp.Clear()
         inp.SendKeys("hello")
         if cls.Contains("onchange") then blur()
         // Value propagation
-        elt.Eventually <@ elt.ByClass(sprintf "display%s1" cls).Text = "hello" @>
+        elt.Eventually <@ elt.ByClass($"display{cls}1").Text = "hello" @>
         // Propagation to other input
-        test <@ elt.ByClass(sprintf "input%s1-2" cls).GetAttribute("value") = "hello" @>
+        test <@ elt.ByClass($"input{cls}1-2").GetAttribute("value") = "hello" @>
         // Propagation to textarea
-        test <@ elt.ByClass(sprintf "textarea%s1" cls).GetAttribute("value") = "hello" @>
+        test <@ elt.ByClass($"textarea{cls}1").GetAttribute("value") = "hello" @>
         // Propagation to select
-        test <@ elt.ByClass(sprintf "select%s1" cls).GetAttribute("value") = "hello" @>
+        test <@ elt.ByClass($"select{cls}1").GetAttribute("value") = "hello" @>
 
     [<Test>]
     [<TestCase("")>]
     [<TestCase("-onchange")>]
     let ``Bind string to textarea``(cls: string) =
         let elt = elt.Inner(By.ClassName "binds")
-        let inp = elt.ByClass(sprintf"textarea%s1" cls)
+        let inp = elt.ByClass($"textarea{cls}1")
         inp.Clear()
         inp.SendKeys("hi textarea")
         if cls.Contains("onchange") then blur()
         // Value propagation
-        elt.Eventually <@ elt.ByClass(sprintf "display%s1" cls).Text = "hi textarea" @>
+        elt.Eventually <@ elt.ByClass($"display{cls}1").Text = "hi textarea" @>
         // Propagation to input
-        test <@ elt.ByClass(sprintf "input%s1-1" cls).GetAttribute("value") = "hi textarea" @>
+        test <@ elt.ByClass($"input{cls}1-1").GetAttribute("value") = "hi textarea" @>
         // Propagation to other input
-        test <@ elt.ByClass(sprintf "input%s1-2" cls).GetAttribute("value") = "hi textarea" @>
+        test <@ elt.ByClass($"input{cls}1-2").GetAttribute("value") = "hi textarea" @>
         // Propagation to select
-        test <@ elt.ByClass(sprintf "select%s1" cls).GetAttribute("value") = "hi textarea" @>
+        test <@ elt.ByClass($"select{cls}1").GetAttribute("value") = "hi textarea" @>
 
     [<Test>]
     let ``Bind string to select``() =
@@ -165,28 +165,28 @@ module Templating =
     [<TestCase("-onchange")>]
     let ``Bind int``(cls: string) =
         let elt = elt.Inner(By.ClassName "binds")
-        let inp = elt.ByClass(sprintf "input%s2-1" cls)
+        let inp = elt.ByClass($"input{cls}2-1")
         inp.Clear()
         inp.SendKeys("1234")
         if cls.Contains("onchange") then blur()
         // Value propagation
-        elt.Eventually <@ elt.ByClass(sprintf "display%s2" cls).Text = "1234" @>
+        elt.Eventually <@ elt.ByClass($"display{cls}2").Text = "1234" @>
         // Propagation to other input
-        test <@ elt.ByClass(sprintf "input%s2-2" cls).GetAttribute("value") = "1234" @>
+        test <@ elt.ByClass($"input{cls}2-2").GetAttribute("value") = "1234" @>
 
     [<Test>]
     [<TestCase("", Ignore = "Char-by-char parsing may eat the dot, TODO fix")>]
     [<TestCase("-onchange")>]
     let ``Bind float``(cls: string) =
         let elt = elt.Inner(By.ClassName "binds")
-        let inp = elt.ByClass(sprintf "input%s3-1" cls)
+        let inp = elt.ByClass($"input{cls}3-1")
         inp.Clear()
         inp.SendKeys("123.456")
         if cls.Contains("onchange") then blur()
         // Value propagation
-        elt.Eventually <@ elt.ByClass(sprintf "display%s3" cls).Text = "123.456" @>
+        elt.Eventually <@ elt.ByClass($"display{cls}3").Text = "123.456" @>
         // Propagation to other input
-        test <@ elt.ByClass(sprintf "input%s3-2" cls).GetAttribute("value") = "123.456" @>
+        test <@ elt.ByClass($"input{cls}3-2").GetAttribute("value") = "123.456" @>
 
     [<Test>]
     let ``Bind checkbox``() =

@@ -35,7 +35,7 @@ let GetRelativePath (baseDir: string) (fullPath: string) =
         if thisDir = baseDir then
             fullPath.[thisDir.Length + 1..]
         elif thisDir.Length <= baseDir.Length then
-            invalidArg "fullPath" (sprintf "'%s' is not a subdirectory of '%s'" fullPath baseDir)
+            invalidArg "fullPath" $"'{fullPath}' is not a subdirectory of '{baseDir}'"
         else
             go (Path.GetDirectoryName thisDir)
     go fullPath

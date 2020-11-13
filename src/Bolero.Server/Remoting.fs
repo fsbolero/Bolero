@@ -137,7 +137,7 @@ type internal ServerRemoteProvider(services: seq<RemotingService>) =
                 None
         )
         |> Option.defaultWith (fun () ->
-            failwithf "Remote service not registered: %s" typeof<'T>.FullName)
+            failwith $"Remote service not registered: {typeof<'T>.FullName}")
 
     interface IRemoteProvider with
 

@@ -70,7 +70,7 @@ type RazorHostingExtensions =
     [<Extension>]
     static member RenderBoleroScript(html: IHtmlHelper, config: IBoleroHostConfig) =
         let k = if config.IsServer then "server" else "webassembly"
-        html.Raw(sprintf """<script src="_framework/blazor.%s.js"></script>""" k)
+        html.Raw($"""<script src="_framework/blazor.{k}.js"></script>""")
 
     [<Extension>]
     static member AddBoleroHost(this: IServiceCollection, ?server: bool, ?prerendered: bool, ?devToggle: bool) =
