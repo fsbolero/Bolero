@@ -82,7 +82,7 @@ type WebFixture() =
 
             // Once both are started, browse and wait for the page to render.
             driver.Navigate().GoToUrl(url)
-            WebFixture.MkWait(TimeSpan.FromSeconds(5.))
+            WebFixture.MkWait(TimeSpan.FromSeconds(20.))
                 .Until(fun d -> try d.FindElement(By.Id "test-fixture") with _ -> null)
             |> ignore
         }
