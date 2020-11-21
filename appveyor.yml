@@ -22,6 +22,7 @@ before_build:
 
 build_script:
   - export NUGET_PACKAGES="$APPVEYOR_BUILD_FOLDER/.nuget"
+  - google-chrome --version
   - ./build.sh -t pack -c Release -v "$SEMVER" --sourceLink /p:GhPages=true
 
 test_script:
