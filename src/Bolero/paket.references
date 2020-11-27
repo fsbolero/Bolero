@@ -4,3 +4,4 @@ Microsoft.AspNetCore.Components.WebAssembly
 Elmish
 Nerdbank.GitVersioning
 Microsoft.Extensions.Http
+FSharp.SystemTextJson

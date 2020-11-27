@@ -24,6 +24,7 @@ open System
 open System.Reflection
 open System.Runtime.CompilerServices
 open System.Text.Json
+open System.Text.Json.Serialization
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
@@ -75,7 +76,7 @@ type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationServic
         member __.Authorize f = authorizeWith [AuthorizeAttribute()] f
         member __.AuthorizeWith authData f = authorizeWith authData f
 
-type internal RemotingService(basePath: PathString, ty: Type, handler: obj, configureSerialization: JsonSerializerOptions -> unit) as this =
+type internal RemotingService(basePath: PathString, ty: Type, handler: obj, configureSerialization: option<JsonSerializerOptions -> unit>) as this =
 
     let flags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
     let makeHandler (method: RemoteMethodDefinition) =
@@ -98,7 +99,9 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
     let methods = dict [for m in methodData -> m.Name, makeHandler m]
 
     let serOptions = JsonSerializerOptions()
-    do configureSerialization serOptions
+    do match configureSerialization with
+        | None -> serOptions.Converters.Add(JsonFSharpConverter())
+        | Some f -> f serOptions
 
     member val ServerSideService = handler
 
@@ -162,7 +165,7 @@ type ServerRemotingExtensions =
             let ctx = services.GetRequiredService<IRemoteContext>()
             let handler = handler ctx
             let basePath = basePath handler
-            RemotingService(basePath, typeof<'T>, handler, defaultArg configureSerialization ignore))
+            RemotingService(basePath, typeof<'T>, handler, configureSerialization))
 
     /// Add a remote service at the given path.
     [<Extension>]
@@ -199,7 +202,7 @@ type ServerRemotingExtensions =
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteHandler>(this: IServiceCollection, ?configureSerialization) =
         ServerRemotingExtensions.AddRemotingImpl(this.AddSingleton<'T>(), fun services ->
             let handler = services.GetRequiredService<'T>().Handler
-            RemotingService(PathString handler.BasePath, handler.GetType(), handler, defaultArg configureSerialization ignore))
+            RemotingService(PathString handler.BasePath, handler.GetType(), handler, configureSerialization))
 
     [<Extension>]
     static member UseRemoting(this: IApplicationBuilder) =

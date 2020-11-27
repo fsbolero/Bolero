@@ -273,7 +273,7 @@ module private RouterImpl =
         | Basic
         /// Rest of the path: "/{*parameter}"
         | Rest of (seq<obj> -> obj) * (obj -> seq<obj>)
-        /// Optional segment: "/{?parameter}" (TODO)
+        // Optional segment: "/{?parameter}" (TODO)
         //| Optional
 
         interface IEquatable<ParameterModifier> with
