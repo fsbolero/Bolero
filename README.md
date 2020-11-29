@@ -19,7 +19,7 @@ It includes:
 
 To get started, you need the following installed:
 
-* .NET Core SDK 3.1. Download it [here](https://dotnet.microsoft.com/download/dotnet-core/3.1).
+* .NET SDK 5.0. Download it [here](https://dotnet.microsoft.com/download).
 
 Then:
 
