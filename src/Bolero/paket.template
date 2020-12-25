@@ -11,6 +11,7 @@ files
     bin/Release/net5.0/Microsoft.AspNetCore.Components.dll ==> lib/net5.0
     bin/Release/net5.0/Microsoft.AspNetCore.Components.Web.dll ==> lib/net5.0
     ../Bolero.Html/bin/Release/net5.0/Bolero.Html.dll ==> lib/net5.0
+    ../Bolero.Html/bin/Release/net5.0/Bolero.Html.xml ==> lib/net5.0
 excludeddependencies
     nerdbank.gitversioning
 include-pdbs true
