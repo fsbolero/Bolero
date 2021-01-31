@@ -111,7 +111,7 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
             try
                 let! x = func arg
                 return! JsonSerializer.SerializeAsync<'resp>(ctx.Response.Body, x, serOptions)
-            with RemoteUnauthorizedException ->
+            with exn when (exn.GetBaseException() :? RemoteUnauthorizedException) ->
                 ctx.Response.StatusCode <- StatusCodes.Status401Unauthorized
                 // TODO: allow customizing based on what failed?
         } :> Task
