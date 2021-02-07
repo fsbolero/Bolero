@@ -11,7 +11,7 @@ nuget Microsoft.AspNetCore.Components.Authorization ~> 5.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 5.0
 nuget Microsoft.Extensions.Configuration.Binder ~> 5.0
 nuget Microsoft.Extensions.Http ~> 5.0
-nuget TaskBuilder.fs >= 2.1.0
+nuget Ply
 nuget Microsoft.AspNetCore.Components ~> 5.0
 nuget Microsoft.AspNetCore.Components.Web ~> 5.0
 nuget Microsoft.AspNetCore.Components.WebAssembly ~> 5.0

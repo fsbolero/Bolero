@@ -29,7 +29,7 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Bolero.Remoting.Server
-open Bolero.Server.RazorHost
+open Bolero.Server
 
 type MyApiHandler(log: ILogger<MyApiHandler>, ctx: IRemoteContext) =
     inherit RemoteHandler<Client.MyApi>()

@@ -18,15 +18,13 @@
 //
 // $end{copyright}
 
-namespace Bolero.Server.RazorHost
+namespace Bolero.Server
 
 open System.Runtime.CompilerServices
-open System.Threading.Tasks
-open Microsoft.Extensions.Hosting
 open Microsoft.AspNetCore.Mvc.Rendering
-open Microsoft.AspNetCore.Components
-open Microsoft.Extensions.DependencyInjection
 open Microsoft.AspNetCore.Http
+open Microsoft.Extensions.DependencyInjection
+open Microsoft.Extensions.Hosting
 
 type IBoleroHostConfig =
     abstract IsServer: bool
@@ -55,22 +53,16 @@ type BoleroHostConfig(baseConfig: IBoleroHostBaseConfig, env: IHostEnvironment, 
         member this.IsServer = this.IsServer
         member this.IsPrerendered = this.IsPrerendered
 
+    static member internal Body(config: IBoleroHostConfig) =
+        let k = if config.IsServer then "server" else "webassembly"
+        $"""<script src="_framework/blazor.{k}.js"></script>"""
+
 [<Extension>]
-type RazorHostingExtensions =
-
-    [<Extension>]
-    static member RenderComponentAsync<'T when 'T :> IComponent>(html: IHtmlHelper, config: IBoleroHostConfig) =
-        match config.IsServer, config.IsPrerendered with
-        | true,  true  -> html.RenderComponentAsync<'T>(RenderMode.ServerPrerendered)
-        | true,  false -> html.RenderComponentAsync<'T>(RenderMode.Server)
-        | false, true  -> html.RenderComponentAsync<'T>(RenderMode.Static)
-        | false, false -> Task.FromResult(null)
-
+type BoleroServerExtensions =
 
     [<Extension>]
     static member RenderBoleroScript(html: IHtmlHelper, config: IBoleroHostConfig) =
-        let k = if config.IsServer then "server" else "webassembly"
-        html.Raw($"""<script src="_framework/blazor.{k}.js"></script>""")
+        html.Raw(BoleroHostConfig.Body(config))
 
     [<Extension>]
     static member AddBoleroHost(this: IServiceCollection, ?server: bool, ?prerendered: bool, ?devToggle: bool) =

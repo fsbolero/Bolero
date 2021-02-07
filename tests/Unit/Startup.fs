@@ -27,7 +27,7 @@ open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Bolero.Remoting.Server
-open Bolero.Server.RazorHost
+open Bolero.Server
 open Bolero.Tests
 
 type Startup() =

@@ -8,7 +8,9 @@
   <ItemGroup>
     <Compile Include="HttpContext.fs" />
     <Compile Include="Remoting.fs" />
-    <Compile Include="RazorHost.fs" />
+    <Compile Include="HostConfig.fs" />
+    <Compile Include="Components.fs" />
+    <Compile Include="Html.fs" />
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>

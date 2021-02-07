@@ -30,7 +30,7 @@ open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
-open FSharp.Control.Tasks.V2
+open FSharp.Control.Tasks
 open Bolero.Remoting
 
 /// [omit]
