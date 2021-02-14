@@ -246,10 +246,11 @@ type Ref<'T>() =
     inherit Ref()
 
     /// The element or component reference.
-    member val Value = Unchecked.defaultof<'T> with get, set
+    /// None if it hasn't been bound using attr.ref.
+    member val Value = None with get, set
 
     override this.Render(builder, sequence) =
-        builder.AddComponentReferenceCapture(sequence, fun v -> this.Value <- unbox<'T> v)
+        builder.AddComponentReferenceCapture(sequence, fun v -> this.Value <- tryUnbox<'T> v)
         sequence + 1
 
 /// A utility to bind a reference to a rendered HTML element.
@@ -259,7 +260,7 @@ type HtmlRef() =
     inherit Ref<ElementReference>()
 
     override this.Render(builder, sequence) =
-        builder.AddElementReferenceCapture(sequence, fun v -> this.Value <- v)
+        builder.AddElementReferenceCapture(sequence, fun v -> this.Value <- Some v)
         sequence + 1
 
 /// A utility to bind a reference to a rendered HTML element.
