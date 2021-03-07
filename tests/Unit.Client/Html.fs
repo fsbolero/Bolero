@@ -25,6 +25,7 @@ open Bolero.Html
 open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Routing
 open Microsoft.JSInterop
+open System.Threading.Tasks
 
 type SomeUnion =
     | Empty
@@ -155,7 +156,9 @@ type BindElementRef() =
             attr.``class`` "element-ref"
             attr.ref elt
             on.task.event "click" (fun _ ->
-                this.JSRuntime.InvokeVoidAsync("setContent", elt.Value, "ElementRef is bound").AsTask())
+                match elt.Value with
+                | Some elt -> this.JSRuntime.InvokeVoidAsync("setContent", elt, "ElementRef is bound").AsTask()
+                | None -> Task.CompletedTask)
         ] [text "Click me"]
 
 type BindComponentRef() =
@@ -170,7 +173,7 @@ type BindComponentRef() =
                  text "Home" ]
             button [
                 attr.``class`` "component-ref"
-                on.event "click" (fun _ -> txt <- cmp.Value.ActiveClass)
+                on.event "click" (fun _ -> txt <- match cmp.Value with Some c -> c.ActiveClass | None -> "Component ref is unbound")
             ] [text txt]
         ]
 
