@@ -41,7 +41,7 @@ open Utility
 let config = getArg "-c" "Debug"
 let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
     let v =
-        let s = dotnetOutput "nbgv" "get-version -v SemVer2"
+        let s = dotnetOutput "nbgv" ["get-version"; "-v"; "SemVer2"]
         s.Trim()
     if BuildServer.buildServer = BuildServer.LocalBuild then
         let p = "Bolero." + v + if v.Contains("-") then ".local." else "-local."
@@ -69,12 +69,12 @@ let verbosity = getFlag "--verbose" >> function
     | false -> "m"
 let sourceLink = getFlag "--sourceLink"
 let buildArgs o =
-    sprintf "-c:%s -v:%s /p:SourceLinkCreate=%b" (config o) (verbosity o) (sourceLink o)
+    [$"-c:{config o}"; $"-v:{verbosity o}"; $"/p:SourceLinkCreate={sourceLink o}"]
 
 Target.description "Run the compilation phase proper"
 Target.create "corebuild" (fun o ->
-    dotnet "paket" "restore"
-    dotnet "build" "Bolero.sln %s" (buildArgs o)
+    dotnet "paket" ["restore"]
+    dotnet "build" ("Bolero.sln" :: buildArgs o)
 )
 
 let [<Literal>] tagsFile = slnDir + "/src/Bolero/tags.csv"
@@ -160,7 +160,7 @@ Target.create "tags" (fun _ ->
 
 Target.description "Run a full compilation"
 Target.create "build" (fun _ ->
-    dotnet "build-server" "shutdown" // Using this to avoid locking of the output dlls
+    dotnet "build-server" ["shutdown"] // Using this to avoid locking of the output dlls
 )
 
 Target.description "Create the NuGet packages"
@@ -175,17 +175,17 @@ Target.create "pack" (fun o ->
 
 Target.description "Run the Client test project"
 Target.create "run-client" (fun o ->
-    dotnet' "tests/Client" [] "run" "%s" (buildArgs o)
+    dotnet' "tests/Client" [] "run" (buildArgs o)
 )
 
 Target.description "Run the Server test project"
 Target.create "run-server" (fun o ->
-    dotnet' "tests/Server" [] "run" "%s" (buildArgs o)
+    dotnet' "tests/Server" [] "run" (buildArgs o)
 )
 
 Target.description "Run the Remoting test project"
 Target.create "run-remoting" (fun o ->
-    dotnet' "tests/Remoting.Server" [] "run" "%s" (buildArgs o)
+    dotnet' "tests/Remoting.Server" [] "run" (buildArgs o)
 )
 
 let uploadTests (url: string) =
@@ -197,11 +197,11 @@ let uploadTests (url: string) =
     c.UploadFile(url, results.FullName) |> ignore
 
 let unitTests o =
-    try dotnet' "tests/Unit" [] "test" "--logger:trx %s" (buildArgs o)
+    try dotnet' "tests/Unit" [] "test" ("--logger:trx" :: buildArgs o)
     finally Option.iter uploadTests (testUploadUrl o)
 
 let publishTests o =
-    dotnet' "tests/Server" [] "publish" "%s" (buildArgs o)
+    dotnet' "tests/Server" [] "publish" (buildArgs o)
 
 Target.description "Run the unit tests"
 Target.create "test" (fun o ->
@@ -211,7 +211,36 @@ Target.create "test" (fun o ->
 
 Target.description "Run the unit tests waiting for a debugger to connect"
 Target.create "test-debug" (fun o ->
-    dotnet' "tests/Unit" ["VSTEST_HOST_DEBUG", "1"] "test" "%s" (buildArgs o)
+    dotnet' "tests/Unit" ["VSTEST_HOST_DEBUG", "1"] "test" (buildArgs o)
+)
+
+Target.description "Update the Selenium driver to match the installed Chrome version"
+Target.create "update-chromedriver" (fun _ ->
+    if Environment.isUnix then
+        try
+            let v = (shellOutput "google-chrome" ["--version"]).Trim()
+            let v = v.[v.LastIndexOf(' ') + 1 ..].Split('.')
+            Some $"{v.[0]}.{v.[1]}"
+        with _ ->
+            Trace.traceImportant "Cannot find installed google-chrome version."
+            None
+    else
+        match
+            [
+                Environment.environVarOrNone "ProgramFiles"
+                Environment.environVarOrNone "ProgramFiles(x86)"
+            ]
+            |> Seq.choose (Option.map (fun e -> $@"{e}\Google\Chrome\Application\chrome.exe"))
+            |> Seq.tryFind File.Exists
+            with
+        | None ->
+            Trace.traceImportant "Cannot find installed chrome version."
+            None
+        | Some f ->
+            let ver = System.Diagnostics.FileVersionInfo.GetVersionInfo(f)
+            Some $"{ver.FileMajorPart}.{ver.FileMinorPart}"
+    |> Option.iter (fun v ->
+        dotnet "paket" ["update"; "Selenium.WebDriver.ChromeDriver"; "-V"; $"~> {v}"])
 )
 
 "corebuild"

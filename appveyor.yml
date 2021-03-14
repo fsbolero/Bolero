@@ -12,17 +12,16 @@ branches:
 skip_tags: true
 
 init:
-  - sudo apt update && sudo apt-get install -y dotnet-sdk-5.0
   - git config --global core.autocrlf input
 
 before_build:
   - dotnet tool restore
   - export SEMVER="$(dotnet nbgv get-version -v SemVer2)"
   - dotnet nbgv cloud
+  - ./build.sh -t update-chromedriver
 
 build_script:
   - export NUGET_PACKAGES="$APPVEYOR_BUILD_FOLDER/.nuget"
-  - google-chrome --version
   - ./build.sh -t pack -c Release -v "$SEMVER" --sourceLink /p:GhPages=true
 
 test_script:

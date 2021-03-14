@@ -184,7 +184,7 @@ NUGET
       Selenium.WebDriver (>= 3.141)
     Selenium.WebDriver (3.141)
       Newtonsoft.Json (>= 10.0.3)
-    Selenium.WebDriver.ChromeDriver (86.0.4240.2200)
+    Selenium.WebDriver.ChromeDriver (89.0.4389.2300)
     System.AppContext (4.3) - restriction: || (== net5.0) (&& (== netstandard2.0) (>= netcoreapp2.1)) (&& (== netstandard2.1) (>= netcoreapp2.1))
       System.Runtime (>= 4.3)
     System.Buffers (4.5.1) - restriction: || (&& (== net5.0) (>= monoandroid)) (&& (== net5.0) (>= monotouch)) (&& (== net5.0) (>= net461)) (&& (== net5.0) (< netcoreapp2.0)) (&& (== net5.0) (>= xamarinios)) (&& (== net5.0) (>= xamarinmac)) (&& (== net5.0) (>= xamarintvos)) (&& (== net5.0) (>= xamarinwatchos)) (== netstandard2.0) (== netstandard2.1)
@@ -458,5 +458,5 @@ NUGET
       FSharp.Core (>= 4.6.2)
 GITHUB
   remote: fsprojects/FSharp.TypeProviders.SDK
-    src/ProvidedTypes.fs (1584152b527903e267f8f6f661c3c6f07659819e)
-    src/ProvidedTypes.fsi (1584152b527903e267f8f6f661c3c6f07659819e)
+    src/ProvidedTypes.fs (377d56321ad062985ed5aa19f205c1c4f04ef328)
+    src/ProvidedTypes.fsi (377d56321ad062985ed5aa19f205c1c4f04ef328)
