@@ -27,7 +27,6 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Bolero.Server
-open Bolero.Server.Components
 
 type Startup() =
 

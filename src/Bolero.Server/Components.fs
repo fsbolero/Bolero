@@ -22,44 +22,24 @@ namespace Bolero.Server.Components
 
 open System
 open System.IO
-open System.Runtime.CompilerServices
 open System.Text.Encodings.Web
 open System.Threading.Tasks
-open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Mvc.Rendering
 open Microsoft.AspNetCore.Mvc.ViewFeatures
-open Microsoft.Extensions.DependencyInjection
 open Bolero
 open Bolero.Server
 open FSharp.Control.Tasks
-open Microsoft.AspNetCore.Routing
 
-[<Extension>]
-type BoleroServerComponentsExtensions =
+module internal Impl =
 
-    [<Extension>]
-    static member RenderComponentAsync(html: IHtmlHelper, componentType: Type, config: IBoleroHostConfig, parameters: obj) =
+    let renderComponentAsync (html: IHtmlHelper) (componentType: Type) (config: IBoleroHostConfig) (parameters: obj) =
         match config.IsServer, config.IsPrerendered with
         | true,  true  -> html.RenderComponentAsync(componentType, RenderMode.ServerPrerendered, parameters)
         | true,  false -> html.RenderComponentAsync(componentType, RenderMode.Server, parameters)
         | false, true  -> html.RenderComponentAsync(componentType, RenderMode.Static, parameters)
         | false, false -> Task.FromResult(null)
-
-    [<Extension>]
-    static member RenderComponentAsync<'T when 'T :> IComponent>(html: IHtmlHelper, config: IBoleroHostConfig, parameters: obj) =
-        html.RenderComponentAsync(typeof<'T>, config, parameters)
-
-    [<Extension>]
-    static member RenderComponentAsync<'T when 'T :> IComponent>(html: IHtmlHelper, config: IBoleroHostConfig) =
-        html.RenderComponentAsync<'T>(config, null)
-
-    [<Extension>]
-    static member RenderComponentAsync(html: IHtmlHelper, componentType: Type, config: IBoleroHostConfig) =
-        html.RenderComponentAsync(componentType, config, null)
-
-module internal Impl =
 
     let renderComp
             (componentType: Type)
@@ -71,14 +51,14 @@ module internal Impl =
         (htmlHelper :?> IViewContextAware).Contextualize(ViewContext(HttpContext = httpContext))
         let! htmlContent =
             match boleroConfig with
-            | ValueSome config -> htmlHelper.RenderComponentAsync(componentType, config, parameters)
+            | ValueSome config -> renderComponentAsync htmlHelper componentType config parameters
             | ValueNone -> htmlHelper.RenderComponentAsync(componentType, RenderMode.Static, parameters)
         return using (new StringWriter()) <| fun writer ->
             htmlContent.WriteTo(writer, HtmlEncoder.Default)
             writer.ToString()
     }
 
-type PageComponent() =
+type Page() =
     inherit Component()
 
     [<Parameter>]
@@ -113,30 +93,3 @@ type BoleroScript() =
 
     override this.BuildRenderTree(builder) =
         builder.AddMarkupContent(0, BoleroHostConfig.Body(this.Config))
-
-type BoleroServerComponentsExtensions with
-
-    /// Render the given page in the HTTP response body.
-    [<Extension>]
-    static member RenderPage(this: HttpContext, page: Node) = unitTask {
-        let htmlHelper = this.RequestServices.GetRequiredService<IHtmlHelper>()
-        let! body = Impl.renderComp typeof<PageComponent> this htmlHelper ValueNone (dict ["Node", box page])
-        let body = body |> System.Text.Encoding.UTF8.GetBytes
-        return! this.Response.Body.WriteAsync(ReadOnlyMemory body)
-    }
-
-    /// Adds a route endpoint that will match requests for non-file-names with the lowest possible priority.
-    /// The request will be routed to a Bolero page.
-    [<Extension>]
-    static member MapFallbackToBolero(this: IEndpointRouteBuilder, page: Bolero.Node) =
-        this.MapFallbackToBolero(fun _ctx -> page)
-
-    /// Adds a route endpoint that will match requests for non-file-names with the lowest possible priority.
-    /// The request will be routed to a Bolero page.
-    [<Extension>]
-    static member MapFallbackToBolero(this: IEndpointRouteBuilder, page: HttpContext -> Bolero.Node) =
-        this.MapFallback(fun ctx ->
-            let page = page ctx
-            if isNull ctx.Response.ContentType then
-                ctx.Response.ContentType <- "text/html; charset=UTF-8"
-            ctx.RenderPage(page))
