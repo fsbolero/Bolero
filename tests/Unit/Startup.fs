@@ -30,6 +30,31 @@ open Bolero.Remoting.Server
 open Bolero.Server
 open Bolero.Tests
 
+module Page =
+    open Bolero
+    open Bolero.Html
+    open Bolero.Server.Html
+
+    let index = doctypeHtml [] [
+        head [] [
+            ``base`` [attr.href "/"]
+            meta [attr.charset "utf-8"]
+        ]
+        body [] [
+            div [attr.id "app"] [rootComp<Bolero.Tests.Client.Tests>]
+            script [] [
+                RawHtml """
+                    // Used by ElementBinder test:
+                    function setContent(element, value) {
+                      element.innerHTML = value;
+                    }
+                """
+            ]
+            script [attr.src "_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"] []
+            boleroScript
+        ]
+    ]
+
 type Startup() =
 
     let mutable items = Map.empty
@@ -79,17 +104,12 @@ type Startup() =
         |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
-        let serverSide = false
         app .UseAuthentication()
             .UseRemoting()
             .UseStaticFiles()
             .UseRouting()
             .UseBlazorFrameworkFiles()
             .UseEndpoints(fun endpoints ->
-                if serverSide then
-                    endpoints.MapBlazorHub() |> ignore
-                    endpoints.MapFallbackToPage("/_Host") |> ignore
-                else
-                    endpoints.MapControllers() |> ignore
-                    endpoints.MapFallbackToFile("index.html") |> ignore)
+                endpoints.MapBlazorHub() |> ignore
+                endpoints.MapFallbackToBolero(Page.index) |> ignore)
         |> ignore
