@@ -56,28 +56,3 @@ type BoleroHostConfig(baseConfig: IBoleroHostBaseConfig, env: IHostEnvironment, 
     static member internal Body(config: IBoleroHostConfig) =
         let k = if config.IsServer then "server" else "webassembly"
         $"""<script src="_framework/blazor.{k}.js"></script>"""
-
-[<Extension>]
-type BoleroServerExtensions =
-
-    [<Extension>]
-    static member RenderBoleroScript(html: IHtmlHelper, config: IBoleroHostConfig) =
-        html.Raw(BoleroHostConfig.Body(config))
-
-    [<Extension>]
-    static member AddBoleroHost(this: IServiceCollection, ?server: bool, ?prerendered: bool, ?devToggle: bool) =
-        let server = defaultArg server false
-        let prerendered = defaultArg prerendered true
-        let devToggle = defaultArg devToggle true
-        if devToggle then
-            this.AddSingleton(
-                { new IBoleroHostBaseConfig with
-                    member _.IsServer = server
-                    member _.IsPrerendered = prerendered })
-                .AddScoped<IBoleroHostConfig, BoleroHostConfig>()
-                .AddHttpContextAccessor()
-        else
-            this.AddSingleton(
-                { new IBoleroHostConfig with
-                    member _.IsServer = server
-                    member _.IsPrerendered = prerendered })

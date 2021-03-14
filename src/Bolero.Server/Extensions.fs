@@ -52,6 +52,28 @@ type BoleroServerComponentsExtensions =
         return! this.Response.Body.WriteAsync(ReadOnlyMemory body)
     }
 
+    [<Extension>]
+    static member RenderBoleroScript(html: IHtmlHelper, config: IBoleroHostConfig) =
+        html.Raw(BoleroHostConfig.Body(config))
+
+    [<Extension>]
+    static member AddBoleroHost(this: IServiceCollection, ?server: bool, ?prerendered: bool, ?devToggle: bool) =
+        let server = defaultArg server false
+        let prerendered = defaultArg prerendered true
+        let devToggle = defaultArg devToggle true
+        if devToggle then
+            this.AddSingleton(
+                { new IBoleroHostBaseConfig with
+                    member _.IsServer = server
+                    member _.IsPrerendered = prerendered })
+                .AddScoped<IBoleroHostConfig, BoleroHostConfig>()
+                .AddHttpContextAccessor()
+        else
+            this.AddSingleton(
+                { new IBoleroHostConfig with
+                    member _.IsServer = server
+                    member _.IsPrerendered = prerendered })
+
     /// Adds a route endpoint that will match requests for non-file-names with the lowest possible priority.
     /// The request will be routed to a Bolero page.
     [<Extension>]
