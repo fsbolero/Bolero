@@ -31,6 +31,23 @@ open Microsoft.Extensions.Logging
 open Bolero.Remoting.Server
 open Bolero.Server
 
+module Page =
+    open Bolero.Html
+    open Bolero.Server.Html
+
+    let index = doctypeHtml [] [
+        head [] [
+            title [] [text "Bolero (remoting)"]
+            meta [attr.charset "UTF-8"]
+            ``base`` [attr.href "/"]
+        ]
+        body [] [
+            div [attr.id "main"] [rootComp<Client.MyApp>]
+            script [attr.src "_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"] []
+            boleroScript
+        ]
+    ]
+
 type MyApiHandler(log: ILogger<MyApiHandler>, ctx: IRemoteContext) =
     inherit RemoteHandler<Client.MyApi>()
 
@@ -71,7 +88,7 @@ type MyApiHandler(log: ILogger<MyApiHandler>, ctx: IRemoteContext) =
 type Startup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
-        services.AddMvc().AddRazorRuntimeCompilation() |> ignore
+        services.AddMvc() |> ignore
         services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie()
             |> ignore
@@ -89,7 +106,7 @@ type Startup() =
             .UseBlazorFrameworkFiles()
             .UseEndpoints(fun endpoints ->
                 endpoints.MapBlazorHub() |> ignore
-                endpoints.MapFallbackToPage("/_Host") |> ignore)
+                endpoints.MapFallbackToBolero(Page.index) |> ignore)
         |> ignore
 
         if env.IsDevelopment() then

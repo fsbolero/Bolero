@@ -17,7 +17,6 @@ nuget Microsoft.AspNetCore.Components.Web ~> 5.0
 nuget Microsoft.AspNetCore.Components.WebAssembly ~> 5.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 5.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 5.0
-nuget Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation ~> 5.0
 nuget System.Text.Json ~> 5.0
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs

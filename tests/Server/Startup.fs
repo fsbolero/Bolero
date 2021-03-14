@@ -31,7 +31,7 @@ open Bolero.Server
 type Startup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
-        services.AddMvc().AddRazorRuntimeCompilation() |> ignore
+        services.AddMvc() |> ignore
         services.AddServerSideBlazor() |> ignore
         services.AddBoleroHost(server = false) |> ignore
 

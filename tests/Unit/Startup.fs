@@ -92,7 +92,7 @@ type Startup() =
         }
 
     member this.ConfigureServices(services: IServiceCollection) =
-        services.AddControllersWithViews().AddRazorRuntimeCompilation() |> ignore
+        services.AddControllersWithViews() |> ignore
         services
             .AddAuthorization()
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
