@@ -25,6 +25,7 @@ open System.IO
 open System.Text.Encodings.Web
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Components
+open Microsoft.AspNetCore.Html
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Mvc.Rendering
 open Microsoft.AspNetCore.Mvc.ViewFeatures
@@ -34,12 +35,14 @@ open FSharp.Control.Tasks
 
 module internal Impl =
 
+    let private emptyContent = Task.FromResult { new IHtmlContent with member _.WriteTo(_, _) = () }
+
     let renderComponentAsync (html: IHtmlHelper) (componentType: Type) (config: IBoleroHostConfig) (parameters: obj) =
         match config.IsServer, config.IsPrerendered with
         | true,  true  -> html.RenderComponentAsync(componentType, RenderMode.ServerPrerendered, parameters)
         | true,  false -> html.RenderComponentAsync(componentType, RenderMode.Server, parameters)
         | false, true  -> html.RenderComponentAsync(componentType, RenderMode.Static, parameters)
-        | false, false -> Task.FromResult(null)
+        | false, false -> emptyContent
 
     let renderComp
             (componentType: Type)

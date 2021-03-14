@@ -99,7 +99,7 @@ type Startup() =
                 .AddCookie()
                 .Services
             .AddRemoting(remoteHandler)
-            .AddBoleroHost()
+            .AddBoleroHost(prerendered = false)
             .AddServerSideBlazor()
         |> ignore
 
