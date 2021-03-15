@@ -13,6 +13,7 @@
     <Compile Include="Router.fs" />
     <Compile Include="ProgramRun.fs" />
     <Compile Include="Components.fs" />
+    <Compile Include="Ref.fs" />
     <Compile Include="Remoting.fs" />
     <Compile Include="Remoting.Client.fs" />
     <Compile Include="Cmd.fs" />

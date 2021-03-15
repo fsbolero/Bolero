@@ -238,33 +238,3 @@ and [<AbstractClass>]
         member this.Dispose() =
             EventHandler<_> this.OnLocationChanged
             |> this.NavigationManager.LocationChanged.RemoveHandler
-
-/// A utility to bind a reference to a rendered component.
-/// See https://fsbolero.io/docs/Blazor#html-element-references
-/// [category: HTML]
-type Ref<'T>() =
-    inherit Ref()
-
-    /// The element or component reference.
-    /// None if it hasn't been bound using attr.ref.
-    member val Value = None with get, set
-
-    override this.Render(builder, sequence) =
-        builder.AddComponentReferenceCapture(sequence, fun v -> this.Value <- tryUnbox<'T> v)
-        sequence + 1
-
-/// A utility to bind a reference to a rendered HTML element.
-/// See https://fsbolero.io/docs/Blazor#html-element-references
-/// [category: HTML]
-type HtmlRef() =
-    inherit Ref<ElementReference>()
-
-    override this.Render(builder, sequence) =
-        builder.AddElementReferenceCapture(sequence, fun v -> this.Value <- Some v)
-        sequence + 1
-
-/// A utility to bind a reference to a rendered HTML element.
-/// See https://fsbolero.io/docs/Blazor#html-element-references
-/// [category: HTML]
-[<Obsolete "Use HtmlRef.">]
-type ElementReferenceBinder = HtmlRef
