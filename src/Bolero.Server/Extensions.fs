@@ -33,13 +33,16 @@ open Microsoft.Extensions.DependencyInjection
 open Bolero
 open FSharp.Control.Tasks
 
+/// Extension methods to enable support for hosting server-side and WebAssembly Bolero components in ASP.NET Core.
 [<Extension>]
-type BoleroServerComponentsExtensions =
+type ServerComponentsExtensions =
 
+    /// Render a Bolero component in a Razor page.
     [<Extension>]
     static member RenderComponentAsync(html: IHtmlHelper, componentType: Type, config: IBoleroHostConfig, [<Optional; DefaultParameterValue null>] parameters: obj) =
         Components.Impl.renderComponentAsync html componentType config parameters
 
+    /// Render a Bolero component in a Razor page.
     [<Extension>]
     static member RenderComponentAsync<'T when 'T :> IComponent>(html: IHtmlHelper, config: IBoleroHostConfig, [<Optional; DefaultParameterValue null>] parameters: obj) =
         Components.Impl.renderComponentAsync html typeof<'T> config parameters
@@ -53,14 +56,17 @@ type BoleroServerComponentsExtensions =
         return! this.Response.Body.WriteAsync(ReadOnlyMemory body)
     }
 
+    /// Create a HTML page from the given Bolero element as MVC content.
     [<Extension>]
     static member BoleroPage(_this: Controller, page: Node) =
         new BoleroPageResult(page)
 
+    /// Render the JavaScript tag needed by Bolero in a Razor page.
     [<Extension>]
     static member RenderBoleroScript(html: IHtmlHelper, config: IBoleroHostConfig) =
         html.Raw(BoleroHostConfig.Body(config))
 
+    /// Configure the hosting of server-side and WebAssembly Bolero components.
     [<Extension>]
     static member AddBoleroHost(this: IServiceCollection, ?server: bool, ?prerendered: bool, ?devToggle: bool) =
         let server = defaultArg server false
