@@ -26,12 +26,12 @@ open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
-open Bolero.Server.RazorHost
+open Bolero.Server
 
 type Startup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
-        services.AddMvc().AddRazorRuntimeCompilation() |> ignore
+        services.AddMvc() |> ignore
         services.AddServerSideBlazor() |> ignore
         services.AddBoleroHost(server = false) |> ignore
 
@@ -47,7 +47,8 @@ type Startup() =
                     ctx.Response.Body.WriteAsync(ReadOnlyMemory body).AsTask()
                 ) |> ignore
                 endpoints.MapBlazorHub() |> ignore
-                endpoints.MapFallbackToPage("/_Host") |> ignore)
+                endpoints.MapFallbackToBolero(Page.index) |> ignore
+            )
         |> ignore
 
 module Program =

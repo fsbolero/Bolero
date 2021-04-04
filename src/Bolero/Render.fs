@@ -205,8 +205,9 @@ and renderAttrs currentComp (builder: RenderTreeBuilder) matchCache sequence att
 
     (sequence, ref)
 
-let RenderNode currentComp builder (matchCache: Dictionary<Type, _>) node =
-    let getMatchParams (ty: Type) =
+let makeMatchCache() =
+    let matchCache = Dictionary<Type, _>()
+    fun (ty: Type) ->
         match matchCache.TryGetValue(ty) with
         | true, x -> x
         | false, _ ->
@@ -215,8 +216,10 @@ let RenderNode currentComp builder (matchCache: Dictionary<Type, _>) node =
             let v = (caseCount, r)
             matchCache.[ty] <- v
             v
+
+let RenderNode currentComp builder matchCache node =
 #if DEBUG_RENDERER
     let builder = RenderTreeBuilder(builder, 0, stdout)
 #endif
-    renderNode currentComp builder getMatchParams 0 node
+    renderNode currentComp builder matchCache 0 node
     |> ignore

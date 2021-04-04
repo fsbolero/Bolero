@@ -36,7 +36,7 @@ open Bolero.Render
 type Component() =
     inherit ComponentBase()
 
-    let matchCache = Dictionary()
+    let matchCache = Render.makeMatchCache()
 
     override this.BuildRenderTree(builder) =
         base.BuildRenderTree(builder)

@@ -6,6 +6,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Page.fs" />
     <Compile Include="Startup.fs" />
     <None Include="paket.references" />
   </ItemGroup>

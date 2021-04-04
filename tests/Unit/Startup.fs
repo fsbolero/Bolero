@@ -27,8 +27,33 @@ open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.Extensions.DependencyInjection
 open Bolero.Remoting.Server
-open Bolero.Server.RazorHost
+open Bolero.Server
 open Bolero.Tests
+
+module Page =
+    open Bolero
+    open Bolero.Html
+    open Bolero.Server.Html
+
+    let index = doctypeHtml [] [
+        head [] [
+            ``base`` [attr.href "/"]
+            meta [attr.charset "utf-8"]
+        ]
+        body [] [
+            div [attr.id "app"] [rootComp<Bolero.Tests.Client.Tests>]
+            script [] [
+                RawHtml """
+                    // Used by ElementBinder test:
+                    function setContent(element, value) {
+                      element.innerHTML = value;
+                    }
+                """
+            ]
+            script [attr.src "_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"] []
+            boleroScript
+        ]
+    ]
 
 type Startup() =
 
@@ -67,29 +92,24 @@ type Startup() =
         }
 
     member this.ConfigureServices(services: IServiceCollection) =
-        services.AddControllersWithViews().AddRazorRuntimeCompilation() |> ignore
+        services.AddControllersWithViews() |> ignore
         services
             .AddAuthorization()
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie()
                 .Services
             .AddRemoting(remoteHandler)
-            .AddBoleroHost()
+            .AddBoleroHost(prerendered = false)
             .AddServerSideBlazor()
         |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
-        let serverSide = false
         app .UseAuthentication()
             .UseRemoting()
             .UseStaticFiles()
             .UseRouting()
             .UseBlazorFrameworkFiles()
             .UseEndpoints(fun endpoints ->
-                if serverSide then
-                    endpoints.MapBlazorHub() |> ignore
-                    endpoints.MapFallbackToPage("/_Host") |> ignore
-                else
-                    endpoints.MapControllers() |> ignore
-                    endpoints.MapFallbackToFile("index.html") |> ignore)
+                endpoints.MapBlazorHub() |> ignore
+                endpoints.MapFallbackToBolero(Page.index) |> ignore)
         |> ignore
