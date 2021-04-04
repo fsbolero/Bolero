@@ -44,18 +44,22 @@ module internal Impl =
         | false, true  -> html.RenderComponentAsync(componentType, RenderMode.Static, parameters)
         | false, false -> emptyContent
 
+    type [<Struct>] RenderType =
+        | FromConfig of IBoleroHostConfig
+        | Page
+
     let renderComp
             (componentType: Type)
             (httpContext: HttpContext)
             (htmlHelper: IHtmlHelper)
-            (boleroConfig: IBoleroHostConfig voption)
+            (renderType: RenderType)
             (parameters: obj)
             = task {
         (htmlHelper :?> IViewContextAware).Contextualize(ViewContext(HttpContext = httpContext))
         let! htmlContent =
-            match boleroConfig with
-            | ValueSome config -> renderComponentAsync htmlHelper componentType config parameters
-            | ValueNone -> htmlHelper.RenderComponentAsync(componentType, RenderMode.Static, parameters)
+            match renderType with
+            | FromConfig config -> renderComponentAsync htmlHelper componentType config parameters
+            | Page -> htmlHelper.RenderComponentAsync(componentType, RenderMode.Static, parameters)
         return using (new StringWriter()) <| fun writer ->
             htmlContent.WriteTo(writer, HtmlEncoder.Default)
             writer.ToString()
@@ -85,7 +89,7 @@ type RootComponent() =
     member val BoleroConfig = Unchecked.defaultof<IBoleroHostConfig> with get, set
 
     override this.BuildRenderTree(builder) =
-        let body = Impl.renderComp this.ComponentType this.HttpContextAccessor.HttpContext this.HtmlHelper (ValueSome this.BoleroConfig) null
+        let body = Impl.renderComp this.ComponentType this.HttpContextAccessor.HttpContext this.HtmlHelper (Impl.FromConfig this.BoleroConfig) null
         builder.AddMarkupContent(0, body.Result)
 
 type BoleroScript() =

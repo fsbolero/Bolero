@@ -48,7 +48,7 @@ type BoleroServerComponentsExtensions =
     [<Extension>]
     static member RenderPage(this: HttpContext, page: Node) = unitTask {
         let htmlHelper = this.RequestServices.GetRequiredService<IHtmlHelper>()
-        let! body = Components.Impl.renderComp typeof<Components.Page> this htmlHelper ValueNone (dict ["Node", box page])
+        let! body = Components.Impl.renderComp typeof<Components.Page> this htmlHelper Components.Impl.Page (dict ["Node", box page])
         let body = body |> System.Text.Encoding.UTF8.GetBytes
         return! this.Response.Body.WriteAsync(ReadOnlyMemory body)
     }
