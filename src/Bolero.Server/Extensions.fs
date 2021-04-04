@@ -27,6 +27,7 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Routing
+open Microsoft.AspNetCore.Mvc
 open Microsoft.AspNetCore.Mvc.Rendering
 open Microsoft.Extensions.DependencyInjection
 open Bolero
@@ -51,6 +52,10 @@ type BoleroServerComponentsExtensions =
         let body = body |> System.Text.Encoding.UTF8.GetBytes
         return! this.Response.Body.WriteAsync(ReadOnlyMemory body)
     }
+
+    [<Extension>]
+    static member BoleroPage(_this: Controller, page: Node) =
+        new BoleroPageResult(page)
 
     [<Extension>]
     static member RenderBoleroScript(html: IHtmlHelper, config: IBoleroHostConfig) =
@@ -89,3 +94,10 @@ type BoleroServerComponentsExtensions =
             if isNull ctx.Response.ContentType then
                 ctx.Response.ContentType <- "text/html; charset=UTF-8"
             ctx.RenderPage(page))
+
+and BoleroPageResult(page: Node) =
+
+    interface IActionResult with
+
+        member _.ExecuteResultAsync(ctx) =
+            ctx.HttpContext.RenderPage(page)
