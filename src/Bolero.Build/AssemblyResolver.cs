@@ -1,15 +1,18 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Mono.Cecil;
 
 namespace Bolero.Build
 {
     internal class AssemblyResolver : IAssemblyResolver
     {
-        private readonly string basePath;
+        private readonly IEnumerable<string> basePaths;
 
-        public AssemblyResolver(string basePath)
+        public AssemblyResolver(IEnumerable<string> basePaths)
         {
-            this.basePath = basePath;
+            this.basePaths = basePaths;
         }
 
         public void Dispose()
@@ -18,7 +21,10 @@ namespace Bolero.Build
 
         public AssemblyDefinition Resolve(AssemblyNameReference name)
         {
-            var path = Path.Combine(basePath, name.Name + ".dll");
+            var path = basePaths
+                .Select(p => Path.Combine(p, name.Name + ".dll"))
+                .FirstOrDefault(File.Exists)
+                ?? throw new Exception($"Could not resolve assembly {name}");
             return AssemblyDefinition.ReadAssembly(path);
         }
 

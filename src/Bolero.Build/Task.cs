@@ -20,6 +20,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Mono.Cecil;
@@ -29,14 +30,15 @@ namespace Bolero.Build {
     public class BoleroTask : Task {
 
         public ITaskItem[] AssembliesDir { get; set; }
+        public ITaskItem[] ResolveDir { get; set; }
 
-        private void StripFile(string f) {
+        private void StripFile(string f, IAssemblyResolver resolver) {
             var anyChanged = false;
             var bytes = File.ReadAllBytes(f);
             var basePath = Path.GetDirectoryName(f);
             var param = new ReaderParameters
             {
-                AssemblyResolver = new AssemblyResolver(basePath),
+                AssemblyResolver = resolver,
             };
             using (var mem = new MemoryStream(bytes))
             using (var asm = AssemblyDefinition.ReadAssembly(mem, param))
@@ -60,6 +62,7 @@ namespace Bolero.Build {
         }
 
         public override bool Execute() {
+            var resolver = new AssemblyResolver(ResolveDir.Select(dir => dir.ItemSpec));
             foreach (var dir in AssembliesDir)
             {
                 foreach (var asm in Directory.GetFiles(dir.ItemSpec))
@@ -68,7 +71,7 @@ namespace Bolero.Build {
                     {
                         try
                         {
-                            StripFile(asm);
+                            StripFile(asm, resolver);
                         }
                         catch (Exception exn)
                         {
