@@ -6,6 +6,6 @@
   <UsingTask AssemblyFile="$(BoleroTaskAssemblyPath)" TaskName="Bolero.Build.BoleroTask"
     Condition="'$(BoleroStripAssemblies)' != 'False'" />
   <Target Name="StripFSharp" AfterTargets="ILLink" Condition="'$(BoleroStripAssemblies)' != 'False'">
-    <BoleroTask AssembliesDir="$(IntermediateLinkDir)" />
+    <BoleroTask AssembliesDir="$(IntermediateLinkDir)" ReferencePath="@(ManagedAssemblyToLink)" />
   </Target>
 </Project>
