@@ -25,12 +25,16 @@ open Microsoft.JSInterop
 open Elmish
 open Bolero
 open Bolero.Html
+open System.Threading.Tasks
+open Microsoft.AspNetCore.Components.Web.Virtualization
+open FSharp.Control.Tasks
 
 type Page =
     | [<EndPoint "/">] Form
     | [<EndPoint "/collection">] Collection
     | [<EndPoint "/collection-item/{key}">] Item of key: int * model: PageModel<int>
     | [<EndPoint "/lazy">] Lazy
+    | [<EndPoint "/virtual">] Virtual
 
 type Item =
     {
@@ -58,6 +62,7 @@ type Model =
         page: Page
         nonLazyValue: int
         lazyModel: LazyModel
+        virtualItems: list<string>
     }
 
 type Message =
@@ -93,10 +98,11 @@ let initModel _ =
         remoteResult = None
         nonLazyValue = 0
         lazyModel = { LazyModel.value = 0; value2 = 0; nonEqVal = "I'm not tested in custom equality"; }
+        virtualItems = [for i in 0..2000 -> $"Item #{i}"]
     }
 
 let defaultPageModel = function
-    | Form | Collection | Lazy -> ()
+    | Form | Collection | Lazy | Virtual -> ()
     | Item (_, m) -> Router.definePageModel m 10
 let router = Router.inferWithModel SetPage (fun m -> m.page) defaultPageModel
 
@@ -269,6 +275,27 @@ let viewLazy model dispatch =
         p [] [lazyCompBy (fun m -> (m.value, m.value2)) lazyViewFunction model.lazyModel]
     ]
 
+let viewVirtual model dispatch =
+    div [attr.style "display:flex; flex-direction:row;"] [
+        div [attr.style "flex:1; height: 300px; border: solid 1px black; overflow-y: auto;"] [
+            virtualize.comp [] model.virtualItems <| fun x ->
+                div [attr.style "border: solid 1px gray;"] [text x]
+        ]
+        div [attr.style "flex:1; height: 300px; border: solid 1px black; overflow-y: auto;"] [
+            virtualize.compProvider [
+                virtualize.placeholder <| fun p ->
+                    div [attr.style "border: solid 1px gray;"] [text $"Placeholder #{p.Index}"]
+                virtualize.overscanCount 5
+            ]
+            <| fun r -> vtask {
+                do! Task.Delay 1000
+                return ItemsProviderResult([r.StartIndex..r.StartIndex+r.Count-1], 2000)
+            }
+            <| fun x ->
+                div [attr.style "border: solid 1px gray;"] [text $"Item #{x}"]
+        ]
+    ]
+
 let view js model dispatch =
     concat [
         RawHtml """
@@ -281,12 +308,15 @@ let view js model dispatch =
             navLink NavLinkMatch.Prefix [router.HRef Collection] [text "Collection"]
             text " "
             navLink NavLinkMatch.Prefix [router.HRef Lazy] [text "Lazy"]
+            text " "
+            navLink NavLinkMatch.All [router.HRef Virtual] [text "Virtual"]
         ]
         cond model.page <| function
             | Form -> viewForm js model dispatch
             | Collection -> viewCollection model dispatch
             | Item (k, m) -> ecomp<ViewItemPage,_,_> [] (k, model.items.[k], m.Model) dispatch
             | Lazy -> viewLazy model dispatch
+            | Virtual -> viewVirtual model dispatch
     ]
 
 type MyApp() =
