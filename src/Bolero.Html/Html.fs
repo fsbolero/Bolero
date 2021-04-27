@@ -2337,3 +2337,30 @@ module bind =
             /// Bind a DateTimeOffset to the value of an input.
             /// The value is updated on the onchange event.
             let inline dateTimeOffset culture value callback = binder<DateTimeOffset, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback culture
+
+module virtualize =
+    open System.Collections.Generic
+    open Microsoft.AspNetCore.Components.Web.Virtualization
+
+    let inline comp<'item> attrs (items: IReadOnlyCollection<'item>) (itemContent: 'item -> Node) =
+        Node.BlazorComponent<Virtualize<'item>>(
+            ("Items" => Virtualize.Internals.Collection<'item> items)
+            :: attr.fragmentWith "ItemContent" itemContent
+            :: attrs,
+            [])
+
+    let inline compProvider<'item> attrs (itemsProvider: ItemsProviderRequest -> ValueTask<ItemsProviderResult<'item>>) (itemContent: 'item -> Node) =
+        Node.BlazorComponent<Virtualize<'item>>(
+            ("ItemsProvider" => ItemsProviderDelegate<'item> itemsProvider)
+            :: attr.fragmentWith "ItemContent" itemContent
+            :: attrs,
+            [])
+
+    let inline placeholder (v: PlaceholderContext -> Node) =
+        attr.fragmentWith "Placeholder" v
+
+    let inline itemSize (v: single) =
+        "ItemSize" => v
+
+    let inline overscanCount (v: int) =
+        "OverscanCount" => v
