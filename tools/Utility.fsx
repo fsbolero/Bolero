@@ -33,31 +33,33 @@ open Fake.Core
 open Fake.DotNet
 open Fake.IO
 
-let runProc dir env cmd args transform =
+let runProc dir env cmd args transform onError =
     let out =
         CreateProcess.fromRawCommand cmd args
         |> CreateProcess.withWorkingDirectory dir
         |> CreateProcess.withEnvironment env
         |> transform
         |> Proc.run
-    if out.ExitCode <> 0 then failwithf "Command %s failed" cmd
+    if out.ExitCode <> 0 then onError out.Result
     out.Result
 
 let dotnet' dir env cmd args =
-    runProc dir env cmd args (CreateProcess.withToolType (ToolType.CreateLocalTool()))
+    runProc dir env cmd args (CreateProcess.withToolType (ToolType.CreateLocalTool())) (fun _ -> failwithf "Command %s failed" cmd)
 
 let dotnet cmd args =
     dotnet' slnDir [] cmd args
 
 let dotnetOutput' dir env cmd args =
     let transform = CreateProcess.withToolType (ToolType.CreateLocalTool()) >> CreateProcess.redirectOutput
-    (runProc dir env cmd args transform).Output
+    let onError (r: ProcessOutput) = Trace.traceError r.Error
+    (runProc dir env cmd args transform onError).Output
 
 let dotnetOutput cmd args =
     dotnetOutput' slnDir [] cmd args
 
 let shellOutput' dir env cmd args =
-    (runProc dir env cmd args CreateProcess.redirectOutput).Output
+    let onError (r: ProcessOutput) = Trace.traceError r.Error
+    (runProc dir env cmd args CreateProcess.redirectOutput onError).Output
 
 let shellOutput cmd args =
     shellOutput' slnDir [] cmd args

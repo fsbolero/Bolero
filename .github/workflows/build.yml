@@ -1,0 +1,97 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.400'
+
+      - name: NuGet cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('.config/dotnet-tools.json') }}-${{ hashFiles('*.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Build
+        run: |
+          # GH Actions puts us in detached head, but for nbgv, we need to be on the branch
+          if echo "${{github.ref}}" | grep -q "^refs/heads/"; then
+            git checkout "$(echo ${{github.ref}} | sed -E 's|^refs/heads/||')";
+          fi
+          # Ensure that the selenium chrome driver matches the installed chrome
+          ./build.sh -t update-chromedriver
+          # Build
+          DOTNET_RUNTIME_IDENTIFIER=linux-x64 ./build.sh -t all -c release
+
+      - name: Upload nupkg
+        uses: actions/upload-artifact@v1
+        with:
+          name: nuget
+          path: build
+
+      - name: Report tests
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Unit tests
+          path: tests/Unit/TestResults/*.trx
+          reporter: dotnet-trx
+
+  prerelease:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ github.ref == 'refs/heads/master' }}
+    steps:
+      - name: Download nupkg
+        uses: actions/download-artifact@v1
+        with:
+          name: nuget
+
+      - name: Push to GitHub feed
+        run: dotnet nuget push *.nupkg
+               --api-key "${{secrets.GITHUB_TOKEN}}"
+               --source "https://nuget.pkg.github.com/${{github.repository_owner}}/"
+               --skip-duplicate
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ contains(github.ref, 'releases') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Prepare
+        run: |
+          # GH Actions puts us in detached head, but for nbgv, we need to be on the branch
+          git checkout "$(echo ${{github.ref}} | sed -E 's|^refs/[^/]+/||')"
+          dotnet tool restore
+          SHORT_VERSION="$(dotnet nbgv get-version -v MajorMinorVersion)"
+          echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_ENV
+          echo "FULL_VERSION=$(dotnet nbgv get-version -v SemVer2)" >> $GITHUB_ENV
+          # Parse the relevant changelog entry out of CHANGELOG.md
+          sed -n "/^## ${SHORT_VERSION//./\\.}\$/{n;bl};d;:l;/^#/Q;p;n;bl" CHANGELOG.md > release.md
+
+      - name: Create draft release
+        uses: actions/create-release@v1
+        with:
+          tag_name: v${{ env.FULL_VERSION }}
+          release_name: Version ${{ env.SHORT_VERSION }}
+          body_path: release.md
+          draft: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

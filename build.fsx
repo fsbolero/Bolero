@@ -243,6 +243,9 @@ Target.create "update-chromedriver" (fun _ ->
         dotnet "paket" ["update"; "Selenium.WebDriver.ChromeDriver"; "-V"; $"~> {v}"])
 )
 
+Target.description "Build, test and pack"
+Target.create "all" ignore
+
 "corebuild"
     ==> "build"
     ==> "pack"
@@ -253,5 +256,8 @@ Target.create "update-chromedriver" (fun _ ->
 
 "build" ?=> "test"
 "build" ?=> "test-debug"
+
+"test" ==> "all"
+"pack" ==> "all"
 
 Target.runOrDefaultWithArguments "build"

@@ -163,7 +163,7 @@ NUGET
       Selenium.WebDriver (>= 3.141)
     Selenium.WebDriver (3.141)
       Newtonsoft.Json (>= 10.0.3)
-    Selenium.WebDriver.ChromeDriver (89.0.4389.2300)
+    Selenium.WebDriver.ChromeDriver (93.0.4577.1500)
     System.AppContext (4.3) - restriction: || (== net5.0) (&& (== netstandard2.0) (>= netcoreapp2.1)) (&& (== netstandard2.1) (>= netcoreapp2.1))
       System.Runtime (>= 4.3)
     System.Buffers (4.5.1) - restriction: || (&& (== net5.0) (>= monoandroid)) (&& (== net5.0) (>= monotouch)) (&& (== net5.0) (>= net461)) (&& (== net5.0) (< netcoreapp2.0)) (&& (== net5.0) (>= xamarinios)) (&& (== net5.0) (>= xamarinmac)) (&& (== net5.0) (>= xamarintvos)) (&& (== net5.0) (>= xamarinwatchos)) (== netstandard2.0) (== netstandard2.1)
