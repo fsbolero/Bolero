@@ -32,13 +32,21 @@ jobs:
           if echo "${{github.ref}}" | grep -q "^refs/heads/"; then
             git checkout "$(echo ${{github.ref}} | sed -E 's|^refs/heads/||')";
           fi
-          DOTNET_RUNTIME_IDENTIFIER=linux-x64 ./build.sh -t pack -c release
+          DOTNET_RUNTIME_IDENTIFIER=linux-x64 ./build.sh -t all -c release
 
       - name: Upload nupkg
         uses: actions/upload-artifact@v1
         with:
           name: nuget
           path: build
+
+      - name: Report tests
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Unit tests
+          path: tests/Unit/TestResults/*.trx
+          reporter: dotnet-trx
 
   prerelease:
     runs-on: ubuntu-latest
