@@ -32,6 +32,9 @@ jobs:
           if echo "${{github.ref}}" | grep -q "^refs/heads/"; then
             git checkout "$(echo ${{github.ref}} | sed -E 's|^refs/heads/||')";
           fi
+          # Ensure that the selenium chrome driver matches the installed chrome
+          ./build.sh -t update-chromedriver
+          # Build
           DOTNET_RUNTIME_IDENTIFIER=linux-x64 ./build.sh -t all -c release
 
       - name: Upload nupkg
