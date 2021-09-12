@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: nuget
-          path: bin/nuget
+          path: build
 
   prerelease:
     runs-on: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
           name: nuget
 
       - name: Push to GitHub feed
-        run: dotnet nuget push nuget/*.nupkg
+        run: dotnet nuget push *.nupkg
                --api-key "${{secrets.GITHUB_TOKEN}}"
                --source "https://nuget.pkg.github.com/${{github.repository_owner}}/"
                --skip-duplicate
