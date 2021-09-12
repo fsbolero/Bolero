@@ -1,6 +1,8 @@
 type project
 id Bolero.Server
 projectUrl https://github.com/fsbolero/bolero
+repositoryUrl https://github.com/fsbolero/bolero
+repositoryType git
 description
     Server-side component of Bolero: a set of tools and libraries to run F# applications in WebAssembly using Blazor
 authors

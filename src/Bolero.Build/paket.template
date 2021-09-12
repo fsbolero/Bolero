@@ -1,5 +1,8 @@
 type file
 id Bolero.Build
+projectUrl https://github.com/fsbolero/bolero
+repositoryUrl https://github.com/fsbolero/bolero
+repositoryType git
 description
     Build tools for Bolero: a set of tools and libraries to run F# applications in WebAssembly using Blazor
 authors
