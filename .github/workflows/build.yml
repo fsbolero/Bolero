@@ -62,7 +62,7 @@ jobs:
           name: nuget
 
       - name: Push to GitHub feed
-        run: dotnet nuget push *.nupkg
+        run: dotnet nuget push nuget/*.nupkg
                --api-key "${{secrets.GITHUB_TOKEN}}"
                --source "https://nuget.pkg.github.com/${{github.repository_owner}}/"
                --skip-duplicate
