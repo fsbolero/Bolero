@@ -23,6 +23,7 @@ namespace Bolero.Server
 open System
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Http
@@ -31,7 +32,6 @@ open Microsoft.AspNetCore.Mvc
 open Microsoft.AspNetCore.Mvc.Rendering
 open Microsoft.Extensions.DependencyInjection
 open Bolero
-open FSharp.Control.Tasks
 
 /// Extension methods to enable support for hosting server-side and WebAssembly Bolero components in ASP.NET Core.
 [<Extension>]
@@ -49,7 +49,7 @@ type ServerComponentsExtensions =
 
     /// Render the given page in the HTTP response body.
     [<Extension>]
-    static member RenderPage(this: HttpContext, page: Node) = unitTask {
+    static member RenderPage(this: HttpContext, page: Node) : Task = upcast task {
         let htmlHelper = this.RequestServices.GetRequiredService<IHtmlHelper>()
         let! body = Components.Impl.renderComp typeof<Components.Page> this htmlHelper Components.Impl.Page (dict ["Node", box page])
         let body = body |> System.Text.Encoding.UTF8.GetBytes

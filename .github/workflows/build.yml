@@ -16,7 +16,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '5.0.400'
+          dotnet-version: '6.0.100'
 
       - name: NuGet cache
         uses: actions/cache@v1

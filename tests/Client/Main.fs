@@ -27,7 +27,6 @@ open Bolero
 open Bolero.Html
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Components.Web.Virtualization
-open FSharp.Control.Tasks
 
 type Page =
     | [<EndPoint "/">] Form
@@ -287,10 +286,10 @@ let viewVirtual model dispatch =
                     div [attr.style "border: solid 1px gray;"] [text $"Placeholder #{p.Index}"]
                 virtualize.overscanCount 5
             ]
-            <| fun r -> vtask {
+            <| fun r -> ValueTask<ItemsProviderResult<_>>(task {
                 do! Task.Delay 1000
                 return ItemsProviderResult([r.StartIndex..r.StartIndex+r.Count-1], 2000)
-            }
+            })
             <| fun x ->
                 div [attr.style "border: solid 1px gray;"] [text $"Item #{x}"]
         ]

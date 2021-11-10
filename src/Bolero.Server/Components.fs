@@ -31,7 +31,6 @@ open Microsoft.AspNetCore.Mvc.Rendering
 open Microsoft.AspNetCore.Mvc.ViewFeatures
 open Bolero
 open Bolero.Server
-open FSharp.Control.Tasks
 
 module internal Impl =
 

@@ -3,7 +3,7 @@ source https://api.nuget.org/v3/index.json
 storage: none
 framework: netstandard2.0, netstandard2.1, net5.0
 
-nuget FSharp.Core >= 5.0 lowest_matching: true
+nuget FSharp.Core >= 6.0 lowest_matching: true
 nuget FSharp.SystemTextJson >= 0.15.14
 nuget HtmlAgilityPack >= 1.11
 nuget Elmish ~> 3.1 lowest_matching: true, strategy: min
@@ -11,7 +11,6 @@ nuget Microsoft.AspNetCore.Components.Authorization ~> 5.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 5.0
 nuget Microsoft.Extensions.Configuration.Binder ~> 5.0
 nuget Microsoft.Extensions.Http ~> 5.0
-nuget Ply >= 0.3.1
 nuget Microsoft.AspNetCore.Components ~> 5.0
 nuget Microsoft.AspNetCore.Components.Web ~> 5.0
 nuget Microsoft.AspNetCore.Components.WebAssembly ~> 5.0
