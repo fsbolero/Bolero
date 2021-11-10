@@ -42,7 +42,7 @@ type WebFixture() =
 
     static let mutable server = Unchecked.defaultof<IWebHost>
 
-    static let mutable driver = Unchecked.defaultof<RemoteWebDriver>
+    static let mutable driver = Unchecked.defaultof<WebDriver>
 
     static let url = "http://localhost:51608"
 
