@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.18
+
+* Loosen Microsoft.* dependencies from ~> 5.0 to >= 5.0 to allow using 6.0+.
+
+* Update FSharp.Core to 6.0.
+
+* Remove references to Ply, use F# 6's own `task` instead.
+
+* Run tests on .NET 6.
+
+* Move CI from AppVeyor to GitHub actions.
+
 ## 0.17
 
 * [#202](https://github.com/fsbolero/Bolero/issues/202) Add the ability to generate static HTML content using Bolero.Html functions.
