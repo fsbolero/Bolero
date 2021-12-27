@@ -1,4 +1,3 @@
-version 5.247.4
 source https://api.nuget.org/v3/index.json
 storage: none
 framework: netstandard2.0, net5.0, net6.0
@@ -6,8 +5,8 @@ lowest_matching: true
 strategy: min
 
 nuget FSharp.Core >= 6.0 content: none
-nuget FSharp.SystemTextJson >= 0.15.14
-nuget HtmlAgilityPack >= 1.11
+nuget FSharp.SystemTextJson >= 0.17.4
+nuget HtmlAgilityPack >= 1.11.39
 nuget Elmish ~> 3.1
 nuget Microsoft.AspNetCore.Components.Authorization >= 5.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 5.0
