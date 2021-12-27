@@ -240,7 +240,7 @@ Target.create "update-chromedriver" (fun _ ->
             let ver = System.Diagnostics.FileVersionInfo.GetVersionInfo(f)
             Some $"{ver.FileMajorPart}.{ver.FileMinorPart}"
     |> Option.iter (fun v ->
-        dotnet "paket" ["update"; "Selenium.WebDriver.ChromeDriver"; "-V"; $"~> {v}"])
+        dotnet "paket" ["update"; "Selenium.WebDriver.ChromeDriver"; "-V"; $"~> {v}"; "-g"; "tests"])
 )
 
 Target.description "Build, test and pack"

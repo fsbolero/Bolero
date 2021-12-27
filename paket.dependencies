@@ -1,31 +1,41 @@
 version 5.247.4
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: netstandard2.0, netstandard2.1, net5.0
+framework: netstandard2.0, net5.0, net6.0
+lowest_matching: true
+strategy: min
 
-nuget FSharp.Core >= 5.0 lowest_matching: true
+nuget FSharp.Core >= 6.0 content: none
 nuget FSharp.SystemTextJson >= 0.15.14
 nuget HtmlAgilityPack >= 1.11
-nuget Elmish ~> 3.1 lowest_matching: true, strategy: min
-nuget Microsoft.AspNetCore.Components.Authorization ~> 5.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 5.0
-nuget Microsoft.Extensions.Configuration.Binder ~> 5.0
-nuget Microsoft.Extensions.Http ~> 5.0
-nuget Ply >= 0.3.1
-nuget Microsoft.AspNetCore.Components ~> 5.0
-nuget Microsoft.AspNetCore.Components.Web ~> 5.0
-nuget Microsoft.AspNetCore.Components.WebAssembly ~> 5.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 5.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 5.0
-nuget System.Text.Json ~> 5.0
+nuget Elmish ~> 3.1
+nuget Microsoft.AspNetCore.Components.Authorization >= 5.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 5.0
+nuget Microsoft.Extensions.Configuration.Binder >= 5.0
+nuget Microsoft.Extensions.Http >= 5.0
+nuget Microsoft.AspNetCore.Components >= 5.0
+nuget Microsoft.AspNetCore.Components.Web >= 5.0
+nuget Microsoft.AspNetCore.Components.WebAssembly >= 5.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server >= 5.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer >= 5.0
+nuget System.Text.Json >= 5.0
+nuget Nerdbank.GitVersioning copy_local: true, lowest_matching: false
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 
-# Bolero.Build
+group build
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: netstandard2.0
+
 nuget Mono.Cecil ~> 0.11.0
 nuget Microsoft.Build.Utilities.Core ~> 15.0
 
-# Tests
+group tests
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: net6.0
+
 nuget FsCheck.NUnit ~> 2.12
 nuget Microsoft.NET.Test.Sdk 15.8.0
 nuget nunit ~> 3.10
@@ -34,5 +44,4 @@ nuget Selenium.Support
 nuget Selenium.WebDriver
 nuget Selenium.WebDriver.ChromeDriver
 # nuget Selenium.WebDriver.GeckoDriver.Win64
-nuget Nerdbank.GitVersioning copy_local: true
 nuget Unquote

@@ -82,7 +82,7 @@ let inline ecomp<'T, 'model, 'msg when 'T :> ElmishComponent<'model, 'msg>>
 /// [category: Components]
 let inline lazyComp (viewFunction: 'model -> Node) (model: 'model) =
     let viewFunction' : 'model -> Elmish.Dispatch<'msg> -> Node = fun m _ -> viewFunction m
-    comp<LazyComponent<'model,_>> ["Model" => model; "ViewFunction" => viewFunction'; ][]
+    comp<LazyComponent<'model,_>> ["Model" => model; "ViewFunction" => viewFunction'; ] []
 
 /// Create a fragment with a lazily rendered view function and a custom equality.
 /// [category: Components]
