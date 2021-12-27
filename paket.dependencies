@@ -5,7 +5,7 @@ framework: netstandard2.0, net5.0, net6.0
 lowest_matching: true
 strategy: min
 
-nuget FSharp.Core >= 6.0
+nuget FSharp.Core >= 6.0 content: none
 nuget FSharp.SystemTextJson >= 0.15.14
 nuget HtmlAgilityPack >= 1.11
 nuget Elmish ~> 3.1
