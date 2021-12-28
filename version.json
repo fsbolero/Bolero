@@ -1,6 +1,6 @@
 {
-  "$schema": "https://raw.githubusercontent.com/AArnott/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
-  "version": "0.18-alpha",
+  "$schema": "https://raw.githubusercontent.com/dotnet/Nerdbank.GitVersioning/master/src/NerdBank.GitVersioning/version.schema.json",
+  "version": "0.18",
   "gitCommitIdShortAutoMinimum": 7,
   "nuGetPackageVersion": {
     "semVer": 2.0
