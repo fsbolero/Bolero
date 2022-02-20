@@ -23,6 +23,10 @@ namespace Bolero
 open System
 open Microsoft.AspNetCore.Components
 
+type [<AbstractClass>] Ref() =
+    /// [omit]
+    abstract Render : Rendering.RenderTreeBuilder * int -> int
+
 /// A utility to bind a reference to a rendered component.
 /// See https://fsbolero.io/docs/Blazor#html-element-references
 /// [category: HTML]

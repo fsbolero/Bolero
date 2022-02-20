@@ -7,6 +7,7 @@
     <!-- <DefineConstants>DEBUG_RENDERER;$(DefineConstants)</DefineConstants> -->
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Attr.fs" />
     <Compile Include="Node.fs" />
     <Compile Include="TemplatingInternals.fs" />
     <Compile Include="Router.fs" />
@@ -14,6 +15,8 @@
     <Compile Include="Components.fs" />
     <Compile Include="Virtualize.fs" />
     <Compile Include="Ref.fs" />
+    <Compile Include="Builders.fs" />
+    <Compile Include="Html.fs" />
     <Compile Include="Remoting.fs" />
     <Compile Include="Remoting.Client.fs" />
     <Compile Include="Cmd.fs" />

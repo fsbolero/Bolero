@@ -17,6 +17,7 @@
       <Paket>True</Paket>
       <Link>paket-files/ProvidedTypes.fs</Link>
     </Compile>
+    <Compile Include="..\Bolero\Attr.fs" Link="Attr.fs" />
     <Compile Include="..\Bolero\Node.fs" Link="Node.fs" />
     <Compile Include="..\Bolero\TemplatingInternals.fs" Link="TemplatingInternals.fs" />
     <Compile Include="Utilities.fs" />
