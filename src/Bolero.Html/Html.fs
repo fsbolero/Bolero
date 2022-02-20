@@ -715,6 +715,9 @@ module attr =
             tb.SetKey(k)
             i)
 
+    /// Create an empty attribute.
+    let inline empty() = Attr.Empty()
+
     /// Create an HTML `aria-X` attribute.
     let inline aria name (v: obj) = ("aria-" + name) => v
 

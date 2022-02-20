@@ -70,7 +70,7 @@ module Html =
         })
 
     /// Insert the required scripts to run Blazor components.
-    let boleroScript = comp<Components.BoleroScript> { Attr.Empty() }
+    let boleroScript = comp<Components.BoleroScript> { attr.empty() }
 
     /// Create a doctype declaration.
     let doctype (decl: string) = rawHtml $"<!DOCTYPE {decl}>\n"
