@@ -38,10 +38,10 @@ let MakeCtor (holes: Parsing.Vars) =
             for KeyValue(_, type') in holes ->
                 match type' with
                 | Parsing.HoleType.String -> <@ box "" @>
-                | Parsing.HoleType.Html -> <@ box Node.Empty @>
+                | Parsing.HoleType.Html -> <@ box (Node.Empty()) @>
                 | Parsing.HoleType.Event _ -> <@ box (Events.NoOp<EventArgs>()) @>
                 | Parsing.HoleType.DataBinding _ -> <@ box (null, Events.NoOp<ChangeEventArgs>()) @>
-                | Parsing.HoleType.Attribute -> <@ box (Attrs []) @>
+                | Parsing.HoleType.Attribute -> <@ box (Attr.Empty()) @>
                 | Parsing.HoleType.AttributeValue -> <@ null @>
         ]
         <@@ (%getThis args).Holes <- %holes @@>)
@@ -89,7 +89,7 @@ let HoleMethodBodies (holeType: Parsing.HoleType) : (ProvidedParameter list * (E
             ["value" => typeof<Attr>], fun args ->
                 <@@ box (%%args.[1]: Attr) @@>
             ["value" => typeof<list<Attr>>], fun args ->
-                <@@ box (Attrs(%%args.[1]: list<Attr>)) @@>
+                <@@ box (Attr.Attrs(%%args.[1]: list<Attr>)) @@>
         ]
     | Parsing.HoleType.AttributeValue ->
         [

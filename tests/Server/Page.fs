@@ -23,20 +23,24 @@ module Bolero.Test.Server.Page
 open Bolero.Html
 open Bolero.Server.Html
 
-let index = doctypeHtml [] [
-    head [] [
-        title [] [text "Bolero (server side)"]
-        meta [attr.charset "UTF-8"]
-        ``base`` [attr.href "/"]
-    ]
-    body [] [
-        div [attr.id "main"] [
+let simple = elt "div" { "test" }
+
+let index = doctypeHtml {
+    head {
+        title { "Bolero (server side)" }
+        meta { attr.charset "UTF-8" }
+        ``base`` { attr.href "/" }
+    }
+    body {
+        div {
+            attr.id "main"
             rootComp<Bolero.Test.Client.Main.MyApp>
-        ]
-        hr []
-        a [attr.href "/external-link"] [
-            text "Non-routed link (this link must point to a separate static page)"
-        ]
+        }
+        hr
+        a {
+            attr.href "/external-link"
+            "Non-routed link (this link must point to a separate static page)"
+        }
         boleroScript
-    ]
-]
+    }
+}

@@ -23,7 +23,6 @@ module Bolero.Tests.Client.Routing
 open Bolero
 open Bolero.Html
 open Elmish
-open Bolero
 
 type Page =
     | [<EndPoint "/">] Home
@@ -179,17 +178,18 @@ let links =
     List.map (fun (l, p) -> "/with-nested-union" + l, WithNestedUnion p) baseLinks
 
 let view model dispatch =
-    concat [
+    concat {
         for url, page in links do
             let cls = pageClass page
-            yield a [attr.classes [$"link-{cls}"]; router.HRef page] [text url]
-            yield button [
+            a { attr.classes [$"link-{cls}"]; router.HRef page; url }
+            button {
                 attr.classes [$"btn-{cls}"]
                 attr.value (router.Link page)
                 on.click (fun _ -> dispatch (SetPage page))
-            ] [text url]
-        yield span [attr.classes ["current-page"]] [text $"{model.page}"]
-    ]
+                url
+            }
+        span { attr.classes ["current-page"]; $"{model.page}" }
+    }
 
 type Test() =
     inherit ProgramComponent<Model, Message>()
@@ -199,6 +199,7 @@ type Test() =
         |> Program.withRouter router
 
 let Tests() =
-    div [attr.id "test-fixture-routing"] [
-        comp<Test> [] []
-    ]
+    div {
+        attr.id "test-fixture-routing"
+        comp<Test>
+    }

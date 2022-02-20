@@ -24,17 +24,39 @@ open Microsoft.AspNetCore.Components
 open Bolero
 open Bolero.Server
 
+type DoctypeHtmlBuilder() =
+    inherit NodeBuilderWithDirectChildrenBase()
+
+    member inline this.Run([<InlineIfLambda>] content: Node) =
+        Node(fun c b m i ->
+            b.AddMarkupContent(i, "<!DOCTYPE html>\n")
+            b.OpenElement(i + 1, "html")
+            let i = content.Invoke(c, b, m, i + 2)
+            b.CloseElement()
+            i)
+
+    member inline this.Run([<InlineIfLambda>] content: Attr) =
+        this.Run(this.Combine(content, Node.Empty()))
+    member inline this.Run([<InlineIfLambda>] content: Key) =
+        this.Run(this.Combine(content, Node.Empty()))
+    member inline this.Run([<InlineIfLambda>] content: RefRender) =
+        this.Run(this.Combine(content, Node.Empty()))
+
+
 module Html =
+    open Bolero.Html
 
     /// Insert a Blazor component inside a static page.
     let rootComp<'T when 'T :> IComponent> =
-        Node.BlazorComponent<Components.RootComponent>([Attr("ComponentType", typeof<'T>)], [])
+        ComponentWithAttrsBuilder<Components.RootComponent>(attrs {
+            "ComponentType" => typeof<'T>
+        })
 
     /// Insert the required scripts to run Blazor components.
-    let boleroScript = Node.BlazorComponent<Components.BoleroScript>([], [])
+    let boleroScript = comp<Components.BoleroScript> { Attr.Empty() }
 
     /// Create a doctype declaration.
-    let doctype (decl: string) = RawHtml $"<!DOCTYPE {decl}>\n"
+    let doctype (decl: string) = rawHtml $"<!DOCTYPE {decl}>\n"
 
     /// Create an `<html>` element preceded by the standard "html" doctype declaration.
-    let doctypeHtml attrs body = Concat [doctype "html"; Elt("html", attrs, body)]
+    let doctypeHtml = DoctypeHtmlBuilder()

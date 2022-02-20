@@ -110,12 +110,9 @@ Target.create "tags" (fun _ ->
         replace (Tags.GetSample().Rows) "TAGS" (fun s tag ->
             let esc = escapeDashes tag.Name
             let ident = if tag.NeedsEscape then "``" + esc + "``" else esc
-            let childrenArg = if tag.CanHaveChildren then " (children: list<Node>)" else ""
-            let childrenVal = if tag.CanHaveChildren then "children" else "[]"
             s.AppendLine(sprintf """/// Create an HTML `<%s>` element.""" tag.Name)
              .AppendLine(        """/// [category: HTML tag names]""")
-             .AppendLine(sprintf """let inline %s (attrs: list<Attr>)%s : Node =""" ident childrenArg)
-             .AppendLine(sprintf """    elt "%s" attrs %s""" tag.Name childrenVal)
+             .AppendLine(sprintf """let %s : ElementBuilder = elt "%s" """ ident tag.Name)
              .AppendLine()
         )
         >> replace (Attrs.GetSample().Rows) "ATTRS" (fun s attr ->
@@ -132,7 +129,7 @@ Target.create "tags" (fun _ ->
             let esc = escapeDashes event.Name
             s.AppendLine(sprintf """    /// Create a handler for HTML event `%s`.""" event.Name)
              .AppendLine(sprintf """    let inline %s (callback: %sEventArgs -> unit) : Attr =""" esc event.Type)
-             .AppendLine(sprintf """        attr.callback<%sEventArgs> ("on%s") callback""" event.Type esc)
+             .AppendLine(sprintf """        attr.callback<%sEventArgs> "on%s" callback""" event.Type esc)
              .AppendLine()
         )
         >> replace (Events.GetSample().Rows) "ASYNCEVENTS" (fun s event ->

@@ -51,19 +51,19 @@ type BoleroComponent() =
     member val Ident = "" with get, set
 
     override this.Render() =
-        concat [
-            div [attr.id this.Ident] [text "Component content"]
+        concat {
+            div { attr.id this.Ident; "Component content" }
 
-            input [
+            input {
                 attr.classes ["condBoolInput"]
                 attr.value condBoolState
                 on.input (fun e -> condBoolState <- e.Value :?> string)
-            ]
+            }
             cond (condBoolState.Length = 2) <| function
-                | true -> span [attr.classes ["condBoolIs2"]] []
-                | false -> span [attr.classes ["condBoolIsNot2"]] []
+                | true -> span { attr.classes ["condBoolIs2"] }
+                | false -> span { attr.classes ["condBoolIsNot2"] }
 
-            input [
+            input {
                 attr.classes ["condUnionInput"]
                 attr.value (string condUnionState)
                 on.input (fun e ->
@@ -73,21 +73,21 @@ type BoleroComponent() =
                         | 0 -> Empty
                         | 1 -> OneChar s.[0]
                         | _ -> ManyChars s)
-            ]
+            }
             cond condUnionState <| function
-                | Empty -> span [attr.classes ["condUnionIsEmpty"]] []
-                | OneChar _ -> span [attr.classes ["condUnionIsOne"]] []
-                | ManyChars _ -> span [attr.classes ["condUnionIsMany"]] []
+                | Empty -> span { attr.classes ["condUnionIsEmpty"] }
+                | OneChar _ -> span { attr.classes ["condUnionIsOne"] }
+                | ManyChars _ -> span { attr.classes ["condUnionIsMany"] }
 
-            input [
+            input {
                 attr.classes ["forEachInput"]
                 attr.value (String.concat "" forEachState)
                 on.input (fun e ->
                     forEachState <- [for c in (e.Value :?> string) -> string c])
-            ]
+            }
             forEach forEachState <| fun s ->
-                span [attr.classes ["forEachIs" + s]] []
-        ]
+                span { attr.classes ["forEachIs" + s] }
+        }
 
 type Binds() =
     inherit Component()
@@ -110,38 +110,38 @@ type Binds() =
     member val radioState = 0 with get, set
 
     override this.Render() =
-        concat [
-            input [attr.``class`` "bind-input"; bind.input.string this.inputState (fun x -> this.inputState <- x)]
-            input [attr.``class`` "bind-input-2"; bind.input.string this.inputState (fun x -> this.inputState <- x)]
-            span [attr.``class`` "bind-input-out"] [text this.inputState]
-            input [attr.``class`` "bind-change"; bind.change.string this.changeState (fun x -> this.changeState <- x)]
-            input [attr.``class`` "bind-change-2"; bind.change.string this.changeState (fun x -> this.changeState <- x)]
-            span [attr.``class`` "bind-change-out"] [text this.changeState]
-            input [attr.``type`` "number"; attr.``class`` "bind-input-int"; bind.input.int this.inputIntState (fun x -> this.inputIntState <- x)]
-            input [attr.``type`` "number"; attr.``class`` "bind-input-int-2"; bind.input.int this.inputIntState (fun x -> this.inputIntState <- x)]
-            span [attr.``class`` "bind-input-int-out"] [text $"{this.inputIntState}"]
-            input [attr.``type`` "number"; attr.``class`` "bind-change-int"; bind.change.int this.changeIntState (fun x -> this.changeIntState <- x)]
-            input [attr.``type`` "number"; attr.``class`` "bind-change-int-2"; bind.change.int this.changeIntState (fun x -> this.changeIntState <- x)]
-            span [attr.``class`` "bind-change-int-out"] [text $"{this.changeIntState}"]
-            input [attr.``type`` "number"; attr.``class`` "bind-input-float"; bind.input.float this.inputFloatState (fun x -> this.inputFloatState <- x)]
-            input [attr.``type`` "number"; attr.``class`` "bind-input-float-2"; bind.input.float this.inputFloatState (fun x -> this.inputFloatState <- x)]
-            span [attr.``class`` "bind-input-float-out"] [text $"{this.inputFloatState}"]
-            input [attr.``type`` "number"; attr.``class`` "bind-change-float"; bind.change.float this.changeFloatState (fun x -> this.changeFloatState <- x)]
-            input [attr.``type`` "number"; attr.``class`` "bind-change-float-2"; bind.change.float this.changeFloatState (fun x -> this.changeFloatState <- x)]
-            span [attr.``class`` "bind-change-float-out"] [text $"{this.changeFloatState}"]
-            input [attr.``type`` "checkbox"; attr.``class`` "bind-checked"; bind.``checked`` this.checkedState (fun x -> this.checkedState <- x)]
-            input [attr.``type`` "checkbox"; attr.``class`` "bind-checked-2"; bind.``checked`` this.checkedState (fun x -> this.checkedState <- x)]
-            span [attr.``class`` "bind-checked-out"] [text $"%b{this.checkedState}"]
+        concat {
+            input { attr.``class`` "bind-input"; bind.input.string this.inputState (fun x -> this.inputState <- x) }
+            input { attr.``class`` "bind-input-2"; bind.input.string this.inputState (fun x -> this.inputState <- x) }
+            span { attr.``class`` "bind-input-out"; this.inputState }
+            input { attr.``class`` "bind-change"; bind.change.string this.changeState (fun x -> this.changeState <- x) }
+            input { attr.``class`` "bind-change-2"; bind.change.string this.changeState (fun x -> this.changeState <- x) }
+            span { attr.``class`` "bind-change-out"; this.changeState }
+            input { attr.``type`` "number"; attr.``class`` "bind-input-int"; bind.input.int this.inputIntState (fun x -> this.inputIntState <- x) }
+            input { attr.``type`` "number"; attr.``class`` "bind-input-int-2"; bind.input.int this.inputIntState (fun x -> this.inputIntState <- x) }
+            span { attr.``class`` "bind-input-int-out"; $"{this.inputIntState}" }
+            input { attr.``type`` "number"; attr.``class`` "bind-change-int"; bind.change.int this.changeIntState (fun x -> this.changeIntState <- x) }
+            input { attr.``type`` "number"; attr.``class`` "bind-change-int-2"; bind.change.int this.changeIntState (fun x -> this.changeIntState <- x) }
+            span { attr.``class`` "bind-change-int-out"; $"{this.changeIntState}" }
+            input { attr.``type`` "number"; attr.``class`` "bind-input-float"; bind.input.float this.inputFloatState (fun x -> this.inputFloatState <- x) }
+            input { attr.``type`` "number"; attr.``class`` "bind-input-float-2"; bind.input.float this.inputFloatState (fun x -> this.inputFloatState <- x) }
+            span { attr.``class`` "bind-input-float-out"; $"{this.inputFloatState}" }
+            input { attr.``type`` "number"; attr.``class`` "bind-change-float"; bind.change.float this.changeFloatState (fun x -> this.changeFloatState <- x) }
+            input { attr.``type`` "number"; attr.``class`` "bind-change-float-2"; bind.change.float this.changeFloatState (fun x -> this.changeFloatState <- x) }
+            span { attr.``class`` "bind-change-float-out"; $"{this.changeFloatState}" }
+            input { attr.``type`` "checkbox"; attr.``class`` "bind-checked"; bind.``checked`` this.checkedState (fun x -> this.checkedState <- x) }
+            input { attr.``type`` "checkbox"; attr.``class`` "bind-checked-2"; bind.``checked`` this.checkedState (fun x -> this.checkedState <- x) }
+            span { attr.``class`` "bind-checked-out"; $"%b{this.checkedState}" }
             forEach {1..10} <| fun v ->
-                input [
+                input {
                     attr.``type`` "radio"
                     attr.name "bind-radio"
                     attr.``class`` ("bind-radio-" + string v)
                     bind.change.string (string v) (fun _ -> this.radioState <- v)
-                ]
-            input [attr.``class`` "bind-radio-0"; bind.input.int this.radioState (fun x -> this.radioState <- x)]
-            span [attr.``class`` "bind-radio-out"] [text $"{this.radioState}"]
-        ]
+                }
+            input { attr.``class`` "bind-radio-0"; bind.input.int this.radioState (fun x -> this.radioState <- x) }
+            span {attr.``class`` "bind-radio-out"; $"{this.radioState}" }
+        }
 
 type BindElementRef() =
     inherit Component()
@@ -152,14 +152,15 @@ type BindElementRef() =
     member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
 
     override this.Render() =
-        button [
+        button {
             attr.``class`` "element-ref"
-            attr.ref elt
+            elt
             on.task.event "click" (fun _ ->
                 match elt.Value with
                 | Some elt -> this.JSRuntime.InvokeVoidAsync("setContent", elt, "ElementRef is bound").AsTask()
                 | None -> Task.CompletedTask)
-        ] [text "Click me"]
+            "Click me"
+        }
 
 type BindComponentRef() =
     inherit Component()
@@ -168,39 +169,46 @@ type BindComponentRef() =
     let mutable txt = "Click me"
 
     override _.Render() =
-        concat [
-            navLink NavLinkMatch.All [attr.ref cmp; "ActiveClass" => "component-ref-is-bound"; attr.``class`` "nav-link" ] [
-                 text "Home" ]
-            button [
+        concat {
+            navLink NavLinkMatch.All {
+                 cmp
+                 "ActiveClass" => "component-ref-is-bound"
+                 attr.``class`` "nav-link"
+                 "Home"
+            }
+            button {
                 attr.``class`` "component-ref"
                 on.event "click" (fun _ -> txt <- match cmp.Value with Some c -> c.ActiveClass | None -> "Component ref is unbound")
-            ] [text txt]
-        ]
+                txt
+            }
+        }
 
 let Tests() =
-    div [attr.id "test-fixture-html"] [
-        p [attr.id "element-with-id"] [text "Contents of element with id"]
-        p [attr.id "element-with-htmlentity"] [text "Escaped <b>text</b> & content"]
-        concat [
-            span [
+    div {
+        attr.id "test-fixture-html"
+        p { attr.id "element-with-id"; "Contents of element with id" }
+        p { attr.id "element-with-htmlentity"; "Escaped <b>text</b> & content" }
+        concat {
+            span {
                 attr.classes ["class-set-1"]
                 attr.``class`` "class-set-2"
                 attr.classes ["class-set-3"; "class-set-4"]
-            ] []
-            span [
+            }
+            span {
                 attr.classes ["class-set-5"]
                 attr.``class`` "class-set-6"
-            ] []
-            span [attr.``class`` "class-set-7"] []
-        ]
-        RawHtml """<div class="raw-html-element">Unescape &lt;b&gt;text&lt;/b&gt; &amp; content</div>"""
-        comp<NavLink> [
+            }
+            span { attr.``class`` "class-set-7" }
+        }
+        rawHtml """<div class="raw-html-element">Unescape &lt;b&gt;text&lt;/b&gt; &amp; content</div>"""
+        comp<NavLink> {
             attr.id "nav-link"
             attr.href "/"
             "Match" => NavLinkMatch.Prefix
-        ] [text "NavLink content"]
-        comp<BoleroComponent> ["Ident" => "bolero-component"] []
-        comp<Binds> [] []
-        comp<BindElementRef> [] []
-        comp<BindComponentRef> [] []
-    ]
+            "NavLink content"
+        }
+        comp<BoleroComponent> { "Ident" => "bolero-component" }
+        comp<Binds>
+        comp<BindElementRef>
+        comp<BindComponentRef>
+    }

@@ -174,31 +174,32 @@ type BindTester() =
 type ``Regression #11`` = Template<"""<span class="${Hole}">${Hole}</span>""">
 
 let Tests() =
-    div [attr.id "test-fixture-templating"] [
+    div {
+        attr.id "test-fixture-templating"
         Inline()
             .NodeHole1("NodeHole1 content")
-            .NodeHole2(div [attr.classes ["nodehole2-content"]] [text "NodeHole2 content"])
+            .NodeHole2(div { attr.classes ["nodehole2-content"]; "NodeHole2 content" })
             .NodeHole3("NodeHole3 content")
-            .NodeHole4(div [attr.classes ["nodehole4-content"]] [text "NodeHole4 content"])
+            .NodeHole4(div { attr.classes ["nodehole4-content"]; "NodeHole4 content" })
             .AttrHole1("attrhole1-content")
             .AttrHole2("attrhole2-content")
             .AttrHole3("attrhole3-content")
             .AttrHole4(5678)
             .AttrHole4True(true)
             .AttrHole4False(false)
-            .FullAttrHole(Attrs [attr.id "fullattrhole-content"; "data-fullattrhole" => 1234])
+            .FullAttrHole([attr.id "fullattrhole-content"; "data-fullattrhole" => 1234])
             .Elt()
         File()
-            .SimpleHole(div [attr.classes ["file-hole"]] [])
+            .SimpleHole(div { attr.classes ["file-hole"] })
             .Elt()
         File.Nested1()
-            .SimpleHole(div [attr.classes ["nested-hole"]] [])
+            .SimpleHole(div { attr.classes ["nested-hole"] })
             .Elt()
         File.Nested2()
             .Elt()
         ``Regression #11``()
             .Hole("regression-11")
             .Elt()
-        comp<EventTester> [] []
-        comp<BindTester> [] []
-    ]
+        comp<EventTester>
+        comp<BindTester>
+    }

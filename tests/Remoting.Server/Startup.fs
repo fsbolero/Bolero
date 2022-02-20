@@ -35,18 +35,18 @@ module Page =
     open Bolero.Html
     open Bolero.Server.Html
 
-    let index = doctypeHtml [] [
-        head [] [
-            title [] [text "Bolero (remoting)"]
-            meta [attr.charset "UTF-8"]
-            ``base`` [attr.href "/"]
-        ]
-        body [] [
-            div [attr.id "main"] [rootComp<Client.MyApp>]
-            script [attr.src "_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"] []
+    let index = doctypeHtml {
+        head {
+            title { "Bolero (remoting)" }
+            meta { attr.charset "UTF-8" }
+            ``base`` { attr.href "/" }
+        }
+        body {
+            div { attr.id "main"; rootComp<Client.MyApp> }
+            script { attr.src "_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js" }
             boleroScript
-        ]
-    ]
+        }
+    }
 
 type MyApiHandler(log: ILogger<MyApiHandler>, ctx: IRemoteContext) =
     inherit RemoteHandler<Client.MyApi>()

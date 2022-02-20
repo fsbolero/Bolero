@@ -15,6 +15,7 @@
     <None Include="paket.references" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Bolero.Html\Bolero.Html.fsproj" />
     <ProjectReference Include="..\Bolero\Bolero.fsproj" />
     <PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.3" PrivateAssets="All" />
     <DotNetCliToolReference Include="dotnet-sourcelink" Version="2.8.3" />

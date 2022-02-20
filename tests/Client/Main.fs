@@ -145,52 +145,56 @@ type SecretPw = Template<"""<div>
 let btnRef = HtmlRef()
 
 let viewForm (js: IJSRuntime) model dispatch =
-    div [] [
-        input [attr.value model.input; on.change (fun e -> dispatch (SetInput (unbox e.Value)))]
-        input [
-            attr.ref btnRef
+    div {
+        input { attr.value model.input; on.change (fun e -> dispatch (SetInput (unbox e.Value))) }
+        input {
             attr.``type`` "submit"
             on.click (fun _ ->
                 js.InvokeAsync("console.log", btnRef.Value) |> ignore
                 dispatch Submit
             )
             attr.style (if model.input = "" then "color:gray;" else null)
-        ]
-        div [] [text $"selected radio item: {model.radioItem}"]
+            btnRef
+        }
+        div { $"selected radio item: {model.radioItem}" }
         forEach {1..10} <| fun ix ->
-            input [
+            input {
                 attr.``type`` "radio"
                 attr.name "my-radio-item"
                 bind.change.string (string ix) (fun _ -> dispatch (SetRadioItem ix))
-            ]
-        div [] [text (defaultArg model.submitted "")]
-        div [] [label [] [
-            input [
-                attr.``type`` "checkbox"
-                bind.``checked`` model.checkbox (fun v -> dispatch (SetCheckbox v))
-            ]
-            text "Checkbox (should be in sync with the one below)"
-        ]]
-        div [] [label [] [
-            input [
-                attr.``type`` "checkbox"
-                bind.``checked`` model.checkbox (fun v -> dispatch (SetCheckbox v))
-            ]
-            text "Checkbox (should be in sync with the one above)"
-        ]]
-        (match model.submitted with
+            }
+        div { defaultArg model.submitted "" }
+        div {
+            label {
+                input {
+                    attr.``type`` "checkbox"
+                    bind.``checked`` model.checkbox (fun v -> dispatch (SetCheckbox v))
+                }
+                text "Checkbox (should be in sync with the one below)"
+            }
+        }
+        div {
+            label {
+                input {
+                    attr.``type`` "checkbox"
+                    bind.``checked`` model.checkbox (fun v -> dispatch (SetCheckbox v))
+                }
+                text "Checkbox (should be in sync with the one above)"
+            }
+        }
+        match model.submitted with
         | Some s ->
-            concat [
+            concat {
                 cond (s.Contains "secret") <| function
                     | true ->
                         SecretPw()
-                            .Kind(b [] [text "secret"])
+                            .Kind(b { "secret" })
                             .Clear(fun _ -> dispatch (SetInput ""))
                             .DblClick(fun e -> dispatch (SetInput $"({e.ClientX}, {e.ClientY})"))
                             .Input(model.input, fun s -> dispatch (SetInput s))
                             .Value(model.addKey, fun k -> dispatch (SetAddKey k))
                             .Elt()
-                    | false -> empty
+                    | false -> empty()
 
                 cond (s.Contains "super") <| function
                     | true ->
@@ -198,10 +202,10 @@ let viewForm (js: IJSRuntime) model dispatch =
                             .Kind("super secret")
                             .Clear(fun _ -> dispatch (SetInput ""))
                             .Elt()
-                    | false -> empty
-            ]
-        | None -> empty)
-    ]
+                    | false -> empty()
+            }
+        | None -> empty()
+    }
 
 type CollectionTemplate = Template<"collection.html">
 
@@ -227,29 +231,29 @@ let viewCollection model dispatch =
         .AddKey(fun _ -> dispatch AddKey)
         .RevOrder(model.revOrder, fun rev -> dispatch (SetRevOrder rev))
         .Items(forEach items <| fun (KeyValue(k, v)) ->
-            ecomp<ViewItem,_,_> [attr.key k] (k, v) dispatch)
+            ecomp<ViewItem,_,_> (k, v) dispatch { attr.key k })
         .Elt()
 
 type ViewItemPage() =
     inherit ElmishComponent<int * string * int, Message>()
 
     override _.View ((k, v, m)) dispatch =
-        concat [
-            p [] [text ("Viewing page for item #" + string k)]
-            p [] [text ("Text is: " + v)]
-            p [] [a [router.HRef Collection] [text "Back to collection"]]
-            p [] [
-                text "Model: "
-                button [on.click (fun _ -> dispatch (SetPage (Item (k, { Model = m - 1 }))))] [text "-"]
-                text $"{m}"
-                button [on.click (fun _ -> dispatch (SetPage (Item (k, { Model = m + 1 }))))] [text "+"]
-            ]
-        ]
+        concat {
+            p { "Viewing page for item #" + string k }
+            p { "Text is: " + v }
+            p { a { router.HRef Collection; "Back to collection" } }
+            p {
+                "Model: "
+                button { on.click (fun _ -> dispatch (SetPage (Item (k, { Model = m - 1 })))); "-" }
+                $"{m}"
+                button { on.click (fun _ -> dispatch (SetPage (Item (k, { Model = m + 1 })))); "+" }
+            }
+        }
 
 let viewLazy model dispatch =
     let lazyViewFunction = (fun m -> text $"Lazy values: ({m.value},{m.nonEqVal}), re-render random number check: {System.Random().Next()}")
-    div [] [
-        pre [] [
+    div {
+        pre {
             text """
 let viewLazy model dispatch =
     div [] [
@@ -259,64 +263,68 @@ let viewLazy model dispatch =
         p [] [lazyComp (fun m -> text $"Lazy values: ({m.value},{m.nonEqVal}), re-render random number check: {System.Random().Next()}") model.lazyModel]
     ]
             """
-        ]
-        p [] [
-            button [on.click (fun _ -> dispatch IncNonLazyVal)] [text "Increase non-lazy value"]
-            button [on.click (fun _ -> dispatch IncLazyVal)] [text "Increase lazy value"]
-            input [
+        }
+        p {
+            button { on.click (fun _ -> dispatch IncNonLazyVal); "Increase non-lazy value" }
+            button { on.click (fun _ -> dispatch IncLazyVal); "Increase lazy value" }
+            input {
                 attr.value model.lazyModel.nonEqVal
                 on.change (fun e -> e.Value |> string |> SetLazyNonEqVal |> dispatch)
-            ]
-        ]
-        p [] [text $"Non-lazy value: {model.nonLazyValue}, re-render random number check: {System.Random().Next()}"]
-        p [] [lazyComp lazyViewFunction model.lazyModel]
-        p [] [lazyCompWith (fun m1 m2 -> m1.value = m2.value) lazyViewFunction model.lazyModel]
-        p [] [lazyCompBy (fun m -> (m.value, m.value2)) lazyViewFunction model.lazyModel]
-    ]
+            }
+        }
+        p { $"Non-lazy value: {model.nonLazyValue}, re-render random number check: {System.Random().Next()}" }
+        p { lazyComp lazyViewFunction model.lazyModel }
+        p { lazyCompWith (fun m1 m2 -> m1.value = m2.value) lazyViewFunction model.lazyModel }
+        p { lazyCompBy (fun m -> (m.value, m.value2)) lazyViewFunction model.lazyModel }
+    }
 
 let viewVirtual model dispatch =
-    div [attr.style "display:flex; flex-direction:row;"] [
-        div [attr.style "flex:1; height: 300px; border: solid 1px black; overflow-y: auto;"] [
-            virtualize.comp [] model.virtualItems <| fun x ->
-                div [attr.style "border: solid 1px gray;"] [text x]
-        ]
-        div [attr.style "flex:1; height: 300px; border: solid 1px black; overflow-y: auto;"] [
-            virtualize.compProvider [
+    div {
+        attr.style "display:flex; flex-direction:row;"
+        div {
+            attr.style "flex:1; height: 300px; border: solid 1px black; overflow-y: auto;"
+            virtualize.comp {
+                let! text = virtualize.items model.virtualItems
+                div { attr.style "border: solid 1px gray;"; text }
+            }
+        }
+        div {
+            attr.style "flex:1; height: 300px; border: solid 1px black; overflow-y: auto;"
+            virtualize.comp {
                 virtualize.placeholder <| fun p ->
-                    div [attr.style "border: solid 1px gray;"] [text $"Placeholder #{p.Index}"]
-                virtualize.overscanCount 5
-            ]
-            <| fun r -> ValueTask<ItemsProviderResult<_>>(task {
-                do! Task.Delay 1000
-                return ItemsProviderResult([r.StartIndex..r.StartIndex+r.Count-1], 2000)
-            })
-            <| fun x ->
-                div [attr.style "border: solid 1px gray;"] [text $"Item #{x}"]
-        ]
-    ]
+                    div { attr.style "border: solid 1px gray;"; $"Placeholder #{p.Index}" }
+                let! text = virtualize.itemsProvider <| fun r ->
+                    ValueTask<ItemsProviderResult<_>>(task {
+                        do! Task.Delay 1000
+                        return ItemsProviderResult([r.StartIndex..r.StartIndex+r.Count-1], 2000)
+                    })
+                div { attr.style "border: solid 1px gray;"; $"Item #{text}" }
+            }
+        }
+    }
 
 let view js model dispatch =
-    concat [
-        RawHtml """
+    concat {
+        rawHtml """
             <div style="color:gray">The links below should have blue background based on the current page.</div>
             <style>.active { background: lightblue; }</style>
         """
-        p [] [
-            navLink NavLinkMatch.All [router.HRef Form] [text "Form"]
+        p {
+            navLink NavLinkMatch.All { router.HRef Form; "Form" }
             text " "
-            navLink NavLinkMatch.Prefix [router.HRef Collection] [text "Collection"]
+            navLink NavLinkMatch.Prefix { router.HRef Collection; "Collection" }
             text " "
-            navLink NavLinkMatch.Prefix [router.HRef Lazy] [text "Lazy"]
+            navLink NavLinkMatch.Prefix { router.HRef Lazy; "Lazy" }
             text " "
-            navLink NavLinkMatch.All [router.HRef Virtual] [text "Virtual"]
-        ]
+            navLink NavLinkMatch.All { router.HRef Virtual; "Virtual" }
+        }
         cond model.page <| function
             | Form -> viewForm js model dispatch
             | Collection -> viewCollection model dispatch
-            | Item (k, m) -> ecomp<ViewItemPage,_,_> [] (k, model.items.[k], m.Model) dispatch
+            | Item (k, m) -> ecomp<ViewItemPage,_,_> (k, model.items.[k], m.Model) dispatch { empty() }
             | Lazy -> viewLazy model dispatch
             | Virtual -> viewVirtual model dispatch
-    ]
+    }
 
 type MyApp() =
     inherit ProgramComponent<Model, Message>()
