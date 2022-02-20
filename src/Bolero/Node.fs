@@ -173,14 +173,14 @@ type NodeBuilderBase() =
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
         Attr(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Key) =
-        Key(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
+        Attr(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: RefRender) =
-        RefRender(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
+        Attr(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
 
     member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: Key) =
         Key(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
     member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: RefRender) =
-        RefRender(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
+        Key(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
 
 
     member inline _.Combine([<InlineIfLambda>] x1: Node, [<InlineIfLambda>] x2: Node) =
@@ -207,11 +207,11 @@ and [<AbstractClass>] NodeBuilderWithDirectChildrenBase() =
     inherit NodeBuilderBase()
 
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Node) =
-        Node(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
+        Attr(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
     member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: Node) =
-        Node(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
+        Key(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
     member inline _.Combine([<InlineIfLambda>] x1: RefRender, [<InlineIfLambda>] x2: Node) =
-        Node(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
+        RefRender(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
 
 and ElementBuilder(name: string) =
     inherit NodeBuilderWithDirectChildrenBase()
@@ -226,11 +226,25 @@ and ElementBuilder(name: string) =
             i)
 
     member inline this.Run([<InlineIfLambda>] content: Attr) =
-        this.Run(this.Combine(content, Node.Empty()))
+        Node(fun c b m i ->
+            b.OpenElement(i, this.Name)
+            let i = content.Invoke(c, b, m, i + 1)
+            b.CloseElement()
+            i)
+
     member inline this.Run([<InlineIfLambda>] content: Key) =
-        this.Run(this.Combine(content, Node.Empty()))
+        Node(fun c b m i ->
+            b.OpenElement(i, this.Name)
+            let i = content.Invoke(c, b, m, i + 1)
+            b.CloseElement()
+            i)
+
     member inline this.Run([<InlineIfLambda>] content: RefRender) =
-        this.Run(this.Combine(content, Node.Empty()))
+        Node(fun c b m i ->
+            b.OpenElement(i, this.Name)
+            let i = content.Invoke(c, b, m, i + 1)
+            b.CloseElement()
+            i)
 
 and NodeBuilderWithChildContentBase() =
     inherit NodeBuilderBase()
@@ -244,11 +258,11 @@ and NodeBuilderWithChildContentBase() =
     member inline _.Delay([<InlineIfLambda>] a: unit -> ChildContent) = ChildContent(fun c b m i -> a().Invoke(c, b, m, i))
 
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: ChildContent) =
-        ChildContent(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
+        Attr(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
     member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: ChildContent) =
-        ChildContent(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
+        Key(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
     member inline _.Combine([<InlineIfLambda>] x1: RefRender, [<InlineIfLambda>] x2: ChildContent) =
-        ChildContent(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
+        RefRender(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
 
     member inline this.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Node) =
         this.Combine(x1, NodeBuilderWithChildContentBase.WrapNode(x2))
@@ -266,12 +280,28 @@ and ComponentBuilder<'T when 'T :> IComponent>() =
             let i = x.Invoke(c, b, m, i + 1)
             b.CloseComponent()
             i)
+
     member inline this.Run([<InlineIfLambda>] x: Attr) =
-        this.Run(ChildContent(fun c b m i -> x.Invoke(c, b, m, i)))
+        Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = x.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i)
+
     member inline this.Run([<InlineIfLambda>] x: Key) =
-        this.Run(ChildContent(fun c b m i -> x.Invoke(c, b, m, i)))
+        Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = x.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i)
+
     member inline this.Run([<InlineIfLambda>] x: RefRender) =
-        this.Run(ChildContent(fun c b m i -> x.Invoke(c, b, m, i)))
+        Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = x.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i)
+
     member inline this.Run([<InlineIfLambda>] x: Node) =
         this.Run(NodeBuilderWithChildContentBase.WrapNode(x))
 
@@ -286,12 +316,28 @@ and ComponentBuilder(ty: Type) =
             let i = x.Invoke(c, b, m, i + 1)
             b.CloseComponent()
             i)
+
     member inline this.Run([<InlineIfLambda>] x: Attr) =
-        this.Run(ChildContent(fun c b m i -> x.Invoke(c, b, m, i)))
+        Node(fun c b m i ->
+            b.OpenComponent(i, this.Type)
+            let i = x.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i)
+
     member inline this.Run([<InlineIfLambda>] x: Key) =
-        this.Run(ChildContent(fun c b m i -> x.Invoke(c, b, m, i)))
+        Node(fun c b m i ->
+            b.OpenComponent(i, this.Type)
+            let i = x.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i)
+
     member inline this.Run([<InlineIfLambda>] x: RefRender) =
-        this.Run(ChildContent(fun c b m i -> x.Invoke(c, b, m, i)))
+        Node(fun c b m i ->
+            b.OpenComponent(i, this.Type)
+            let i = x.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i)
+
     member inline this.Run([<InlineIfLambda>] x: Node) =
         this.Run(NodeBuilderWithChildContentBase.WrapNode(x))
 
@@ -308,12 +354,34 @@ and ComponentWithAttrsBuilder<'T when 'T :> IComponent>(attrs: Attr) =
             let i = x.Invoke(c, b, m, i)
             b.CloseComponent()
             i)
+
     member inline this.Run([<InlineIfLambda>] x: Attr) =
-        this.Run(ChildContent(fun c b m i -> x.Invoke(c, b, m, i)))
+        let attrs = this.Attrs
+        Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            let i = x.Invoke(c, b, m, i)
+            b.CloseComponent()
+            i)
+
     member inline this.Run([<InlineIfLambda>] x: Key) =
-        this.Run(ChildContent(fun c b m i -> x.Invoke(c, b, m, i)))
+        let attrs = this.Attrs
+        Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            let i = x.Invoke(c, b, m, i)
+            b.CloseComponent()
+            i)
+
     member inline this.Run([<InlineIfLambda>] x: RefRender) =
-        this.Run(ChildContent(fun c b m i -> x.Invoke(c, b, m, i)))
+        let attrs = this.Attrs
+        Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            let i = x.Invoke(c, b, m, i)
+            b.CloseComponent()
+            i)
+
     member inline this.Run([<InlineIfLambda>] x: Node) =
         this.Run(NodeBuilderWithChildContentBase.WrapNode(x))
 

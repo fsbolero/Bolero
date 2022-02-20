@@ -154,11 +154,11 @@ type BindElementRef() =
     override this.Render() =
         button {
             attr.``class`` "element-ref"
-            elt
             on.task.event "click" (fun _ ->
                 match elt.Value with
                 | Some elt -> this.JSRuntime.InvokeVoidAsync("setContent", elt, "ElementRef is bound").AsTask()
                 | None -> Task.CompletedTask)
+            elt
             "Click me"
         }
 
@@ -171,9 +171,9 @@ type BindComponentRef() =
     override _.Render() =
         concat {
             navLink NavLinkMatch.All {
-                 cmp
                  "ActiveClass" => "component-ref-is-bound"
                  attr.``class`` "nav-link"
+                 cmp
                  "Home"
             }
             button {

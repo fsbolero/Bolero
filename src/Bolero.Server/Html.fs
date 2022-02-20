@@ -36,11 +36,28 @@ type DoctypeHtmlBuilder() =
             i)
 
     member inline this.Run([<InlineIfLambda>] content: Attr) =
-        this.Run(this.Combine(content, Node.Empty()))
+        Node(fun c b m i ->
+            b.AddMarkupContent(i, "<!DOCTYPE html>\n")
+            b.OpenElement(i + 1, "html")
+            let i = content.Invoke(c, b, m, i + 2)
+            b.CloseElement()
+            i)
+
     member inline this.Run([<InlineIfLambda>] content: Key) =
-        this.Run(this.Combine(content, Node.Empty()))
+        Node(fun c b m i ->
+            b.AddMarkupContent(i, "<!DOCTYPE html>\n")
+            b.OpenElement(i + 1, "html")
+            let i = content.Invoke(c, b, m, i + 2)
+            b.CloseElement()
+            i)
+
     member inline this.Run([<InlineIfLambda>] content: RefRender) =
-        this.Run(this.Combine(content, Node.Empty()))
+        Node(fun c b m i ->
+            b.AddMarkupContent(i, "<!DOCTYPE html>\n")
+            b.OpenElement(i + 1, "html")
+            let i = content.Invoke(c, b, m, i + 2)
+            b.CloseElement()
+            i)
 
 
 module Html =
