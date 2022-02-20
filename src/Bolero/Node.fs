@@ -40,8 +40,6 @@ type RefRender = delegate of obj * Rendering.RenderTreeBuilder * (Type -> int * 
 
 type ChildContent = delegate of obj * Rendering.RenderTreeBuilder * (Type -> int * (obj -> int)) * int -> int
 
-//type AsBuilder = delegate of [<InlineIfLambda>] nodeBuilder: NodeBuilder -> NodeBuilder
-
 module Attr =
 
     let inline Make (name: string) (value: 'T) = Attr(fun _ tb _ i ->
@@ -188,20 +186,6 @@ type NodeBuilderBase() =
 
     member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
         this.Yield(Node.ForEach s f)
-
-//    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> NodeBuilderFragment) =
-//        this.Yield(Node.ForEach s (fun x ->
-//            (f x).Invoke(this).Invoke((fun _ _ _ i -> i), (fun _ _ _ i -> i), (fun _ _ _ i -> i), (fun _ _ _ i -> i))))
-//
-//    member inline _.Yield([<InlineIfLambda>] asBuilder: AsBuilder) = asBuilder
-//
-//    member inline _.Delay([<InlineIfLambda>] a: unit -> AsBuilder) = a()
-//
-//    member inline _.Combine([<InlineIfLambda>] nbb: NodeBuilderFragment, [<InlineIfLambda>] a: AsBuilder) =
-//        AsBuilder(fun n -> nbb.Invoke(n))
-//
-//    member inline this.Run([<InlineIfLambda>] a: AsBuilder) =
-//        a.Invoke(this)
 
 and [<AbstractClass>] NodeBuilderWithDirectChildrenBase() =
     inherit NodeBuilderBase()

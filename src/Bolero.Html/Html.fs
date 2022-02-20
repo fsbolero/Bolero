@@ -2244,18 +2244,6 @@ module bind =
             /// The value is updated on the onchange event.
             let inline dateTimeOffset culture value callback = binder<DateTimeOffset, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback culture
 
-//type VirtualizeItemsDeclaration<'T> = delegate of Rendering.RenderTreeBuilder * int -> int
-//
-//type NodeBuilder with
-//
-//    member inline _.Bind<'T>([<InlineIfLambda>] items: VirtualizeItemsDeclaration<'T>, [<InlineIfLambda>] cont: 'T -> NodeBuilderFragment) =
-//        NodeBuilderFragment(fun nb ->
-//            NodeBuilder(fun a k r n ->
-//                nb.Invoke(
-//                    a.Concat(fun _ b _ i -> items.Invoke(b, i))
-//                     .Concat(attr.fragmentWith "ItemContent" (fun x -> Html.concat.Run(cont x))),
-//                    k, r, n)))
-
 module virtualize =
     open System.Collections.Generic
     open Microsoft.AspNetCore.Components.Web.Virtualization
