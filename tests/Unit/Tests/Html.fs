@@ -188,6 +188,15 @@ module Html =
         test <@ nav.Text = "Home" @>
 
     [<Test>]
+    let ComponentChildContent() =
+        let comp = elt.ByClass("comp-child-content")
+        testNotNull <@ comp @>
+        let child = comp.ByClass("comp-child-elt")
+        testNotNull <@ child @>
+        test <@ child.Text = "comp-child-text-1" @>
+        test <@ comp.Text = "comp-child-text-1comp-child-text-2" @>
+
+    [<Test>]
     let ElementBindKeyAndRef() =
         let btn = elt.ByClass("elt-keyref1").ByClass("elt-keyref-btn")
         let target = elt.ByClass("elt-keyref2")

@@ -198,6 +198,19 @@ type SimpleComponent() =
     override this.Render() =
         li { attr.``class`` this.CompClass; this.ChildContent }
 
+type ComponentChildContent() =
+    inherit Component()
+
+    override _.Render() =
+        comp<SimpleComponent> {
+            "CompClass" => "comp-child-content"
+            span {
+                attr.``class`` "comp-child-elt"
+                "comp-child-text-1"
+            }
+            "comp-child-text-2"
+        }
+
 type BindKeyAndRef() =
     inherit Component()
 
@@ -263,5 +276,6 @@ let Tests() =
         comp<Binds>
         comp<BindElementRef>
         comp<BindComponentRef>
+        comp<ComponentChildContent>
         comp<BindKeyAndRef>
     }
