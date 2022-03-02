@@ -36,12 +36,15 @@ type ChildKeyAndRefContent = delegate of obj * Rendering.RenderTreeBuilder * (Ty
 
 type NodeBuilderBase() =
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
-    member inline _.Yield(ref: Ref) = KeyAndRef(fun _ b _ i -> ref.Render(b, i))
     member inline _.Yield(keyAndRef: KeyAndRef) = keyAndRef
     member inline _.Yield([<InlineIfLambda>] node: Node) = node
     member inline this.Yield(text: string) =
         this.Yield(Node(fun _ b _ i ->
             b.AddContent(i, text)
+            i + 1))
+    member inline this.Yield(fragment: RenderFragment) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, fragment)
             i + 1))
     member inline this.Yield(eb: ElementBuilder) =
         this.Yield(Node(fun c b m i ->
@@ -110,6 +113,8 @@ and ElementBuilder(name: string) =
 
     member _.Name = name
 
+    member inline _.Yield(ref: HtmlRef) = KeyAndRef(fun _ b _ i -> ref.Render(b, i))
+
     member inline this.Run([<InlineIfLambda>] content: Node) =
         Node(fun c b m i ->
             b.OpenElement(i, this.Name)
@@ -167,6 +172,8 @@ and NodeBuilderWithChildContentBase() =
 and ComponentBuilder<'T when 'T :> IComponent>() =
     inherit NodeBuilderWithChildContentBase()
 
+    member inline _.Yield(ref: Ref<'T>) = KeyAndRef(fun _ b _ i -> ref.Render(b, i))
+
     member inline this.Run([<InlineIfLambda>] x: ChildContentAttr) =
         Node(fun c b m i ->
             b.OpenComponent<'T>(i)
@@ -200,6 +207,8 @@ and ComponentBuilder<'T when 'T :> IComponent>() =
 
 and ComponentBuilder(ty: Type) =
     inherit NodeBuilderWithChildContentBase()
+
+    member inline _.Yield(ref: Ref) = KeyAndRef(fun _ b _ i -> ref.Render(b, i))
 
     member _.Type = ty
 
@@ -238,6 +247,8 @@ and ComponentWithAttrsBuilder<'T when 'T :> IComponent>(attrs: Attr) =
     inherit NodeBuilderWithChildContentBase()
 
     member _.Attrs = attrs
+
+    member inline _.Yield(ref: Ref<'T>) = KeyAndRef(fun _ b _ i -> ref.Render(b, i))
 
     member inline this.Run([<InlineIfLambda>] x: ChildContentAttr) =
         let attrs = this.Attrs

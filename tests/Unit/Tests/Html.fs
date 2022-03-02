@@ -186,3 +186,19 @@ module Html =
     let ComponentRefBinderRendersChildren() =
         let nav = elt.ByClass("nav-link")
         test <@ nav.Text = "Home" @>
+
+    [<Test>]
+    let ElementBindKeyAndRef() =
+        let btn = elt.ByClass("elt-keyref1").ByClass("elt-keyref-btn")
+        let target = elt.ByClass("elt-keyref2")
+        testNotNull <@ btn @>
+        btn.Click()
+        elt.Eventually <@ target.Text = "elt-keyref is bound" @>
+
+    [<Test>]
+    let ComponentBindKeyAndRef() =
+        let btn = elt.ByClass("comp-keyref1").ByClass("comp-keyref-btn")
+        let target = elt.ByClass("comp-keyref2")
+        testNotNull <@ btn @>
+        btn.Click()
+        elt.Eventually <@ target.Text = "comp-keyref is bound" @>

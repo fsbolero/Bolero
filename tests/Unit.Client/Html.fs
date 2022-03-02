@@ -183,6 +183,70 @@ type BindComponentRef() =
             }
         }
 
+type SimpleComponent() =
+    inherit Component()
+
+    [<Parameter>]
+    member val CompClass = "" with get, set
+
+    [<Parameter>]
+    member val SuccessText = "" with get, set
+
+    [<Parameter>]
+    member val ChildContent = Unchecked.defaultof<RenderFragment> with get, set
+
+    override this.Render() =
+        li { attr.``class`` this.CompClass; this.ChildContent }
+
+type BindKeyAndRef() =
+    inherit Component()
+
+    let htmlRef = HtmlRef()
+    let mutable htmlText = "elt-keyref is not bound"
+    let compRef = Ref<SimpleComponent>()
+    let mutable compText = "comp-keyref is not bound"
+
+    [<Inject>]
+    member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
+
+    override this.Render() =
+        ul {
+            li {
+                attr.``class`` "elt-keyref1"
+                attr.key "elt-keyref1"
+                button {
+                    attr.``class`` "elt-keyref-btn"
+                    on.task.click (fun _ ->
+                        match htmlRef.Value with
+                        | Some elt -> this.JSRuntime.InvokeVoidAsync("setContent", elt, "elt-keyref is bound").AsTask()
+                        | None -> Task.CompletedTask)
+                }
+            }
+            li {
+                attr.``class`` "elt-keyref2"
+                attr.keyAndRef "elt-keyref2" htmlRef
+                htmlText
+            }
+            comp<SimpleComponent> {
+                "CompClass" => "comp-keyref1"
+                attr.key "comp-keyref1"
+                button {
+                    attr.``class`` "comp-keyref-btn"
+                    on.click (fun _ ->
+                        compText <-
+                            match compRef.Value with
+                            | Some c -> c.SuccessText
+                            | None -> "comp-keyref is unbound")
+                }
+            }
+            comp<SimpleComponent> {
+                "CompClass" => "comp-keyref2"
+                "SuccessText" => "comp-keyref is bound"
+                attr.keyAndRef "comp-keyref2" compRef
+                compText
+            }
+        }
+
 let Tests() =
     div {
         attr.id "test-fixture-html"
@@ -199,4 +263,5 @@ let Tests() =
         comp<Binds>
         comp<BindElementRef>
         comp<BindComponentRef>
+        comp<BindKeyAndRef>
     }
