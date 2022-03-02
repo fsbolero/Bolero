@@ -226,3 +226,17 @@ module Html =
         testNotNull <@ btn @>
         btn.Click()
         elt.Eventually <@ target.Text = "comp-keyref is bound" @>
+
+    [<Test>]
+    let Virtualize() =
+        let container = elt.ByClass("virt-keyref-container")
+        testNotNull <@ container @>
+        for i in 1..10 do
+            let item = container.ByClass($"virt-keyref-{i}")
+            testNotNull <@ item @>
+            test <@ item.Text = $"placeholder {i}" || item.Text = $"item {i}" @>
+
+        let btn = elt.ByClass("virt-keyref-btn")
+        testNotNull <@ btn @>
+        btn.Click()
+        elt.Eventually <@ btn.Text = "virt-keyref is bound: 10" @>

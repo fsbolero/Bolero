@@ -220,6 +220,8 @@ type BindKeyAndRef() =
     let mutable htmlText = "elt-keyref is not bound"
     let compRef = Ref<SimpleComponent>()
     let mutable compText = "comp-keyref is not bound"
+    let virtRef = Ref<Web.Virtualization.Virtualize<int>>()
+    let mutable virtText = "virt-keyref is not bound"
 
     [<Inject>]
     member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
@@ -259,6 +261,29 @@ type BindKeyAndRef() =
                 "SuccessText" => "comp-keyref is bound"
                 attr.keyAndRef "comp-keyref2" compRef
                 compText
+            }
+            div {
+                attr.``class`` "virt-keyref-container"
+                virtualize.comp {
+                    virtualize.placeholder <| fun ctx ->
+                        let x = ctx.Index
+                        div { attr.``class`` $"virt-keyref-{x}"; $"placeholder {x}" }
+                    virtRef
+                    let! x = virtualize.items [1..10]
+                    div {
+                        attr.``class`` $"virt-keyref-{x}"
+                        attr.key x
+                        $"item {x}"
+                    }
+                }
+                button {
+                    attr.``class`` "virt-keyref-btn"
+                    on.click (fun _ ->
+                        match virtRef.Value with
+                        | None -> ()
+                        | Some r -> virtText <- $"virt-keyref is bound: {r.Items.Count}")
+                    virtText
+                }
             }
         }
 
