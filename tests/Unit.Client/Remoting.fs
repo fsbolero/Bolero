@@ -107,30 +107,30 @@ let update api msg model =
 let remote model dispatch =
     concat {
         input {
-            attr.classes ["signin-input"]
+            attr.``class`` "signin-input"
             bind.input.string model.username (dispatch << SetUsername)
         }
         button {
-            attr.classes ["signin-button"]
+            attr.``class`` "signin-button"
             on.click (fun _ -> dispatch SendSignIn)
             "Sign in"
         }
         button {
-            attr.classes ["signout-button"]
+            attr.``class`` "signout-button"
             on.click (fun _ -> dispatch SendSignOut)
             "Sign out"
         }
         div {
-            attr.classes ["is-signedin"]
+            attr.``class`` "is-signedin"
             defaultArg model.signedInAs "<not logged in>"
         }
         button {
-            attr.classes ["get-admin"]
+            attr.``class`` "get-admin"
             on.click (fun _ -> dispatch SendGetAdmin)
             "Get whether I'm admin"
         }
         div {
-            attr.classes ["is-admin"]
+            attr.``class`` "is-admin"
             defaultArg model.getAdmin "<not admin>"
         }
     }
@@ -138,20 +138,20 @@ let remote model dispatch =
 let view model dispatch =
     div {
         input {
-            attr.classes ["key-input"]
+            attr.``class`` "key-input"
             attr.value model.key
             on.input (fun e -> dispatch (SetKey (e.Value :?> string)))
         }
         input {
-            attr.classes ["value-input"]
+            attr.``class`` "value-input"
             attr.value model.value
             on.input (fun e -> dispatch (SetValue (e.Value :?> string)))
         }
-        button { attr.classes ["add-btn"]; on.click (fun _ -> dispatch Add); "Add" }
-        button { attr.classes ["rem-btn"]; on.click (fun _ -> dispatch Remove); "Remove" }
+        button { attr.``class`` "add-btn"; on.click (fun _ -> dispatch Add); "Add" }
+        button { attr.``class`` "rem-btn"; on.click (fun _ -> dispatch Remove); "Remove" }
         cond model.received <| function
-            | None -> div { attr.classes ["output-empty"] }
-            | Some v -> div { attr.classes ["output"]; v }
+            | None -> div { attr.``class`` "output-empty" }
+            | Some v -> div { attr.``class`` "output"; v }
         remote model dispatch
         cond model.error <| function
         | None -> empty()

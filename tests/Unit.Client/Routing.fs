@@ -181,14 +181,14 @@ let view model dispatch =
     concat {
         for url, page in links do
             let cls = pageClass page
-            a { attr.classes [$"link-{cls}"]; router.HRef page; url }
+            a { attr.``class`` $"link-{cls}"; router.HRef page; url }
             button {
-                attr.classes [$"btn-{cls}"]
+                attr.``class`` $"btn-{cls}"
                 attr.value (router.Link page)
                 on.click (fun _ -> dispatch (SetPage page))
                 url
             }
-        span { attr.classes ["current-page"]; $"{model.page}" }
+        span { attr.``class`` "current-page"; $"{model.page}" }
     }
 
 type Test() =

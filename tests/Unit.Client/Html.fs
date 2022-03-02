@@ -55,16 +55,16 @@ type BoleroComponent() =
             div { attr.id this.Ident; "Component content" }
 
             input {
-                attr.classes ["condBoolInput"]
+                attr.``class`` "condBoolInput"
                 attr.value condBoolState
                 on.input (fun e -> condBoolState <- e.Value :?> string)
             }
             cond (condBoolState.Length = 2) <| function
-                | true -> span { attr.classes ["condBoolIs2"] }
-                | false -> span { attr.classes ["condBoolIsNot2"] }
+                | true -> span { attr.``class`` "condBoolIs2" }
+                | false -> span { attr.``class`` "condBoolIsNot2" }
 
             input {
-                attr.classes ["condUnionInput"]
+                attr.``class`` "condUnionInput"
                 attr.value (string condUnionState)
                 on.input (fun e ->
                     let s = e.Value :?> string
@@ -75,20 +75,20 @@ type BoleroComponent() =
                         | _ -> ManyChars s)
             }
             cond condUnionState <| function
-                | Empty -> span { attr.classes ["condUnionIsEmpty"] }
-                | OneChar _ -> span { attr.classes ["condUnionIsOne"] }
-                | ManyChars _ -> span { attr.classes ["condUnionIsMany"] }
+                | Empty -> span { attr.``class`` "condUnionIsEmpty" }
+                | OneChar _ -> span { attr.``class`` "condUnionIsOne" }
+                | ManyChars _ -> span { attr.``class`` "condUnionIsMany" }
 
             input {
-                attr.classes ["forEachInput"]
+                attr.``class`` "forEachInput"
                 attr.value (String.concat "" forEachState)
                 on.input (fun e ->
                     forEachState <- [for c in (e.Value :?> string) -> string c])
             }
             forEach forEachState <| fun s ->
-                span { attr.classes ["forEachIs" + s] }
+                span { attr.``class`` ("forEachIs" + s) }
             for s in forEachState do
-                span { attr.classes ["forLoopIs" + s] }
+                span { attr.``class`` ("forLoopIs" + s) }
         }
 
 type Binds() =

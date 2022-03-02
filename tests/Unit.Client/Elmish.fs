@@ -57,23 +57,23 @@ type IntInput() =
     override this.View model dispatch =
         concat {
             input {
-                attr.classes ["intValue-input"; this.ExtraClass]
+                attr.``class`` $"intValue-input {this.ExtraClass}"
                 attr.value model
                 on.input (fun e -> dispatch (int (e.Value :?> string)))
             }
-            span { attr.classes ["intValue-repeat"]; $"{model}" }
+            span { attr.``class`` "intValue-repeat"; $"{model}" }
         }
 
 let view model dispatch =
     div {
-        attr.classes ["container"]
-        input { attr.classes ["constValue-input"]; attr.value model.constValue }
+        attr.``class`` "container"
+        input { attr.``class`` "constValue-input"; attr.value model.constValue }
         input {
-            attr.classes ["stringValue-input"]
+            attr.``class`` "stringValue-input"
             attr.value model.stringValue
             on.input (fun e -> dispatch (SetStringValue (e.Value :?> string)))
         }
-        span { attr.classes ["stringValue-repeat"]; model.stringValue }
+        span { attr.``class`` "stringValue-repeat"; model.stringValue }
         ecomp<IntInput,_,_> model.intValue (SetIntValue >> dispatch) { "ExtraClass" => "intValue-extraClass" }
     }
 
