@@ -87,6 +87,21 @@ module Html =
         testNotNull <@ elt.ByClass("forEachIsB") @>
 
     [<Test>]
+    let ``Render many for loop items``() =
+        let inp = elt.ByClass("forEachInput")
+        inp.Clear()
+
+        inp.SendKeys("ABC")
+        elt.EventuallyNotNull <@ elt.ByClass("forLoopIsA") @>
+        testNotNull <@ elt.ByClass("forLoopIsB") @>
+        testNotNull <@ elt.ByClass("forLoopIsC") @>
+
+        inp.SendKeys(Keys.Backspace)
+        elt.EventuallyNull <@ elt.ByClass("forLoopIsC") @>
+        testNotNull <@ elt.ByClass("forLoopIsA") @>
+        testNotNull <@ elt.ByClass("forLoopIsB") @>
+
+    [<Test>]
     let ``bind.input``() =
         let inp = elt.ByClass("bind-input")
         inp.Clear()

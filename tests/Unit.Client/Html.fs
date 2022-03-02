@@ -87,6 +87,8 @@ type BoleroComponent() =
             }
             forEach forEachState <| fun s ->
                 span { attr.classes ["forEachIs" + s] }
+            for s in forEachState do
+                span { attr.classes ["forLoopIs" + s] }
         }
 
 type Binds() =
