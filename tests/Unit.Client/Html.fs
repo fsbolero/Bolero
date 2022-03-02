@@ -188,18 +188,6 @@ let Tests() =
         attr.id "test-fixture-html"
         p { attr.id "element-with-id"; "Contents of element with id" }
         p { attr.id "element-with-htmlentity"; "Escaped <b>text</b> & content" }
-        concat {
-            span {
-                attr.classes ["class-set-1"]
-                attr.``class`` "class-set-2"
-                attr.classes ["class-set-3"; "class-set-4"]
-            }
-            span {
-                attr.classes ["class-set-5"]
-                attr.``class`` "class-set-6"
-            }
-            span { attr.``class`` "class-set-7" }
-        }
         rawHtml """<div class="raw-html-element">Unescape &lt;b&gt;text&lt;/b&gt; &amp; content</div>"""
         comp<NavLink> {
             attr.id "nav-link"

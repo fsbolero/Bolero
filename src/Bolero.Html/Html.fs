@@ -697,6 +697,7 @@ let wbr : ElementBuilder = elt "wbr"
 /// HTML attributes.
 module attr =
     /// Create an HTML `class` attribute containing the given class names.
+    [<Obsolete "Use attr.``class`` and String.concat. Multiple class attributes on the same element are not combined anymore.">]
     let inline classes (classes: list<string>) : Attr =
         Attr.Make "class" (String.concat " " classes)
 

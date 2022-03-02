@@ -26,16 +26,6 @@ module Html =
         test <@ elt.ById("element-with-htmlentity").Text = "Escaped <b>text</b> & content" @>
 
     [<Test>]
-    let ``Element with classes``() =
-        testNotNull <@ elt.ByClass("class-set-1") @>
-        testNotNull <@ elt.ByClass("class-set-2") @>
-        testNotNull <@ elt.ByClass("class-set-3") @>
-        testNotNull <@ elt.ByClass("class-set-4") @>
-        testNotNull <@ elt.ByClass("class-set-5") @>
-        testNotNull <@ elt.ByClass("class-set-6") @>
-        testNotNull <@ elt.ByClass("class-set-7") @>
-
-    [<Test>]
     let ``Raw HTML``() =
         test <@ elt.ByClass("raw-html-element").Text = "Unescape <b>text</b> & content" @>
 
