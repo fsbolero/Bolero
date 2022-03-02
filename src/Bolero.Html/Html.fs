@@ -24,10 +24,10 @@ module Bolero.Html
 
 open System.Threading.Tasks
 open System.Globalization
-
 open System
 open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Web
+open Bolero.Builders
 
 /// Create an empty HTML fragment.
 /// [category: HTML elements]
@@ -702,19 +702,27 @@ module attr =
         Attr.Make "class" (String.concat " " classes)
 
     /// Bind an element or component reference.
-    [<Obsolete "Use the ref directly in the element or component builder.">]
-    let inline ref (r: Ref<'T>) =
-        r
+    let inline ref (r: Ref<'T>) : KeyAndRef =
+        KeyAndRef(fun _ b _ i ->
+            r.Render(b, i))
 
-    /// Bind an element reference.
-    [<Obsolete "Use the ref directly in the element or component builder.">]
-    let inline bindRef (r: Ref<'T>) =
-        r
+    /// Bind an element or component reference.
+    [<Obsolete "Use attr.ref, or yield the ref directly in the element or component builder.">]
+    let inline bindRef (r: Ref<'T>) : KeyAndRef =
+        ref r
 
-    let inline key (k: obj) =
-        Key(fun _ tb _ i ->
-            tb.SetKey(k)
+    /// Set an element's unique key among a sequence of similar elements.
+    let inline key (k: obj) : KeyAndRef =
+        KeyAndRef(fun _ b _ i ->
+            b.SetKey(k)
             i)
+
+    /// Set an element's unique key among a sequence of similar elements
+    /// and bind a reference to it.
+    let inline keyAndRef (k: obj) (r: Ref) =
+        KeyAndRef(fun _ b _ i ->
+            b.SetKey(k)
+            r.Render(b, i))
 
     /// Create an empty attribute.
     let inline empty() = Attr.Empty()

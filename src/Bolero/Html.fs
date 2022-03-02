@@ -20,11 +20,15 @@
 
 module Bolero.Html
 
+open Bolero.Builders
+
 type AttrBuilder() =
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
     member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
-        Attr(fun c b m i -> x2.Invoke(c, b, m, x1.Invoke(c, b, m, i)))
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
 
 let attrs = AttrBuilder()
 

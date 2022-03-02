@@ -22,6 +22,7 @@ namespace Bolero.Server
 
 open Microsoft.AspNetCore.Components
 open Bolero
+open Bolero.Builders
 open Bolero.Server
 
 type DoctypeHtmlBuilder() =
@@ -43,7 +44,7 @@ type DoctypeHtmlBuilder() =
             b.CloseElement()
             i)
 
-    member inline this.Run([<InlineIfLambda>] content: Key) =
+    member inline this.Run([<InlineIfLambda>] content: KeyAndRef) =
         Node(fun c b m i ->
             b.AddMarkupContent(i, "<!DOCTYPE html>\n")
             b.OpenElement(i + 1, "html")
@@ -51,7 +52,7 @@ type DoctypeHtmlBuilder() =
             b.CloseElement()
             i)
 
-    member inline this.Run([<InlineIfLambda>] content: RefRender) =
+    member inline this.Run([<InlineIfLambda>] content: ChildKeyAndRefContent) =
         Node(fun c b m i ->
             b.AddMarkupContent(i, "<!DOCTYPE html>\n")
             b.OpenElement(i + 1, "html")
