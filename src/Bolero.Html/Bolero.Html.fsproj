@@ -7,6 +7,7 @@
     <RootNamespace>Bolero</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\Trimmable.fs" Link="Trimmable.fs" />
     <Compile Include="Html.fs" />
   </ItemGroup>
   <ItemGroup>
