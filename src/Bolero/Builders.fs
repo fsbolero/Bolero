@@ -68,6 +68,13 @@ type NodeBuilderBase() =
             let i = attrs.Invoke(c, b, m, i + 1)
             b.CloseComponent()
             i))
+    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
 
     member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> KeyAndRef) = KeyAndRef(fun c b m i -> r().Invoke(c, b, m, i))
@@ -242,6 +249,31 @@ and ComponentBuilder(ty: Type) =
 
     member inline this.Run([<InlineIfLambda>] x: Node) =
         this.Run(NodeBuilderWithChildContentBase.WrapNode(x))
+
+and ComponentWithAttrsAndNoChildrenBuilder<'T when 'T :> IComponent>(attrs: Attr) =
+    inherit NodeBuilderBase()
+
+    member _.Attrs = attrs
+
+    member inline _.Yield(ref: Ref<'T>) = KeyAndRef(fun _ b _ i -> ref.Render(b, i))
+
+    member inline this.Run([<InlineIfLambda>] x: Attr) =
+        let attrs = this.Attrs
+        Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            let i = x.Invoke(c, b, m, i)
+            b.CloseComponent()
+            i)
+
+    member inline this.Run([<InlineIfLambda>] x: KeyAndRef) =
+        let attrs = this.Attrs
+        Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            let i = x.Invoke(c, b, m, i)
+            b.CloseComponent()
+            i)
 
 and ComponentWithAttrsBuilder<'T when 'T :> IComponent>(attrs: Attr) =
     inherit NodeBuilderWithChildContentBase()

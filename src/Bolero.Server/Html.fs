@@ -66,7 +66,7 @@ module Html =
 
     /// Insert a Blazor component inside a static page.
     let rootComp<'T when 'T :> IComponent> =
-        ComponentWithAttrsBuilder<Components.RootComponent>(attrs {
+        ComponentWithAttrsAndNoChildrenBuilder<Components.RootComponent>(attrs {
             "ComponentType" => typeof<'T>
         })
 

@@ -79,7 +79,7 @@ let inline comp<'T when 'T :> IComponent> = ComponentBuilder<'T>()
 /// [category: Components]
 let inline ecomp<'T, 'model, 'msg when 'T :> ElmishComponent<'model, 'msg>>
         (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
-    ComponentWithAttrsBuilder<'T>(Html.attrs {
+    ComponentWithAttrsAndNoChildrenBuilder<'T>(Html.attrs {
         "Model" => model
         "Dispatch" => dispatch
     })

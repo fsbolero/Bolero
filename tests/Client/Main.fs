@@ -321,7 +321,7 @@ let view js model dispatch =
         cond model.page <| function
             | Form -> viewForm js model dispatch
             | Collection -> viewCollection model dispatch
-            | Item (k, m) -> ecomp<ViewItemPage,_,_> (k, model.items.[k], m.Model) dispatch { empty() }
+            | Item (k, m) -> ecomp<ViewItemPage,_,_> (k, model.items.[k], m.Model) dispatch { attr.empty() }
             | Lazy -> viewLazy model dispatch
             | Virtual -> viewVirtual model dispatch
     }
