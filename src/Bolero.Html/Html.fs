@@ -33,7 +33,7 @@ open Bolero.Builders
 let attrs = AttrBuilder()
 
 /// Computation expression to create a Node that is the concatenation of multiple elements and components.
-let concat = NodeBuilderBase()
+let concat = ConcatBuilder()
 
 /// Create an empty HTML fragment.
 /// [category: HTML elements]

@@ -34,7 +34,7 @@ type ChildContentAttr = delegate of obj * Rendering.RenderTreeBuilder * (Type ->
 /// The child content may be either direct children at the end, or a ChildContent attribute at the beginning.
 type ChildKeyAndRefContent = delegate of obj * Rendering.RenderTreeBuilder * (Type -> int * (obj -> int)) * int -> int
 
-type AttrBuilder() =
+type [<Struct; NoComparison; NoEquality>] AttrBuilder =
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
     member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
@@ -42,7 +42,62 @@ type AttrBuilder() =
             let i = x1.Invoke(c, b, m, i)
             x2.Invoke(c, b, m, i))
 
-type NodeBuilderBase() =
+type [<Struct; NoComparison; NoEquality>] ConcatBuilder =
+    member inline _.Yield([<InlineIfLambda>] node: Node) = node
+    member inline this.Yield(text: string) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, text)
+            i + 1))
+    member inline this.Yield(fragment: RenderFragment) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, fragment)
+            i + 1))
+    member inline this.Yield(eb: ElementBuilder) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenElement(i, eb.Name)
+            b.CloseElement()
+            i + 1))
+    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            b.CloseComponent()
+            i + 1))
+    member inline this.Yield(comp: ComponentBuilder) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent(i, comp.Type)
+            b.CloseComponent()
+            i + 1))
+    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
+    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
+
+    member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
+
+    member inline _.Combine([<InlineIfLambda>] x1: Node, [<InlineIfLambda>] x2: Node) =
+        Node(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+
+    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+        this.Yield(Node.ForEach s f)
+
+// This is the only builder where generated code becomes worse if it is a struct,
+// but since the vast majority of its uses are stored in a global, it's not too big a deal to make it a class.
+and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
+    val public Name: string
+    new(name) = { Name = name }
+
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
     member inline _.Yield([<InlineIfLambda>] keyAndRef: KeyAndRef) = keyAndRef
     member inline _.Yield([<InlineIfLambda>] node: Node) = node
@@ -111,9 +166,6 @@ type NodeBuilderBase() =
     member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
         this.Yield(Node.ForEach s f)
 
-and [<AbstractClass>] NodeBuilderWithDirectChildrenBase() =
-    inherit NodeBuilderBase()
-
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Node) =
         Attr(fun c b m i ->
             let i = x1.Invoke(c, b, m, i)
@@ -122,11 +174,6 @@ and [<AbstractClass>] NodeBuilderWithDirectChildrenBase() =
         ChildKeyAndRefContent(fun c b m i ->
             let i = x1.Invoke(c, b, m, i)
             x2.Invoke(c, b, m, i))
-
-and ElementBuilder(name: string) =
-    inherit NodeBuilderWithDirectChildrenBase()
-
-    member _.Name = name
 
     member inline _.Yield(ref: HtmlRef) = KeyAndRef(fun _ b _ i -> ref.Render(b, i))
 
@@ -158,10 +205,77 @@ and ElementBuilder(name: string) =
             b.CloseElement()
             i)
 
-and NodeBuilderWithChildContentBase() =
-    inherit NodeBuilderBase()
+and [<Struct; NoComparison; NoEquality>] ComponentBuilder<'T when 'T :> IComponent> =
 
-    static member inline WrapNode([<InlineIfLambda>] n: Node) =
+    member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
+    member inline _.Yield([<InlineIfLambda>] keyAndRef: KeyAndRef) = keyAndRef
+    member inline _.Yield([<InlineIfLambda>] node: Node) = node
+    member inline this.Yield(text: string) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, text)
+            i + 1))
+    member inline this.Yield(fragment: RenderFragment) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, fragment)
+            i + 1))
+    member inline this.Yield(eb: ElementBuilder) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenElement(i, eb.Name)
+            b.CloseElement()
+            i + 1))
+    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            b.CloseComponent()
+            i + 1))
+    member inline this.Yield(comp: ComponentBuilder) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent(i, comp.Type)
+            b.CloseComponent()
+            i + 1))
+    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
+    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
+
+    member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] r: unit -> KeyAndRef) = KeyAndRef(fun c b m i -> r().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] r: unit -> ChildKeyAndRefContent) = ChildKeyAndRefContent(fun c b m i -> r().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
+
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: KeyAndRef) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: ChildKeyAndRefContent) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+
+
+    member inline _.Combine([<InlineIfLambda>] x1: Node, [<InlineIfLambda>] x2: Node) =
+        Node(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+
+    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+        this.Yield(Node.ForEach s f)
+
+    member inline _.WrapNode([<InlineIfLambda>] n: Node) =
         ChildContentAttr(fun c b m i ->
             b.AddAttribute(i, "ChildContent", RenderFragment(fun b ->
                 n.Invoke(c, b, m, 0) |> ignore))
@@ -180,12 +294,9 @@ and NodeBuilderWithChildContentBase() =
             x1.Invoke(c, b, m, i))
 
     member inline this.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Node) =
-        this.Combine(x1, NodeBuilderWithChildContentBase.WrapNode(x2))
+        this.Combine(x1, this.WrapNode(x2))
     member inline this.Combine([<InlineIfLambda>] x1: KeyAndRef, [<InlineIfLambda>] x2: Node) =
-        this.Combine(x1, NodeBuilderWithChildContentBase.WrapNode(x2))
-
-and ComponentBuilder<'T when 'T :> IComponent>() =
-    inherit NodeBuilderWithChildContentBase()
+        this.Combine(x1, this.WrapNode(x2))
 
     member inline _.Yield(ref: Ref<'T>) = KeyAndRef(fun _ b _ i -> ref.Render(b, i))
 
@@ -218,50 +329,212 @@ and ComponentBuilder<'T when 'T :> IComponent>() =
             i)
 
     member inline this.Run([<InlineIfLambda>] x: Node) =
-        this.Run(NodeBuilderWithChildContentBase.WrapNode(x))
+        this.Run(this.WrapNode(x))
 
-and ComponentBuilder(ty: Type) =
-    inherit NodeBuilderWithChildContentBase()
+and [<Struct; NoComparison; NoEquality>] ComponentBuilder =
+
+    val public Type : Type
+    new(ty: Type) = { Type = ty }
+
+    member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
+    member inline _.Yield([<InlineIfLambda>] keyAndRef: KeyAndRef) = keyAndRef
+    member inline _.Yield([<InlineIfLambda>] node: Node) = node
+    member inline this.Yield(text: string) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, text)
+            i + 1))
+    member inline this.Yield(fragment: RenderFragment) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, fragment)
+            i + 1))
+    member inline this.Yield(eb: ElementBuilder) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenElement(i, eb.Name)
+            b.CloseElement()
+            i + 1))
+    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            b.CloseComponent()
+            i + 1))
+    member inline this.Yield(comp: ComponentBuilder) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent(i, comp.Type)
+            b.CloseComponent()
+            i + 1))
+    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
+    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
+
+    member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] r: unit -> KeyAndRef) = KeyAndRef(fun c b m i -> r().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] r: unit -> ChildKeyAndRefContent) = ChildKeyAndRefContent(fun c b m i -> r().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
+
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: KeyAndRef) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: ChildKeyAndRefContent) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+
+
+    member inline _.Combine([<InlineIfLambda>] x1: Node, [<InlineIfLambda>] x2: Node) =
+        Node(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+
+    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+        this.Yield(Node.ForEach s f)
+
+    member inline _.WrapNode([<InlineIfLambda>] n: Node) =
+        ChildContentAttr(fun c b m i ->
+            b.AddAttribute(i, "ChildContent", RenderFragment(fun b ->
+                n.Invoke(c, b, m, 0) |> ignore))
+            i + 1)
+
+    member inline _.Delay([<InlineIfLambda>] a: unit -> ChildContentAttr) = ChildContentAttr(fun c b m i -> a().Invoke(c, b, m, i))
+
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: ChildContentAttr) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: KeyAndRef, [<InlineIfLambda>] x2: ChildContentAttr) =
+        ChildKeyAndRefContent(fun c b m i ->
+            // Swap x2 and x1, because the ChildContent attr must come before the key and ref.
+            let i = x2.Invoke(c, b, m, i)
+            x1.Invoke(c, b, m, i))
+
+    member inline this.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Node) =
+        this.Combine(x1, this.WrapNode(x2))
+    member inline this.Combine([<InlineIfLambda>] x1: KeyAndRef, [<InlineIfLambda>] x2: Node) =
+        this.Combine(x1, this.WrapNode(x2))
 
     member inline _.Yield(ref: Ref) = KeyAndRef(fun _ b _ i -> ref.Render(b, i))
 
-    member _.Type = ty
-
     member inline this.Run([<InlineIfLambda>] x: ChildContentAttr) =
+        let ty = this.Type
         Node(fun c b m i ->
-            b.OpenComponent(i, this.Type)
+            b.OpenComponent(i, ty)
             let i = x.Invoke(c, b, m, i + 1)
             b.CloseComponent()
             i)
 
     member inline this.Run([<InlineIfLambda>] x: Attr) =
+        let ty = this.Type
         Node(fun c b m i ->
-            b.OpenComponent(i, this.Type)
+            b.OpenComponent(i, ty)
             let i = x.Invoke(c, b, m, i + 1)
             b.CloseComponent()
             i)
 
     member inline this.Run([<InlineIfLambda>] x: KeyAndRef) =
+        let ty = this.Type
         Node(fun c b m i ->
-            b.OpenComponent(i, this.Type)
+            b.OpenComponent(i, ty)
             let i = x.Invoke(c, b, m, i + 1)
             b.CloseComponent()
             i)
 
     member inline this.Run([<InlineIfLambda>] x: ChildKeyAndRefContent) =
+        let ty = this.Type
         Node(fun c b m i ->
-            b.OpenComponent(i, this.Type)
+            b.OpenComponent(i, ty)
             let i = x.Invoke(c, b, m, i + 1)
             b.CloseComponent()
             i)
 
     member inline this.Run([<InlineIfLambda>] x: Node) =
-        this.Run(NodeBuilderWithChildContentBase.WrapNode(x))
+        this.Run(this.WrapNode(x))
 
-and ComponentWithAttrsAndNoChildrenBuilder<'T when 'T :> IComponent>(attrs: Attr) =
-    inherit NodeBuilderBase()
+and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsAndNoChildrenBuilder<'T when 'T :> IComponent> =
+    val public Attrs : Attr
+    new (attrs: Attr) = { Attrs = attrs }
 
-    member _.Attrs = attrs
+    member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
+    member inline _.Yield([<InlineIfLambda>] keyAndRef: KeyAndRef) = keyAndRef
+    member inline _.Yield([<InlineIfLambda>] node: Node) = node
+    member inline this.Yield(text: string) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, text)
+            i + 1))
+    member inline this.Yield(fragment: RenderFragment) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, fragment)
+            i + 1))
+    member inline this.Yield(eb: ElementBuilder) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenElement(i, eb.Name)
+            b.CloseElement()
+            i + 1))
+    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            b.CloseComponent()
+            i + 1))
+    member inline this.Yield(comp: ComponentBuilder) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent(i, comp.Type)
+            b.CloseComponent()
+            i + 1))
+    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
+    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
+
+    member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] r: unit -> KeyAndRef) = KeyAndRef(fun c b m i -> r().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] r: unit -> ChildKeyAndRefContent) = ChildKeyAndRefContent(fun c b m i -> r().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
+
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: KeyAndRef) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: ChildKeyAndRefContent) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+
+
+    member inline _.Combine([<InlineIfLambda>] x1: Node, [<InlineIfLambda>] x2: Node) =
+        Node(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+
+    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+        this.Yield(Node.ForEach s f)
 
     member inline _.Yield(ref: Ref<'T>) = KeyAndRef(fun _ b _ i -> ref.Render(b, i))
 
@@ -283,10 +556,100 @@ and ComponentWithAttrsAndNoChildrenBuilder<'T when 'T :> IComponent>(attrs: Attr
             b.CloseComponent()
             i)
 
-and ComponentWithAttrsBuilder<'T when 'T :> IComponent>(attrs: Attr) =
-    inherit NodeBuilderWithChildContentBase()
+and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsBuilder<'T when 'T :> IComponent> =
+    val public Attrs : Attr
+    new (attrs: Attr) = { Attrs = attrs }
 
-    member _.Attrs = attrs
+    member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
+    member inline _.Yield([<InlineIfLambda>] keyAndRef: KeyAndRef) = keyAndRef
+    member inline _.Yield([<InlineIfLambda>] node: Node) = node
+    member inline this.Yield(text: string) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, text)
+            i + 1))
+    member inline this.Yield(fragment: RenderFragment) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, fragment)
+            i + 1))
+    member inline this.Yield(eb: ElementBuilder) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenElement(i, eb.Name)
+            b.CloseElement()
+            i + 1))
+    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            b.CloseComponent()
+            i + 1))
+    member inline this.Yield(comp: ComponentBuilder) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent(i, comp.Type)
+            b.CloseComponent()
+            i + 1))
+    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
+    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
+
+    member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] r: unit -> KeyAndRef) = KeyAndRef(fun c b m i -> r().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] r: unit -> ChildKeyAndRefContent) = ChildKeyAndRefContent(fun c b m i -> r().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
+
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: KeyAndRef) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: ChildKeyAndRefContent) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+
+
+    member inline _.Combine([<InlineIfLambda>] x1: Node, [<InlineIfLambda>] x2: Node) =
+        Node(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+
+    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+        this.Yield(Node.ForEach s f)
+
+    member inline _.WrapNode([<InlineIfLambda>] n: Node) =
+        ChildContentAttr(fun c b m i ->
+            b.AddAttribute(i, "ChildContent", RenderFragment(fun b ->
+                n.Invoke(c, b, m, 0) |> ignore))
+            i + 1)
+
+    member inline _.Delay([<InlineIfLambda>] a: unit -> ChildContentAttr) = ChildContentAttr(fun c b m i -> a().Invoke(c, b, m, i))
+
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: ChildContentAttr) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: KeyAndRef, [<InlineIfLambda>] x2: ChildContentAttr) =
+        ChildKeyAndRefContent(fun c b m i ->
+            // Swap x2 and x1, because the ChildContent attr must come before the key and ref.
+            let i = x2.Invoke(c, b, m, i)
+            x1.Invoke(c, b, m, i))
+
+    member inline this.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Node) =
+        this.Combine(x1, this.WrapNode(x2))
+    member inline this.Combine([<InlineIfLambda>] x1: KeyAndRef, [<InlineIfLambda>] x2: Node) =
+        this.Combine(x1, this.WrapNode(x2))
 
     member inline _.Yield(ref: Ref<'T>) = KeyAndRef(fun _ b _ i -> ref.Render(b, i))
 
@@ -327,12 +690,135 @@ and ComponentWithAttrsBuilder<'T when 'T :> IComponent>(attrs: Attr) =
             i)
 
     member inline this.Run([<InlineIfLambda>] x: Node) =
-        this.Run(NodeBuilderWithChildContentBase.WrapNode(x))
+        this.Run(this.WrapNode(x))
 
 type VirtualizeItemsDeclaration<'T> = delegate of Rendering.RenderTreeBuilder * int -> int
 
-type VirtualizeBuilder<'Item>() =
-    inherit ComponentBuilder<Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<'Item>>()
+type [<Struct; NoComparison; NoEquality>] VirtualizeBuilder<'Item> =
+
+    member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
+    member inline _.Yield([<InlineIfLambda>] keyAndRef: KeyAndRef) = keyAndRef
+    member inline _.Yield([<InlineIfLambda>] node: Node) = node
+    member inline this.Yield(text: string) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, text)
+            i + 1))
+    member inline this.Yield(fragment: RenderFragment) =
+        this.Yield(Node(fun _ b _ i ->
+            b.AddContent(i, fragment)
+            i + 1))
+    member inline this.Yield(eb: ElementBuilder) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenElement(i, eb.Name)
+            b.CloseElement()
+            i + 1))
+    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            b.CloseComponent()
+            i + 1))
+    member inline this.Yield(comp: ComponentBuilder) =
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent(i, comp.Type)
+            b.CloseComponent()
+            i + 1))
+    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
+    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+        let attrs : Attr = comp.Attrs
+        this.Yield(Node(fun c b m i ->
+            b.OpenComponent<'T>(i)
+            let i = attrs.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i))
+
+    member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] r: unit -> KeyAndRef) = KeyAndRef(fun c b m i -> r().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] r: unit -> ChildKeyAndRefContent) = ChildKeyAndRefContent(fun c b m i -> r().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
+
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: KeyAndRef) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: ChildKeyAndRefContent) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+
+
+    member inline _.Combine([<InlineIfLambda>] x1: Node, [<InlineIfLambda>] x2: Node) =
+        Node(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+
+    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+        this.Yield(Node.ForEach s f)
+
+    member inline _.WrapNode([<InlineIfLambda>] n: Node) =
+        ChildContentAttr(fun c b m i ->
+            b.AddAttribute(i, "ChildContent", RenderFragment(fun b ->
+                n.Invoke(c, b, m, 0) |> ignore))
+            i + 1)
+
+    member inline _.Delay([<InlineIfLambda>] a: unit -> ChildContentAttr) = ChildContentAttr(fun c b m i -> a().Invoke(c, b, m, i))
+
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: ChildContentAttr) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: KeyAndRef, [<InlineIfLambda>] x2: ChildContentAttr) =
+        ChildKeyAndRefContent(fun c b m i ->
+            // Swap x2 and x1, because the ChildContent attr must come before the key and ref.
+            let i = x2.Invoke(c, b, m, i)
+            x1.Invoke(c, b, m, i))
+
+    member inline this.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Node) =
+        this.Combine(x1, this.WrapNode(x2))
+    member inline this.Combine([<InlineIfLambda>] x1: KeyAndRef, [<InlineIfLambda>] x2: Node) =
+        this.Combine(x1, this.WrapNode(x2))
+
+    member inline _.Yield(ref: Ref<'T>) = KeyAndRef(fun _ b _ i -> ref.Render(b, i))
+
+    member inline this.Run([<InlineIfLambda>] x: ChildContentAttr) =
+        Node(fun c b m i ->
+            b.OpenComponent<Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<'Item>>(i)
+            let i = x.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i)
+
+    member inline this.Run([<InlineIfLambda>] x: Attr) =
+        Node(fun c b m i ->
+            b.OpenComponent<Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<'Item>>(i)
+            let i = x.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i)
+
+    member inline this.Run([<InlineIfLambda>] x: KeyAndRef) =
+        Node(fun c b m i ->
+            b.OpenComponent<Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<'Item>>(i)
+            let i = x.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i)
+
+    member inline this.Run([<InlineIfLambda>] x: ChildKeyAndRefContent) =
+        Node(fun c b m i ->
+            b.OpenComponent<Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<'Item>>(i)
+            let i = x.Invoke(c, b, m, i + 1)
+            b.CloseComponent()
+            i)
+
+    member inline this.Run([<InlineIfLambda>] x: Node) =
+        this.Run(this.WrapNode(x))
 
     member inline this.Bind([<InlineIfLambda>] items: VirtualizeItemsDeclaration<'Item>, [<InlineIfLambda>] cont: 'Item -> Node) =
         ChildContentAttr(fun c b m i ->
