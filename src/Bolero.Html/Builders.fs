@@ -34,6 +34,14 @@ type ChildContentAttr = delegate of obj * Rendering.RenderTreeBuilder * (Type ->
 /// The child content may be either direct children at the end, or a ChildContent attribute at the beginning.
 type ChildKeyAndRefContent = delegate of obj * Rendering.RenderTreeBuilder * (Type -> int * (obj -> int)) * int -> int
 
+type AttrBuilder() =
+    member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
+    member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
+    member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
+        Attr(fun c b m i ->
+            let i = x1.Invoke(c, b, m, i)
+            x2.Invoke(c, b, m, i))
+
 type NodeBuilderBase() =
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
     member inline _.Yield([<InlineIfLambda>] keyAndRef: KeyAndRef) = keyAndRef

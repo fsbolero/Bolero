@@ -29,6 +29,12 @@ open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Web
 open Bolero.Builders
 
+/// Computation expression to create an Attr that is the concatenation of multiple attributes.
+let attrs = AttrBuilder()
+
+/// Computation expression to create a Node that is the concatenation of multiple elements and components.
+let concat = NodeBuilderBase()
+
 /// Create an empty HTML fragment.
 /// [category: HTML elements]
 let inline empty() = Node.Empty()
@@ -79,7 +85,7 @@ let inline comp<'T when 'T :> IComponent> = ComponentBuilder<'T>()
 /// [category: Components]
 let inline ecomp<'T, 'model, 'msg when 'T :> ElmishComponent<'model, 'msg>>
         (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
-    ComponentWithAttrsAndNoChildrenBuilder<'T>(Html.attrs {
+    ComponentWithAttrsAndNoChildrenBuilder<'T>(attrs {
         "Model" => model
         "Dispatch" => dispatch
     })
@@ -163,7 +169,7 @@ let inline lazyComp3By (equal: ('model1 * 'model2) -> 'a) (viewFunction: ('model
 /// based on whether the current URI matches its `href`.
 /// [category: Components]
 let inline navLink (``match``: Routing.NavLinkMatch) =
-    ComponentWithAttrsBuilder<Routing.NavLink>(Html.attrs {
+    ComponentWithAttrsBuilder<Routing.NavLink>(attrs {
         "Match" => ``match``
     })
 

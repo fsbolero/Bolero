@@ -15,8 +15,6 @@
     <Compile Include="Components.fs" />
     <Compile Include="Virtualize.fs" />
     <Compile Include="Ref.fs" />
-    <Compile Include="Builders.fs" />
-    <Compile Include="Html.fs" />
     <Compile Include="Remoting.fs" />
     <Compile Include="Remoting.Client.fs" />
     <Compile Include="Cmd.fs" />
