@@ -36,7 +36,7 @@ type ChildKeyAndRefContent = delegate of obj * Rendering.RenderTreeBuilder * (Ty
 
 type NodeBuilderBase() =
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
-    member inline _.Yield(keyAndRef: KeyAndRef) = keyAndRef
+    member inline _.Yield([<InlineIfLambda>] keyAndRef: KeyAndRef) = keyAndRef
     member inline _.Yield([<InlineIfLambda>] node: Node) = node
     member inline this.Yield(text: string) =
         this.Yield(Node(fun _ b _ i ->
