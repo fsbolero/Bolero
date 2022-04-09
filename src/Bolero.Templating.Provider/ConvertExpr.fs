@@ -112,10 +112,10 @@ let rec ConvertAttr (vars: Map<string, Expr>) (attr: Parsing.Expr) : Expr<Attr> 
     match attr with
     | Parsing.Concat attrs ->
         let attrs = TExpr.Array<Attr> (Seq.map (ConvertAttr vars) attrs)
-        <@ Attr.Attrs (List.ofArray %attrs) @>
+        <@ Attr.Attrs %attrs @>
     | Parsing.Attr (name, value) ->
         let value = ConvertAttrValue vars value
-        <@ Attr.Attr (name, %value) @>
+        <@ Attr.Make name %value @>
     | Parsing.VarContent varName ->
         vars.[varName] |> Expr.Cast
     | Parsing.WrapVars (subst, attr) ->
@@ -127,13 +127,13 @@ let rec ConvertNode (vars: Map<string, Expr>) (node: Parsing.Expr) : Expr<Node> 
     match node with
     | Parsing.Concat exprs ->
         let exprs = TExpr.Array<Node> (Seq.map (ConvertNode vars) exprs)
-        <@ Node.Concat (List.ofArray %exprs) @>
+        <@ Node.Concat %exprs @>
     | Parsing.PlainHtml string ->
         <@ Node.RawHtml string @>
     | Parsing.Elt (name, attrs, children) ->
         let attrs = TExpr.Array<Attr> (Seq.map (ConvertAttr vars) attrs)
         let children = TExpr.Array<Node> (Seq.map (ConvertNode vars) children)
-        <@ Node.Elt (name, List.ofArray %attrs, List.ofArray %children) @>
+        <@ Node.Elt name %attrs %children @>
     | Parsing.VarContent varName ->
         vars.[varName] |> Expr.Cast
     | Parsing.WrapVars (subst, node) ->

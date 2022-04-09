@@ -287,7 +287,7 @@ NUGET
       Selenium.WebDriver (>= 4.1)
     Selenium.WebDriver (4.1)
       Newtonsoft.Json (>= 12.0.3)
-    Selenium.WebDriver.ChromeDriver (96.0.4664.4500)
+    Selenium.WebDriver.ChromeDriver (100.0.4896.6000)
     System.AppContext (4.3)
       System.Runtime (>= 4.3)
     System.Collections (4.3)

@@ -8,3 +8,10 @@ type MouseEventArgs = class end
 type PointerEventArgs = class end
 type ProgressEventArgs = class end
 type TouchEventArgs = class end
+
+namespace Microsoft.AspNetCore.Components.Web.Virtualization
+
+open Microsoft.AspNetCore.Components
+
+type Virtualize<'TItem>() =
+    inherit ComponentBase()

@@ -55,26 +55,27 @@ type IntInput() =
     member val ExtraClass = "" with get, set
 
     override this.View model dispatch =
-        concat [
-            input [
-                attr.classes ["intValue-input"; this.ExtraClass]
+        concat {
+            input {
+                attr.``class`` $"intValue-input {this.ExtraClass}"
                 attr.value model
                 on.input (fun e -> dispatch (int (e.Value :?> string)))
-            ]
-            span [attr.classes ["intValue-repeat"]] [text $"{model}"]
-        ]
+            }
+            span { attr.``class`` "intValue-repeat"; $"{model}" }
+        }
 
 let view model dispatch =
-    div [attr.classes ["container"]] [
-        input [attr.classes ["constValue-input"]; attr.value model.constValue]
-        input [
-            attr.classes ["stringValue-input"]
+    div {
+        attr.``class`` "container"
+        input { attr.``class`` "constValue-input"; attr.value model.constValue }
+        input {
+            attr.``class`` "stringValue-input"
             attr.value model.stringValue
             on.input (fun e -> dispatch (SetStringValue (e.Value :?> string)))
-        ]
-        span [attr.classes ["stringValue-repeat"]] [text model.stringValue]
-        ecomp<IntInput,_,_> ["ExtraClass" => "intValue-extraClass"] model.intValue (SetIntValue >> dispatch)
-    ]
+        }
+        span { attr.``class`` "stringValue-repeat"; model.stringValue }
+        ecomp<IntInput,_,_> model.intValue (SetIntValue >> dispatch) { "ExtraClass" => "intValue-extraClass" }
+    }
 
 type Test() =
     inherit ProgramComponent<Model, Message>()
@@ -83,6 +84,7 @@ type Test() =
         Program.mkProgram (fun _ -> initModel, []) update view
 
 let Tests() =
-    div [attr.id "test-fixture-elmish"] [
-        comp<Test> [] []
-    ]
+    div {
+        attr.id "test-fixture-elmish"
+        comp<Test>
+    }

@@ -105,61 +105,66 @@ let update api msg model =
     | RecvGetAdmin resp -> { model with getAdmin = resp }, []
 
 let remote model dispatch =
-    concat [
-        input [
-            attr.classes ["signin-input"]
+    concat {
+        input {
+            attr.``class`` "signin-input"
             bind.input.string model.username (dispatch << SetUsername)
-        ]
-        button [
-            attr.classes ["signin-button"]
+        }
+        button {
+            attr.``class`` "signin-button"
             on.click (fun _ -> dispatch SendSignIn)
-        ] [text "Sign in"]
-        button [
-            attr.classes ["signout-button"]
+            "Sign in"
+        }
+        button {
+            attr.``class`` "signout-button"
             on.click (fun _ -> dispatch SendSignOut)
-        ] [text "Sign out"]
-        div [attr.classes ["is-signedin"]] [
-            text (defaultArg model.signedInAs "<not logged in>")
-        ]
-        button [
-            attr.classes ["get-admin"]
+            "Sign out"
+        }
+        div {
+            attr.``class`` "is-signedin"
+            defaultArg model.signedInAs "<not logged in>"
+        }
+        button {
+            attr.``class`` "get-admin"
             on.click (fun _ -> dispatch SendGetAdmin)
-        ] [text "Get whether I'm admin"]
-        div [attr.classes ["is-admin"]] [
-            text (defaultArg model.getAdmin "<not admin>")
-        ]
-    ]
+            "Get whether I'm admin"
+        }
+        div {
+            attr.``class`` "is-admin"
+            defaultArg model.getAdmin "<not admin>"
+        }
+    }
 
 let view model dispatch =
-    div [] [
-        input [
-            attr.classes ["key-input"]
+    div {
+        input {
+            attr.``class`` "key-input"
             attr.value model.key
             on.input (fun e -> dispatch (SetKey (e.Value :?> string)))
-        ]
-        input [
-            attr.classes ["value-input"]
+        }
+        input {
+            attr.``class`` "value-input"
             attr.value model.value
             on.input (fun e -> dispatch (SetValue (e.Value :?> string)))
-        ]
-        button [attr.classes ["add-btn"]; on.click (fun _ -> dispatch Add)] [text "Add"]
-        button [attr.classes ["rem-btn"]; on.click (fun _ -> dispatch Remove)] [text "Remove"]
+        }
+        button { attr.``class`` "add-btn"; on.click (fun _ -> dispatch Add); "Add" }
+        button { attr.``class`` "rem-btn"; on.click (fun _ -> dispatch Remove); "Remove" }
         cond model.received <| function
-            | None -> div [attr.classes ["output-empty"]] []
-            | Some v -> div [attr.classes ["output"]] [text v]
+            | None -> div { attr.``class`` "output-empty" }
+            | Some v -> div { attr.``class`` "output"; v }
         remote model dispatch
         cond model.error <| function
-        | None -> empty
-        | Some e -> p [] [text $"{e}"]
-        comp<CascadingAuthenticationState> [] [
-            comp<AuthorizeView> [
+        | None -> empty()
+        | Some e -> p { $"{e}" }
+        comp<CascadingAuthenticationState> {
+            comp<AuthorizeView> {
                 attr.fragmentWith "Authorized" <| fun (context: AuthenticationState) ->
-                    div [] [text $"You're authorized! Welcome {context.User.Identity.Name}"]
+                    div { $"You're authorized! Welcome {context.User.Identity.Name}" }
                 attr.fragmentWith "NotAuthorized" <| fun (_: AuthenticationState) ->
-                    div [] [text "You're not authorized :("]
-            ] []
-        ]
-    ]
+                    div { "You're not authorized :(" }
+            }
+        }
+    }
 
 type Test() =
     inherit ProgramComponent<Model, Message>()
@@ -169,6 +174,7 @@ type Test() =
         Program.mkProgram (fun _ -> initModel, []) (update api) view
 
 let Tests() =
-    div [attr.id "test-fixture-remoting"] [
-        comp<Test> [] []
-    ]
+    div {
+        attr.id "test-fixture-remoting"
+        comp<Test>
+    }

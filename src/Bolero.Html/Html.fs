@@ -24,14 +24,28 @@ module Bolero.Html
 
 open System.Threading.Tasks
 open System.Globalization
-
 open System
 open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Web
+open Bolero.Builders
+
+/// Computation expression to create an Attr that is the concatenation of multiple attributes.
+let attrs = AttrBuilder()
+
+/// Computation expression to create a Node that is the concatenation of multiple elements and components.
+let concat = ConcatBuilder()
+
+/// Create an empty HTML fragment.
+/// [category: HTML elements]
+let inline empty() = Node.Empty()
 
 /// Create an HTML text node.
 /// [category: HTML elements]
-let inline text str = Text str
+let inline text str = Node.Text str
+
+/// Create a raw HTML node.
+/// [category: HTML elements]
+let inline rawHtml str = Node.RawHtml str
 
 /// Create an HTML text node using formatting.
 /// [category: HTML elements]
@@ -39,29 +53,25 @@ let inline textf format = Printf.kprintf text format
 
 /// Create an HTML element.
 /// [category: HTML elements]
-let inline elt name attrs children = Node.Elt(name, attrs, children)
-
-/// Concatenate HTML fragments.
-/// [category: HTML elements]
-let inline concat nodes = Concat nodes
+let inline elt name = ElementBuilder name
 
 /// Create an HTML attribute.
 /// [category: HTML elements]
-let inline (=>) name value = Attr(name, box value)
+let inline (=>) name value = Attr.Make name value
 
 /// Create a conditional fragment. `matching` must be either a boolean or an F# union.
 /// If it's a union, `mkNode` must only match on the case.
 /// [category: HTML elements]
 let inline cond<'T> (matching: 'T) (mkNode: 'T -> Node) =
     if typeof<'T> = typeof<bool> then
-        Node.Cond(unbox<bool> matching, mkNode matching)
+        Node.Cond (unbox<bool> matching) (mkNode matching)
     else
-        Node.Match(typeof<'T>, matching, mkNode matching)
+        Node.Match matching (mkNode matching)
 
 /// Create a fragment that concatenates nodes for each item in a sequence.
 /// [category: HTML elements]
 let inline forEach<'T> (items: seq<'T>) (mkNode: 'T -> Node) =
-    Node.ForEach [for n in items -> mkNode n]
+    Node.ForEach items mkNode
 
 /// Create a node from a Blazor RenderFragment.
 let inline fragment (frag: RenderFragment) =
@@ -69,46 +79,73 @@ let inline fragment (frag: RenderFragment) =
 
 /// Create a fragment from a Blazor component.
 /// [category: Components]
-let inline comp<'T when 'T :> IComponent> attrs children =
-    Node.BlazorComponent<'T>(attrs, children)
+let inline comp<'T when 'T :> IComponent> = ComponentBuilder<'T>()
 
 /// Create a fragment from an Elmish component.
 /// [category: Components]
 let inline ecomp<'T, 'model, 'msg when 'T :> ElmishComponent<'model, 'msg>>
-        (attrs: list<Attr>) (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
-    comp<'T> (attrs @ ["Model" => model; "Dispatch" => dispatch]) []
+        (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
+    ComponentWithAttrsAndNoChildrenBuilder<'T>(attrs {
+        "Model" => model
+        "Dispatch" => dispatch
+    })
 
 /// Create a fragment with a lazily rendered view function.
 /// [category: Components]
-let inline lazyComp (viewFunction: 'model -> Node) (model: 'model) =
-    let viewFunction' : 'model -> Elmish.Dispatch<'msg> -> Node = fun m _ -> viewFunction m
-    comp<LazyComponent<'model,_>> ["Model" => model; "ViewFunction" => viewFunction'; ] []
+let inline lazyComp ([<InlineIfLambda>] viewFunction: 'model -> Node) (model: 'model) =
+    let viewFunction' : 'model -> Elmish.Dispatch<_> -> Node = fun m _ -> viewFunction m
+    comp<LazyComponent<'model, obj>> {
+        "Model" => model
+        "ViewFunction" => viewFunction'
+    }
 
 /// Create a fragment with a lazily rendered view function and a custom equality.
 /// [category: Components]
-let inline lazyCompWith (equal: 'model -> 'model -> bool) (viewFunction: 'model -> Node) (model: 'model) =
-    let viewFunction' : 'model -> Elmish.Dispatch<'msg> -> Node = fun m _ -> viewFunction m
-    comp<LazyComponent<'model,_>> ["Model" => model; "ViewFunction" => viewFunction'; "Equal" => equal; ] []
+let inline lazyCompWith (equal: 'model -> 'model -> bool) ([<InlineIfLambda>] viewFunction: 'model -> Node) (model: 'model) =
+    let viewFunction' : 'model -> Elmish.Dispatch<_> -> Node = fun m _ -> viewFunction m
+    comp<LazyComponent<'model, obj>> {
+        "Model" => model
+        "ViewFunction" => viewFunction'
+        "Equal" => equal
+    }
 
 /// Create a fragment with a lazily rendered view function.
 /// [category: Components]
 let inline lazyComp2 (viewFunction: 'model -> Elmish.Dispatch<'msg> -> Node) (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
-    comp<LazyComponent<'model,'msg>> ["Model" => model; "Dispatch" => dispatch; "ViewFunction" => viewFunction; ] []
+    comp<LazyComponent<'model, 'msg>> {
+        "Model" => model
+        "Dispatch" => dispatch
+        "ViewFunction" => viewFunction
+    }
 
 /// Create a fragment with a lazily rendered view function and a custom equality.
 /// [category: Components]
 let inline lazyComp2With (equal: 'model -> 'model -> bool) (viewFunction: 'model -> Elmish.Dispatch<'msg> -> Node) (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
-    comp<LazyComponent<'model,'msg>> ["Model" => model; "Dispatch" => dispatch; "ViewFunction" => viewFunction; "Equal" => equal; ] []
+    comp<LazyComponent<'model, 'msg>> {
+        "Model" => model
+        "Dispatch" => dispatch
+        "ViewFunction" => viewFunction
+        "Equal" => equal
+    }
 
 /// Create a fragment with a lazily rendered view function.
 /// [category: Components]
 let inline lazyComp3 (viewFunction: ('model1 * 'model2') -> Elmish.Dispatch<'msg> -> Node) (model1: 'model1) (model2: 'model2) (dispatch: Elmish.Dispatch<'msg>) =
-    comp<LazyComponent<('model1 * 'model2),'msg>> ["Model" => (model1, model2); "Dispatch" => dispatch; "ViewFunction" => viewFunction; ] []
+    comp<LazyComponent<'model1 * 'model2, 'msg>>{
+        "Model" => (model1, model2)
+        "Dispatch" => dispatch
+        "ViewFunction" => viewFunction
+    }
 
 /// Create a fragment with a lazily rendered view function and a custom equality.
 /// [category: Components]
 let inline lazyComp3With (equal: ('model1 * 'model2) -> ('model1 * 'model2) -> bool) (viewFunction: ('model1 * 'model2') -> Elmish.Dispatch<'msg> -> Node) (model1: 'model1) (model2: 'model2) (dispatch: Elmish.Dispatch<'msg>) =
-    comp<LazyComponent<('model1 * 'model2),'msg>> ["Model" => (model1, model2); "Dispatch" => dispatch; "ViewFunction" => viewFunction; "Equal" => equal; ] []
+    comp<LazyComponent<'model1 * 'model2, 'msg>> {
+        "Model" => (model1, model2)
+        "Dispatch" => dispatch
+        "ViewFunction" => viewFunction
+        "Equal" => equal
+    }
 
 /// Create a fragment with a lazily rendered view function and custom equality on model field.
 /// [category: Components]
@@ -131,684 +168,563 @@ let inline lazyComp3By (equal: ('model1 * 'model2) -> 'a) (viewFunction: ('model
 /// Create a navigation link which toggles its `active` class
 /// based on whether the current URI matches its `href`.
 /// [category: Components]
-let inline navLink (``match``: Routing.NavLinkMatch) attrs children =
-    comp<Routing.NavLink> (("Match" => ``match``) :: attrs) children
+let inline navLink (``match``: Routing.NavLinkMatch) =
+    ComponentWithAttrsBuilder<Routing.NavLink>(attrs {
+        "Match" => ``match``
+    })
 
 // BEGIN TAGS
 /// Create an HTML `<a>` element.
 /// [category: HTML tag names]
-let inline a (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "a" attrs children
+let a : ElementBuilder = elt "a"
 
 /// Create an HTML `<abbr>` element.
 /// [category: HTML tag names]
-let inline abbr (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "abbr" attrs children
+let abbr : ElementBuilder = elt "abbr"
 
 /// Create an HTML `<acronym>` element.
 /// [category: HTML tag names]
-let inline acronym (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "acronym" attrs children
+let acronym : ElementBuilder = elt "acronym"
 
 /// Create an HTML `<address>` element.
 /// [category: HTML tag names]
-let inline address (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "address" attrs children
+let address : ElementBuilder = elt "address"
 
 /// Create an HTML `<applet>` element.
 /// [category: HTML tag names]
-let inline applet (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "applet" attrs children
+let applet : ElementBuilder = elt "applet"
 
 /// Create an HTML `<area>` element.
 /// [category: HTML tag names]
-let inline area (attrs: list<Attr>) : Node =
-    elt "area" attrs []
+let area : ElementBuilder = elt "area"
 
 /// Create an HTML `<article>` element.
 /// [category: HTML tag names]
-let inline article (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "article" attrs children
+let article : ElementBuilder = elt "article"
 
 /// Create an HTML `<aside>` element.
 /// [category: HTML tag names]
-let inline aside (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "aside" attrs children
+let aside : ElementBuilder = elt "aside"
 
 /// Create an HTML `<audio>` element.
 /// [category: HTML tag names]
-let inline audio (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "audio" attrs children
+let audio : ElementBuilder = elt "audio"
 
 /// Create an HTML `<b>` element.
 /// [category: HTML tag names]
-let inline b (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "b" attrs children
+let b : ElementBuilder = elt "b"
 
 /// Create an HTML `<base>` element.
 /// [category: HTML tag names]
-let inline ``base`` (attrs: list<Attr>) : Node =
-    elt "base" attrs []
+let ``base`` : ElementBuilder = elt "base"
 
 /// Create an HTML `<basefont>` element.
 /// [category: HTML tag names]
-let inline basefont (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "basefont" attrs children
+let basefont : ElementBuilder = elt "basefont"
 
 /// Create an HTML `<bdi>` element.
 /// [category: HTML tag names]
-let inline bdi (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "bdi" attrs children
+let bdi : ElementBuilder = elt "bdi"
 
 /// Create an HTML `<bdo>` element.
 /// [category: HTML tag names]
-let inline bdo (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "bdo" attrs children
+let bdo : ElementBuilder = elt "bdo"
 
 /// Create an HTML `<big>` element.
 /// [category: HTML tag names]
-let inline big (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "big" attrs children
+let big : ElementBuilder = elt "big"
 
 /// Create an HTML `<blockquote>` element.
 /// [category: HTML tag names]
-let inline blockquote (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "blockquote" attrs children
+let blockquote : ElementBuilder = elt "blockquote"
 
 /// Create an HTML `<body>` element.
 /// [category: HTML tag names]
-let inline body (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "body" attrs children
+let body : ElementBuilder = elt "body"
 
 /// Create an HTML `<br>` element.
 /// [category: HTML tag names]
-let inline br (attrs: list<Attr>) : Node =
-    elt "br" attrs []
+let br : ElementBuilder = elt "br"
 
 /// Create an HTML `<button>` element.
 /// [category: HTML tag names]
-let inline button (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "button" attrs children
+let button : ElementBuilder = elt "button"
 
 /// Create an HTML `<canvas>` element.
 /// [category: HTML tag names]
-let inline canvas (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "canvas" attrs children
+let canvas : ElementBuilder = elt "canvas"
 
 /// Create an HTML `<caption>` element.
 /// [category: HTML tag names]
-let inline caption (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "caption" attrs children
+let caption : ElementBuilder = elt "caption"
 
 /// Create an HTML `<center>` element.
 /// [category: HTML tag names]
-let inline center (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "center" attrs children
+let center : ElementBuilder = elt "center"
 
 /// Create an HTML `<cite>` element.
 /// [category: HTML tag names]
-let inline cite (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "cite" attrs children
+let cite : ElementBuilder = elt "cite"
 
 /// Create an HTML `<code>` element.
 /// [category: HTML tag names]
-let inline code (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "code" attrs children
+let code : ElementBuilder = elt "code"
 
 /// Create an HTML `<col>` element.
 /// [category: HTML tag names]
-let inline col (attrs: list<Attr>) : Node =
-    elt "col" attrs []
+let col : ElementBuilder = elt "col"
 
 /// Create an HTML `<colgroup>` element.
 /// [category: HTML tag names]
-let inline colgroup (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "colgroup" attrs children
+let colgroup : ElementBuilder = elt "colgroup"
 
 /// Create an HTML `<content>` element.
 /// [category: HTML tag names]
-let inline content (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "content" attrs children
+let content : ElementBuilder = elt "content"
 
 /// Create an HTML `<data>` element.
 /// [category: HTML tag names]
-let inline data (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "data" attrs children
+let data : ElementBuilder = elt "data"
 
 /// Create an HTML `<datalist>` element.
 /// [category: HTML tag names]
-let inline datalist (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "datalist" attrs children
+let datalist : ElementBuilder = elt "datalist"
 
 /// Create an HTML `<dd>` element.
 /// [category: HTML tag names]
-let inline dd (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "dd" attrs children
+let dd : ElementBuilder = elt "dd"
 
 /// Create an HTML `<del>` element.
 /// [category: HTML tag names]
-let inline del (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "del" attrs children
+let del : ElementBuilder = elt "del"
 
 /// Create an HTML `<details>` element.
 /// [category: HTML tag names]
-let inline details (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "details" attrs children
+let details : ElementBuilder = elt "details"
 
 /// Create an HTML `<dfn>` element.
 /// [category: HTML tag names]
-let inline dfn (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "dfn" attrs children
+let dfn : ElementBuilder = elt "dfn"
 
 /// Create an HTML `<dialog>` element.
 /// [category: HTML tag names]
-let inline dialog (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "dialog" attrs children
+let dialog : ElementBuilder = elt "dialog"
 
 /// Create an HTML `<dir>` element.
 /// [category: HTML tag names]
-let inline dir (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "dir" attrs children
+let dir : ElementBuilder = elt "dir"
 
 /// Create an HTML `<div>` element.
 /// [category: HTML tag names]
-let inline div (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "div" attrs children
+let div : ElementBuilder = elt "div"
 
 /// Create an HTML `<dl>` element.
 /// [category: HTML tag names]
-let inline dl (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "dl" attrs children
+let dl : ElementBuilder = elt "dl"
 
 /// Create an HTML `<dt>` element.
 /// [category: HTML tag names]
-let inline dt (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "dt" attrs children
+let dt : ElementBuilder = elt "dt"
 
 /// Create an HTML `<element>` element.
 /// [category: HTML tag names]
-let inline element (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "element" attrs children
+let element : ElementBuilder = elt "element"
 
 /// Create an HTML `<em>` element.
 /// [category: HTML tag names]
-let inline em (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "em" attrs children
+let em : ElementBuilder = elt "em"
 
 /// Create an HTML `<embed>` element.
 /// [category: HTML tag names]
-let inline embed (attrs: list<Attr>) : Node =
-    elt "embed" attrs []
+let embed : ElementBuilder = elt "embed"
 
 /// Create an HTML `<fieldset>` element.
 /// [category: HTML tag names]
-let inline fieldset (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "fieldset" attrs children
+let fieldset : ElementBuilder = elt "fieldset"
 
 /// Create an HTML `<figcaption>` element.
 /// [category: HTML tag names]
-let inline figcaption (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "figcaption" attrs children
+let figcaption : ElementBuilder = elt "figcaption"
 
 /// Create an HTML `<figure>` element.
 /// [category: HTML tag names]
-let inline figure (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "figure" attrs children
+let figure : ElementBuilder = elt "figure"
 
 /// Create an HTML `<font>` element.
 /// [category: HTML tag names]
-let inline font (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "font" attrs children
+let font : ElementBuilder = elt "font"
 
 /// Create an HTML `<footer>` element.
 /// [category: HTML tag names]
-let inline footer (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "footer" attrs children
+let footer : ElementBuilder = elt "footer"
 
 /// Create an HTML `<form>` element.
 /// [category: HTML tag names]
-let inline form (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "form" attrs children
+let form : ElementBuilder = elt "form"
 
 /// Create an HTML `<frame>` element.
 /// [category: HTML tag names]
-let inline frame (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "frame" attrs children
+let frame : ElementBuilder = elt "frame"
 
 /// Create an HTML `<frameset>` element.
 /// [category: HTML tag names]
-let inline frameset (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "frameset" attrs children
+let frameset : ElementBuilder = elt "frameset"
 
 /// Create an HTML `<h1>` element.
 /// [category: HTML tag names]
-let inline h1 (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "h1" attrs children
+let h1 : ElementBuilder = elt "h1"
 
 /// Create an HTML `<h2>` element.
 /// [category: HTML tag names]
-let inline h2 (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "h2" attrs children
+let h2 : ElementBuilder = elt "h2"
 
 /// Create an HTML `<h3>` element.
 /// [category: HTML tag names]
-let inline h3 (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "h3" attrs children
+let h3 : ElementBuilder = elt "h3"
 
 /// Create an HTML `<h4>` element.
 /// [category: HTML tag names]
-let inline h4 (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "h4" attrs children
+let h4 : ElementBuilder = elt "h4"
 
 /// Create an HTML `<h5>` element.
 /// [category: HTML tag names]
-let inline h5 (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "h5" attrs children
+let h5 : ElementBuilder = elt "h5"
 
 /// Create an HTML `<h6>` element.
 /// [category: HTML tag names]
-let inline h6 (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "h6" attrs children
+let h6 : ElementBuilder = elt "h6"
 
 /// Create an HTML `<head>` element.
 /// [category: HTML tag names]
-let inline head (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "head" attrs children
+let head : ElementBuilder = elt "head"
 
 /// Create an HTML `<header>` element.
 /// [category: HTML tag names]
-let inline header (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "header" attrs children
+let header : ElementBuilder = elt "header"
 
 /// Create an HTML `<hr>` element.
 /// [category: HTML tag names]
-let inline hr (attrs: list<Attr>) : Node =
-    elt "hr" attrs []
+let hr : ElementBuilder = elt "hr"
 
 /// Create an HTML `<html>` element.
 /// [category: HTML tag names]
-let inline html (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "html" attrs children
+let html : ElementBuilder = elt "html"
 
 /// Create an HTML `<i>` element.
 /// [category: HTML tag names]
-let inline i (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "i" attrs children
+let i : ElementBuilder = elt "i"
 
 /// Create an HTML `<iframe>` element.
 /// [category: HTML tag names]
-let inline iframe (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "iframe" attrs children
+let iframe : ElementBuilder = elt "iframe"
 
 /// Create an HTML `<img>` element.
 /// [category: HTML tag names]
-let inline img (attrs: list<Attr>) : Node =
-    elt "img" attrs []
+let img : ElementBuilder = elt "img"
 
 /// Create an HTML `<input>` element.
 /// [category: HTML tag names]
-let inline input (attrs: list<Attr>) : Node =
-    elt "input" attrs []
+let input : ElementBuilder = elt "input"
 
 /// Create an HTML `<ins>` element.
 /// [category: HTML tag names]
-let inline ins (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "ins" attrs children
+let ins : ElementBuilder = elt "ins"
 
 /// Create an HTML `<kbd>` element.
 /// [category: HTML tag names]
-let inline kbd (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "kbd" attrs children
+let kbd : ElementBuilder = elt "kbd"
 
 /// Create an HTML `<label>` element.
 /// [category: HTML tag names]
-let inline label (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "label" attrs children
+let label : ElementBuilder = elt "label"
 
 /// Create an HTML `<legend>` element.
 /// [category: HTML tag names]
-let inline legend (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "legend" attrs children
+let legend : ElementBuilder = elt "legend"
 
 /// Create an HTML `<li>` element.
 /// [category: HTML tag names]
-let inline li (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "li" attrs children
+let li : ElementBuilder = elt "li"
 
 /// Create an HTML `<link>` element.
 /// [category: HTML tag names]
-let inline link (attrs: list<Attr>) : Node =
-    elt "link" attrs []
+let link : ElementBuilder = elt "link"
 
 /// Create an HTML `<main>` element.
 /// [category: HTML tag names]
-let inline main (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "main" attrs children
+let main : ElementBuilder = elt "main"
 
 /// Create an HTML `<map>` element.
 /// [category: HTML tag names]
-let inline map (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "map" attrs children
+let map : ElementBuilder = elt "map"
 
 /// Create an HTML `<mark>` element.
 /// [category: HTML tag names]
-let inline mark (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "mark" attrs children
+let mark : ElementBuilder = elt "mark"
 
 /// Create an HTML `<menu>` element.
 /// [category: HTML tag names]
-let inline menu (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "menu" attrs children
+let menu : ElementBuilder = elt "menu"
 
 /// Create an HTML `<menuitem>` element.
 /// [category: HTML tag names]
-let inline menuitem (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "menuitem" attrs children
+let menuitem : ElementBuilder = elt "menuitem"
 
 /// Create an HTML `<meta>` element.
 /// [category: HTML tag names]
-let inline meta (attrs: list<Attr>) : Node =
-    elt "meta" attrs []
+let meta : ElementBuilder = elt "meta"
 
 /// Create an HTML `<meter>` element.
 /// [category: HTML tag names]
-let inline meter (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "meter" attrs children
+let meter : ElementBuilder = elt "meter"
 
 /// Create an HTML `<nav>` element.
 /// [category: HTML tag names]
-let inline nav (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "nav" attrs children
+let nav : ElementBuilder = elt "nav"
 
 /// Create an HTML `<noembed>` element.
 /// [category: HTML tag names]
-let inline noembed (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "noembed" attrs children
+let noembed : ElementBuilder = elt "noembed"
 
 /// Create an HTML `<noframes>` element.
 /// [category: HTML tag names]
-let inline noframes (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "noframes" attrs children
+let noframes : ElementBuilder = elt "noframes"
 
 /// Create an HTML `<noscript>` element.
 /// [category: HTML tag names]
-let inline noscript (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "noscript" attrs children
+let noscript : ElementBuilder = elt "noscript"
 
 /// Create an HTML `<object>` element.
 /// [category: HTML tag names]
-let inline object (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "object" attrs children
+let object : ElementBuilder = elt "object"
 
 /// Create an HTML `<ol>` element.
 /// [category: HTML tag names]
-let inline ol (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "ol" attrs children
+let ol : ElementBuilder = elt "ol"
 
 /// Create an HTML `<optgroup>` element.
 /// [category: HTML tag names]
-let inline optgroup (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "optgroup" attrs children
+let optgroup : ElementBuilder = elt "optgroup"
 
 /// Create an HTML `<option>` element.
 /// [category: HTML tag names]
-let inline option (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "option" attrs children
+let option : ElementBuilder = elt "option"
 
 /// Create an HTML `<output>` element.
 /// [category: HTML tag names]
-let inline output (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "output" attrs children
+let output : ElementBuilder = elt "output"
 
 /// Create an HTML `<p>` element.
 /// [category: HTML tag names]
-let inline p (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "p" attrs children
+let p : ElementBuilder = elt "p"
 
 /// Create an HTML `<param>` element.
 /// [category: HTML tag names]
-let inline param (attrs: list<Attr>) : Node =
-    elt "param" attrs []
+let param : ElementBuilder = elt "param"
 
 /// Create an HTML `<picture>` element.
 /// [category: HTML tag names]
-let inline picture (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "picture" attrs children
+let picture : ElementBuilder = elt "picture"
 
 /// Create an HTML `<pre>` element.
 /// [category: HTML tag names]
-let inline pre (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "pre" attrs children
+let pre : ElementBuilder = elt "pre"
 
 /// Create an HTML `<progress>` element.
 /// [category: HTML tag names]
-let inline progress (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "progress" attrs children
+let progress : ElementBuilder = elt "progress"
 
 /// Create an HTML `<q>` element.
 /// [category: HTML tag names]
-let inline q (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "q" attrs children
+let q : ElementBuilder = elt "q"
 
 /// Create an HTML `<rb>` element.
 /// [category: HTML tag names]
-let inline rb (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "rb" attrs children
+let rb : ElementBuilder = elt "rb"
 
 /// Create an HTML `<rp>` element.
 /// [category: HTML tag names]
-let inline rp (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "rp" attrs children
+let rp : ElementBuilder = elt "rp"
 
 /// Create an HTML `<rt>` element.
 /// [category: HTML tag names]
-let inline rt (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "rt" attrs children
+let rt : ElementBuilder = elt "rt"
 
 /// Create an HTML `<rtc>` element.
 /// [category: HTML tag names]
-let inline rtc (attrs: list<Attr>) : Node =
-    elt "rtc" attrs []
+let rtc : ElementBuilder = elt "rtc"
 
 /// Create an HTML `<ruby>` element.
 /// [category: HTML tag names]
-let inline ruby (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "ruby" attrs children
+let ruby : ElementBuilder = elt "ruby"
 
 /// Create an HTML `<s>` element.
 /// [category: HTML tag names]
-let inline s (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "s" attrs children
+let s : ElementBuilder = elt "s"
 
 /// Create an HTML `<samp>` element.
 /// [category: HTML tag names]
-let inline samp (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "samp" attrs children
+let samp : ElementBuilder = elt "samp"
 
 /// Create an HTML `<script>` element.
 /// [category: HTML tag names]
-let inline script (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "script" attrs children
+let script : ElementBuilder = elt "script"
 
 /// Create an HTML `<section>` element.
 /// [category: HTML tag names]
-let inline section (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "section" attrs children
+let section : ElementBuilder = elt "section"
 
 /// Create an HTML `<select>` element.
 /// [category: HTML tag names]
-let inline select (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "select" attrs children
+let select : ElementBuilder = elt "select"
 
 /// Create an HTML `<shadow>` element.
 /// [category: HTML tag names]
-let inline shadow (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "shadow" attrs children
+let shadow : ElementBuilder = elt "shadow"
 
 /// Create an HTML `<slot>` element.
 /// [category: HTML tag names]
-let inline slot (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "slot" attrs children
+let slot : ElementBuilder = elt "slot"
 
 /// Create an HTML `<small>` element.
 /// [category: HTML tag names]
-let inline small (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "small" attrs children
+let small : ElementBuilder = elt "small"
 
 /// Create an HTML `<source>` element.
 /// [category: HTML tag names]
-let inline source (attrs: list<Attr>) : Node =
-    elt "source" attrs []
+let source : ElementBuilder = elt "source"
 
 /// Create an HTML `<span>` element.
 /// [category: HTML tag names]
-let inline span (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "span" attrs children
+let span : ElementBuilder = elt "span"
 
 /// Create an HTML `<strike>` element.
 /// [category: HTML tag names]
-let inline strike (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "strike" attrs children
+let strike : ElementBuilder = elt "strike"
 
 /// Create an HTML `<strong>` element.
 /// [category: HTML tag names]
-let inline strong (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "strong" attrs children
+let strong : ElementBuilder = elt "strong"
 
 /// Create an HTML `<style>` element.
 /// [category: HTML tag names]
-let inline style (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "style" attrs children
+let style : ElementBuilder = elt "style"
 
 /// Create an HTML `<sub>` element.
 /// [category: HTML tag names]
-let inline sub (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "sub" attrs children
+let sub : ElementBuilder = elt "sub"
 
 /// Create an HTML `<summary>` element.
 /// [category: HTML tag names]
-let inline summary (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "summary" attrs children
+let summary : ElementBuilder = elt "summary"
 
 /// Create an HTML `<sup>` element.
 /// [category: HTML tag names]
-let inline sup (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "sup" attrs children
+let sup : ElementBuilder = elt "sup"
 
 /// Create an HTML `<svg>` element.
 /// [category: HTML tag names]
-let inline svg (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "svg" attrs children
+let svg : ElementBuilder = elt "svg"
 
 /// Create an HTML `<table>` element.
 /// [category: HTML tag names]
-let inline table (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "table" attrs children
+let table : ElementBuilder = elt "table"
 
 /// Create an HTML `<tbody>` element.
 /// [category: HTML tag names]
-let inline tbody (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "tbody" attrs children
+let tbody : ElementBuilder = elt "tbody"
 
 /// Create an HTML `<td>` element.
 /// [category: HTML tag names]
-let inline td (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "td" attrs children
+let td : ElementBuilder = elt "td"
 
 /// Create an HTML `<template>` element.
 /// [category: HTML tag names]
-let inline template (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "template" attrs children
+let template : ElementBuilder = elt "template"
 
 /// Create an HTML `<textarea>` element.
 /// [category: HTML tag names]
-let inline textarea (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "textarea" attrs children
+let textarea : ElementBuilder = elt "textarea"
 
 /// Create an HTML `<tfoot>` element.
 /// [category: HTML tag names]
-let inline tfoot (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "tfoot" attrs children
+let tfoot : ElementBuilder = elt "tfoot"
 
 /// Create an HTML `<th>` element.
 /// [category: HTML tag names]
-let inline th (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "th" attrs children
+let th : ElementBuilder = elt "th"
 
 /// Create an HTML `<thead>` element.
 /// [category: HTML tag names]
-let inline thead (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "thead" attrs children
+let thead : ElementBuilder = elt "thead"
 
 /// Create an HTML `<time>` element.
 /// [category: HTML tag names]
-let inline time (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "time" attrs children
+let time : ElementBuilder = elt "time"
 
 /// Create an HTML `<title>` element.
 /// [category: HTML tag names]
-let inline title (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "title" attrs children
+let title : ElementBuilder = elt "title"
 
 /// Create an HTML `<tr>` element.
 /// [category: HTML tag names]
-let inline tr (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "tr" attrs children
+let tr : ElementBuilder = elt "tr"
 
 /// Create an HTML `<track>` element.
 /// [category: HTML tag names]
-let inline track (attrs: list<Attr>) : Node =
-    elt "track" attrs []
+let track : ElementBuilder = elt "track"
 
 /// Create an HTML `<tt>` element.
 /// [category: HTML tag names]
-let inline tt (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "tt" attrs children
+let tt : ElementBuilder = elt "tt"
 
 /// Create an HTML `<u>` element.
 /// [category: HTML tag names]
-let inline u (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "u" attrs children
+let u : ElementBuilder = elt "u"
 
 /// Create an HTML `<ul>` element.
 /// [category: HTML tag names]
-let inline ul (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "ul" attrs children
+let ul : ElementBuilder = elt "ul"
 
 /// Create an HTML `<var>` element.
 /// [category: HTML tag names]
-let inline var (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "var" attrs children
+let var : ElementBuilder = elt "var"
 
 /// Create an HTML `<video>` element.
 /// [category: HTML tag names]
-let inline video (attrs: list<Attr>) (children: list<Node>) : Node =
-    elt "video" attrs children
+let video : ElementBuilder = elt "video"
 
 /// Create an HTML `<wbr>` element.
 /// [category: HTML tag names]
-let inline wbr (attrs: list<Attr>) : Node =
-    elt "wbr" attrs []
+let wbr : ElementBuilder = elt "wbr"
 
 // END TAGS
 
 /// HTML attributes.
 module attr =
     /// Create an HTML `class` attribute containing the given class names.
+    [<Obsolete "Use attr.``class`` and String.concat. Multiple class attributes on the same element are not combined anymore.">]
     let inline classes (classes: list<string>) : Attr =
-        Attr.Classes classes
+        Attr.Make "class" (String.concat " " classes)
 
     /// Bind an element or component reference.
-    let inline ref (r: Ref<'T>) =
-        Attr.Ref r
+    let inline ref (r: Ref<'T>) : RefContent =
+        RefContent(fun _ b _ i ->
+            r.Render(b, i))
 
-    /// Bind an element reference.
-    [<Obsolete "Use attr.ref.">]
-    let inline bindRef (r: Ref<'T>) =
-        Attr.Ref r
+    /// Bind an element or component reference.
+    [<Obsolete "Use attr.ref, or yield the ref directly in the element or component builder.">]
+    let inline bindRef (r: Ref<'T>) : RefContent =
+        ref r
 
-    let inline key (k: obj) =
-        Attr.Key k
+    /// Set an element's unique key among a sequence of similar elements.
+    let inline key (k: obj) : Key =
+        Key(fun _ b _ i ->
+            b.SetKey(k)
+            i)
+
+    /// Create an empty attribute.
+    let inline empty() = Attr.Empty()
 
     /// Create an HTML `aria-X` attribute.
     let inline aria name (v: obj) = ("aria-" + name) => v
@@ -816,43 +732,47 @@ module attr =
     /// Create an attribute whose value is a callback.
     /// Use this function for Blazor component attributes of type `EventCallback<T>`.
     /// Note: for HTML event handlers, prefer functions from the module `on`.
-    let inline callback<'T> (name: string) (value: 'T -> unit) =
-        ExplicitAttr (Func<_,_,_,_>(fun builder sequence receiver ->
+    let inline callback<'T> (name: string) ([<InlineIfLambda>] value: 'T -> unit) =
+        Attr(fun receiver builder _ sequence ->
             builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Action<'T>(value)))
-            sequence + 1))
+            sequence + 1)
 
     module async =
 
         /// Create an attribute whose value is an asynchronous callback.
         /// Use this function for Blazor component attributes of type `EventCallback<T>`.
         /// Note: for HTML event handlers, prefer functions from the module `on.async`.
-        let inline callback<'T> (name: string) (value: 'T -> Async<unit>) =
-            ExplicitAttr (Func<_,_,_,_>(fun builder sequence receiver ->
+        let inline callback<'T> (name: string) ([<InlineIfLambda>] value: 'T -> Async<unit>) =
+            Attr(fun receiver builder _ sequence ->
                 builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Func<'T, Task>(fun x -> Async.StartImmediateAsTask (value x) :> Task)))
-                sequence + 1))
+                sequence + 1)
 
     module task =
 
         /// Create an attribute whose value is an asynchronous callback.
         /// Use this function for Blazor component attributes of type `EventCallback<T>`.
         /// Note: for HTML event handlers, prefer functions from the module `on.task`.
-        let inline callback<'T> (name: string) (value: 'T -> Task) =
-            ExplicitAttr (Func<_,_,_,_>(fun builder sequence receiver ->
+        let inline callback<'T> (name: string) ([<InlineIfLambda>] value: 'T -> Task) =
+            Attr(fun receiver builder _ sequence ->
                 builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Func<'T, Task>(value)))
-                sequence + 1))
+                sequence + 1)
 
     /// Create an attribute whose value is an HTML fragment.
     /// Use this function for Blazor component attributes of type `RenderFragment`.
-    let inline fragment name node =
-        FragmentAttr (name, fun f ->
-            box <| RenderFragment(fun rt -> f rt node))
+    let inline fragment name ([<InlineIfLambda>] node: Node) =
+        Attr(fun receiver builder matchCache sequence ->
+            builder.AddAttribute(sequence, name, RenderFragment(fun rt ->
+                node.Invoke(receiver, rt, matchCache, 0) |> ignore))
+            sequence + 1)
 
     /// Create an attribute whose value is a parameterized HTML fragment.
     /// Use this function for Blazor component attributes of type `RenderFragment<T>`.
-    let inline fragmentWith name node =
-        FragmentAttr (name, fun f ->
-            box <| RenderFragment<_>(fun ctx ->
-                RenderFragment(fun rt -> f rt (node ctx))))
+    let inline fragmentWith name ([<InlineIfLambda>] node: 'a -> Node) =
+        Attr(fun receiver builder matchCache sequence ->
+            builder.AddAttribute(sequence, name, RenderFragment<_>(fun ctx ->
+                RenderFragment(fun rt ->
+                    (node ctx).Invoke(receiver, rt, matchCache, 0) |> ignore)))
+            sequence + 1)
 
 // BEGIN ATTRS
     /// Create an HTML `accept` attribute.
@@ -1223,382 +1143,382 @@ module on =
 
     /// Prevent the default event behavior for a given HTML event.
     let inline preventDefault eventName (value: bool) =
-        ExplicitAttr (Func<_,_,_,_>(fun builder sequence _receiver ->
+        Attr(fun _ builder _ sequence ->
             builder.AddEventPreventDefaultAttribute(sequence, eventName, value)
             sequence + 1
-        ))
+        )
 
     /// Stop the propagation to parent elements of a given HTML event.
     let inline stopPropagation eventName (value: bool) =
-        ExplicitAttr (Func<_,_,_,_>(fun builder sequence _receiver ->
+        Attr(fun _ builder _ sequence ->
             builder.AddEventStopPropagationAttribute(sequence, eventName, value)
             sequence + 1
-        ))
+        )
 
 // BEGIN EVENTS
     /// Create a handler for HTML event `focus`.
     let inline focus (callback: FocusEventArgs -> unit) : Attr =
-        attr.callback<FocusEventArgs> ("onfocus") callback
+        attr.callback<FocusEventArgs> "onfocus" callback
 
     /// Create a handler for HTML event `blur`.
     let inline blur (callback: FocusEventArgs -> unit) : Attr =
-        attr.callback<FocusEventArgs> ("onblur") callback
+        attr.callback<FocusEventArgs> "onblur" callback
 
     /// Create a handler for HTML event `focusin`.
     let inline focusin (callback: FocusEventArgs -> unit) : Attr =
-        attr.callback<FocusEventArgs> ("onfocusin") callback
+        attr.callback<FocusEventArgs> "onfocusin" callback
 
     /// Create a handler for HTML event `focusout`.
     let inline focusout (callback: FocusEventArgs -> unit) : Attr =
-        attr.callback<FocusEventArgs> ("onfocusout") callback
+        attr.callback<FocusEventArgs> "onfocusout" callback
 
     /// Create a handler for HTML event `mouseover`.
     let inline mouseover (callback: MouseEventArgs -> unit) : Attr =
-        attr.callback<MouseEventArgs> ("onmouseover") callback
+        attr.callback<MouseEventArgs> "onmouseover" callback
 
     /// Create a handler for HTML event `mouseout`.
     let inline mouseout (callback: MouseEventArgs -> unit) : Attr =
-        attr.callback<MouseEventArgs> ("onmouseout") callback
+        attr.callback<MouseEventArgs> "onmouseout" callback
 
     /// Create a handler for HTML event `mousemove`.
     let inline mousemove (callback: MouseEventArgs -> unit) : Attr =
-        attr.callback<MouseEventArgs> ("onmousemove") callback
+        attr.callback<MouseEventArgs> "onmousemove" callback
 
     /// Create a handler for HTML event `mousedown`.
     let inline mousedown (callback: MouseEventArgs -> unit) : Attr =
-        attr.callback<MouseEventArgs> ("onmousedown") callback
+        attr.callback<MouseEventArgs> "onmousedown" callback
 
     /// Create a handler for HTML event `mouseup`.
     let inline mouseup (callback: MouseEventArgs -> unit) : Attr =
-        attr.callback<MouseEventArgs> ("onmouseup") callback
+        attr.callback<MouseEventArgs> "onmouseup" callback
 
     /// Create a handler for HTML event `click`.
     let inline click (callback: MouseEventArgs -> unit) : Attr =
-        attr.callback<MouseEventArgs> ("onclick") callback
+        attr.callback<MouseEventArgs> "onclick" callback
 
     /// Create a handler for HTML event `dblclick`.
     let inline dblclick (callback: MouseEventArgs -> unit) : Attr =
-        attr.callback<MouseEventArgs> ("ondblclick") callback
+        attr.callback<MouseEventArgs> "ondblclick" callback
 
     /// Create a handler for HTML event `wheel`.
     let inline wheel (callback: MouseEventArgs -> unit) : Attr =
-        attr.callback<MouseEventArgs> ("onwheel") callback
+        attr.callback<MouseEventArgs> "onwheel" callback
 
     /// Create a handler for HTML event `mousewheel`.
     let inline mousewheel (callback: MouseEventArgs -> unit) : Attr =
-        attr.callback<MouseEventArgs> ("onmousewheel") callback
+        attr.callback<MouseEventArgs> "onmousewheel" callback
 
     /// Create a handler for HTML event `contextmenu`.
     let inline contextmenu (callback: MouseEventArgs -> unit) : Attr =
-        attr.callback<MouseEventArgs> ("oncontextmenu") callback
+        attr.callback<MouseEventArgs> "oncontextmenu" callback
 
     /// Create a handler for HTML event `drag`.
     let inline drag (callback: DragEventArgs -> unit) : Attr =
-        attr.callback<DragEventArgs> ("ondrag") callback
+        attr.callback<DragEventArgs> "ondrag" callback
 
     /// Create a handler for HTML event `dragend`.
     let inline dragend (callback: DragEventArgs -> unit) : Attr =
-        attr.callback<DragEventArgs> ("ondragend") callback
+        attr.callback<DragEventArgs> "ondragend" callback
 
     /// Create a handler for HTML event `dragenter`.
     let inline dragenter (callback: DragEventArgs -> unit) : Attr =
-        attr.callback<DragEventArgs> ("ondragenter") callback
+        attr.callback<DragEventArgs> "ondragenter" callback
 
     /// Create a handler for HTML event `dragleave`.
     let inline dragleave (callback: DragEventArgs -> unit) : Attr =
-        attr.callback<DragEventArgs> ("ondragleave") callback
+        attr.callback<DragEventArgs> "ondragleave" callback
 
     /// Create a handler for HTML event `dragover`.
     let inline dragover (callback: DragEventArgs -> unit) : Attr =
-        attr.callback<DragEventArgs> ("ondragover") callback
+        attr.callback<DragEventArgs> "ondragover" callback
 
     /// Create a handler for HTML event `dragstart`.
     let inline dragstart (callback: DragEventArgs -> unit) : Attr =
-        attr.callback<DragEventArgs> ("ondragstart") callback
+        attr.callback<DragEventArgs> "ondragstart" callback
 
     /// Create a handler for HTML event `drop`.
     let inline drop (callback: DragEventArgs -> unit) : Attr =
-        attr.callback<DragEventArgs> ("ondrop") callback
+        attr.callback<DragEventArgs> "ondrop" callback
 
     /// Create a handler for HTML event `keydown`.
     let inline keydown (callback: KeyboardEventArgs -> unit) : Attr =
-        attr.callback<KeyboardEventArgs> ("onkeydown") callback
+        attr.callback<KeyboardEventArgs> "onkeydown" callback
 
     /// Create a handler for HTML event `keyup`.
     let inline keyup (callback: KeyboardEventArgs -> unit) : Attr =
-        attr.callback<KeyboardEventArgs> ("onkeyup") callback
+        attr.callback<KeyboardEventArgs> "onkeyup" callback
 
     /// Create a handler for HTML event `keypress`.
     let inline keypress (callback: KeyboardEventArgs -> unit) : Attr =
-        attr.callback<KeyboardEventArgs> ("onkeypress") callback
+        attr.callback<KeyboardEventArgs> "onkeypress" callback
 
     /// Create a handler for HTML event `change`.
     let inline change (callback: ChangeEventArgs -> unit) : Attr =
-        attr.callback<ChangeEventArgs> ("onchange") callback
+        attr.callback<ChangeEventArgs> "onchange" callback
 
     /// Create a handler for HTML event `input`.
     let inline input (callback: ChangeEventArgs -> unit) : Attr =
-        attr.callback<ChangeEventArgs> ("oninput") callback
+        attr.callback<ChangeEventArgs> "oninput" callback
 
     /// Create a handler for HTML event `invalid`.
     let inline invalid (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("oninvalid") callback
+        attr.callback<EventArgs> "oninvalid" callback
 
     /// Create a handler for HTML event `reset`.
     let inline reset (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onreset") callback
+        attr.callback<EventArgs> "onreset" callback
 
     /// Create a handler for HTML event `select`.
     let inline select (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onselect") callback
+        attr.callback<EventArgs> "onselect" callback
 
     /// Create a handler for HTML event `selectstart`.
     let inline selectstart (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onselectstart") callback
+        attr.callback<EventArgs> "onselectstart" callback
 
     /// Create a handler for HTML event `selectionchange`.
     let inline selectionchange (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onselectionchange") callback
+        attr.callback<EventArgs> "onselectionchange" callback
 
     /// Create a handler for HTML event `submit`.
     let inline submit (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onsubmit") callback
+        attr.callback<EventArgs> "onsubmit" callback
 
     /// Create a handler for HTML event `beforecopy`.
     let inline beforecopy (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onbeforecopy") callback
+        attr.callback<EventArgs> "onbeforecopy" callback
 
     /// Create a handler for HTML event `beforecut`.
     let inline beforecut (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onbeforecut") callback
+        attr.callback<EventArgs> "onbeforecut" callback
 
     /// Create a handler for HTML event `beforepaste`.
     let inline beforepaste (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onbeforepaste") callback
+        attr.callback<EventArgs> "onbeforepaste" callback
 
     /// Create a handler for HTML event `copy`.
     let inline copy (callback: ClipboardEventArgs -> unit) : Attr =
-        attr.callback<ClipboardEventArgs> ("oncopy") callback
+        attr.callback<ClipboardEventArgs> "oncopy" callback
 
     /// Create a handler for HTML event `cut`.
     let inline cut (callback: ClipboardEventArgs -> unit) : Attr =
-        attr.callback<ClipboardEventArgs> ("oncut") callback
+        attr.callback<ClipboardEventArgs> "oncut" callback
 
     /// Create a handler for HTML event `paste`.
     let inline paste (callback: ClipboardEventArgs -> unit) : Attr =
-        attr.callback<ClipboardEventArgs> ("onpaste") callback
+        attr.callback<ClipboardEventArgs> "onpaste" callback
 
     /// Create a handler for HTML event `touchcancel`.
     let inline touchcancel (callback: TouchEventArgs -> unit) : Attr =
-        attr.callback<TouchEventArgs> ("ontouchcancel") callback
+        attr.callback<TouchEventArgs> "ontouchcancel" callback
 
     /// Create a handler for HTML event `touchend`.
     let inline touchend (callback: TouchEventArgs -> unit) : Attr =
-        attr.callback<TouchEventArgs> ("ontouchend") callback
+        attr.callback<TouchEventArgs> "ontouchend" callback
 
     /// Create a handler for HTML event `touchmove`.
     let inline touchmove (callback: TouchEventArgs -> unit) : Attr =
-        attr.callback<TouchEventArgs> ("ontouchmove") callback
+        attr.callback<TouchEventArgs> "ontouchmove" callback
 
     /// Create a handler for HTML event `touchstart`.
     let inline touchstart (callback: TouchEventArgs -> unit) : Attr =
-        attr.callback<TouchEventArgs> ("ontouchstart") callback
+        attr.callback<TouchEventArgs> "ontouchstart" callback
 
     /// Create a handler for HTML event `touchenter`.
     let inline touchenter (callback: TouchEventArgs -> unit) : Attr =
-        attr.callback<TouchEventArgs> ("ontouchenter") callback
+        attr.callback<TouchEventArgs> "ontouchenter" callback
 
     /// Create a handler for HTML event `touchleave`.
     let inline touchleave (callback: TouchEventArgs -> unit) : Attr =
-        attr.callback<TouchEventArgs> ("ontouchleave") callback
+        attr.callback<TouchEventArgs> "ontouchleave" callback
 
     /// Create a handler for HTML event `pointercapture`.
     let inline pointercapture (callback: PointerEventArgs -> unit) : Attr =
-        attr.callback<PointerEventArgs> ("onpointercapture") callback
+        attr.callback<PointerEventArgs> "onpointercapture" callback
 
     /// Create a handler for HTML event `lostpointercapture`.
     let inline lostpointercapture (callback: PointerEventArgs -> unit) : Attr =
-        attr.callback<PointerEventArgs> ("onlostpointercapture") callback
+        attr.callback<PointerEventArgs> "onlostpointercapture" callback
 
     /// Create a handler for HTML event `pointercancel`.
     let inline pointercancel (callback: PointerEventArgs -> unit) : Attr =
-        attr.callback<PointerEventArgs> ("onpointercancel") callback
+        attr.callback<PointerEventArgs> "onpointercancel" callback
 
     /// Create a handler for HTML event `pointerdown`.
     let inline pointerdown (callback: PointerEventArgs -> unit) : Attr =
-        attr.callback<PointerEventArgs> ("onpointerdown") callback
+        attr.callback<PointerEventArgs> "onpointerdown" callback
 
     /// Create a handler for HTML event `pointerenter`.
     let inline pointerenter (callback: PointerEventArgs -> unit) : Attr =
-        attr.callback<PointerEventArgs> ("onpointerenter") callback
+        attr.callback<PointerEventArgs> "onpointerenter" callback
 
     /// Create a handler for HTML event `pointerleave`.
     let inline pointerleave (callback: PointerEventArgs -> unit) : Attr =
-        attr.callback<PointerEventArgs> ("onpointerleave") callback
+        attr.callback<PointerEventArgs> "onpointerleave" callback
 
     /// Create a handler for HTML event `pointermove`.
     let inline pointermove (callback: PointerEventArgs -> unit) : Attr =
-        attr.callback<PointerEventArgs> ("onpointermove") callback
+        attr.callback<PointerEventArgs> "onpointermove" callback
 
     /// Create a handler for HTML event `pointerout`.
     let inline pointerout (callback: PointerEventArgs -> unit) : Attr =
-        attr.callback<PointerEventArgs> ("onpointerout") callback
+        attr.callback<PointerEventArgs> "onpointerout" callback
 
     /// Create a handler for HTML event `pointerover`.
     let inline pointerover (callback: PointerEventArgs -> unit) : Attr =
-        attr.callback<PointerEventArgs> ("onpointerover") callback
+        attr.callback<PointerEventArgs> "onpointerover" callback
 
     /// Create a handler for HTML event `pointerup`.
     let inline pointerup (callback: PointerEventArgs -> unit) : Attr =
-        attr.callback<PointerEventArgs> ("onpointerup") callback
+        attr.callback<PointerEventArgs> "onpointerup" callback
 
     /// Create a handler for HTML event `canplay`.
     let inline canplay (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("oncanplay") callback
+        attr.callback<EventArgs> "oncanplay" callback
 
     /// Create a handler for HTML event `canplaythrough`.
     let inline canplaythrough (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("oncanplaythrough") callback
+        attr.callback<EventArgs> "oncanplaythrough" callback
 
     /// Create a handler for HTML event `cuechange`.
     let inline cuechange (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("oncuechange") callback
+        attr.callback<EventArgs> "oncuechange" callback
 
     /// Create a handler for HTML event `durationchange`.
     let inline durationchange (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("ondurationchange") callback
+        attr.callback<EventArgs> "ondurationchange" callback
 
     /// Create a handler for HTML event `emptied`.
     let inline emptied (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onemptied") callback
+        attr.callback<EventArgs> "onemptied" callback
 
     /// Create a handler for HTML event `pause`.
     let inline pause (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onpause") callback
+        attr.callback<EventArgs> "onpause" callback
 
     /// Create a handler for HTML event `play`.
     let inline play (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onplay") callback
+        attr.callback<EventArgs> "onplay" callback
 
     /// Create a handler for HTML event `playing`.
     let inline playing (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onplaying") callback
+        attr.callback<EventArgs> "onplaying" callback
 
     /// Create a handler for HTML event `ratechange`.
     let inline ratechange (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onratechange") callback
+        attr.callback<EventArgs> "onratechange" callback
 
     /// Create a handler for HTML event `seeked`.
     let inline seeked (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onseeked") callback
+        attr.callback<EventArgs> "onseeked" callback
 
     /// Create a handler for HTML event `seeking`.
     let inline seeking (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onseeking") callback
+        attr.callback<EventArgs> "onseeking" callback
 
     /// Create a handler for HTML event `stalled`.
     let inline stalled (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onstalled") callback
+        attr.callback<EventArgs> "onstalled" callback
 
     /// Create a handler for HTML event `stop`.
     let inline stop (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onstop") callback
+        attr.callback<EventArgs> "onstop" callback
 
     /// Create a handler for HTML event `suspend`.
     let inline suspend (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onsuspend") callback
+        attr.callback<EventArgs> "onsuspend" callback
 
     /// Create a handler for HTML event `timeupdate`.
     let inline timeupdate (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("ontimeupdate") callback
+        attr.callback<EventArgs> "ontimeupdate" callback
 
     /// Create a handler for HTML event `volumechange`.
     let inline volumechange (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onvolumechange") callback
+        attr.callback<EventArgs> "onvolumechange" callback
 
     /// Create a handler for HTML event `waiting`.
     let inline waiting (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onwaiting") callback
+        attr.callback<EventArgs> "onwaiting" callback
 
     /// Create a handler for HTML event `loadstart`.
     let inline loadstart (callback: ProgressEventArgs -> unit) : Attr =
-        attr.callback<ProgressEventArgs> ("onloadstart") callback
+        attr.callback<ProgressEventArgs> "onloadstart" callback
 
     /// Create a handler for HTML event `timeout`.
     let inline timeout (callback: ProgressEventArgs -> unit) : Attr =
-        attr.callback<ProgressEventArgs> ("ontimeout") callback
+        attr.callback<ProgressEventArgs> "ontimeout" callback
 
     /// Create a handler for HTML event `abort`.
     let inline abort (callback: ProgressEventArgs -> unit) : Attr =
-        attr.callback<ProgressEventArgs> ("onabort") callback
+        attr.callback<ProgressEventArgs> "onabort" callback
 
     /// Create a handler for HTML event `load`.
     let inline load (callback: ProgressEventArgs -> unit) : Attr =
-        attr.callback<ProgressEventArgs> ("onload") callback
+        attr.callback<ProgressEventArgs> "onload" callback
 
     /// Create a handler for HTML event `loadend`.
     let inline loadend (callback: ProgressEventArgs -> unit) : Attr =
-        attr.callback<ProgressEventArgs> ("onloadend") callback
+        attr.callback<ProgressEventArgs> "onloadend" callback
 
     /// Create a handler for HTML event `progress`.
     let inline progress (callback: ProgressEventArgs -> unit) : Attr =
-        attr.callback<ProgressEventArgs> ("onprogress") callback
+        attr.callback<ProgressEventArgs> "onprogress" callback
 
     /// Create a handler for HTML event `error`.
     let inline error (callback: ProgressEventArgs -> unit) : Attr =
-        attr.callback<ProgressEventArgs> ("onerror") callback
+        attr.callback<ProgressEventArgs> "onerror" callback
 
     /// Create a handler for HTML event `activate`.
     let inline activate (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onactivate") callback
+        attr.callback<EventArgs> "onactivate" callback
 
     /// Create a handler for HTML event `beforeactivate`.
     let inline beforeactivate (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onbeforeactivate") callback
+        attr.callback<EventArgs> "onbeforeactivate" callback
 
     /// Create a handler for HTML event `beforedeactivate`.
     let inline beforedeactivate (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onbeforedeactivate") callback
+        attr.callback<EventArgs> "onbeforedeactivate" callback
 
     /// Create a handler for HTML event `deactivate`.
     let inline deactivate (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("ondeactivate") callback
+        attr.callback<EventArgs> "ondeactivate" callback
 
     /// Create a handler for HTML event `ended`.
     let inline ended (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onended") callback
+        attr.callback<EventArgs> "onended" callback
 
     /// Create a handler for HTML event `fullscreenchange`.
     let inline fullscreenchange (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onfullscreenchange") callback
+        attr.callback<EventArgs> "onfullscreenchange" callback
 
     /// Create a handler for HTML event `fullscreenerror`.
     let inline fullscreenerror (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onfullscreenerror") callback
+        attr.callback<EventArgs> "onfullscreenerror" callback
 
     /// Create a handler for HTML event `loadeddata`.
     let inline loadeddata (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onloadeddata") callback
+        attr.callback<EventArgs> "onloadeddata" callback
 
     /// Create a handler for HTML event `loadedmetadata`.
     let inline loadedmetadata (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onloadedmetadata") callback
+        attr.callback<EventArgs> "onloadedmetadata" callback
 
     /// Create a handler for HTML event `pointerlockchange`.
     let inline pointerlockchange (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onpointerlockchange") callback
+        attr.callback<EventArgs> "onpointerlockchange" callback
 
     /// Create a handler for HTML event `pointerlockerror`.
     let inline pointerlockerror (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onpointerlockerror") callback
+        attr.callback<EventArgs> "onpointerlockerror" callback
 
     /// Create a handler for HTML event `readystatechange`.
     let inline readystatechange (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onreadystatechange") callback
+        attr.callback<EventArgs> "onreadystatechange" callback
 
     /// Create a handler for HTML event `scroll`.
     let inline scroll (callback: EventArgs -> unit) : Attr =
-        attr.callback<EventArgs> ("onscroll") callback
+        attr.callback<EventArgs> "onscroll" callback
 
 // END EVENTS
 
@@ -2178,15 +2098,12 @@ module bind =
                         when ^F : (static member CreateBinder : EventCallbackFactory * obj * Action< ^T> * ^T * CultureInfo -> EventCallback<ChangeEventArgs>)
                         and ^B : (static member FormatValue : ^T * CultureInfo -> ^O)>
             (eventName: string) (valueAttribute: string) (currentValue: ^T) (callback: ^T -> unit) cultureInfo =
-        Attrs [
-            valueAttribute => (^B : (static member FormatValue : ^T * CultureInfo -> ^O)(currentValue, cultureInfo))
-            ExplicitAttr(Func<_,_,_,_>(fun builder sequence receiver ->
-                builder.AddAttribute(sequence, eventName,
-                    (^F : (static member CreateBinder : EventCallbackFactory * obj * Action< ^T> * ^T * CultureInfo -> EventCallback<ChangeEventArgs>)
-                        (EventCallback.Factory, receiver, Action<_> callback, currentValue, cultureInfo)))
-                sequence + 1
-            ))
-        ]
+        Attr(fun receiver builder matchCache sequence ->
+            builder.AddAttribute(sequence, valueAttribute, (^B : (static member FormatValue : ^T * CultureInfo -> ^O)(currentValue, cultureInfo)))
+            builder.AddAttribute(sequence + 1, eventName,
+                (^F : (static member CreateBinder : EventCallbackFactory * obj * Action< ^T> * ^T * CultureInfo -> EventCallback<ChangeEventArgs>)
+                    (EventCallback.Factory, receiver, Action<_> callback, currentValue, cultureInfo)))
+            sequence + 2)
 
     /// Bind a boolean to the value of a checkbox.
     let inline ``checked`` value callback = binder<bool, EventCallbackFactoryBinderExtensions, BindConverter, bool> "onchange" "checked" value callback null
@@ -2342,21 +2259,19 @@ module virtualize =
     open System.Collections.Generic
     open Microsoft.AspNetCore.Components.Web.Virtualization
 
-    let inline comp<'item> attrs (items: IReadOnlyCollection<'item>) (itemContent: 'item -> Node) =
-        Node.BlazorComponent<Virtualize<'item>>(
-            ("Items" => Virtualize.Internals.Collection<'item> items)
-            :: attr.fragmentWith "ItemContent" itemContent
-            :: attrs,
-            [])
+    let inline items (items: IReadOnlyCollection<'item>) =
+        VirtualizeItemsDeclaration<'item>(fun b i ->
+            b.AddAttribute(i, "Items", Virtualize.Internals.Collection<'item> items)
+            i + 1)
 
-    let inline compProvider<'item> attrs (itemsProvider: ItemsProviderRequest -> ValueTask<ItemsProviderResult<'item>>) (itemContent: 'item -> Node) =
-        Node.BlazorComponent<Virtualize<'item>>(
-            ("ItemsProvider" => ItemsProviderDelegate<'item> itemsProvider)
-            :: attr.fragmentWith "ItemContent" itemContent
-            :: attrs,
-            [])
+    let inline itemsProvider ([<InlineIfLambda>] itemsProvider: ItemsProviderRequest -> ValueTask<ItemsProviderResult<'item>>) =
+        VirtualizeItemsDeclaration<'item>(fun b i ->
+            b.AddAttribute(i, "ItemsProvider", ItemsProviderDelegate<'item> itemsProvider)
+            i + 1)
 
-    let inline placeholder (v: PlaceholderContext -> Node) =
+    let inline comp<'item> = VirtualizeBuilder<'item>()
+
+    let inline placeholder ([<InlineIfLambda>] v: PlaceholderContext -> Node) =
         attr.fragmentWith "Placeholder" v
 
     let inline itemSize (v: single) =

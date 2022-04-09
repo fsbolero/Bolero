@@ -1,4 +1,4 @@
-// $begin{copyright}
+﻿// $begin{copyright}
 //
 // This file is part of Bolero
 //
@@ -21,61 +21,77 @@
 namespace Bolero
 
 open System
+open System.Collections.Generic
+open FSharp.Reflection
 open Microsoft.AspNetCore.Components
-
-/// HTML attribute or Blazor component parameter.
-/// Use `Bolero.Html.attr` or `(=>)` to create attributes.
-/// [category: HTML]
-type Attr =
-    /// [omit]
-    | Attr of string * obj
-    /// [omit]
-    | Attrs of list<Attr>
-    /// [omit]
-    | Key of obj
-    /// [omit]
-    | Classes of list<string>
-    /// [omit]
-    | ExplicitAttr of Func<Rendering.RenderTreeBuilder, int, obj, int>
-    /// [omit]
-    | FragmentAttr of string * ((Rendering.RenderTreeBuilder -> Node -> unit) -> obj)
-    /// [omit]
-    | Ref of Ref
 
 /// HTML fragment.
 /// [category: HTML]
-and Node =
-    /// An empty HTML fragment.
-    | Empty
-    /// A concatenation of several HTML fragments.
-    | Concat of list<Node>
-    /// A single HTML element.
-    | Elt of name: string * attrs: list<Attr> * children: list<Node>
-    /// A single HTML text node.
-    | Text of text: string
-    /// A raw HTML fragment.
-    | RawHtml of html: string
-    /// A single Blazor component.
-    | Component of Type * attrs: list<Attr> * children: list<Node>
-    /// A conditional "if" component.
-    | Cond of bool * Node
-    /// A conditional "match" component.
-    | Match of unionType: Type * value: obj * node: Node
-    /// A list of similarly structured fragments.
-    | ForEach of list<Node>
-    /// A Blazor fragment.
-    | Fragment of RenderFragment
+type Node = delegate of obj * Rendering.RenderTreeBuilder * (Type -> int * (obj -> int)) * int -> int
 
-    /// A single Blazor component, statically typed.
-    static member BlazorComponent<'T when 'T :> IComponent>(attrs, children) =
-        Node.Component(typeof<'T>, attrs, children)
+module Node =
 
-and [<AbstractClass>] Ref() =
-    /// [omit]
-    abstract Render : Rendering.RenderTreeBuilder * int -> int
+    let inline Empty() = Node(fun _ _ _ i -> i)
 
-module Html =
+    let MakeMatchCache() =
+        let matchCache = Dictionary<Type, _>()
+        fun (ty: Type) ->
+            match matchCache.TryGetValue(ty) with
+            | true, x -> x
+            | false, _ ->
+                let caseCount = FSharpType.GetUnionCases(ty, true).Length
+                let r = FSharpValue.PreComputeUnionTagReader(ty)
+                let v = (caseCount, r)
+                matchCache.[ty] <- v
+                v
 
-    /// Create an empty HTML fragment.
-    /// [category: HTML elements]
-    let empty = Empty
+    let inline Elt name (attrs: seq<Attr>) (children: seq<Node>) = Node(fun comp tb matchCache i ->
+        tb.OpenElement(i, name)
+        let mutable i = i + 1
+        for attr in attrs do
+            i <- attr.Invoke(comp, tb, matchCache, i)
+        for node in children do
+            i <- node.Invoke(comp, tb, matchCache, i)
+        tb.CloseElement()
+        i)
+
+    let inline Text (text: string) = Node(fun _ tb _ i ->
+        tb.AddContent(i, text)
+        i + 1)
+
+    let inline RawHtml (html: string) = Node(fun _ tb _ i ->
+        tb.AddMarkupContent(i, html)
+        i + 1)
+
+    let inline Cond (cond: bool) ([<InlineIfLambda>] node: Node) = Node(fun comp tb matchCache i ->
+        tb.OpenRegion(if cond then i else i + 1)
+        node.Invoke(comp, tb, matchCache, 0) |> ignore
+        tb.CloseRegion()
+        i + 2)
+
+    let inline Match (value: 'T) ([<InlineIfLambda>] node: Node) = Node(fun comp tb matchCache i ->
+        let caseCount, getMatchedCase = matchCache typeof<'T>
+        let matchedCase = getMatchedCase value
+        tb.OpenRegion(i + matchedCase)
+        node.Invoke(comp, tb, matchCache, 0) |> ignore
+        tb.CloseRegion()
+        i + caseCount)
+
+    let inline Concat (nodes: seq<Node>) = Node(fun comp tb matchCache i ->
+        let mutable i = i
+        for node in nodes do
+            i <- node.Invoke(comp, tb, matchCache, i)
+        i)
+
+    let inline ForEach (items: seq<'T>) ([<InlineIfLambda>] mkNode: 'T -> Node) = Node(fun comp tb matchCache i ->
+        tb.OpenRegion(i)
+        for item in items do
+            (mkNode item).Invoke(comp, tb, matchCache, 0) |> ignore
+        tb.CloseRegion()
+        i + 1)
+
+    let inline Fragment (fragment: RenderFragment) = Node(fun _ tb _ i ->
+        tb.OpenRegion(i)
+        fragment.Invoke(tb)
+        tb.CloseRegion()
+        i + 1)

@@ -169,54 +169,54 @@ let Display model dispatch =
             .setValue(fun e -> dispatch (SetCurrentValue (e.Value :?> string)))
             .add(fun _ -> dispatch AddItem)
             .Elt()
-    concat [
+    concat {
         Tpl()
             .form(form)
             .refresh(fun _ -> dispatch RefreshItems)
-            .items(forEach model.items <| fun item -> ecomp<Item, _, _> [attr.key item.Key] item dispatch)
+            .items(forEach model.items <| fun item -> ecomp<Item, _, _> item dispatch { attr.key item.Key })
             .error(
                 cond model.lastError <| function
-                | None -> empty
+                | None -> empty()
                 | Some exn -> text (string exn)
             )
             .Elt()
-        hr []
+        hr
         cond model.currentLogin <| function
         | None ->
-            concat [
-                input [bind.change.string model.loginInput (dispatch << SetLoginInput)]
-                button [on.click (fun _ -> dispatch Login)] [text "Log in"]
-            ]
+            concat {
+                input { bind.change.string model.loginInput (dispatch << SetLoginInput) }
+                button { on.click (fun _ -> dispatch Login); "Log in" }
+            }
         | Some login ->
-            concat [
-                text "Logged in as {login}"
-                button [on.click (fun _ -> dispatch Logout)] [text "Log out"]
-            ]
-        hr []
+            concat {
+                "Logged in as {login}"
+                button { on.click (fun _ -> dispatch Logout); "Log out" }
+            }
+        hr
         text "2 * "
-        input [
+        input {
             attr.``type`` "number"
             bind.change.int model.authDoubleInput (dispatch << SetAuthDoubleInput)
-        ]
+        }
         text " = "
-        button [on.click (fun _ -> dispatch SendAuthDouble)] [text "Send"]
+        button { on.click (fun _ -> dispatch SendAuthDouble); "Send" }
         text model.authDoubleResult
-        div [] [
-            a [router.HRef Home] [text "Goto: home"]
-            br []
-            a [router.HRef (Custom 123)] [text "Goto: custom 123"]
-        ]
-        comp<CascadingAuthenticationState> [] [
-            comp<AuthorizeView> [
+        div {
+            a { router.HRef Home; "Goto: home" }
+            br
+            a { router.HRef (Custom 123); "Goto: custom 123" }
+        }
+        comp<CascadingAuthenticationState> {
+            comp<AuthorizeView> {
                 attr.fragmentWith "Authorized" <| fun (context: AuthenticationState) ->
                     printfn "Rendering Authorized"
-                    div [] [text $"You're authorized! Welcome {context.User.Identity.Name}"]
+                    div { $"You're authorized! Welcome {context.User.Identity.Name}" }
                 attr.fragmentWith "NotAuthorized" <| fun (_: AuthenticationState) ->
                     printfn "Rendering NotAuthorized"
-                    div [] [text "You're not authorized :("]
-            ] []
-        ]
-    ]
+                    div { "You're not authorized :(" }
+            }
+        }
+    }
 
 type MyApp() =
     inherit ProgramComponent<Model, Message>()

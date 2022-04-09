@@ -8,4 +8,8 @@
     <Compile Include="Library.fs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Microsoft.AspNetCore.Components\Microsoft.AspNetCore.Components.fsproj" />
+  </ItemGroup>
+
 </Project>

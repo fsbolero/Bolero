@@ -21,14 +21,12 @@
 namespace Bolero
 
 open System
-open System.Collections.Generic
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Routing
 open Microsoft.Extensions.Logging
 open Microsoft.JSInterop
 open Elmish
-open Bolero.Render
 
 /// Base class for components built from `Bolero.Node`s.
 /// [category: Components]
@@ -36,12 +34,11 @@ open Bolero.Render
 type Component() =
     inherit ComponentBase()
 
-    let matchCache = Render.makeMatchCache()
+    let matchCache = Node.MakeMatchCache()
 
     override this.BuildRenderTree(builder) =
         base.BuildRenderTree(builder)
-        this.Render()
-        |> RenderNode this builder matchCache
+        this.Render().Invoke(this, builder, matchCache, 0) |> ignore
 
     /// The rendered contents of the component.
     abstract Render : unit -> Node
@@ -114,7 +111,7 @@ and [<AbstractClass>]
     inherit Component<'model>()
 
     let mutable oldModel = None
-    let mutable view = Node.Empty
+    let mutable view = Node.Empty()
     let mutable runProgramLoop = fun () -> ()
     let mutable dispatch = ignore<'msg>
     let mutable program = Unchecked.defaultof<Program<'model, 'msg>>

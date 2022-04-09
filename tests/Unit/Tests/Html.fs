@@ -26,16 +26,6 @@ module Html =
         test <@ elt.ById("element-with-htmlentity").Text = "Escaped <b>text</b> & content" @>
 
     [<Test>]
-    let ``Element with classes``() =
-        testNotNull <@ elt.ByClass("class-set-1") @>
-        testNotNull <@ elt.ByClass("class-set-2") @>
-        testNotNull <@ elt.ByClass("class-set-3") @>
-        testNotNull <@ elt.ByClass("class-set-4") @>
-        testNotNull <@ elt.ByClass("class-set-5") @>
-        testNotNull <@ elt.ByClass("class-set-6") @>
-        testNotNull <@ elt.ByClass("class-set-7") @>
-
-    [<Test>]
     let ``Raw HTML``() =
         test <@ elt.ByClass("raw-html-element").Text = "Unescape <b>text</b> & content" @>
 
@@ -95,6 +85,21 @@ module Html =
         elt.EventuallyNull <@ elt.ByClass("forEachIsC") @>
         testNotNull <@ elt.ByClass("forEachIsA") @>
         testNotNull <@ elt.ByClass("forEachIsB") @>
+
+    [<Test>]
+    let ``Render many for loop items``() =
+        let inp = elt.ByClass("forEachInput")
+        inp.Clear()
+
+        inp.SendKeys("ABC")
+        elt.EventuallyNotNull <@ elt.ByClass("forLoopIsA") @>
+        testNotNull <@ elt.ByClass("forLoopIsB") @>
+        testNotNull <@ elt.ByClass("forLoopIsC") @>
+
+        inp.SendKeys(Keys.Backspace)
+        elt.EventuallyNull <@ elt.ByClass("forLoopIsC") @>
+        testNotNull <@ elt.ByClass("forLoopIsA") @>
+        testNotNull <@ elt.ByClass("forLoopIsB") @>
 
     [<Test>]
     let ``bind.input``() =
@@ -196,3 +201,42 @@ module Html =
     let ComponentRefBinderRendersChildren() =
         let nav = elt.ByClass("nav-link")
         test <@ nav.Text = "Home" @>
+
+    [<Test>]
+    let ComponentChildContent() =
+        let comp = elt.ByClass("comp-child-content")
+        testNotNull <@ comp @>
+        let child = comp.ByClass("comp-child-elt")
+        testNotNull <@ child @>
+        test <@ child.Text = "comp-child-text-1" @>
+        test <@ comp.Text = "comp-child-text-1comp-child-text-2" @>
+
+    [<Test>]
+    let ElementBindKeyAndRef() =
+        let btn = elt.ByClass("elt-keyref1").ByClass("elt-keyref-btn")
+        let target = elt.ByClass("elt-keyref2")
+        testNotNull <@ btn @>
+        btn.Click()
+        elt.Eventually <@ target.Text = "elt-keyref is bound" @>
+
+    [<Test>]
+    let ComponentBindKeyAndRef() =
+        let btn = elt.ByClass("comp-keyref1").ByClass("comp-keyref-btn")
+        let target = elt.ByClass("comp-keyref2")
+        testNotNull <@ btn @>
+        btn.Click()
+        elt.Eventually <@ target.Text = "comp-keyref is bound" @>
+
+    [<Test>]
+    let Virtualize() =
+        let container = elt.ByClass("virt-keyref-container")
+        testNotNull <@ container @>
+        for i in 1..10 do
+            let item = container.ByClass($"virt-keyref-{i}")
+            testNotNull <@ item @>
+            test <@ item.Text = $"placeholder {i}" || item.Text = $"item {i}" @>
+
+        let btn = elt.ByClass("virt-keyref-btn")
+        testNotNull <@ btn @>
+        btn.Click()
+        elt.Eventually <@ btn.Text = "virt-keyref is bound: 10" @>

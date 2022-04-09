@@ -35,25 +35,25 @@ module Page =
     open Bolero.Html
     open Bolero.Server.Html
 
-    let index = doctypeHtml [] [
-        head [] [
-            ``base`` [attr.href "/"]
-            meta [attr.charset "utf-8"]
-        ]
-        body [] [
-            div [attr.id "app"] [rootComp<Bolero.Tests.Client.Tests>]
-            script [] [
-                RawHtml """
+    let index = doctypeHtml {
+        head {
+            ``base`` { attr.href "/" }
+            meta { attr.charset "utf-8" }
+        }
+        body {
+            div { attr.id "app"; rootComp<Bolero.Tests.Client.Tests> }
+            script {
+                rawHtml """
                     // Used by ElementBinder test:
                     function setContent(element, value) {
                       element.innerHTML = value;
                     }
                 """
-            ]
-            script [attr.src "_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js"] []
+            }
+            script { attr.src "_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js" }
             boleroScript
-        ]
-    ]
+        }
+    }
 
 type Startup() =
 
