@@ -708,27 +708,20 @@ module attr =
         Attr.Make "class" (String.concat " " classes)
 
     /// Bind an element or component reference.
-    let inline ref (r: Ref<'T>) : KeyAndRef =
-        KeyAndRef(fun _ b _ i ->
+    let inline ref (r: Ref<'T>) : RefContent =
+        RefContent(fun _ b _ i ->
             r.Render(b, i))
 
     /// Bind an element or component reference.
     [<Obsolete "Use attr.ref, or yield the ref directly in the element or component builder.">]
-    let inline bindRef (r: Ref<'T>) : KeyAndRef =
+    let inline bindRef (r: Ref<'T>) : RefContent =
         ref r
 
     /// Set an element's unique key among a sequence of similar elements.
-    let inline key (k: obj) : KeyAndRef =
-        KeyAndRef(fun _ b _ i ->
+    let inline key (k: obj) : Key =
+        Key(fun _ b _ i ->
             b.SetKey(k)
             i)
-
-    /// Set an element's unique key among a sequence of similar elements
-    /// and bind a reference to it.
-    let inline keyAndRef (k: obj) (r: Ref) =
-        KeyAndRef(fun _ b _ i ->
-            b.SetKey(k)
-            r.Render(b, i))
 
     /// Create an empty attribute.
     let inline empty() = Attr.Empty()

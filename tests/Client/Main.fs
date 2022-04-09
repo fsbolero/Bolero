@@ -20,6 +20,7 @@
 
 module Bolero.Test.Client.Main
 
+open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Routing
 open Microsoft.JSInterop
 open Elmish
@@ -237,7 +238,10 @@ let viewCollection model dispatch =
 type ViewItemPage() =
     inherit ElmishComponent<int * string * int, Message>()
 
-    override _.View ((k, v, m)) dispatch =
+    [<Inject>]
+    member val JS = Unchecked.defaultof<IJSRuntime> with get, set
+
+    override this.View ((k, v, m)) dispatch =
         concat {
             p { "Viewing page for item #" + string k }
             p { "Text is: " + v }
@@ -247,6 +251,23 @@ type ViewItemPage() =
                 button { on.click (fun _ -> dispatch (SetPage (Item (k, { Model = m - 1 })))); "-" }
                 $"{m}"
                 button { on.click (fun _ -> dispatch (SetPage (Item (k, { Model = m + 1 })))); "+" }
+            }
+            script { rawHtml "
+                function changeBg(elt) {
+                    var bg = elt.style.backgroundColor;
+                    elt.style.backgroundColor = bg == 'red' ? 'lightblue' : 'red';
+                }" }
+            ul {
+                for x in 1..3 do
+                    let ref = HtmlRef()
+                    li {
+                        attr.key x
+                        attr.style "background-color: lightblue"
+                        on.task.click (fun _ ->
+                            this.JS.InvokeVoidAsync("changeBg", ref.Value.Value).AsTask())
+                        attr.ref ref
+                        "Testing key + attr + ref + children in one element"
+                    }
             }
         }
 

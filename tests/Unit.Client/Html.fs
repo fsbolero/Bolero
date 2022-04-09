@@ -229,8 +229,8 @@ type BindKeyAndRef() =
     override this.Render() =
         ul {
             li {
-                attr.``class`` "elt-keyref1"
                 attr.key "elt-keyref1"
+                attr.``class`` "elt-keyref1"
                 button {
                     attr.``class`` "elt-keyref-btn"
                     on.task.click (fun _ ->
@@ -240,13 +240,14 @@ type BindKeyAndRef() =
                 }
             }
             li {
+                attr.key "elt-keyref2"
                 attr.``class`` "elt-keyref2"
-                attr.keyAndRef "elt-keyref2" htmlRef
+                htmlRef
                 htmlText
             }
             comp<SimpleComponent> {
-                "CompClass" => "comp-keyref1"
                 attr.key "comp-keyref1"
+                "CompClass" => "comp-keyref1"
                 button {
                     attr.``class`` "comp-keyref-btn"
                     on.click (fun _ ->
@@ -257,9 +258,10 @@ type BindKeyAndRef() =
                 }
             }
             comp<SimpleComponent> {
+                attr.key "comp-keyref2"
                 "CompClass" => "comp-keyref2"
                 "SuccessText" => "comp-keyref is bound"
-                attr.keyAndRef "comp-keyref2" compRef
+                compRef
                 compText
             }
             div {
@@ -271,8 +273,8 @@ type BindKeyAndRef() =
                     virtRef
                     let! x = virtualize.items [1..10]
                     div {
-                        attr.``class`` $"virt-keyref-{x}"
                         attr.key x
+                        attr.``class`` $"virt-keyref-{x}"
                         $"item {x}"
                     }
                 }
