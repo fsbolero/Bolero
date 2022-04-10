@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <OutputType>Library</OutputType>
-    <OutputPath>..\Bolero\bin\$(Configuration)\net5.0</OutputPath>
+    <OutputPath>..\Bolero\bin\$(Configuration)\net6.0</OutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <DefineConstants>IS_DESIGNTIME</DefineConstants>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>

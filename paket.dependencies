@@ -1,6 +1,6 @@
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: netstandard2.0, net5.0, net6.0
+framework: netstandard2.0, net6.0
 lowest_matching: true
 strategy: min
 
@@ -8,16 +8,16 @@ nuget FSharp.Core >= 6.0 content: none
 nuget FSharp.SystemTextJson >= 0.17.4
 nuget HtmlAgilityPack >= 1.11.39
 nuget Elmish ~> 3.1
-nuget Microsoft.AspNetCore.Components.Authorization >= 5.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 5.0
-nuget Microsoft.Extensions.Configuration.Binder >= 5.0
-nuget Microsoft.Extensions.Http >= 5.0
-nuget Microsoft.AspNetCore.Components >= 5.0
-nuget Microsoft.AspNetCore.Components.Web >= 5.0
-nuget Microsoft.AspNetCore.Components.WebAssembly >= 5.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.Server >= 5.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer >= 5.0
-nuget System.Text.Json >= 5.0
+nuget Microsoft.AspNetCore.Components.Authorization >= 6.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 6.0
+nuget Microsoft.Extensions.Configuration.Binder >= 6.0
+nuget Microsoft.Extensions.Http >= 6.0
+nuget Microsoft.AspNetCore.Components >= 6.0
+nuget Microsoft.AspNetCore.Components.Web >= 6.0
+nuget Microsoft.AspNetCore.Components.WebAssembly >= 6.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server >= 6.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer >= 6.0
+nuget System.Text.Json >= 6.0
 nuget Nerdbank.GitVersioning copy_local: true, lowest_matching: false
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs

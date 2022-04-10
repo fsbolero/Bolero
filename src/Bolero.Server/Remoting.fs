@@ -208,7 +208,7 @@ type ServerRemotingExtensions =
         let handlers =
             this.ApplicationServices.GetServices<RemotingService>()
             |> Array.ofSeq
-        this.Use(fun ctx next ->
+        this.Use(fun ctx (next: Func<Task>) ->
             handlers
             |> Array.tryPick (fun h -> h.TryHandle(ctx))
             |> Option.defaultWith next.Invoke

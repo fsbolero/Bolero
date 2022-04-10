@@ -8,12 +8,12 @@ description
 authors
     Loic Denuziere
 files
-    bin/Release/net5.0/Bolero.Templating.Provider.dll ==> lib/net5.0
-    bin/Release/net5.0/HtmlAgilityPack.dll ==> lib/net5.0
-    bin/Release/net5.0/Microsoft.AspNetCore.Components.dll ==> lib/net5.0
-    bin/Release/net5.0/Microsoft.AspNetCore.Components.Web.dll ==> lib/net5.0
-    ../Bolero.Html/bin/Release/net5.0/Bolero.Html.dll ==> lib/net5.0
-    ../Bolero.Html/bin/Release/net5.0/Bolero.Html.xml ==> lib/net5.0
+    bin/Release/net6.0/Bolero.Templating.Provider.dll ==> lib/net6.0
+    bin/Release/net6.0/HtmlAgilityPack.dll ==> lib/net6.0
+    bin/Release/net6.0/Microsoft.AspNetCore.Components.dll ==> lib/net6.0
+    bin/Release/net6.0/Microsoft.AspNetCore.Components.Web.dll ==> lib/net6.0
+    ../Bolero.Html/bin/Release/net6.0/Bolero.Html.dll ==> lib/net6.0
+    ../Bolero.Html/bin/Release/net6.0/Bolero.Html.xml ==> lib/net6.0
 excludeddependencies
     nerdbank.gitversioning
 include-pdbs true
