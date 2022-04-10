@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.20
+
+* Upgrade dependency to .NET 6.
+
+* [#249](https://github.com/fsbolero/Bolero/issues/249) Replace the list-based functions for HTML and components with computation expressions:
+
+    ```fsharp
+    div {
+        "Welcome to "
+        navLink NavLinkMatch.All {
+            attr.href "https://fsbolero.io"
+            on.click (fun _ -> printfn "Clicked!")
+            b { "Bolero" }
+        }
+        "!"
+    }
+    ```
+
+    * Union types `Attr` and `Node` replaced with delegate types, alongside modules for raw constructors.
+
+    * `Bolero.Html` element functions, `Bolero.Html.concat`, `Bolero.Html.attrs` replaced with computation expression builders.
+
+    * `Bolero.Html.comp`, `ecomp`, `lazyComp*`, `navLink` functions no longer take attribute and child lists and return a computation expression builder instead.
+
+    * `Bolero.Html.virtualize.comp` replaced with a computation expression builder where `let!` retrieves the current item:
+        ```fsharp
+        virtualize.comp {
+            virtualize.placeholder (fun _ -> text "<placeholder>")
+            let! item = virtualize.items [1..100]
+            text $"Actual item {item}"
+        }
+        ```
+
+    * `Bolero.Html.empty` value replaced with a function: `empty()`.
+
+    * `Bolero.Html.attr.empty` value replaced with a function: `attr.empty()`.
+
+* `Bolero.Html.attr.classes` is obsolete. **BREAKING CHANGE:** classes are no longer combined across multiple calls to it or `Bolero.Html.attr.class`.
+
+* [#250](https://github.com/fsbolero/Bolero/issues/250) Configure Bolero and Bolero.Html for trimming.
+
 ## 0.18
 
 * Loosen Microsoft.* dependencies from ~> 5.0 to >= 5.0 to allow using 6.0+.
@@ -127,7 +168,7 @@
 * [#151](https://github.com/fsbolero/bolero/issues/151) Accept either a relative or absolute path in custom router's `getRoute`.
 
 * [#155](https://github.com/fsbolero/bolero/issues/155) Add function `fragment` to create a Bolero `Node` from a Blazor `RenderFragment`.
-    
+
 * [#159](https://github.com/fsbolero/bolero/issues/159) **Breaking change**: Remove the module `Bolero.Json`, and use System.Text.Json together with [FSharp.SystemTextJson](https://github.com/Tarmil/FSharp.SystemTextJson) instead for remoting.
 
     Remoting serialization can be customized by passing an additional argument `configureSerialization: JsonSerializerOptions -> unit` to `services.AddRemoting()` in both the server-side and client-side startup functions.
@@ -186,7 +227,7 @@
     ```fsharp
     member AddBoleroHost : ?server: bool * ?prerendered: bool * ?devToggle: bool -> IServiceCollection
     ```
-    
+
 ## 0.12
 
 * #119: Correctly apply model changes to inputs using `bind.*`
@@ -252,7 +293,7 @@
 
         val definePageModel : PageModel<'T> -> 'T -> unit
     ```
-    
+
 ## 0.8
 
 * Updated Blazor and .NET Core dependencies to version 3.0-preview8, with associated API changes.
@@ -275,7 +316,7 @@
     ```
 
     There are also new overloads on `IServiceCollection.AddRemoting` that take `IRemoteContext -> 'Handler` as argument, so that remote handlers that use authorization don't need to switch to using DI.
-    
+
 ## 0.7
 
 * Bolero.HotReload, the HTML template hot reload library, had been blocked from upgrade by a dependency; it is now available again for the latest Bolero.

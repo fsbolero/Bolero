@@ -19,7 +19,7 @@ It includes:
 
 To get started, you need the following installed:
 
-* .NET SDK 5.0. Download it [here](https://dotnet.microsoft.com/download).
+* .NET SDK 6.0. Download it [here](https://dotnet.microsoft.com/download).
 
 Then:
 
