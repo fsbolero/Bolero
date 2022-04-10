@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <OutputType>Library</OutputType>
+    <IsTrimmable>true</IsTrimmable>
     <!-- <DefineConstants>DEBUG_RENDERER;$(DefineConstants)</DefineConstants> -->
   </PropertyGroup>
   <ItemGroup>
@@ -19,6 +20,8 @@
     <Compile Include="Remoting.Client.fs" />
     <Compile Include="Cmd.fs" />
     <Compile Include="Program.fs" />
+    <None Include="roots.xml" />
+    <None Include="Bolero.targets" />
     <None Include="paket.references" />
     <None Include="paket.template" />
   </ItemGroup>

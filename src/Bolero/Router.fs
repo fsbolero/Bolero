@@ -24,6 +24,7 @@ namespace Bolero
 
 open System
 open System.Collections.Generic
+open System.Diagnostics.CodeAnalysis
 open System.Net
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
@@ -672,7 +673,8 @@ module Router =
     /// to declare how they match to a URI.
     /// Inside `defaultPageModel`, call `Router.definePageModel` to indicate the page model to use
     /// when switching to a new page.
-    let inferWithModel<'ep, 'model, 'msg> (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) (defaultPageModel: 'ep -> unit) =
+    let inferWithModel<[<DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)>] 'ep, 'model, 'msg>
+            (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) (defaultPageModel: 'ep -> unit) =
         let ty = typeof<'ep>
         let cache = Dictionary()
         for KeyValue(k, v) in baseTypes do cache.Add(k, v)
@@ -695,7 +697,8 @@ module Router =
     /// Infer a router constructed around an endpoint type `'ep`.
     /// This type must be an F# union type, and its cases should use `EndPointAttribute`
     /// to declare how they match to a URI.
-    let infer<'ep, 'model, 'msg> (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) =
+    let infer<[<DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)>] 'ep, 'model, 'msg>
+            (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) =
         inferWithModel makeMessage getEndPoint ignore
 
     let noModel<'T> = { Model = Unchecked.defaultof<'T> }

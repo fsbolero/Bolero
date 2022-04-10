@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<linker>
+  <assembly fullname="Bolero">
+    <type fullname="Bolero.Component`1" required="false" />
+    <type fullname="Bolero.ElmishComponent`2" required="false" />
+    <type fullname="Bolero.LazyComponent`2" required="false" />
+    <type fullname="Bolero.ProgramComponent`2" required="false" />
+    <type fullname="Bolero.PageModel`1" required="false" />
+  </assembly>
+</linker>

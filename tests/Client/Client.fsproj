@@ -15,5 +15,6 @@
     <ProjectReference Include="..\..\src\Bolero\Bolero.fsproj" />
   </ItemGroup>
   <Import Project="..\..\src\Bolero.Build\Bolero.Build.targets" />
+  <Import Project="..\..\src\Bolero\Bolero.targets" />
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

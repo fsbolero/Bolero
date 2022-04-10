@@ -5,6 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <OutputType>Library</OutputType>
     <RootNamespace>Bolero</RootNamespace>
+    <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Trimmable.fs" Link="Trimmable.fs" />

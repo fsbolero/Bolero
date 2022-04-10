@@ -14,6 +14,8 @@ files
     bin/Release/net6.0/Microsoft.AspNetCore.Components.Web.dll ==> lib/net6.0
     ../Bolero.Html/bin/Release/net6.0/Bolero.Html.dll ==> lib/net6.0
     ../Bolero.Html/bin/Release/net6.0/Bolero.Html.xml ==> lib/net6.0
+    Bolero.targets ==> build
+    roots.xml ==> build
 excludeddependencies
     nerdbank.gitversioning
 include-pdbs true
