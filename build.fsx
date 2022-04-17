@@ -29,9 +29,10 @@ nuget FSharp.Data ~> 3.0-beta
 #load "tools/Utility.fsx"
 
 open System.IO
-open System.Net
+open System.Net.Http
 open System.Text
 open System.Text.RegularExpressions
+open System.Threading.Tasks
 open Fake.Core
 open Fake.Core.TargetOperators
 open Fake.DotNet
@@ -193,8 +194,13 @@ let uploadTests (url: string) =
         DirectoryInfo(slnDir </> "tests" </> "Unit" </> "TestResults")
             .EnumerateFiles("*.trx")
         |> Seq.maxBy (fun f -> f.CreationTime)
-    use c = new WebClient()
-    c.UploadFile(url, results.FullName) |> ignore
+    use c = new HttpClient()
+    use f = File.OpenRead(results.FullName)
+    use content = new StreamContent(f)
+    c.PostAsync(url, content)
+    :> Task
+    |> Async.AwaitTask
+    |> Async.RunSynchronously
 
 let unitTests o =
     try dotnet' "tests/Unit" [] "test" ("--logger:trx" :: buildArgs o)
