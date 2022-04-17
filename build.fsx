@@ -38,7 +38,10 @@ open Fake.DotNet
 open Fake.IO.FileSystemOperators
 open Utility
 
-let config = getArg "-c" "Debug"
+let config = getArgWith "-c" <| fun o ->
+    match o.Context.FinalTarget with
+    | "all" | "pack" -> "Release"
+    | _ -> "Debug"
 let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
     let v =
         let s = dotnetOutput "nbgv" ["get-version"; "-v"; "SemVer2"]

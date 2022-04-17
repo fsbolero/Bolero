@@ -67,25 +67,31 @@ let shellOutput cmd args =
 /// `cache f x` returns `f x` the first time,
 /// and re-returns the first result on subsequent calls.
 let cache f =
-    let res = ref None
+    let mutable res = None
     fun x ->
-        match !res with
+        match res with
         | Some y -> y
         | None ->
             let y = f x
-            res := Some y
+            res <- Some y
             y
 
+let rec private getArgImpl prefix = function
+    | s :: m :: _ when s = prefix -> Some m
+    | _ :: rest -> getArgImpl prefix rest
+    | [] -> None
+
 let getArgOpt prefix = cache <| fun (o: TargetParameter) ->
-    let rec go = function
-        | s :: m :: _ when s = prefix -> Some m
-        | _ :: rest -> go rest
-        | [] -> None
-    go o.Context.Arguments
+    getArgImpl prefix o.Context.Arguments
 
 let getArg prefix ``default`` =
     getArgOpt prefix
     >> Option.defaultValue ``default``
+
+let getArgWith prefix ``default`` = cache <| fun (o: TargetParameter) ->
+    match getArgImpl prefix o.Context.Arguments with
+    | Some x -> x
+    | None -> ``default`` o
 
 let getFlag flag = cache <| fun (o: TargetParameter) ->
     List.contains flag o.Context.Arguments
