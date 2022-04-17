@@ -19,6 +19,12 @@
       "commands": [
         "nbgv"
       ]
+    },
+    "jetbrains.refasmer.clitool": {
+      "version": "1.0.27",
+      "commands": [
+        "refasmer"
+      ]
     }
   }
 }

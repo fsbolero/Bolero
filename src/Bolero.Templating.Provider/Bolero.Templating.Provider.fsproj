@@ -28,5 +28,12 @@
     <Compile Include="Provider.fs" />
     <None Include="paket.references" />
   </ItemGroup>
+  <ItemGroup>
+    <TpRuntimeAssembly Include="$(OutputPath)\Microsoft.AspNetCore.Components.dll" />
+    <TpRuntimeAssembly Include="$(OutputPath)\Microsoft.AspNetCore.Components.Web.dll" />
+  </ItemGroup>
+  <Target Name="GenerateReferenceAssembliesForTpRuntimeDependencies" AfterTargets="Build">
+    <Exec Command="dotnet refasmer -p -n -w -m @(TpRuntimeAssembly, ' ')" />
+  </Target>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
