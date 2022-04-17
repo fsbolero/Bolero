@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <OutputType>Library</OutputType>
     <OutputPath>..\Bolero\bin\$(Configuration)\net6.0</OutputPath>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
@@ -27,10 +27,6 @@
     <Compile Include="CodeGen.fs" />
     <Compile Include="Provider.fs" />
     <None Include="paket.references" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\tpdummy\Microsoft.AspNetCore.Components\Microsoft.AspNetCore.Components.fsproj" />
-    <ProjectReference Include="..\tpdummy\Microsoft.AspNetCore.Components.Web\Microsoft.AspNetCore.Components.Web.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
