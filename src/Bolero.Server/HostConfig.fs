@@ -20,10 +20,7 @@
 
 namespace Bolero.Server
 
-open System.Runtime.CompilerServices
-open Microsoft.AspNetCore.Mvc.Rendering
 open Microsoft.AspNetCore.Http
-open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 
 type IBoleroHostConfig =

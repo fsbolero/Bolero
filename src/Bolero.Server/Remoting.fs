@@ -69,11 +69,11 @@ type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationServic
         }
 
     interface IHttpContextAccessor with
-        member __.HttpContext with get () = http.HttpContext and set v = http.HttpContext <- v
+        member _.HttpContext with get () = http.HttpContext and set v = http.HttpContext <- v
 
     interface IRemoteContext with
-        member __.Authorize f = authorizeWith [AuthorizeAttribute()] f
-        member __.AuthorizeWith authData f = authorizeWith authData f
+        member _.Authorize f = authorizeWith [AuthorizeAttribute()] f
+        member _.AuthorizeWith authData f = authorizeWith authData f
 
 type internal RemotingService(basePath: PathString, ty: Type, handler: obj, configureSerialization: option<JsonSerializerOptions -> unit>) as this =
 

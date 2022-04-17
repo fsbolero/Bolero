@@ -29,7 +29,6 @@ open NUnit.Framework
 open OpenQA.Selenium
 open OpenQA.Selenium.Chrome
 // open OpenQA.Selenium.Firefox
-open OpenQA.Selenium.Remote
 open OpenQA.Selenium.Support.UI
 open Swensen.Unquote
 open Bolero.Tests

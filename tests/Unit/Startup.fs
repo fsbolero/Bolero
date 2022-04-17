@@ -31,7 +31,6 @@ open Bolero.Server
 open Bolero.Tests
 
 module Page =
-    open Bolero
     open Bolero.Html
     open Bolero.Server.Html
 

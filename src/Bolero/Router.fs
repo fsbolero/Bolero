@@ -643,12 +643,12 @@ module private RouterImpl =
         | false, _ ->
             // Add lazy version in case ty is recursive.
             let rec segment = ref {
-                parse = fun x -> (!segment).parse x
-                write = fun x -> (!segment).write x
+                parse = fun x -> segment.Value.parse x
+                write = fun x -> segment.Value.write x
             }
-            cache.[ty] <- !segment
+            cache.[ty] <- segment.Value
             let getSegment = getSegment cache ignore
-            segment :=
+            segment.Value <-
                 if ty.IsArray && ty.GetArrayRank() = 1 then
                     arraySegment getSegment (ty.GetElementType())
                 elif ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<list<_>> then
@@ -661,8 +661,8 @@ module private RouterImpl =
                     recordSegment getSegment ty
                 else
                     fail (InvalidRouterKind.UnsupportedType ty)
-            cache.[ty] <- !segment
-            !segment
+            cache.[ty] <- segment.Value
+            segment.Value
 
 /// Functions for building Routers that bind page navigation with Elmish.
 /// [category: Routing]

@@ -99,7 +99,7 @@ type ClientRemoteProvider(http: HttpClient, configureSerialization: IConfigureSe
                     typeof<ClientRemoteProvider>.GetMethod("SendAndParse")
                         .MakeGenericMethod([|method.ReturnType|])
                 FSharpValue.MakeFunction(method.FunctionType, fun arg ->
-                    let uri = !baseUri + method.Name
+                    let uri = baseUri.Value + method.Name
                     post.Invoke(this, [|HttpMethod.Post; uri; arg|])
                 )
             )
@@ -114,7 +114,7 @@ type ClientRemoteProvider(http: HttpClient, configureSerialization: IConfigureSe
         member this.GetService<'T when 'T :> IRemoteService>() =
             let basePath = ref ""
             let proxy = this.MakeRemoteProxy(typeof<'T>, basePath) :?> 'T
-            basePath := normalizeBasePath proxy.BasePath
+            basePath.Value <- normalizeBasePath proxy.BasePath
             proxy
 
 /// Extension methods to enable support for remoting in ProgramComponent.

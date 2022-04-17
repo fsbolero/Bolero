@@ -189,7 +189,7 @@ let Display model dispatch =
             }
         | Some login ->
             concat {
-                "Logged in as {login}"
+                $"Logged in as {login}"
                 button { on.click (fun _ -> dispatch Logout); "Log out" }
             }
         hr
