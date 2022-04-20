@@ -240,8 +240,8 @@ type BindKeyAndRef() =
                 }
             }
             li {
-                attr.key "elt-keyref2"
                 attr.``class`` "elt-keyref2"
+                attr.key "elt-keyref2"
                 htmlRef
                 htmlText
             }
