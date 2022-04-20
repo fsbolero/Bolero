@@ -24,9 +24,6 @@ open System
 open Microsoft.AspNetCore.Components
 open Bolero
 
-/// Render the current element or component's key.
-type Key = delegate of obj * Rendering.RenderTreeBuilder * (Type -> int * (obj -> int)) * int -> int
-
 /// Render the current element or component's reference.
 type RefContent = delegate of obj * Rendering.RenderTreeBuilder * (Type -> int * (obj -> int)) * int -> int
 
@@ -101,7 +98,6 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
     val public Name: string
     new(name) = { Name = name }
 
-    member inline _.Yield([<InlineIfLambda>] key: Key) = key
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
     member inline _.Yield([<InlineIfLambda>] ref: RefContent) = ref
     member inline _.Yield([<InlineIfLambda>] node: Node) = node
@@ -143,24 +139,10 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
             b.CloseComponent()
             i))
 
-    member inline _.Delay([<InlineIfLambda>] k: unit -> Key) = Key(fun c b m i -> k().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> RefContent) = RefContent(fun c b m i -> r().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> ChildAndRefContent) = ChildAndRefContent(fun c b m i -> r().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
-
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: Attr) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: RefContent) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: ChildAndRefContent) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
 
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
         Attr(fun c b m i ->
@@ -202,13 +184,6 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
             b.CloseElement()
             i)
 
-    member inline this.Run([<InlineIfLambda>] content: Key) =
-        Node(fun c b m i ->
-            b.OpenElement(i, this.Name)
-            let i = content.Invoke(c, b, m, i + 1)
-            b.CloseElement()
-            i)
-
     member inline this.Run([<InlineIfLambda>] content: Attr) =
         Node(fun c b m i ->
             b.OpenElement(i, this.Name)
@@ -232,7 +207,6 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
 
 and [<Struct; NoComparison; NoEquality>] ComponentBuilder<'T when 'T :> IComponent> =
 
-    member inline _.Yield([<InlineIfLambda>] key: Key) = key
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
     member inline _.Yield([<InlineIfLambda>] ref: RefContent) = ref
     member inline _.Yield([<InlineIfLambda>] node: Node) = node
@@ -274,24 +248,10 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder<'T when 'T :> ICompone
             b.CloseComponent()
             i))
 
-    member inline _.Delay([<InlineIfLambda>] k: unit -> Key) = Key(fun c b m i -> k().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> RefContent) = RefContent(fun c b m i -> r().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> ChildAndRefContent) = ChildAndRefContent(fun c b m i -> r().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
-
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: Attr) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: RefContent) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: ChildAndRefContent) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
 
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
         Attr(fun c b m i ->
@@ -347,13 +307,6 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder<'T when 'T :> ICompone
             b.CloseComponent()
             i)
 
-    member inline this.Run([<InlineIfLambda>] x: Key) =
-        Node(fun c b m i ->
-            b.OpenComponent<'T>(i)
-            let i = x.Invoke(c, b, m, i + 1)
-            b.CloseComponent()
-            i)
-
     member inline this.Run([<InlineIfLambda>] x: Attr) =
         Node(fun c b m i ->
             b.OpenComponent<'T>(i)
@@ -383,7 +336,6 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder =
     val public Type : Type
     new(ty: Type) = { Type = ty }
 
-    member inline _.Yield([<InlineIfLambda>] key: Key) = key
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
     member inline _.Yield([<InlineIfLambda>] ref: RefContent) = ref
     member inline _.Yield([<InlineIfLambda>] node: Node) = node
@@ -425,24 +377,10 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder =
             b.CloseComponent()
             i))
 
-    member inline _.Delay([<InlineIfLambda>] k: unit -> Key) = Key(fun c b m i -> k().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> RefContent) = RefContent(fun c b m i -> r().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> ChildAndRefContent) = ChildAndRefContent(fun c b m i -> r().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
-
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: Attr) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: RefContent) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: ChildAndRefContent) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
 
 
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
@@ -500,14 +438,6 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder =
             b.CloseComponent()
             i)
 
-    member inline this.Run([<InlineIfLambda>] x: Key) =
-        let ty = this.Type
-        Node(fun c b m i ->
-            b.OpenComponent(i, ty)
-            let i = x.Invoke(c, b, m, i + 1)
-            b.CloseComponent()
-            i)
-
     member inline this.Run([<InlineIfLambda>] x: Attr) =
         let ty = this.Type
         Node(fun c b m i ->
@@ -539,7 +469,6 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsAndNoChildrenBuilder<
     val public Attrs : Attr
     new (attrs: Attr) = { Attrs = attrs }
 
-    member inline _.Yield([<InlineIfLambda>] key: Key) = key
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
     member inline _.Yield([<InlineIfLambda>] ref: RefContent) = ref
     member inline _.Yield([<InlineIfLambda>] node: Node) = node
@@ -581,24 +510,10 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsAndNoChildrenBuilder<
             b.CloseComponent()
             i))
 
-    member inline _.Delay([<InlineIfLambda>] k: unit -> Key) = Key(fun c b m i -> k().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> RefContent) = RefContent(fun c b m i -> r().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> ChildAndRefContent) = ChildAndRefContent(fun c b m i -> r().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
-
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: Attr) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: RefContent) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: ChildAndRefContent) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
 
 
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
@@ -625,15 +540,6 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsAndNoChildrenBuilder<
 
     member inline _.Yield(ref: Ref<'T>) = RefContent(fun _ b _ i -> ref.Render(b, i))
 
-    member inline this.Run([<InlineIfLambda>] x: Key) =
-        let attrs = this.Attrs
-        Node(fun c b m i ->
-            b.OpenComponent<'T>(i)
-            let i = attrs.Invoke(c, b, m, i + 1)
-            let i = x.Invoke(c, b, m, i)
-            b.CloseComponent()
-            i)
-
     member inline this.Run([<InlineIfLambda>] x: Attr) =
         let attrs = this.Attrs
         Node(fun c b m i ->
@@ -656,7 +562,6 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsBuilder<'T when 'T :>
     val public Attrs : Attr
     new (attrs: Attr) = { Attrs = attrs }
 
-    member inline _.Yield([<InlineIfLambda>] key: Key) = key
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
     member inline _.Yield([<InlineIfLambda>] ref: RefContent) = ref
     member inline _.Yield([<InlineIfLambda>] node: Node) = node
@@ -698,24 +603,10 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsBuilder<'T when 'T :>
             b.CloseComponent()
             i))
 
-    member inline _.Delay([<InlineIfLambda>] k: unit -> Key) = Key(fun c b m i -> k().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> RefContent) = RefContent(fun c b m i -> r().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> ChildAndRefContent) = ChildAndRefContent(fun c b m i -> r().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
-
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: Attr) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: RefContent) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: ChildAndRefContent) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
 
 
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
@@ -766,15 +657,6 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsBuilder<'T when 'T :>
     member inline _.Yield(ref: Ref<'T>) = RefContent(fun _ b _ i -> ref.Render(b, i))
 
     member inline this.Run([<InlineIfLambda>] x: ChildContentAttr) =
-        let attrs = this.Attrs
-        Node(fun c b m i ->
-            b.OpenComponent<'T>(i)
-            let i = attrs.Invoke(c, b, m, i + 1)
-            let i = x.Invoke(c, b, m, i)
-            b.CloseComponent()
-            i)
-
-    member inline this.Run([<InlineIfLambda>] x: Key) =
         let attrs = this.Attrs
         Node(fun c b m i ->
             b.OpenComponent<'T>(i)
@@ -817,7 +699,6 @@ type VirtualizeItemsDeclaration<'T> = delegate of Rendering.RenderTreeBuilder * 
 
 type [<Struct; NoComparison; NoEquality>] VirtualizeBuilder<'Item> =
 
-    member inline _.Yield([<InlineIfLambda>] key: Key) = key
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
     member inline _.Yield([<InlineIfLambda>] ref: RefContent) = ref
     member inline _.Yield([<InlineIfLambda>] node: Node) = node
@@ -860,24 +741,10 @@ type [<Struct; NoComparison; NoEquality>] VirtualizeBuilder<'Item> =
             i))
 
 
-    member inline _.Delay([<InlineIfLambda>] k: unit -> Key) = Key(fun c b m i -> k().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> RefContent) = RefContent(fun c b m i -> r().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] r: unit -> ChildAndRefContent) = ChildAndRefContent(fun c b m i -> r().Invoke(c, b, m, i))
     member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
-
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: Attr) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: RefContent) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
-    member inline _.Combine([<InlineIfLambda>] x1: Key, [<InlineIfLambda>] x2: ChildAndRefContent) =
-        Key(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
 
 
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
@@ -928,13 +795,6 @@ type [<Struct; NoComparison; NoEquality>] VirtualizeBuilder<'Item> =
     member inline _.Yield(ref: Ref<'T>) = RefContent(fun _ b _ i -> ref.Render(b, i))
 
     member inline this.Run([<InlineIfLambda>] x: ChildContentAttr) =
-        Node(fun c b m i ->
-            b.OpenComponent<Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<'Item>>(i)
-            let i = x.Invoke(c, b, m, i + 1)
-            b.CloseComponent()
-            i)
-
-    member inline this.Run([<InlineIfLambda>] x: Key) =
         Node(fun c b m i ->
             b.OpenComponent<Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<'Item>>(i)
             let i = x.Invoke(c, b, m, i + 1)

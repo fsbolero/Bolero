@@ -718,8 +718,8 @@ module attr =
         ref r
 
     /// Set an element's unique key among a sequence of similar elements.
-    let inline key (k: obj) : Key =
-        Key(fun _ b _ i ->
+    let inline key (k: obj) : Attr =
+        Attr(fun _ b _ i ->
             b.SetKey(k)
             i)
 
