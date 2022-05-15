@@ -236,5 +236,7 @@ module Templating =
 
     [<Test>]
     let ``Regression #256: attribute name case is respected``() =
-        test <@ elt.ByClass("regression-256").GetDomAttribute("viewbox") |> isNull @>
-        test <@ elt.ByClass("regression-256").GetDomAttribute("viewBox") = "0 0 100 100" @>
+        test <@ elt.ByClass("regression-256-with-holes").GetDomAttribute("viewbox") |> isNull @>
+        test <@ elt.ByClass("regression-256-with-holes").GetDomAttribute("viewBox") = "0 0 100 100" @>
+        test <@ elt.ByClass("regression-256-without-holes").GetDomAttribute("viewbox") |> isNull @>
+        test <@ elt.ByClass("regression-256-without-holes").GetDomAttribute("viewBox") = "0 0 100 100" @>
