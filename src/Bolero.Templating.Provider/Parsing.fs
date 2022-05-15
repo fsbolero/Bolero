@@ -372,6 +372,8 @@ let ParseDoc (filename: option<string>) (doc: HtmlDocument) : ParsedTemplates =
 /// Get the HTML document for the given type provider argument, either inline or from a file.
 let GetDoc (fileOrContent: string) (rootFolder: string) : option<string> * HtmlDocument =
     let doc = HtmlDocument()
+    doc.OptionOutputOriginalCase <- true
+    doc.OptionDefaultUseOriginalName <- true
     if fileOrContent.Contains("<") then
         doc.LoadHtml(fileOrContent)
         None, doc

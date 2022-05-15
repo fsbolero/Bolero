@@ -41,6 +41,9 @@
 
 * [#250](https://github.com/fsbolero/Bolero/issues/250) Configure Bolero and Bolero.Html for trimming.
 
+* [#256](https://github.com/fsbolero/Bolero/issues/256) by @JeremiahSanders: Templating: keep the casing of attribute names.
+    This fixes issues with case-sensitive SVG attributes.
+
 ## 0.18
 
 * Loosen Microsoft.* dependencies from ~> 5.0 to >= 5.0 to allow using 6.0+.
