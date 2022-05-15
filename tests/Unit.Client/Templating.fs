@@ -173,6 +173,10 @@ type BindTester() =
 
 type ``Regression #11`` = Template<"""<span class="${Hole}">${Hole}</span>""">
 
+type ``Regression #256`` = Template<"""<svg width="200" height="200" version="1.1" viewBox="0 0 100 100" class="regression-256" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="45" fill="${CircleFill}" stroke="${CircleStroke}" stroke-width="3"/>
+</svg>""">
+
 let Tests() =
     div {
         attr.id "test-fixture-templating"
@@ -199,6 +203,10 @@ let Tests() =
             .Elt()
         ``Regression #11``()
             .Hole("regression-11")
+            .Elt()
+        ``Regression #256``()
+            .CircleFill("red")
+            .CircleStroke("black")
             .Elt()
         comp<EventTester>
         comp<BindTester>
