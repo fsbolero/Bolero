@@ -5,7 +5,7 @@ lowest_matching: true
 strategy: min
 
 nuget FSharp.Core >= 6.0 content: none
-nuget FSharp.SystemTextJson >= 0.17.4
+nuget FSharp.SystemTextJson >= 0.19.13
 nuget HtmlAgilityPack >= 1.11.39
 nuget Elmish ~> 3.1
 nuget Microsoft.AspNetCore.Components.Authorization >= 6.0
