@@ -30,22 +30,26 @@ open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 open FSharp.Reflection
 
-/// A router that binds page navigation with Elmish.
-/// [category: Routing]
+/// <summary>A router that binds page navigation with Elmish.</summary>
+/// <typeparam name="model">The Elmish model type.</typeparam>
+/// <typeparam name="msg">The Elmish message type.</typeparam>
+/// <category>Routing</category>
 type IRouter<'model, 'msg> =
-    /// Get the uri corresponding to `model`.
+    /// <summary>Get the uri corresponding to <paramref name="model" />.</summary>
     abstract GetRoute : model: 'model -> string
 
-    /// Get the message to send when the page navigates to `uri`.
+    /// <summary>Get the message to send when the page navigates to <paramref name="uri" />.</summary>
     abstract SetRoute : uri: string -> option<'msg>
 
-/// A simple hand-written router.
-/// [category: Routing]
+/// <summary>A simple hand-written router.</summary>
+/// <typeparam name="model">The Elmish model type.</typeparam>
+/// <typeparam name="msg">The Elmish message type.</typeparam>
+/// <category>Routing</category>
 type Router<'model, 'msg> =
     {
-        /// Get the uri corresponding to `model`.
+        /// <summary>Get the uri corresponding to the model.</summary>
         getRoute: 'model -> string
-        /// Get the message to send when the page navigates to `uri`.
+        /// <summary>Get the message to send when the page navigates to the uri.</summary>
         setRoute: string -> option<'msg>
     }
 
@@ -53,26 +57,35 @@ type Router<'model, 'msg> =
         member this.GetRoute(model) = this.getRoute model
         member this.SetRoute(uri) = this.setRoute uri
 
-/// A simple router where the endpoint corresponds to a value easily gettable from the model.
-/// [category: Routing]
+/// <summary>A simple router where the endpoint corresponds to a value easily gettable from the model.</summary>
+/// <typeparam name="ep">The routing endpoint type.</typeparam>
+/// <typeparam name="model">The Elmish model type.</typeparam>
+/// <typeparam name="msg">The Elmish message type.</typeparam>
+/// <category>Routing</category>
 type Router<'ep, 'model, 'msg> =
     {
+        /// <summary>Extract the current endpoint from the model.</summary>
         getEndPoint: 'model -> 'ep
+        /// <summary>Get the uri corresponding to an endpoint.</summary>
         getRoute: 'ep -> string
+        /// <summary>Get the message to send when the page navigates to an uri.</summary>
         setRoute: string -> option<'msg>
     }
 
-    /// Get the uri for the given endpoint.
-    member this.Link(ep) = this.getRoute ep
+    /// <summary>Get the uri for the given <paramref name="endpoint" />.</summary>
+    member this.Link(endpoint) = this.getRoute endpoint
 
     interface IRouter<'model, 'msg> with
         member this.GetRoute(model) = this.getRoute (this.getEndPoint model)
         member this.SetRoute(uri) = this.setRoute uri
 
-/// Declare how an F# union case matches to a URI.
-/// [category: Routing]
+/// <summary>Declare how an F# union case matches to a URI.</summary>
+/// <category>Routing</category>
 [<AttributeUsage(AttributeTargets.Property, AllowMultiple = false)>]
-type EndPointAttribute(endpoint: string) =
+type EndPointAttribute
+    /// <summary>Declare how an F# union case matches to a URI.</summary>
+    /// <param name="endpoint">The endpoint URI path.</param>
+    (endpoint: string) =
     inherit Attribute()
 
     let endpoint = endpoint.Trim('/').Split('/')
@@ -80,18 +93,24 @@ type EndPointAttribute(endpoint: string) =
     /// The path that this endpoint recognizes.
     member this.Path = endpoint
 
-/// Declare that the given field of an F# union case matches the entire
-/// remainder of the URL path.
-/// If field is unspecified, this applies to the last field of the case.
-/// [category: Routing]
+/// <summary>
+/// Declare that the given field of an F# union case matches the entire remainder of the URL path.
+/// </summary>
+/// <category>Routing</category>
 [<AttributeUsage(AttributeTargets.Property, AllowMultiple = false)>]
-type WildcardAttribute([<Optional>] field: string) =
+type WildcardAttribute
+    /// <summary>
+    /// Declare that the given field of an F# union case matches the entire remainder of the URL path.
+    /// </summary>
+    /// <param name="field">The name of the field. If unspecified, this applies to the last field of the case.</param>
+    ([<Optional>] field: string) =
     inherit Attribute()
 
+    /// <summary>The name of the field.</summary>
     member this.Field = field
 
-/// The kinds of invalid router.
-/// [category: Routing]
+/// <summary>The kinds of invalid router.</summary>
+/// <category>Routing</category>
 [<RequireQualifiedAccess>]
 type InvalidRouterKind =
     | UnsupportedType of Type
@@ -106,8 +125,8 @@ type InvalidRouterKind =
     | InvalidRestType of UnionCaseInfo
     | MultiplePageModels of UnionCaseInfo
 
-/// Exception thrown when a router is incorrectly defined.
-/// [category: Routing]
+/// <summary>Exception thrown when a router is incorrectly defined.</summary>
+/// <category>Routing</category>
 exception InvalidRouter of kind: InvalidRouterKind with
     override this.Message =
         let withCase (case: UnionCaseInfo) s =
@@ -136,9 +155,9 @@ exception InvalidRouter of kind: InvalidRouterKind with
         | InvalidRouterKind.MultiplePageModels case ->
             withCase case "multiple page models on the same case"
 
-/// A wrapper type to include a model in a router page type.
-/// See https://fsbolero.io/docs/Routing#page-models
-/// [category: Routing]
+/// <summary>A wrapper type to include a model in a router page type.</summary>
+/// <seealso href="https://fsbolero.io/docs/Routing#page-models" />
+/// <category>Routing</category>
 [<CLIMutable>]
 type PageModel<'T> = { Model: 'T }
 
@@ -664,15 +683,22 @@ module private RouterImpl =
             cache.[ty] <- segment.Value
             segment.Value
 
-/// Functions for building Routers that bind page navigation with Elmish.
-/// [category: Routing]
+/// <summary>Functions for building Routers that bind page navigation with Elmish.</summary>
+/// <category>Routing</category>
 module Router =
 
-    /// Infer a router constructed around an endpoint type `'ep`.
-    /// This type must be an F# union type, and its cases should use `EndPointAttribute`
+    /// <summary>
+    /// Infer a router constructed around an endpoint type <typeparamref name="ep" />.
+    /// This type must be an F# union type, and its cases should use <see cref="T:EndPointAttribute" />
     /// to declare how they match to a URI.
-    /// Inside `defaultPageModel`, call `Router.definePageModel` to indicate the page model to use
-    /// when switching to a new page.
+    /// </summary>
+    /// <param name="makeMessage">Function that creates the message for switching to the page pointed by an endpoint.</param>
+    /// <param name="getEndPoint">Function that extracts the current endpoint from the Elmish model.</param>
+    /// <param name="defaultPageModel">
+    /// Function that indicates the default <see cref="T:PageModel`1" /> for a given endpoint.
+    /// Inside this function, call <see cref="M:definePageModel" /> to indicate the page model to use when switching to a new page.
+    /// </param>
+    /// <returns>A router for the given endpoint type.</returns>
     let inferWithModel<[<DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)>] 'ep, 'model, 'msg>
             (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) (defaultPageModel: 'ep -> unit) =
         let ty = typeof<'ep>
@@ -694,23 +720,42 @@ module Router =
                     | _ -> None)
         }
 
-    /// Infer a router constructed around an endpoint type `'ep`.
-    /// This type must be an F# union type, and its cases should use `EndPointAttribute`
+    /// <summary>
+    /// Infer a router constructed around an endpoint type <typeparamref name="ep" />.
+    /// This type must be an F# union type, and its cases should use <see cref="T:EndPointAttribute" />
     /// to declare how they match to a URI.
+    /// </summary>
+    /// <param name="makeMessage">Function that creates the message for switching to the page pointed by an endpoint.</param>
+    /// <param name="getEndPoint">Function that extracts the current endpoint from the Elmish model.</param>
+    /// <returns>A router for the given endpoint type.</returns>
     let infer<[<DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)>] 'ep, 'model, 'msg>
             (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) =
         inferWithModel makeMessage getEndPoint ignore
 
+    /// <summary>
+    /// An empty PageModel. Used when constructing an endpoint to pass to methods such as <see cref="M:Router`3.Link" />.
+    /// </summary>
     let noModel<'T> = { Model = Unchecked.defaultof<'T> }
 
+    /// <summary>
+    /// Define the PageModel for a given endpoint.
+    /// Must be called inside the <c>defaultPageModel</c> function passed to <see cref="M:inferWithModel`3" />.
+    /// </summary>
+    /// <param name="pageModel">
+    /// The PageModel, retrieved from the endpoint passed to the function by <see cref="M:inferWithModel`3" />.
+    /// </param>
+    /// <param name="value">The value of the page model to put inside <paramref name="pageModel" />.</param>
     let definePageModel (pageModel: PageModel<'T>) (value: 'T) =
         pageModel.GetType().GetProperty("Model").SetValue(pageModel, value)
 
-/// [category: Routing]
+/// <category>Routing</category>
 [<Extension>]
 type RouterExtensions =
 
-    /// Create an HTML href attribute pointing to the given endpoint.
+    /// <summary>Create an HTML href attribute pointing to the given endpoint.</summary>
+    /// <param name="this">The router.</param>
+    /// <param name="endpoint">The router endpoint.</param>
+    /// <returns>An <c>href</c> attribute pointing to the given endpoint.</returns>
     [<Extension>]
     static member HRef(this: Router<'ep, _, _>, endpoint: 'ep) : Attr =
         Attr.Make "href" (this.Link endpoint)

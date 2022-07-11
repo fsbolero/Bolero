@@ -44,12 +44,13 @@ type RemoteResponse<'resp> =
         | Success x -> Some x
         | Unauthorized -> None
 
+/// <exclude />
 [<AllowNullLiteral>]
 type IConfigureSerialization =
     abstract ConfigureSerialization: JsonSerializerOptions -> unit
 
-/// Provides remote service implementations when running in WebAssembly.
-/// [omit]
+/// <summary>Provides remote service implementations when running in WebAssembly.</summary>
+/// <exclude />
 type ClientRemoteProvider(http: HttpClient, configureSerialization: IConfigureSerialization) =
 
     let serOptions = JsonSerializerOptions()
@@ -117,18 +118,30 @@ type ClientRemoteProvider(http: HttpClient, configureSerialization: IConfigureSe
             basePath.Value <- normalizeBasePath proxy.BasePath
             proxy
 
-/// Extension methods to enable support for remoting in ProgramComponent.
+/// <summary>Extension methods to enable support for remoting in ProgramComponent.</summary>
 [<Extension>]
 type ClientRemotingExtensions =
 
-    /// Enable support for remoting in ProgramComponent.
+    /// <summary>Enable support for remoting in ProgramComponent when running in WebAssembly.</summary>
+    /// <param name="services">The DI service collection.</param>
+    /// <param name="env">The WebAssembly host environment.</param>
+    /// <param name="configureSerialization">
+    /// Callback that configures the JSON serialization for remote arguments and return values.
+    /// </param>
+    /// <returns>The HttpClient builder for remote calls.</returns>
     [<Extension>]
     static member AddRemoting(services: IServiceCollection, env: IWebAssemblyHostEnvironment, ?configureSerialization: JsonSerializerOptions -> unit) =
         ClientRemotingExtensions.AddRemoting(services,
             (fun httpClient -> httpClient.BaseAddress <- Uri(env.BaseAddress)),
             ?configureSerialization = configureSerialization)
 
-    /// Enable support for remoting in ProgramComponent with the given HttpClient configuration.
+    /// <summary>Enable support for remoting in ProgramComponent when running in WebAssembly.</summary>
+    /// <param name="services">The DI service collection.</param>
+    /// <param name="configureHttpClient">Callback that configures the HttpClient.</param>
+    /// <param name="configureSerialization">
+    /// Callback that configures the JSON serialization for remote arguments and return values.
+    /// </param>
+    /// <returns>The HttpClient builder for remote calls.</returns>
     [<Extension>]
     static member AddRemoting(services: IServiceCollection, configureHttpClient: HttpClient -> unit, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
         services.AddSingleton({

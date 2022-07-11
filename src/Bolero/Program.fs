@@ -18,14 +18,19 @@
 //
 // $end{copyright}
 
-/// Functions to enable the router in an Elmish program.
-/// [category: Routing]
+/// <summary>Functions to enable the router in an Elmish program.</summary>
+/// <category>Elmish</category>
 module Bolero.Program
 
 open System.Reflection
 open Elmish
 
+/// <summary>
 /// Attach `router` to `program` when it is run as the `Program` of a `ProgramComponent`.
+/// </summary>
+/// <param name="router">The router.</param>
+/// <param name="program">The Elmish program.</param>
+/// <returns>The Elmish program configured with routing.</param>
 let withRouter
         (router: IRouter<'model, 'msg>)
         (program: Program<'model, 'msg>) =
@@ -38,8 +43,14 @@ let withRouter
             model, initCmd @ compCmd)
         id id id id
 
+/// <summary>
 /// Attach a router inferred from `makeMessage` and `getEndPoint` to `program`
 /// when it is run as the `Program` of a `ProgramComponent`.
+/// </summary>
+/// <param name="makeMessage">Function that creates a message from an endpoint value.</param>
+/// <param name="getEndPoint">Function that extracts the current endpoint from the model.</param>
+/// <param name="program">The Elmish program.</param>
+/// <returns>The Elmish program configured with routing.</param>
 let withRouterInfer
         (makeMessage: 'ep -> 'msg)
         (getEndPoint: 'model -> 'ep)

@@ -27,23 +27,34 @@ open Microsoft.Extensions.DependencyInjection
 open FSharp.Reflection
 open Bolero
 
-/// Exception thrown when a remote function fails to authorize a call.
+/// <summary>Exception thrown when a remote function fails to authorize a call.</summary>
 exception RemoteUnauthorizedException with
     override this.Message = "Unauthorized remote operation"
 
-/// Exception thrown on the client when a remote call fails.
+/// <summary>Exception thrown on the client when a remote call fails.</summary>
 exception RemoteException of HttpResponseMessage
 
-/// Indicate that this type is a remote service, served at the given base URL path.
+/// <summary>Indicate that this type is a remote service, served at the given base URL path.</summary>
 type IRemoteService =
     abstract BasePath : string
 
-/// Provides remote service implementations.
+/// <summary>Provides remote service implementations.</summary>
 type IRemoteProvider =
+
+    /// <summary>Get the remote service of the given type, whose URL has the given base path.</summary>
+    /// <typeparam name="T">The remote service type.</typeparam>
+    /// <param name="basePath">The base URL path.</param>
+    /// <returns>The remote service.</returns>
     abstract GetService<'T> : basePath: string -> 'T
+
+    /// <summary>
+    /// Get the remote service of the given type, whose URL is determined by its <see cref="T:IRemoteService" /> implementation.
+    /// </summary>
+    /// <typeparam name="T">The remote service type.</typeparam>
+    /// <returns>The remote service.</returns>
     abstract GetService<'T when 'T :> IRemoteService> : unit -> 'T
 
-/// [omit]
+/// <exclude />
 type RemoteMethodDefinition =
     {
         Name: string
@@ -52,26 +63,34 @@ type RemoteMethodDefinition =
         ReturnType: Type
     }
 
-/// Extension methods to retrieve remote services from a program component.
+/// <summary>Extension methods to retrieve remote services from a program component.</summary>
 [<Extension>]
 type RemotingExtensions =
 
-    /// [omit]
+    /// <exclude />
     [<Extension>]
     static member RemoteProvider(this: IProgramComponent) =
         this.Services.GetRequiredService<IRemoteProvider>()
 
-    /// Get an instance of the given remote service, whose URL has the given base path.
+    /// <summary>Get an instance of the given remote service, whose URL has the given base path.</summary>
+    /// <typeparam name="T">The remote service type.</typeparam>
+    /// <param name="basePath">The base URL path.</param>
+    /// <returns>The remote service.</returns>
     [<Extension>]
     static member Remote<'T>(this: IProgramComponent, basePath: string) =
         this.RemoteProvider().GetService<'T>(basePath)
 
-    /// Get an instance of the given remote service.
+    /// <summary>
+    /// Get an instance of the given remote service, whose URL is determined by its <see cref="T:IRemoteService" /> implementation.
+    /// </summary>
+    /// <typeparam name="T">The remote service type.</typeparam>
+    /// <param name="basePath">The base URL path.</param>
+    /// <returns>The remote service.</returns>
     [<Extension>]
     static member Remote<'T when 'T :> IRemoteService>(this: IProgramComponent) =
         this.RemoteProvider().GetService<'T>()
 
-    /// [omit]
+    /// <exclude />
     static member ExtractRemoteMethods(ty: Type) : Result<RemoteMethodDefinition[], list<string>> =
         if not (FSharpType.IsRecord ty) then
             Error [$"Remote type must be a record: {ty.FullName}"]
