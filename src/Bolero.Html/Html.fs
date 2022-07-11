@@ -29,57 +29,163 @@ open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Web
 open Bolero.Builders
 
-/// Computation expression to create an Attr that is the concatenation of multiple attributes.
+/// <summary>Computation expression to create an Attr that is the concatenation of multiple attributes.</summary>
+/// <category>HTML attributes</category>
 let attrs = AttrBuilder()
 
+/// <summary>
 /// Computation expression to create a Node that is the concatenation of multiple elements and components.
+/// </summary>
+/// <category>HTML elements</category>
 let concat = ConcatBuilder()
 
-/// Create an empty HTML fragment.
-/// [category: HTML elements]
+/// <summary>Create an empty HTML fragment.</summary>
+/// <category>HTML elements</category>
 let inline empty() = Node.Empty()
 
-/// Create an HTML text node.
-/// [category: HTML elements]
+/// <summary>Create an HTML text node.</summary>
+/// <param name="str">The text.</param>
+/// <category>HTML elements</category>
+/// <remarks>
+/// When inside an HTML computation expression, a text node can be inserted by simply yielding a string,
+/// without having to wrap it in <see cref="M:text" />.
+/// <code lang="fsharp">
+/// let helloWorld =
+///     div {
+///         text "Hello, "  // `text` can be used to create a text node.
+///         "world!"        // But inside an element, a simple string is equivalent.
+///     }
+/// </code>
+/// </remarks>
 let inline text str = Node.Text str
 
-/// Create a raw HTML node.
-/// [category: HTML elements]
+/// <summary>Create a raw HTML node.</summary>
+/// <param name="str">The raw HTML string.</param>
+/// <category>HTML elements</category>
 let inline rawHtml str = Node.RawHtml str
 
-/// Create an HTML text node using formatting.
-/// [category: HTML elements]
+/// <summary>Create an HTML text node using formatting.</summary>
+/// <param name="format">The <see cref="M:Microsoft.FSharp.Core.ExtraTopLevelOperators.printf`1" />-style format string.</param>
+/// <category>HTML elements</category>
 let inline textf format = Printf.kprintf text format
 
-/// Create an HTML element.
-/// [category: HTML elements]
+/// <summary>Create an HTML element.</summary>
+/// <param name="name">The name of the element.</param>
+/// <returns>A computation expression builder to insert attributes and children in the element.</returns>
+/// <example>
+/// <code lang="fsharp">
+/// let helloWorld =
+///     elt "div" {
+///         "id" =&gt; "hello-world"
+///         "Hello, world!"
+///     }
+/// </code>
+/// </example>
+/// <remarks>
+/// Builders such as <see cref="P:div" /> also exist for all standard HTML elements.
+/// In general, it is only useful to call <see cref="M:elt" /> to create a non-standard element.
+/// </remarks>
+/// <category>HTML elements</category>
 let inline elt name = ElementBuilder name
 
-/// Create an HTML attribute.
-/// [category: HTML elements]
+/// <summary>Create an HTML attribute or a component parameter.</summary>
+/// <param name="name">The name of the attribute or parameter.</param>
+/// <param name="value">The value of the attribute or parameter.</param>
+/// <returns>An HTML attribute or component parameter.</returns>
+/// <example>
+/// <code lang="fsharp">
+/// let helloWorld =
+///     div {
+///         "id" =&gt; "hello-world"
+///         "Hello, world!"
+///     }
+/// </code>
+/// </example>
+/// <remarks>
+/// Functions such as <see cref="attr.id" /> also exist for all standard HTML attributes.
+/// In general, it is only useful to call <see cref="M:op_EqualsGreater" /> to create
+/// a non-standard attribute or a component parameter.
+/// </remarks>
+/// <category>HTML elements</category>
 let inline (=>) name value = Attr.Make name value
 
-/// Create a conditional fragment. `matching` must be either a boolean or an F# union.
-/// If it's a union, `mkNode` must only match on the case.
-/// [category: HTML elements]
+/// <summary>
+/// Create a conditional fragment, ie. a fragment whose structure depends on a value.
+/// </summary>
+/// <param name="matching">
+/// The value on which the structure of the fragment depends.
+/// Must be either a boolean or an F# union.
+/// </param>
+/// <param name="mkNode">
+/// The function that creates the node. If <paramref name="matching" /> is a union,
+/// then <paramref name="mkNode" /> must only match on the case, without nested patterns.
+/// </param>
+/// <returns>The generated HTML fragment wrapped in a way that Blazor can render.</returns>
+/// <example>
+/// This function is necessary because Blazor cannot properly render HTML whose structure changes
+/// depending on some runtime state. For example, the following would fail at runtime:
+/// <code lang="fsharp">
+/// let failing (isBold: bool) =
+///     div {
+///         if isBold then
+///             b { text "Hello, world!" }
+///         else
+///             text "Hello, world!"
+///     }
+/// </code>
+/// Instead, <see cref="M:cond" /> must be used:
+/// <code lang="fsharp">
+/// let succeeding (isBold: bool) =
+///     div {
+///         cond isBold &lt;| function
+///             | true -> b { text "Hello, world!" }
+///             | false -> text "Hello, world!"
+///     }
+/// </code>
+/// </example>
+/// <category>HTML elements</category>
 let inline cond<'T> (matching: 'T) (mkNode: 'T -> Node) =
     Node.Match matching (mkNode matching)
 
-/// Create a fragment that concatenates nodes for each item in a sequence.
-/// [category: HTML elements]
+/// <summary>Create a HTML fragment that concatenates nodes for each item in a sequence.</summary>
+/// <typeparam name="T">The type of items to render into HTML fragments.</typeparam>
+/// <param name="items">The sequence of items to render into HTML fragments.</param>
+/// <param name="mkNode">The function that renders one item into a HTML fragment.</param>
+/// <category>HTML elements</category>
 let inline forEach<'T> (items: seq<'T>) (mkNode: 'T -> Node) =
     Node.ForEach items mkNode
 
-/// Create a node from a Blazor RenderFragment.
+/// <summary>Wrap a Blazor RenderFragment in a Bolero Node.</summary>
+/// <param name="fragment">The Blazor RenderFragment.</param>
+/// <returns>A Bolero Node representing the Blazor RenderFragment.</returns>
 let inline fragment (frag: RenderFragment) =
     Node.Fragment frag
 
-/// Create a fragment from a Blazor component.
-/// [category: Components]
+/// <summary>Computation expression builder to create a Blazor component.</summary>
+/// <typeparam name="T">The Blazor component type.</typeparam>
+/// <example>
+/// <code lang="fsharp">
+/// open Microsoft.AspNetCore.Components
+///
+/// let homeLink =
+///     comp&lt;Routing.NavLink&gt; {
+///         "Match" => Routing.NavLinkMatch.Prefix
+///         attr.href "/"
+///         "Go to the home page"
+///     }
+/// </code>
+/// </example>
+/// <category>Components</category>
 let inline comp<'T when 'T :> IComponent> = ComponentBuilder<'T>()
 
-/// Create a fragment from an Elmish component.
-/// [category: Components]
+/// <summary>Computation expression builder to create an Elmish component.</summary>
+/// <typeparam name="T">The Elmish component type.</typeparam>
+/// <typeparam name="model">The Elmish model type.</typeparam>
+/// <typeparam name="msg">The Elmish message type.</typeparam>
+/// <param name="model">The Elmish model.</param>
+/// <param name="dispatch">The Elmish dispatch function.</param>
+/// <returns>A computation expression builder to insert attributes and children in the component.</returns>
+/// <category>Components</category>
 let inline ecomp<'T, 'model, 'msg when 'T :> ElmishComponent<'model, 'msg>>
         (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
     ComponentWithAttrsAndNoChildrenBuilder<'T>(attrs {
@@ -87,8 +193,11 @@ let inline ecomp<'T, 'model, 'msg when 'T :> ElmishComponent<'model, 'msg>>
         "Dispatch" => dispatch
     })
 
-/// Create a fragment with a lazily rendered view function.
-/// [category: Components]
+/// <summary>Create a fragment with a lazily rendered view function.</summary>
+/// <typeparam name="model">The model passed to the view function.</typeparam>
+/// <param name="model">The model passed to the view function.</param>
+/// <param name="viewFunction">The view function.</param>
+/// <category>Components</category>
 let inline lazyComp ([<InlineIfLambda>] viewFunction: 'model -> Node) (model: 'model) =
     let viewFunction' : 'model -> Elmish.Dispatch<_> -> Node = fun m _ -> viewFunction m
     comp<LazyComponent<'model, obj>> {
@@ -96,8 +205,12 @@ let inline lazyComp ([<InlineIfLambda>] viewFunction: 'model -> Node) (model: 'm
         "ViewFunction" => viewFunction'
     }
 
-/// Create a fragment with a lazily rendered view function and a custom equality.
-/// [category: Components]
+/// <summary>Create a fragment with a lazily rendered view function and a custom equality.</summary>
+/// <typeparam name="model">The model passed to the view function.</typeparam>
+/// <param name="equal">The equality function used to determine if the view needs re-rendering.</param>
+/// <param name="viewFunction">The view function.</param>
+/// <param name="model">The model passed to the view function.</param>
+/// <category>Components</category>
 let inline lazyCompWith (equal: 'model -> 'model -> bool) ([<InlineIfLambda>] viewFunction: 'model -> Node) (model: 'model) =
     let viewFunction' : 'model -> Elmish.Dispatch<_> -> Node = fun m _ -> viewFunction m
     comp<LazyComponent<'model, obj>> {
@@ -106,8 +219,13 @@ let inline lazyCompWith (equal: 'model -> 'model -> bool) ([<InlineIfLambda>] vi
         "Equal" => equal
     }
 
-/// Create a fragment with a lazily rendered view function.
-/// [category: Components]
+/// <summary>Create a fragment with a lazily rendered view function.</summary>
+/// <typeparam name="model">The model passed to the view function.</typeparam>
+/// <typeparam name="msg">The Elmish message type.</typeparam>
+/// <param name="viewFunction">The view function.</param>
+/// <param name="model">The model passed to the view function.</param>
+/// <param name="dispatch">The Elmish dispatch function.</param>
+/// <category>Components</category>
 let inline lazyComp2 (viewFunction: 'model -> Elmish.Dispatch<'msg> -> Node) (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
     comp<LazyComponent<'model, 'msg>> {
         "Model" => model
@@ -115,8 +233,14 @@ let inline lazyComp2 (viewFunction: 'model -> Elmish.Dispatch<'msg> -> Node) (mo
         "ViewFunction" => viewFunction
     }
 
-/// Create a fragment with a lazily rendered view function and a custom equality.
-/// [category: Components]
+/// <summary>Create a fragment with a lazily rendered view function and a custom equality.</summary>
+/// <typeparam name="model">The model passed to the view function.</typeparam>
+/// <typeparam name="msg">The Elmish message type.</typeparam>
+/// <param name="equal">The equality function used to determine if the view needs re-rendering.</param>
+/// <param name="viewFunction">The view function.</param>
+/// <param name="model">The model passed to the view function.</param>
+/// <param name="dispatch">The Elmish dispatch function.</param>
+/// <category>Components</category>
 let inline lazyComp2With (equal: 'model -> 'model -> bool) (viewFunction: 'model -> Elmish.Dispatch<'msg> -> Node) (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
     comp<LazyComponent<'model, 'msg>> {
         "Model" => model
@@ -125,8 +249,15 @@ let inline lazyComp2With (equal: 'model -> 'model -> bool) (viewFunction: 'model
         "Equal" => equal
     }
 
-/// Create a fragment with a lazily rendered view function.
-/// [category: Components]
+/// <summary>Create a fragment with a lazily rendered view function and two model values.</summary>
+/// <typeparam name="model1">The first model passed to the view function.</typeparam>
+/// <typeparam name="model2">The second model passed to the view function.</typeparam>
+/// <typeparam name="msg">The Elmish message type.</typeparam>
+/// <param name="viewFunction">The view function.</param>
+/// <param name="model1">The first model passed to the view function.</param>
+/// <param name="model2">The second model passed to the view function.</param>
+/// <param name="dispatch">The Elmish dispatch function.</param>
+/// <category>Components</category>
 let inline lazyComp3 (viewFunction: ('model1 * 'model2') -> Elmish.Dispatch<'msg> -> Node) (model1: 'model1) (model2: 'model2) (dispatch: Elmish.Dispatch<'msg>) =
     comp<LazyComponent<'model1 * 'model2, 'msg>>{
         "Model" => (model1, model2)
@@ -134,8 +265,16 @@ let inline lazyComp3 (viewFunction: ('model1 * 'model2') -> Elmish.Dispatch<'msg
         "ViewFunction" => viewFunction
     }
 
-/// Create a fragment with a lazily rendered view function and a custom equality.
-/// [category: Components]
+/// <summary>Create a fragment with a lazily rendered view function, two model values and a custom equality.</summary>
+/// <typeparam name="model1">The first model passed to the view function.</typeparam>
+/// <typeparam name="model2">The second model passed to the view function.</typeparam>
+/// <typeparam name="msg">The Elmish message type.</typeparam>
+/// <param name="equal">The equality function used to determine if the view needs re-rendering.</param>
+/// <param name="viewFunction">The view function.</param>
+/// <param name="model1">The first model passed to the view function.</param>
+/// <param name="model2">The second model passed to the view function.</param>
+/// <param name="dispatch">The Elmish dispatch function.</param>
+/// <category>Components</category>
 let inline lazyComp3With (equal: ('model1 * 'model2) -> ('model1 * 'model2) -> bool) (viewFunction: ('model1 * 'model2') -> Elmish.Dispatch<'msg> -> Node) (model1: 'model1) (model2: 'model2) (dispatch: Elmish.Dispatch<'msg>) =
     comp<LazyComponent<'model1 * 'model2, 'msg>> {
         "Model" => (model1, model2)
@@ -144,591 +283,634 @@ let inline lazyComp3With (equal: ('model1 * 'model2) -> ('model1 * 'model2) -> b
         "Equal" => equal
     }
 
-/// Create a fragment with a lazily rendered view function and custom equality on model field.
-/// [category: Components]
+/// <summary>Create a fragment with a lazily rendered view function and custom equality on model field.</summary>
+/// <typeparam name="model">The model passed to the view function.</typeparam>
+/// <param name="equal">The function used to extract the equality key that determines if the view needs re-rendering.</param>
+/// <param name="viewFunction">The view function.</param>
+/// <param name="model">The model passed to the view function.</param>
+/// <category>Components</category>
 let inline lazyCompBy (equal: 'model -> 'a) (viewFunction: 'model -> Node) (model: 'model) =
     let equal' model1 model2 = (equal model1) = (equal model2)
     lazyCompWith equal' viewFunction model
 
-/// Create a fragment with a lazily rendered view function and custom equality on model field.
-/// [category: Components]
+/// <summary>Create a fragment with a lazily rendered view function and custom equality on model field.</summary>
+/// <typeparam name="model">The model passed to the view function.</typeparam>
+/// <typeparam name="msg">The Elmish message type.</typeparam>
+/// <param name="equal">The function used to extract the equality key that determines if the view needs re-rendering.</param>
+/// <param name="viewFunction">The view function.</param>
+/// <param name="model">The model passed to the view function.</param>
+/// <param name="dispatch">The Elmish dispatch function.</param>
+/// <category>Components</category>
 let inline lazyComp2By (equal: 'model -> 'a) (viewFunction: 'model -> Elmish.Dispatch<'msg> -> Node) (model: 'model) (dispatch: Elmish.Dispatch<'msg>) =
     let equal' model1 model2 = (equal model1) = (equal model2)
     lazyComp2With equal' viewFunction model dispatch
 
-/// Create a fragment with a lazily rendered view function and custom equality on model field.
-/// [category: Components]
+/// <summary>Create a fragment with a lazily rendered view function, two model values and custom equality on model field.</summary>
+/// <typeparam name="model1">The first model passed to the view function.</typeparam>
+/// <typeparam name="model2">The second model passed to the view function.</typeparam>
+/// <typeparam name="msg">The Elmish message type.</typeparam>
+/// <param name="equal">The function used to extract the equality key that determines if the view needs re-rendering.</param>
+/// <param name="viewFunction">The view function.</param>
+/// <param name="model1">The first model passed to the view function.</param>
+/// <param name="model2">The second model passed to the view function.</param>
+/// <param name="dispatch">The Elmish dispatch function.</param>
+/// <category>Components</category>
 let inline lazyComp3By (equal: ('model1 * 'model2) -> 'a) (viewFunction: ('model1 * 'model2) -> Elmish.Dispatch<'msg> -> Node) (model1: 'model1) (model2: 'model2) (dispatch: Elmish.Dispatch<'msg>) =
     let equal' (model11, model12) (model21, model22) = (equal (model11, model12)) = (equal (model21, model22))
     lazyComp3With equal' viewFunction model1 model2 dispatch
 
-/// Create a navigation link which toggles its `active` class
-/// based on whether the current URI matches its `href`.
-/// [category: Components]
+/// <summary>
+/// Computation expression builder to create a navigation link which toggles its <c>active</c> class
+/// based on whether the current URI matches its <c>href</c>.
+/// </summary>
+/// <param name="match">The URL match behavior.</param>
+/// <example>
+/// <code lang="fsharp">
+/// open Microsoft.AspNetCore.Components.Routing
+///
+/// let homeLink =
+///     navLink NavLinkMatch.All {
+///         attr.href "/home"
+///         "Go to home"
+///     }
+/// </code>
+/// </example>
+/// <category>Components</category>
 let inline navLink (``match``: Routing.NavLinkMatch) =
     ComponentWithAttrsBuilder<Routing.NavLink>(attrs {
         "Match" => ``match``
     })
 
 // BEGIN TAGS
-/// Create an HTML `<a>` element.
-/// [category: HTML tag names]
-let a : ElementBuilder = elt "a"
-
-/// Create an HTML `<abbr>` element.
-/// [category: HTML tag names]
-let abbr : ElementBuilder = elt "abbr"
-
-/// Create an HTML `<acronym>` element.
-/// [category: HTML tag names]
-let acronym : ElementBuilder = elt "acronym"
-
-/// Create an HTML `<address>` element.
-/// [category: HTML tag names]
-let address : ElementBuilder = elt "address"
-
-/// Create an HTML `<applet>` element.
-/// [category: HTML tag names]
-let applet : ElementBuilder = elt "applet"
-
-/// Create an HTML `<area>` element.
-/// [category: HTML tag names]
-let area : ElementBuilder = elt "area"
-
-/// Create an HTML `<article>` element.
-/// [category: HTML tag names]
-let article : ElementBuilder = elt "article"
-
-/// Create an HTML `<aside>` element.
-/// [category: HTML tag names]
-let aside : ElementBuilder = elt "aside"
-
-/// Create an HTML `<audio>` element.
-/// [category: HTML tag names]
-let audio : ElementBuilder = elt "audio"
-
-/// Create an HTML `<b>` element.
-/// [category: HTML tag names]
-let b : ElementBuilder = elt "b"
-
-/// Create an HTML `<base>` element.
-/// [category: HTML tag names]
-let ``base`` : ElementBuilder = elt "base"
-
-/// Create an HTML `<basefont>` element.
-/// [category: HTML tag names]
-let basefont : ElementBuilder = elt "basefont"
-
-/// Create an HTML `<bdi>` element.
-/// [category: HTML tag names]
-let bdi : ElementBuilder = elt "bdi"
-
-/// Create an HTML `<bdo>` element.
-/// [category: HTML tag names]
-let bdo : ElementBuilder = elt "bdo"
-
-/// Create an HTML `<big>` element.
-/// [category: HTML tag names]
-let big : ElementBuilder = elt "big"
-
-/// Create an HTML `<blockquote>` element.
-/// [category: HTML tag names]
-let blockquote : ElementBuilder = elt "blockquote"
-
-/// Create an HTML `<body>` element.
-/// [category: HTML tag names]
-let body : ElementBuilder = elt "body"
-
-/// Create an HTML `<br>` element.
-/// [category: HTML tag names]
-let br : ElementBuilder = elt "br"
-
-/// Create an HTML `<button>` element.
-/// [category: HTML tag names]
-let button : ElementBuilder = elt "button"
-
-/// Create an HTML `<canvas>` element.
-/// [category: HTML tag names]
-let canvas : ElementBuilder = elt "canvas"
-
-/// Create an HTML `<caption>` element.
-/// [category: HTML tag names]
-let caption : ElementBuilder = elt "caption"
-
-/// Create an HTML `<center>` element.
-/// [category: HTML tag names]
-let center : ElementBuilder = elt "center"
-
-/// Create an HTML `<cite>` element.
-/// [category: HTML tag names]
-let cite : ElementBuilder = elt "cite"
-
-/// Create an HTML `<code>` element.
-/// [category: HTML tag names]
-let code : ElementBuilder = elt "code"
-
-/// Create an HTML `<col>` element.
-/// [category: HTML tag names]
-let col : ElementBuilder = elt "col"
-
-/// Create an HTML `<colgroup>` element.
-/// [category: HTML tag names]
-let colgroup : ElementBuilder = elt "colgroup"
-
-/// Create an HTML `<content>` element.
-/// [category: HTML tag names]
-let content : ElementBuilder = elt "content"
-
-/// Create an HTML `<data>` element.
-/// [category: HTML tag names]
-let data : ElementBuilder = elt "data"
-
-/// Create an HTML `<datalist>` element.
-/// [category: HTML tag names]
-let datalist : ElementBuilder = elt "datalist"
-
-/// Create an HTML `<dd>` element.
-/// [category: HTML tag names]
-let dd : ElementBuilder = elt "dd"
-
-/// Create an HTML `<del>` element.
-/// [category: HTML tag names]
-let del : ElementBuilder = elt "del"
-
-/// Create an HTML `<details>` element.
-/// [category: HTML tag names]
-let details : ElementBuilder = elt "details"
-
-/// Create an HTML `<dfn>` element.
-/// [category: HTML tag names]
-let dfn : ElementBuilder = elt "dfn"
-
-/// Create an HTML `<dialog>` element.
-/// [category: HTML tag names]
-let dialog : ElementBuilder = elt "dialog"
-
-/// Create an HTML `<dir>` element.
-/// [category: HTML tag names]
-let dir : ElementBuilder = elt "dir"
-
-/// Create an HTML `<div>` element.
-/// [category: HTML tag names]
-let div : ElementBuilder = elt "div"
-
-/// Create an HTML `<dl>` element.
-/// [category: HTML tag names]
-let dl : ElementBuilder = elt "dl"
-
-/// Create an HTML `<dt>` element.
-/// [category: HTML tag names]
-let dt : ElementBuilder = elt "dt"
-
-/// Create an HTML `<element>` element.
-/// [category: HTML tag names]
-let element : ElementBuilder = elt "element"
-
-/// Create an HTML `<em>` element.
-/// [category: HTML tag names]
-let em : ElementBuilder = elt "em"
-
-/// Create an HTML `<embed>` element.
-/// [category: HTML tag names]
-let embed : ElementBuilder = elt "embed"
-
-/// Create an HTML `<fieldset>` element.
-/// [category: HTML tag names]
-let fieldset : ElementBuilder = elt "fieldset"
-
-/// Create an HTML `<figcaption>` element.
-/// [category: HTML tag names]
-let figcaption : ElementBuilder = elt "figcaption"
-
-/// Create an HTML `<figure>` element.
-/// [category: HTML tag names]
-let figure : ElementBuilder = elt "figure"
-
-/// Create an HTML `<font>` element.
-/// [category: HTML tag names]
-let font : ElementBuilder = elt "font"
-
-/// Create an HTML `<footer>` element.
-/// [category: HTML tag names]
-let footer : ElementBuilder = elt "footer"
-
-/// Create an HTML `<form>` element.
-/// [category: HTML tag names]
-let form : ElementBuilder = elt "form"
-
-/// Create an HTML `<frame>` element.
-/// [category: HTML tag names]
-let frame : ElementBuilder = elt "frame"
-
-/// Create an HTML `<frameset>` element.
-/// [category: HTML tag names]
-let frameset : ElementBuilder = elt "frameset"
-
-/// Create an HTML `<h1>` element.
-/// [category: HTML tag names]
-let h1 : ElementBuilder = elt "h1"
-
-/// Create an HTML `<h2>` element.
-/// [category: HTML tag names]
-let h2 : ElementBuilder = elt "h2"
-
-/// Create an HTML `<h3>` element.
-/// [category: HTML tag names]
-let h3 : ElementBuilder = elt "h3"
-
-/// Create an HTML `<h4>` element.
-/// [category: HTML tag names]
-let h4 : ElementBuilder = elt "h4"
-
-/// Create an HTML `<h5>` element.
-/// [category: HTML tag names]
-let h5 : ElementBuilder = elt "h5"
-
-/// Create an HTML `<h6>` element.
-/// [category: HTML tag names]
-let h6 : ElementBuilder = elt "h6"
-
-/// Create an HTML `<head>` element.
-/// [category: HTML tag names]
-let head : ElementBuilder = elt "head"
-
-/// Create an HTML `<header>` element.
-/// [category: HTML tag names]
-let header : ElementBuilder = elt "header"
-
-/// Create an HTML `<hr>` element.
-/// [category: HTML tag names]
-let hr : ElementBuilder = elt "hr"
-
-/// Create an HTML `<html>` element.
-/// [category: HTML tag names]
-let html : ElementBuilder = elt "html"
-
-/// Create an HTML `<i>` element.
-/// [category: HTML tag names]
-let i : ElementBuilder = elt "i"
-
-/// Create an HTML `<iframe>` element.
-/// [category: HTML tag names]
-let iframe : ElementBuilder = elt "iframe"
-
-/// Create an HTML `<img>` element.
-/// [category: HTML tag names]
-let img : ElementBuilder = elt "img"
-
-/// Create an HTML `<input>` element.
-/// [category: HTML tag names]
-let input : ElementBuilder = elt "input"
-
-/// Create an HTML `<ins>` element.
-/// [category: HTML tag names]
-let ins : ElementBuilder = elt "ins"
-
-/// Create an HTML `<kbd>` element.
-/// [category: HTML tag names]
-let kbd : ElementBuilder = elt "kbd"
-
-/// Create an HTML `<label>` element.
-/// [category: HTML tag names]
-let label : ElementBuilder = elt "label"
-
-/// Create an HTML `<legend>` element.
-/// [category: HTML tag names]
-let legend : ElementBuilder = elt "legend"
-
-/// Create an HTML `<li>` element.
-/// [category: HTML tag names]
-let li : ElementBuilder = elt "li"
-
-/// Create an HTML `<link>` element.
-/// [category: HTML tag names]
-let link : ElementBuilder = elt "link"
-
-/// Create an HTML `<main>` element.
-/// [category: HTML tag names]
-let main : ElementBuilder = elt "main"
-
-/// Create an HTML `<map>` element.
-/// [category: HTML tag names]
-let map : ElementBuilder = elt "map"
-
-/// Create an HTML `<mark>` element.
-/// [category: HTML tag names]
-let mark : ElementBuilder = elt "mark"
-
-/// Create an HTML `<menu>` element.
-/// [category: HTML tag names]
-let menu : ElementBuilder = elt "menu"
-
-/// Create an HTML `<menuitem>` element.
-/// [category: HTML tag names]
-let menuitem : ElementBuilder = elt "menuitem"
-
-/// Create an HTML `<meta>` element.
-/// [category: HTML tag names]
-let meta : ElementBuilder = elt "meta"
-
-/// Create an HTML `<meter>` element.
-/// [category: HTML tag names]
-let meter : ElementBuilder = elt "meter"
-
-/// Create an HTML `<nav>` element.
-/// [category: HTML tag names]
-let nav : ElementBuilder = elt "nav"
-
-/// Create an HTML `<noembed>` element.
-/// [category: HTML tag names]
-let noembed : ElementBuilder = elt "noembed"
-
-/// Create an HTML `<noframes>` element.
-/// [category: HTML tag names]
-let noframes : ElementBuilder = elt "noframes"
-
-/// Create an HTML `<noscript>` element.
-/// [category: HTML tag names]
-let noscript : ElementBuilder = elt "noscript"
-
-/// Create an HTML `<object>` element.
-/// [category: HTML tag names]
-let object : ElementBuilder = elt "object"
-
-/// Create an HTML `<ol>` element.
-/// [category: HTML tag names]
-let ol : ElementBuilder = elt "ol"
-
-/// Create an HTML `<optgroup>` element.
-/// [category: HTML tag names]
-let optgroup : ElementBuilder = elt "optgroup"
-
-/// Create an HTML `<option>` element.
-/// [category: HTML tag names]
-let option : ElementBuilder = elt "option"
-
-/// Create an HTML `<output>` element.
-/// [category: HTML tag names]
-let output : ElementBuilder = elt "output"
-
-/// Create an HTML `<p>` element.
-/// [category: HTML tag names]
-let p : ElementBuilder = elt "p"
-
-/// Create an HTML `<param>` element.
-/// [category: HTML tag names]
-let param : ElementBuilder = elt "param"
-
-/// Create an HTML `<picture>` element.
-/// [category: HTML tag names]
-let picture : ElementBuilder = elt "picture"
-
-/// Create an HTML `<pre>` element.
-/// [category: HTML tag names]
-let pre : ElementBuilder = elt "pre"
-
-/// Create an HTML `<progress>` element.
-/// [category: HTML tag names]
-let progress : ElementBuilder = elt "progress"
-
-/// Create an HTML `<q>` element.
-/// [category: HTML tag names]
-let q : ElementBuilder = elt "q"
-
-/// Create an HTML `<rb>` element.
-/// [category: HTML tag names]
-let rb : ElementBuilder = elt "rb"
-
-/// Create an HTML `<rp>` element.
-/// [category: HTML tag names]
-let rp : ElementBuilder = elt "rp"
-
-/// Create an HTML `<rt>` element.
-/// [category: HTML tag names]
-let rt : ElementBuilder = elt "rt"
-
-/// Create an HTML `<rtc>` element.
-/// [category: HTML tag names]
-let rtc : ElementBuilder = elt "rtc"
-
-/// Create an HTML `<ruby>` element.
-/// [category: HTML tag names]
-let ruby : ElementBuilder = elt "ruby"
-
-/// Create an HTML `<s>` element.
-/// [category: HTML tag names]
-let s : ElementBuilder = elt "s"
-
-/// Create an HTML `<samp>` element.
-/// [category: HTML tag names]
-let samp : ElementBuilder = elt "samp"
-
-/// Create an HTML `<script>` element.
-/// [category: HTML tag names]
-let script : ElementBuilder = elt "script"
-
-/// Create an HTML `<section>` element.
-/// [category: HTML tag names]
-let section : ElementBuilder = elt "section"
-
-/// Create an HTML `<select>` element.
-/// [category: HTML tag names]
-let select : ElementBuilder = elt "select"
-
-/// Create an HTML `<shadow>` element.
-/// [category: HTML tag names]
-let shadow : ElementBuilder = elt "shadow"
-
-/// Create an HTML `<slot>` element.
-/// [category: HTML tag names]
-let slot : ElementBuilder = elt "slot"
-
-/// Create an HTML `<small>` element.
-/// [category: HTML tag names]
-let small : ElementBuilder = elt "small"
-
-/// Create an HTML `<source>` element.
-/// [category: HTML tag names]
-let source : ElementBuilder = elt "source"
-
-/// Create an HTML `<span>` element.
-/// [category: HTML tag names]
-let span : ElementBuilder = elt "span"
-
-/// Create an HTML `<strike>` element.
-/// [category: HTML tag names]
-let strike : ElementBuilder = elt "strike"
-
-/// Create an HTML `<strong>` element.
-/// [category: HTML tag names]
-let strong : ElementBuilder = elt "strong"
-
-/// Create an HTML `<style>` element.
-/// [category: HTML tag names]
-let style : ElementBuilder = elt "style"
-
-/// Create an HTML `<sub>` element.
-/// [category: HTML tag names]
-let sub : ElementBuilder = elt "sub"
-
-/// Create an HTML `<summary>` element.
-/// [category: HTML tag names]
-let summary : ElementBuilder = elt "summary"
-
-/// Create an HTML `<sup>` element.
-/// [category: HTML tag names]
-let sup : ElementBuilder = elt "sup"
-
-/// Create an HTML `<svg>` element.
-/// [category: HTML tag names]
-let svg : ElementBuilder = elt "svg"
-
-/// Create an HTML `<table>` element.
-/// [category: HTML tag names]
-let table : ElementBuilder = elt "table"
-
-/// Create an HTML `<tbody>` element.
-/// [category: HTML tag names]
-let tbody : ElementBuilder = elt "tbody"
-
-/// Create an HTML `<td>` element.
-/// [category: HTML tag names]
-let td : ElementBuilder = elt "td"
-
-/// Create an HTML `<template>` element.
-/// [category: HTML tag names]
-let template : ElementBuilder = elt "template"
-
-/// Create an HTML `<textarea>` element.
-/// [category: HTML tag names]
-let textarea : ElementBuilder = elt "textarea"
-
-/// Create an HTML `<tfoot>` element.
-/// [category: HTML tag names]
-let tfoot : ElementBuilder = elt "tfoot"
-
-/// Create an HTML `<th>` element.
-/// [category: HTML tag names]
-let th : ElementBuilder = elt "th"
-
-/// Create an HTML `<thead>` element.
-/// [category: HTML tag names]
-let thead : ElementBuilder = elt "thead"
-
-/// Create an HTML `<time>` element.
-/// [category: HTML tag names]
-let time : ElementBuilder = elt "time"
-
-/// Create an HTML `<title>` element.
-/// [category: HTML tag names]
-let title : ElementBuilder = elt "title"
-
-/// Create an HTML `<tr>` element.
-/// [category: HTML tag names]
-let tr : ElementBuilder = elt "tr"
-
-/// Create an HTML `<track>` element.
-/// [category: HTML tag names]
-let track : ElementBuilder = elt "track"
-
-/// Create an HTML `<tt>` element.
-/// [category: HTML tag names]
-let tt : ElementBuilder = elt "tt"
-
-/// Create an HTML `<u>` element.
-/// [category: HTML tag names]
-let u : ElementBuilder = elt "u"
-
-/// Create an HTML `<ul>` element.
-/// [category: HTML tag names]
-let ul : ElementBuilder = elt "ul"
-
-/// Create an HTML `<var>` element.
-/// [category: HTML tag names]
-let var : ElementBuilder = elt "var"
-
-/// Create an HTML `<video>` element.
-/// [category: HTML tag names]
-let video : ElementBuilder = elt "video"
-
-/// Create an HTML `<wbr>` element.
-/// [category: HTML tag names]
-let wbr : ElementBuilder = elt "wbr"
+/// <summary>Computation expression to create an HTML <c>&lt;a&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let a : ElementBuilder = elt "a" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;abbr&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let abbr : ElementBuilder = elt "abbr" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;acronym&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let acronym : ElementBuilder = elt "acronym" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;address&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let address : ElementBuilder = elt "address" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;applet&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let applet : ElementBuilder = elt "applet" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;area&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let area : ElementBuilder = elt "area" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;article&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let article : ElementBuilder = elt "article" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;aside&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let aside : ElementBuilder = elt "aside" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;audio&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let audio : ElementBuilder = elt "audio" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;b&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let b : ElementBuilder = elt "b" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;base&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let ``base`` : ElementBuilder = elt "base" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;basefont&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let basefont : ElementBuilder = elt "basefont" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;bdi&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let bdi : ElementBuilder = elt "bdi" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;bdo&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let bdo : ElementBuilder = elt "bdo" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;big&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let big : ElementBuilder = elt "big" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;blockquote&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let blockquote : ElementBuilder = elt "blockquote" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;body&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let body : ElementBuilder = elt "body" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;br&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let br : ElementBuilder = elt "br" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;button&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let button : ElementBuilder = elt "button" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;canvas&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let canvas : ElementBuilder = elt "canvas" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;caption&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let caption : ElementBuilder = elt "caption" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;center&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let center : ElementBuilder = elt "center" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;cite&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let cite : ElementBuilder = elt "cite" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;code&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let code : ElementBuilder = elt "code" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;col&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let col : ElementBuilder = elt "col" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;colgroup&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let colgroup : ElementBuilder = elt "colgroup" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;content&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let content : ElementBuilder = elt "content" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;data&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let data : ElementBuilder = elt "data" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;datalist&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let datalist : ElementBuilder = elt "datalist" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;dd&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let dd : ElementBuilder = elt "dd" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;del&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let del : ElementBuilder = elt "del" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;details&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let details : ElementBuilder = elt "details" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;dfn&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let dfn : ElementBuilder = elt "dfn" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;dialog&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let dialog : ElementBuilder = elt "dialog" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;dir&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let dir : ElementBuilder = elt "dir" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;div&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let div : ElementBuilder = elt "div" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;dl&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let dl : ElementBuilder = elt "dl" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;dt&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let dt : ElementBuilder = elt "dt" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;element&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let element : ElementBuilder = elt "element" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;em&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let em : ElementBuilder = elt "em" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;embed&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let embed : ElementBuilder = elt "embed" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;fieldset&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let fieldset : ElementBuilder = elt "fieldset" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;figcaption&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let figcaption : ElementBuilder = elt "figcaption" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;figure&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let figure : ElementBuilder = elt "figure" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;font&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let font : ElementBuilder = elt "font" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;footer&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let footer : ElementBuilder = elt "footer" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;form&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let form : ElementBuilder = elt "form" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;frame&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let frame : ElementBuilder = elt "frame" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;frameset&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let frameset : ElementBuilder = elt "frameset" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;h1&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let h1 : ElementBuilder = elt "h1" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;h2&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let h2 : ElementBuilder = elt "h2" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;h3&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let h3 : ElementBuilder = elt "h3" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;h4&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let h4 : ElementBuilder = elt "h4" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;h5&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let h5 : ElementBuilder = elt "h5" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;h6&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let h6 : ElementBuilder = elt "h6" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;head&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let head : ElementBuilder = elt "head" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;header&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let header : ElementBuilder = elt "header" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;hr&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let hr : ElementBuilder = elt "hr" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;html&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let html : ElementBuilder = elt "html" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;i&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let i : ElementBuilder = elt "i" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;iframe&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let iframe : ElementBuilder = elt "iframe" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;img&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let img : ElementBuilder = elt "img" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;input&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let input : ElementBuilder = elt "input" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;ins&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let ins : ElementBuilder = elt "ins" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;kbd&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let kbd : ElementBuilder = elt "kbd" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;label&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let label : ElementBuilder = elt "label" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;legend&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let legend : ElementBuilder = elt "legend" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;li&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let li : ElementBuilder = elt "li" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;link&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let link : ElementBuilder = elt "link" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;main&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let main : ElementBuilder = elt "main" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;map&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let map : ElementBuilder = elt "map" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;mark&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let mark : ElementBuilder = elt "mark" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;menu&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let menu : ElementBuilder = elt "menu" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;menuitem&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let menuitem : ElementBuilder = elt "menuitem" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;meta&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let meta : ElementBuilder = elt "meta" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;meter&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let meter : ElementBuilder = elt "meter" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;nav&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let nav : ElementBuilder = elt "nav" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;noembed&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let noembed : ElementBuilder = elt "noembed" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;noframes&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let noframes : ElementBuilder = elt "noframes" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;noscript&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let noscript : ElementBuilder = elt "noscript" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;object&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let object : ElementBuilder = elt "object" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;ol&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let ol : ElementBuilder = elt "ol" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;optgroup&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let optgroup : ElementBuilder = elt "optgroup" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;option&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let option : ElementBuilder = elt "option" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;output&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let output : ElementBuilder = elt "output" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;p&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let p : ElementBuilder = elt "p" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;param&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let param : ElementBuilder = elt "param" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;picture&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let picture : ElementBuilder = elt "picture" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;pre&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let pre : ElementBuilder = elt "pre" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;progress&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let progress : ElementBuilder = elt "progress" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;q&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let q : ElementBuilder = elt "q" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;rb&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let rb : ElementBuilder = elt "rb" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;rp&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let rp : ElementBuilder = elt "rp" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;rt&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let rt : ElementBuilder = elt "rt" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;rtc&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let rtc : ElementBuilder = elt "rtc" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;ruby&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let ruby : ElementBuilder = elt "ruby" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;s&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let s : ElementBuilder = elt "s" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;samp&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let samp : ElementBuilder = elt "samp" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;script&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let script : ElementBuilder = elt "script" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;section&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let section : ElementBuilder = elt "section" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;select&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let select : ElementBuilder = elt "select" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;shadow&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let shadow : ElementBuilder = elt "shadow" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;slot&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let slot : ElementBuilder = elt "slot" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;small&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let small : ElementBuilder = elt "small" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;source&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let source : ElementBuilder = elt "source" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;span&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let span : ElementBuilder = elt "span" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;strike&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let strike : ElementBuilder = elt "strike" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;strong&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let strong : ElementBuilder = elt "strong" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;style&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let style : ElementBuilder = elt "style" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;sub&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let sub : ElementBuilder = elt "sub" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;summary&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let summary : ElementBuilder = elt "summary" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;sup&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let sup : ElementBuilder = elt "sup" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;svg&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let svg : ElementBuilder = elt "svg" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;table&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let table : ElementBuilder = elt "table" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;tbody&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let tbody : ElementBuilder = elt "tbody" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;td&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let td : ElementBuilder = elt "td" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;template&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let template : ElementBuilder = elt "template" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;textarea&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let textarea : ElementBuilder = elt "textarea" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;tfoot&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let tfoot : ElementBuilder = elt "tfoot" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;th&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let th : ElementBuilder = elt "th" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;thead&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let thead : ElementBuilder = elt "thead" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;time&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let time : ElementBuilder = elt "time" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;title&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let title : ElementBuilder = elt "title" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;tr&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let tr : ElementBuilder = elt "tr" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;track&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let track : ElementBuilder = elt "track" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;tt&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let tt : ElementBuilder = elt "tt" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;u&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let u : ElementBuilder = elt "u" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;ul&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let ul : ElementBuilder = elt "ul" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;var&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let var : ElementBuilder = elt "var" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;video&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let video : ElementBuilder = elt "video" 
+
+/// <summary>Computation expression to create an HTML <c>&lt;wbr&gt;</c> element.</summary>
+/// <category>HTML tag names</category>
+let wbr : ElementBuilder = elt "wbr" 
 
 // END TAGS
 
 /// HTML attributes.
 module attr =
-    /// Create an HTML `class` attribute containing the given class names.
+    /// <summary>Create an HTML <c>class</c> attribute containing the given class names.</summary>
     [<Obsolete "Use attr.``class`` and String.concat. Multiple class attributes on the same element are not combined anymore.">]
     let inline classes (classes: list<string>) : Attr =
         Attr.Make "class" (String.concat " " classes)
 
-    /// Bind an element or component reference.
+    /// <summary>Bind an element or component reference.</summary>
+    /// <param name="r">The reference.</param>
+    /// <remarks>
+    /// Must be inserted in an element or component computation expression, after attributes and before child content.
+    /// </remarks>
     let inline ref (r: Ref<'T>) : RefContent =
         RefContent(fun _ b i ->
             r.Render(b, i))
 
-    /// Bind an element or component reference.
+    /// <summary>Bind an element or component reference.</summary>
     [<Obsolete "Use attr.ref, or yield the ref directly in the element or component builder.">]
     let inline bindRef (r: Ref<'T>) : RefContent =
         ref r
 
-    /// Set an element's unique key among a sequence of similar elements.
+    /// <summary>Set an element's unique key among a sequence of similar elements.</summary>
+    /// <param name="k">The unique key.</param>
     let inline key (k: obj) : Attr =
         Attr(fun _ b i ->
             b.SetKey(k)
             i)
 
-    /// Create an empty attribute.
+    /// <summary>Create an empty attribute.</summary>
     let inline empty() = Attr.Empty()
 
-    /// Create an HTML `aria-X` attribute.
+    /// <summary>Create an HTML <c>aria-X</c> attribute.</summary>
+    /// <param name="name">The attribute name, minus the <c>aria-</c> prefix.</param>
+    /// <param name="v">The attribute value.</param>
     let inline aria name (v: obj) = ("aria-" + name) => v
 
+    /// <summary>
     /// Create an attribute whose value is a callback.
-    /// Use this function for Blazor component attributes of type `EventCallback<T>`.
-    /// Note: for HTML event handlers, prefer functions from the module `on`.
+    /// Use this function for Blazor component attributes of type <see cref="T:Microsoft.AspNetCore.Components.EventCallback`1" />.
+    /// </summary>
+    /// <param name="name">The name of the attribute (including "on" prefix for HTML event handlers).</param>
+    /// <param name="value">The function to use as callback.</param>
+    /// <remarks>For HTML event handlers, prefer functions from the module <see cref="on" />.</remarks>
     let inline callback<'T> (name: string) ([<InlineIfLambda>] value: 'T -> unit) =
         Attr(fun receiver builder sequence ->
             builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Action<'T>(value)))
@@ -736,9 +918,13 @@ module attr =
 
     module async =
 
+        /// <summary>
         /// Create an attribute whose value is an asynchronous callback.
-        /// Use this function for Blazor component attributes of type `EventCallback<T>`.
-        /// Note: for HTML event handlers, prefer functions from the module `on.async`.
+        /// Use this function for Blazor component attributes of type <see cref="T:Microsoft.AspNetCore.Components.EventCallback`1" />.
+        /// </summary>
+        /// <param name="name">The name of the attribute (including "on" prefix for HTML event handlers).</param>
+        /// <param name="value">The function to use as callback.</param>
+        /// <remarks>For HTML event handlers, prefer functions from the module <see cref="on.async" />.</remarks>
         let inline callback<'T> (name: string) ([<InlineIfLambda>] value: 'T -> Async<unit>) =
             Attr(fun receiver builder sequence ->
                 builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Func<'T, Task>(fun x -> Async.StartImmediateAsTask (value x) :> Task)))
@@ -746,24 +932,36 @@ module attr =
 
     module task =
 
+        /// <summary>
         /// Create an attribute whose value is an asynchronous callback.
-        /// Use this function for Blazor component attributes of type `EventCallback<T>`.
-        /// Note: for HTML event handlers, prefer functions from the module `on.task`.
+        /// Use this function for Blazor component attributes of type <see cref="T:Microsoft.AspNetCore.Components.EventCallback`1" />.
+        /// </summary>
+        /// <param name="name">The name of the attribute (including "on" prefix for HTML event handlers).</param>
+        /// <param name="value">The function to use as callback.</param>
+        /// <remarks>For HTML event handlers, prefer functions from the module <see cref="on.task" />.</remarks>
         let inline callback<'T> (name: string) ([<InlineIfLambda>] value: 'T -> Task) =
             Attr(fun receiver builder sequence ->
                 builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Func<'T, Task>(value)))
                 sequence + 1)
 
+    /// <summary>
     /// Create an attribute whose value is an HTML fragment.
-    /// Use this function for Blazor component attributes of type `RenderFragment`.
+    /// Use this function for Blazor component attributes of type <see cref="T:Microsoft.AspNetCore.Components.RenderFragment" />.
+    /// </summary>
+    /// <param name="name">The name of the attribute.</param>
+    /// <param name="node">The value of the attribute.</param>
     let inline fragment name ([<InlineIfLambda>] node: Node) =
         Attr(fun receiver builder sequence ->
             builder.AddAttribute(sequence, name, RenderFragment(fun rt ->
                 node.Invoke(receiver, rt, 0) |> ignore))
             sequence + 1)
 
+    /// <summary>
     /// Create an attribute whose value is a parameterized HTML fragment.
-    /// Use this function for Blazor component attributes of type `RenderFragment<T>`.
+    /// Use this function for Blazor component attributes of type <see cref="T:Microsoft.AspNetCore.Components.RenderFragment`1" />.
+    /// </summary>
+    /// <param name="name">The name of the attribute.</param>
+    /// <param name="node">The value of the attribute.</param>
     let inline fragmentWith name ([<InlineIfLambda>] node: 'a -> Node) =
         Attr(fun receiver builder sequence ->
             builder.AddAttribute(sequence, name, RenderFragment<_>(fun ctx ->
@@ -772,361 +970,480 @@ module attr =
             sequence + 1)
 
 // BEGIN ATTRS
-    /// Create an HTML `accept` attribute.
+    /// <summary>Create an HTML <c>accept</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline accept (v: obj) : Attr = "accept" => v
 
-    /// Create an HTML `accept-charset` attribute.
+    /// <summary>Create an HTML <c>accept-charset</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline acceptCharset (v: obj) : Attr = "accept-charset" => v
 
-    /// Create an HTML `accesskey` attribute.
+    /// <summary>Create an HTML <c>accesskey</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline accesskey (v: obj) : Attr = "accesskey" => v
 
-    /// Create an HTML `action` attribute.
+    /// <summary>Create an HTML <c>action</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline action (v: obj) : Attr = "action" => v
 
-    /// Create an HTML `align` attribute.
+    /// <summary>Create an HTML <c>align</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline align (v: obj) : Attr = "align" => v
 
-    /// Create an HTML `allow` attribute.
+    /// <summary>Create an HTML <c>allow</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline allow (v: obj) : Attr = "allow" => v
 
-    /// Create an HTML `alt` attribute.
+    /// <summary>Create an HTML <c>alt</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline alt (v: obj) : Attr = "alt" => v
 
-    /// Create an HTML `async` attribute.
+    /// <summary>Create an HTML <c>async</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline async' (v: obj) : Attr = "async" => v
 
-    /// Create an HTML `autocapitalize` attribute.
+    /// <summary>Create an HTML <c>autocapitalize</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline autocapitalize (v: obj) : Attr = "autocapitalize" => v
 
-    /// Create an HTML `autocomplete` attribute.
+    /// <summary>Create an HTML <c>autocomplete</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline autocomplete (v: obj) : Attr = "autocomplete" => v
 
-    /// Create an HTML `autofocus` attribute.
+    /// <summary>Create an HTML <c>autofocus</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline autofocus (v: obj) : Attr = "autofocus" => v
 
-    /// Create an HTML `autoplay` attribute.
+    /// <summary>Create an HTML <c>autoplay</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline autoplay (v: obj) : Attr = "autoplay" => v
 
-    /// Create an HTML `bgcolor` attribute.
+    /// <summary>Create an HTML <c>bgcolor</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline bgcolor (v: obj) : Attr = "bgcolor" => v
 
-    /// Create an HTML `border` attribute.
+    /// <summary>Create an HTML <c>border</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline border (v: obj) : Attr = "border" => v
 
-    /// Create an HTML `buffered` attribute.
+    /// <summary>Create an HTML <c>buffered</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline buffered (v: obj) : Attr = "buffered" => v
 
-    /// Create an HTML `challenge` attribute.
+    /// <summary>Create an HTML <c>challenge</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline challenge (v: obj) : Attr = "challenge" => v
 
-    /// Create an HTML `charset` attribute.
+    /// <summary>Create an HTML <c>charset</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline charset (v: obj) : Attr = "charset" => v
 
-    /// Create an HTML `checked` attribute.
+    /// <summary>Create an HTML <c>checked</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline ``checked`` (v: obj) : Attr = "checked" => v
 
-    /// Create an HTML `cite` attribute.
+    /// <summary>Create an HTML <c>cite</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline cite (v: obj) : Attr = "cite" => v
 
-    /// Create an HTML `class` attribute.
+    /// <summary>Create an HTML <c>class</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline ``class`` (v: obj) : Attr = "class" => v
 
-    /// Create an HTML `code` attribute.
+    /// <summary>Create an HTML <c>code</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline code (v: obj) : Attr = "code" => v
 
-    /// Create an HTML `codebase` attribute.
+    /// <summary>Create an HTML <c>codebase</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline codebase (v: obj) : Attr = "codebase" => v
 
-    /// Create an HTML `color` attribute.
+    /// <summary>Create an HTML <c>color</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline color (v: obj) : Attr = "color" => v
 
-    /// Create an HTML `cols` attribute.
+    /// <summary>Create an HTML <c>cols</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline cols (v: obj) : Attr = "cols" => v
 
-    /// Create an HTML `colspan` attribute.
+    /// <summary>Create an HTML <c>colspan</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline colspan (v: obj) : Attr = "colspan" => v
 
-    /// Create an HTML `content` attribute.
+    /// <summary>Create an HTML <c>content</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline content (v: obj) : Attr = "content" => v
 
-    /// Create an HTML `contenteditable` attribute.
+    /// <summary>Create an HTML <c>contenteditable</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline contenteditable (v: obj) : Attr = "contenteditable" => v
 
-    /// Create an HTML `contextmenu` attribute.
+    /// <summary>Create an HTML <c>contextmenu</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline contextmenu (v: obj) : Attr = "contextmenu" => v
 
-    /// Create an HTML `controls` attribute.
+    /// <summary>Create an HTML <c>controls</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline controls (v: obj) : Attr = "controls" => v
 
-    /// Create an HTML `coords` attribute.
+    /// <summary>Create an HTML <c>coords</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline coords (v: obj) : Attr = "coords" => v
 
-    /// Create an HTML `crossorigin` attribute.
+    /// <summary>Create an HTML <c>crossorigin</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline crossorigin (v: obj) : Attr = "crossorigin" => v
 
-    /// Create an HTML `csp` attribute.
+    /// <summary>Create an HTML <c>csp</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline csp (v: obj) : Attr = "csp" => v
 
-    /// Create an HTML `data` attribute.
+    /// <summary>Create an HTML <c>data</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline data (v: obj) : Attr = "data" => v
 
-    /// Create an HTML `datetime` attribute.
+    /// <summary>Create an HTML <c>datetime</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline datetime (v: obj) : Attr = "datetime" => v
 
-    /// Create an HTML `decoding` attribute.
+    /// <summary>Create an HTML <c>decoding</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline decoding (v: obj) : Attr = "decoding" => v
 
-    /// Create an HTML `default` attribute.
+    /// <summary>Create an HTML <c>default</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline ``default`` (v: obj) : Attr = "default" => v
 
-    /// Create an HTML `defer` attribute.
+    /// <summary>Create an HTML <c>defer</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline defer (v: obj) : Attr = "defer" => v
 
-    /// Create an HTML `dir` attribute.
+    /// <summary>Create an HTML <c>dir</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline dir (v: obj) : Attr = "dir" => v
 
-    /// Create an HTML `dirname` attribute.
+    /// <summary>Create an HTML <c>dirname</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline dirname (v: obj) : Attr = "dirname" => v
 
-    /// Create an HTML `disabled` attribute.
+    /// <summary>Create an HTML <c>disabled</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline disabled (v: obj) : Attr = "disabled" => v
 
-    /// Create an HTML `download` attribute.
+    /// <summary>Create an HTML <c>download</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline download (v: obj) : Attr = "download" => v
 
-    /// Create an HTML `draggable` attribute.
+    /// <summary>Create an HTML <c>draggable</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline draggable (v: obj) : Attr = "draggable" => v
 
-    /// Create an HTML `dropzone` attribute.
+    /// <summary>Create an HTML <c>dropzone</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline dropzone (v: obj) : Attr = "dropzone" => v
 
-    /// Create an HTML `enctype` attribute.
+    /// <summary>Create an HTML <c>enctype</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline enctype (v: obj) : Attr = "enctype" => v
 
-    /// Create an HTML `for` attribute.
+    /// <summary>Create an HTML <c>for</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline ``for`` (v: obj) : Attr = "for" => v
 
-    /// Create an HTML `form` attribute.
+    /// <summary>Create an HTML <c>form</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline form (v: obj) : Attr = "form" => v
 
-    /// Create an HTML `formaction` attribute.
+    /// <summary>Create an HTML <c>formaction</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline formaction (v: obj) : Attr = "formaction" => v
 
-    /// Create an HTML `headers` attribute.
+    /// <summary>Create an HTML <c>headers</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline headers (v: obj) : Attr = "headers" => v
 
-    /// Create an HTML `height` attribute.
+    /// <summary>Create an HTML <c>height</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline height (v: obj) : Attr = "height" => v
 
-    /// Create an HTML `hidden` attribute.
+    /// <summary>Create an HTML <c>hidden</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline hidden (v: obj) : Attr = "hidden" => v
 
-    /// Create an HTML `high` attribute.
+    /// <summary>Create an HTML <c>high</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline high (v: obj) : Attr = "high" => v
 
-    /// Create an HTML `href` attribute.
+    /// <summary>Create an HTML <c>href</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline href (v: obj) : Attr = "href" => v
 
-    /// Create an HTML `hreflang` attribute.
+    /// <summary>Create an HTML <c>hreflang</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline hreflang (v: obj) : Attr = "hreflang" => v
 
-    /// Create an HTML `http-equiv` attribute.
+    /// <summary>Create an HTML <c>http-equiv</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline httpEquiv (v: obj) : Attr = "http-equiv" => v
 
-    /// Create an HTML `icon` attribute.
+    /// <summary>Create an HTML <c>icon</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline icon (v: obj) : Attr = "icon" => v
 
-    /// Create an HTML `id` attribute.
+    /// <summary>Create an HTML <c>id</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline id (v: obj) : Attr = "id" => v
 
-    /// Create an HTML `importance` attribute.
+    /// <summary>Create an HTML <c>importance</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline importance (v: obj) : Attr = "importance" => v
 
-    /// Create an HTML `integrity` attribute.
+    /// <summary>Create an HTML <c>integrity</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline integrity (v: obj) : Attr = "integrity" => v
 
-    /// Create an HTML `ismap` attribute.
+    /// <summary>Create an HTML <c>ismap</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline ismap (v: obj) : Attr = "ismap" => v
 
-    /// Create an HTML `itemprop` attribute.
+    /// <summary>Create an HTML <c>itemprop</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline itemprop (v: obj) : Attr = "itemprop" => v
 
-    /// Create an HTML `keytype` attribute.
+    /// <summary>Create an HTML <c>keytype</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline keytype (v: obj) : Attr = "keytype" => v
 
-    /// Create an HTML `kind` attribute.
+    /// <summary>Create an HTML <c>kind</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline kind (v: obj) : Attr = "kind" => v
 
-    /// Create an HTML `label` attribute.
+    /// <summary>Create an HTML <c>label</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline label (v: obj) : Attr = "label" => v
 
-    /// Create an HTML `lang` attribute.
+    /// <summary>Create an HTML <c>lang</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline lang (v: obj) : Attr = "lang" => v
 
-    /// Create an HTML `language` attribute.
+    /// <summary>Create an HTML <c>language</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline language (v: obj) : Attr = "language" => v
 
-    /// Create an HTML `lazyload` attribute.
+    /// <summary>Create an HTML <c>lazyload</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline lazyload (v: obj) : Attr = "lazyload" => v
 
-    /// Create an HTML `list` attribute.
+    /// <summary>Create an HTML <c>list</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline list (v: obj) : Attr = "list" => v
 
-    /// Create an HTML `loop` attribute.
+    /// <summary>Create an HTML <c>loop</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline loop (v: obj) : Attr = "loop" => v
 
-    /// Create an HTML `low` attribute.
+    /// <summary>Create an HTML <c>low</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline low (v: obj) : Attr = "low" => v
 
-    /// Create an HTML `manifest` attribute.
+    /// <summary>Create an HTML <c>manifest</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline manifest (v: obj) : Attr = "manifest" => v
 
-    /// Create an HTML `max` attribute.
+    /// <summary>Create an HTML <c>max</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline max (v: obj) : Attr = "max" => v
 
-    /// Create an HTML `maxlength` attribute.
+    /// <summary>Create an HTML <c>maxlength</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline maxlength (v: obj) : Attr = "maxlength" => v
 
-    /// Create an HTML `media` attribute.
+    /// <summary>Create an HTML <c>media</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline media (v: obj) : Attr = "media" => v
 
-    /// Create an HTML `method` attribute.
+    /// <summary>Create an HTML <c>method</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline method (v: obj) : Attr = "method" => v
 
-    /// Create an HTML `min` attribute.
+    /// <summary>Create an HTML <c>min</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline min (v: obj) : Attr = "min" => v
 
-    /// Create an HTML `minlength` attribute.
+    /// <summary>Create an HTML <c>minlength</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline minlength (v: obj) : Attr = "minlength" => v
 
-    /// Create an HTML `multiple` attribute.
+    /// <summary>Create an HTML <c>multiple</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline multiple (v: obj) : Attr = "multiple" => v
 
-    /// Create an HTML `muted` attribute.
+    /// <summary>Create an HTML <c>muted</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline muted (v: obj) : Attr = "muted" => v
 
-    /// Create an HTML `name` attribute.
+    /// <summary>Create an HTML <c>name</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline name (v: obj) : Attr = "name" => v
 
-    /// Create an HTML `novalidate` attribute.
+    /// <summary>Create an HTML <c>novalidate</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline novalidate (v: obj) : Attr = "novalidate" => v
 
-    /// Create an HTML `open` attribute.
+    /// <summary>Create an HTML <c>open</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline ``open`` (v: obj) : Attr = "open" => v
 
-    /// Create an HTML `optimum` attribute.
+    /// <summary>Create an HTML <c>optimum</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline optimum (v: obj) : Attr = "optimum" => v
 
-    /// Create an HTML `pattern` attribute.
+    /// <summary>Create an HTML <c>pattern</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline pattern (v: obj) : Attr = "pattern" => v
 
-    /// Create an HTML `ping` attribute.
+    /// <summary>Create an HTML <c>ping</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline ping (v: obj) : Attr = "ping" => v
 
-    /// Create an HTML `placeholder` attribute.
+    /// <summary>Create an HTML <c>placeholder</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline placeholder (v: obj) : Attr = "placeholder" => v
 
-    /// Create an HTML `poster` attribute.
+    /// <summary>Create an HTML <c>poster</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline poster (v: obj) : Attr = "poster" => v
 
-    /// Create an HTML `preload` attribute.
+    /// <summary>Create an HTML <c>preload</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline preload (v: obj) : Attr = "preload" => v
 
-    /// Create an HTML `readonly` attribute.
+    /// <summary>Create an HTML <c>readonly</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline readonly (v: obj) : Attr = "readonly" => v
 
-    /// Create an HTML `rel` attribute.
+    /// <summary>Create an HTML <c>rel</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline rel (v: obj) : Attr = "rel" => v
 
-    /// Create an HTML `required` attribute.
+    /// <summary>Create an HTML <c>required</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline required (v: obj) : Attr = "required" => v
 
-    /// Create an HTML `reversed` attribute.
+    /// <summary>Create an HTML <c>reversed</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline reversed (v: obj) : Attr = "reversed" => v
 
-    /// Create an HTML `rows` attribute.
+    /// <summary>Create an HTML <c>rows</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline rows (v: obj) : Attr = "rows" => v
 
-    /// Create an HTML `rowspan` attribute.
+    /// <summary>Create an HTML <c>rowspan</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline rowspan (v: obj) : Attr = "rowspan" => v
 
-    /// Create an HTML `sandbox` attribute.
+    /// <summary>Create an HTML <c>sandbox</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline sandbox (v: obj) : Attr = "sandbox" => v
 
-    /// Create an HTML `scope` attribute.
+    /// <summary>Create an HTML <c>scope</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline scope (v: obj) : Attr = "scope" => v
 
-    /// Create an HTML `selected` attribute.
+    /// <summary>Create an HTML <c>selected</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline selected (v: obj) : Attr = "selected" => v
 
-    /// Create an HTML `shape` attribute.
+    /// <summary>Create an HTML <c>shape</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline shape (v: obj) : Attr = "shape" => v
 
-    /// Create an HTML `size` attribute.
+    /// <summary>Create an HTML <c>size</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline size (v: obj) : Attr = "size" => v
 
-    /// Create an HTML `sizes` attribute.
+    /// <summary>Create an HTML <c>sizes</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline sizes (v: obj) : Attr = "sizes" => v
 
-    /// Create an HTML `slot` attribute.
+    /// <summary>Create an HTML <c>slot</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline slot (v: obj) : Attr = "slot" => v
 
-    /// Create an HTML `span` attribute.
+    /// <summary>Create an HTML <c>span</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline span (v: obj) : Attr = "span" => v
 
-    /// Create an HTML `spellcheck` attribute.
+    /// <summary>Create an HTML <c>spellcheck</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline spellcheck (v: obj) : Attr = "spellcheck" => v
 
-    /// Create an HTML `src` attribute.
+    /// <summary>Create an HTML <c>src</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline src (v: obj) : Attr = "src" => v
 
-    /// Create an HTML `srcdoc` attribute.
+    /// <summary>Create an HTML <c>srcdoc</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline srcdoc (v: obj) : Attr = "srcdoc" => v
 
-    /// Create an HTML `srclang` attribute.
+    /// <summary>Create an HTML <c>srclang</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline srclang (v: obj) : Attr = "srclang" => v
 
-    /// Create an HTML `srcset` attribute.
+    /// <summary>Create an HTML <c>srcset</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline srcset (v: obj) : Attr = "srcset" => v
 
-    /// Create an HTML `start` attribute.
+    /// <summary>Create an HTML <c>start</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline start (v: obj) : Attr = "start" => v
 
-    /// Create an HTML `step` attribute.
+    /// <summary>Create an HTML <c>step</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline step (v: obj) : Attr = "step" => v
 
-    /// Create an HTML `style` attribute.
+    /// <summary>Create an HTML <c>style</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline style (v: obj) : Attr = "style" => v
 
-    /// Create an HTML `summary` attribute.
+    /// <summary>Create an HTML <c>summary</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline summary (v: obj) : Attr = "summary" => v
 
-    /// Create an HTML `tabindex` attribute.
+    /// <summary>Create an HTML <c>tabindex</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline tabindex (v: obj) : Attr = "tabindex" => v
 
-    /// Create an HTML `target` attribute.
+    /// <summary>Create an HTML <c>target</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline target (v: obj) : Attr = "target" => v
 
-    /// Create an HTML `title` attribute.
+    /// <summary>Create an HTML <c>title</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline title (v: obj) : Attr = "title" => v
 
-    /// Create an HTML `translate` attribute.
+    /// <summary>Create an HTML <c>translate</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline translate (v: obj) : Attr = "translate" => v
 
-    /// Create an HTML `type` attribute.
+    /// <summary>Create an HTML <c>type</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline ``type`` (v: obj) : Attr = "type" => v
 
-    /// Create an HTML `usemap` attribute.
+    /// <summary>Create an HTML <c>usemap</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline usemap (v: obj) : Attr = "usemap" => v
 
-    /// Create an HTML `value` attribute.
+    /// <summary>Create an HTML <c>value</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline value (v: obj) : Attr = "value" => v
 
-    /// Create an HTML `width` attribute.
+    /// <summary>Create an HTML <c>width</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline width (v: obj) : Attr = "width" => v
 
-    /// Create an HTML `wrap` attribute.
+    /// <summary>Create an HTML <c>wrap</c> attribute.</summary>
+    /// <param name="v">The value of the attribute.</param>
     let inline wrap (v: obj) : Attr = "wrap" => v
 
 // END ATTRS
@@ -1134,18 +1451,25 @@ module attr =
 /// Event handlers.
 module on =
 
-    /// Create a handler for a HTML event of type EventArgs.
+    /// <summary>Create a handler for a HTML event of type <typeparamref name="T" />.</summary>
+    /// <typeparam name="T">The event type.</typeparam>
+    /// <param name="eventName">The name of the event, without the "on" prefix.</param>
+    /// <param name="callback">The event callback.</param>
     let inline event<'T when 'T :> EventArgs> eventName (callback: ^T -> unit) =
         attr.callback<'T> ("on" + eventName) callback
 
-    /// Prevent the default event behavior for a given HTML event.
+    /// <summary>Prevent the default event behavior for a given HTML event.</summary>
+    /// <param name="eventName">The name of the event, without the "on" prefix.</param>
+    /// <param name="value">True to prevent the default event behavior.</param>
     let inline preventDefault eventName (value: bool) =
         Attr(fun _ builder sequence ->
             builder.AddEventPreventDefaultAttribute(sequence, eventName, value)
             sequence + 1
         )
 
-    /// Stop the propagation to parent elements of a given HTML event.
+    /// <summary>Stop the propagation to parent elements of a given HTML event.</summary>
+    /// <param name="eventName">The name of the event, without the "on" prefix.</param>
+    /// <param name="value">True to prevent the propagation.</param>
     let inline stopPropagation eventName (value: bool) =
         Attr(fun _ builder sequence ->
             builder.AddEventStopPropagationAttribute(sequence, eventName, value)
@@ -1153,934 +1477,1213 @@ module on =
         )
 
 // BEGIN EVENTS
-    /// Create a handler for HTML event `focus`.
+    /// <summary>Create a handler for HTML event <c>focus</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline focus (callback: FocusEventArgs -> unit) : Attr =
         attr.callback<FocusEventArgs> "onfocus" callback
 
-    /// Create a handler for HTML event `blur`.
+    /// <summary>Create a handler for HTML event <c>blur</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline blur (callback: FocusEventArgs -> unit) : Attr =
         attr.callback<FocusEventArgs> "onblur" callback
 
-    /// Create a handler for HTML event `focusin`.
+    /// <summary>Create a handler for HTML event <c>focusin</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline focusin (callback: FocusEventArgs -> unit) : Attr =
         attr.callback<FocusEventArgs> "onfocusin" callback
 
-    /// Create a handler for HTML event `focusout`.
+    /// <summary>Create a handler for HTML event <c>focusout</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline focusout (callback: FocusEventArgs -> unit) : Attr =
         attr.callback<FocusEventArgs> "onfocusout" callback
 
-    /// Create a handler for HTML event `mouseover`.
+    /// <summary>Create a handler for HTML event <c>mouseover</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline mouseover (callback: MouseEventArgs -> unit) : Attr =
         attr.callback<MouseEventArgs> "onmouseover" callback
 
-    /// Create a handler for HTML event `mouseout`.
+    /// <summary>Create a handler for HTML event <c>mouseout</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline mouseout (callback: MouseEventArgs -> unit) : Attr =
         attr.callback<MouseEventArgs> "onmouseout" callback
 
-    /// Create a handler for HTML event `mousemove`.
+    /// <summary>Create a handler for HTML event <c>mousemove</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline mousemove (callback: MouseEventArgs -> unit) : Attr =
         attr.callback<MouseEventArgs> "onmousemove" callback
 
-    /// Create a handler for HTML event `mousedown`.
+    /// <summary>Create a handler for HTML event <c>mousedown</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline mousedown (callback: MouseEventArgs -> unit) : Attr =
         attr.callback<MouseEventArgs> "onmousedown" callback
 
-    /// Create a handler for HTML event `mouseup`.
+    /// <summary>Create a handler for HTML event <c>mouseup</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline mouseup (callback: MouseEventArgs -> unit) : Attr =
         attr.callback<MouseEventArgs> "onmouseup" callback
 
-    /// Create a handler for HTML event `click`.
+    /// <summary>Create a handler for HTML event <c>click</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline click (callback: MouseEventArgs -> unit) : Attr =
         attr.callback<MouseEventArgs> "onclick" callback
 
-    /// Create a handler for HTML event `dblclick`.
+    /// <summary>Create a handler for HTML event <c>dblclick</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline dblclick (callback: MouseEventArgs -> unit) : Attr =
         attr.callback<MouseEventArgs> "ondblclick" callback
 
-    /// Create a handler for HTML event `wheel`.
+    /// <summary>Create a handler for HTML event <c>wheel</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline wheel (callback: MouseEventArgs -> unit) : Attr =
         attr.callback<MouseEventArgs> "onwheel" callback
 
-    /// Create a handler for HTML event `mousewheel`.
+    /// <summary>Create a handler for HTML event <c>mousewheel</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline mousewheel (callback: MouseEventArgs -> unit) : Attr =
         attr.callback<MouseEventArgs> "onmousewheel" callback
 
-    /// Create a handler for HTML event `contextmenu`.
+    /// <summary>Create a handler for HTML event <c>contextmenu</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline contextmenu (callback: MouseEventArgs -> unit) : Attr =
         attr.callback<MouseEventArgs> "oncontextmenu" callback
 
-    /// Create a handler for HTML event `drag`.
+    /// <summary>Create a handler for HTML event <c>drag</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline drag (callback: DragEventArgs -> unit) : Attr =
         attr.callback<DragEventArgs> "ondrag" callback
 
-    /// Create a handler for HTML event `dragend`.
+    /// <summary>Create a handler for HTML event <c>dragend</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline dragend (callback: DragEventArgs -> unit) : Attr =
         attr.callback<DragEventArgs> "ondragend" callback
 
-    /// Create a handler for HTML event `dragenter`.
+    /// <summary>Create a handler for HTML event <c>dragenter</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline dragenter (callback: DragEventArgs -> unit) : Attr =
         attr.callback<DragEventArgs> "ondragenter" callback
 
-    /// Create a handler for HTML event `dragleave`.
+    /// <summary>Create a handler for HTML event <c>dragleave</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline dragleave (callback: DragEventArgs -> unit) : Attr =
         attr.callback<DragEventArgs> "ondragleave" callback
 
-    /// Create a handler for HTML event `dragover`.
+    /// <summary>Create a handler for HTML event <c>dragover</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline dragover (callback: DragEventArgs -> unit) : Attr =
         attr.callback<DragEventArgs> "ondragover" callback
 
-    /// Create a handler for HTML event `dragstart`.
+    /// <summary>Create a handler for HTML event <c>dragstart</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline dragstart (callback: DragEventArgs -> unit) : Attr =
         attr.callback<DragEventArgs> "ondragstart" callback
 
-    /// Create a handler for HTML event `drop`.
+    /// <summary>Create a handler for HTML event <c>drop</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline drop (callback: DragEventArgs -> unit) : Attr =
         attr.callback<DragEventArgs> "ondrop" callback
 
-    /// Create a handler for HTML event `keydown`.
+    /// <summary>Create a handler for HTML event <c>keydown</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline keydown (callback: KeyboardEventArgs -> unit) : Attr =
         attr.callback<KeyboardEventArgs> "onkeydown" callback
 
-    /// Create a handler for HTML event `keyup`.
+    /// <summary>Create a handler for HTML event <c>keyup</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline keyup (callback: KeyboardEventArgs -> unit) : Attr =
         attr.callback<KeyboardEventArgs> "onkeyup" callback
 
-    /// Create a handler for HTML event `keypress`.
+    /// <summary>Create a handler for HTML event <c>keypress</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline keypress (callback: KeyboardEventArgs -> unit) : Attr =
         attr.callback<KeyboardEventArgs> "onkeypress" callback
 
-    /// Create a handler for HTML event `change`.
+    /// <summary>Create a handler for HTML event <c>change</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline change (callback: ChangeEventArgs -> unit) : Attr =
         attr.callback<ChangeEventArgs> "onchange" callback
 
-    /// Create a handler for HTML event `input`.
+    /// <summary>Create a handler for HTML event <c>input</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline input (callback: ChangeEventArgs -> unit) : Attr =
         attr.callback<ChangeEventArgs> "oninput" callback
 
-    /// Create a handler for HTML event `invalid`.
+    /// <summary>Create a handler for HTML event <c>invalid</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline invalid (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "oninvalid" callback
 
-    /// Create a handler for HTML event `reset`.
+    /// <summary>Create a handler for HTML event <c>reset</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline reset (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onreset" callback
 
-    /// Create a handler for HTML event `select`.
+    /// <summary>Create a handler for HTML event <c>select</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline select (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onselect" callback
 
-    /// Create a handler for HTML event `selectstart`.
+    /// <summary>Create a handler for HTML event <c>selectstart</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline selectstart (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onselectstart" callback
 
-    /// Create a handler for HTML event `selectionchange`.
+    /// <summary>Create a handler for HTML event <c>selectionchange</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline selectionchange (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onselectionchange" callback
 
-    /// Create a handler for HTML event `submit`.
+    /// <summary>Create a handler for HTML event <c>submit</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline submit (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onsubmit" callback
 
-    /// Create a handler for HTML event `beforecopy`.
+    /// <summary>Create a handler for HTML event <c>beforecopy</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline beforecopy (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onbeforecopy" callback
 
-    /// Create a handler for HTML event `beforecut`.
+    /// <summary>Create a handler for HTML event <c>beforecut</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline beforecut (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onbeforecut" callback
 
-    /// Create a handler for HTML event `beforepaste`.
+    /// <summary>Create a handler for HTML event <c>beforepaste</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline beforepaste (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onbeforepaste" callback
 
-    /// Create a handler for HTML event `copy`.
+    /// <summary>Create a handler for HTML event <c>copy</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline copy (callback: ClipboardEventArgs -> unit) : Attr =
         attr.callback<ClipboardEventArgs> "oncopy" callback
 
-    /// Create a handler for HTML event `cut`.
+    /// <summary>Create a handler for HTML event <c>cut</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline cut (callback: ClipboardEventArgs -> unit) : Attr =
         attr.callback<ClipboardEventArgs> "oncut" callback
 
-    /// Create a handler for HTML event `paste`.
+    /// <summary>Create a handler for HTML event <c>paste</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline paste (callback: ClipboardEventArgs -> unit) : Attr =
         attr.callback<ClipboardEventArgs> "onpaste" callback
 
-    /// Create a handler for HTML event `touchcancel`.
+    /// <summary>Create a handler for HTML event <c>touchcancel</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline touchcancel (callback: TouchEventArgs -> unit) : Attr =
         attr.callback<TouchEventArgs> "ontouchcancel" callback
 
-    /// Create a handler for HTML event `touchend`.
+    /// <summary>Create a handler for HTML event <c>touchend</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline touchend (callback: TouchEventArgs -> unit) : Attr =
         attr.callback<TouchEventArgs> "ontouchend" callback
 
-    /// Create a handler for HTML event `touchmove`.
+    /// <summary>Create a handler for HTML event <c>touchmove</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline touchmove (callback: TouchEventArgs -> unit) : Attr =
         attr.callback<TouchEventArgs> "ontouchmove" callback
 
-    /// Create a handler for HTML event `touchstart`.
+    /// <summary>Create a handler for HTML event <c>touchstart</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline touchstart (callback: TouchEventArgs -> unit) : Attr =
         attr.callback<TouchEventArgs> "ontouchstart" callback
 
-    /// Create a handler for HTML event `touchenter`.
+    /// <summary>Create a handler for HTML event <c>touchenter</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline touchenter (callback: TouchEventArgs -> unit) : Attr =
         attr.callback<TouchEventArgs> "ontouchenter" callback
 
-    /// Create a handler for HTML event `touchleave`.
+    /// <summary>Create a handler for HTML event <c>touchleave</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline touchleave (callback: TouchEventArgs -> unit) : Attr =
         attr.callback<TouchEventArgs> "ontouchleave" callback
 
-    /// Create a handler for HTML event `pointercapture`.
+    /// <summary>Create a handler for HTML event <c>pointercapture</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline pointercapture (callback: PointerEventArgs -> unit) : Attr =
         attr.callback<PointerEventArgs> "onpointercapture" callback
 
-    /// Create a handler for HTML event `lostpointercapture`.
+    /// <summary>Create a handler for HTML event <c>lostpointercapture</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline lostpointercapture (callback: PointerEventArgs -> unit) : Attr =
         attr.callback<PointerEventArgs> "onlostpointercapture" callback
 
-    /// Create a handler for HTML event `pointercancel`.
+    /// <summary>Create a handler for HTML event <c>pointercancel</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline pointercancel (callback: PointerEventArgs -> unit) : Attr =
         attr.callback<PointerEventArgs> "onpointercancel" callback
 
-    /// Create a handler for HTML event `pointerdown`.
+    /// <summary>Create a handler for HTML event <c>pointerdown</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline pointerdown (callback: PointerEventArgs -> unit) : Attr =
         attr.callback<PointerEventArgs> "onpointerdown" callback
 
-    /// Create a handler for HTML event `pointerenter`.
+    /// <summary>Create a handler for HTML event <c>pointerenter</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline pointerenter (callback: PointerEventArgs -> unit) : Attr =
         attr.callback<PointerEventArgs> "onpointerenter" callback
 
-    /// Create a handler for HTML event `pointerleave`.
+    /// <summary>Create a handler for HTML event <c>pointerleave</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline pointerleave (callback: PointerEventArgs -> unit) : Attr =
         attr.callback<PointerEventArgs> "onpointerleave" callback
 
-    /// Create a handler for HTML event `pointermove`.
+    /// <summary>Create a handler for HTML event <c>pointermove</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline pointermove (callback: PointerEventArgs -> unit) : Attr =
         attr.callback<PointerEventArgs> "onpointermove" callback
 
-    /// Create a handler for HTML event `pointerout`.
+    /// <summary>Create a handler for HTML event <c>pointerout</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline pointerout (callback: PointerEventArgs -> unit) : Attr =
         attr.callback<PointerEventArgs> "onpointerout" callback
 
-    /// Create a handler for HTML event `pointerover`.
+    /// <summary>Create a handler for HTML event <c>pointerover</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline pointerover (callback: PointerEventArgs -> unit) : Attr =
         attr.callback<PointerEventArgs> "onpointerover" callback
 
-    /// Create a handler for HTML event `pointerup`.
+    /// <summary>Create a handler for HTML event <c>pointerup</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline pointerup (callback: PointerEventArgs -> unit) : Attr =
         attr.callback<PointerEventArgs> "onpointerup" callback
 
-    /// Create a handler for HTML event `canplay`.
+    /// <summary>Create a handler for HTML event <c>canplay</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline canplay (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "oncanplay" callback
 
-    /// Create a handler for HTML event `canplaythrough`.
+    /// <summary>Create a handler for HTML event <c>canplaythrough</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline canplaythrough (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "oncanplaythrough" callback
 
-    /// Create a handler for HTML event `cuechange`.
+    /// <summary>Create a handler for HTML event <c>cuechange</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline cuechange (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "oncuechange" callback
 
-    /// Create a handler for HTML event `durationchange`.
+    /// <summary>Create a handler for HTML event <c>durationchange</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline durationchange (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "ondurationchange" callback
 
-    /// Create a handler for HTML event `emptied`.
+    /// <summary>Create a handler for HTML event <c>emptied</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline emptied (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onemptied" callback
 
-    /// Create a handler for HTML event `pause`.
+    /// <summary>Create a handler for HTML event <c>pause</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline pause (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onpause" callback
 
-    /// Create a handler for HTML event `play`.
+    /// <summary>Create a handler for HTML event <c>play</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline play (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onplay" callback
 
-    /// Create a handler for HTML event `playing`.
+    /// <summary>Create a handler for HTML event <c>playing</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline playing (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onplaying" callback
 
-    /// Create a handler for HTML event `ratechange`.
+    /// <summary>Create a handler for HTML event <c>ratechange</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline ratechange (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onratechange" callback
 
-    /// Create a handler for HTML event `seeked`.
+    /// <summary>Create a handler for HTML event <c>seeked</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline seeked (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onseeked" callback
 
-    /// Create a handler for HTML event `seeking`.
+    /// <summary>Create a handler for HTML event <c>seeking</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline seeking (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onseeking" callback
 
-    /// Create a handler for HTML event `stalled`.
+    /// <summary>Create a handler for HTML event <c>stalled</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline stalled (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onstalled" callback
 
-    /// Create a handler for HTML event `stop`.
+    /// <summary>Create a handler for HTML event <c>stop</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline stop (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onstop" callback
 
-    /// Create a handler for HTML event `suspend`.
+    /// <summary>Create a handler for HTML event <c>suspend</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline suspend (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onsuspend" callback
 
-    /// Create a handler for HTML event `timeupdate`.
+    /// <summary>Create a handler for HTML event <c>timeupdate</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline timeupdate (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "ontimeupdate" callback
 
-    /// Create a handler for HTML event `volumechange`.
+    /// <summary>Create a handler for HTML event <c>volumechange</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline volumechange (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onvolumechange" callback
 
-    /// Create a handler for HTML event `waiting`.
+    /// <summary>Create a handler for HTML event <c>waiting</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline waiting (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onwaiting" callback
 
-    /// Create a handler for HTML event `loadstart`.
+    /// <summary>Create a handler for HTML event <c>loadstart</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline loadstart (callback: ProgressEventArgs -> unit) : Attr =
         attr.callback<ProgressEventArgs> "onloadstart" callback
 
-    /// Create a handler for HTML event `timeout`.
+    /// <summary>Create a handler for HTML event <c>timeout</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline timeout (callback: ProgressEventArgs -> unit) : Attr =
         attr.callback<ProgressEventArgs> "ontimeout" callback
 
-    /// Create a handler for HTML event `abort`.
+    /// <summary>Create a handler for HTML event <c>abort</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline abort (callback: ProgressEventArgs -> unit) : Attr =
         attr.callback<ProgressEventArgs> "onabort" callback
 
-    /// Create a handler for HTML event `load`.
+    /// <summary>Create a handler for HTML event <c>load</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline load (callback: ProgressEventArgs -> unit) : Attr =
         attr.callback<ProgressEventArgs> "onload" callback
 
-    /// Create a handler for HTML event `loadend`.
+    /// <summary>Create a handler for HTML event <c>loadend</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline loadend (callback: ProgressEventArgs -> unit) : Attr =
         attr.callback<ProgressEventArgs> "onloadend" callback
 
-    /// Create a handler for HTML event `progress`.
+    /// <summary>Create a handler for HTML event <c>progress</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline progress (callback: ProgressEventArgs -> unit) : Attr =
         attr.callback<ProgressEventArgs> "onprogress" callback
 
-    /// Create a handler for HTML event `error`.
+    /// <summary>Create a handler for HTML event <c>error</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline error (callback: ProgressEventArgs -> unit) : Attr =
         attr.callback<ProgressEventArgs> "onerror" callback
 
-    /// Create a handler for HTML event `activate`.
+    /// <summary>Create a handler for HTML event <c>activate</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline activate (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onactivate" callback
 
-    /// Create a handler for HTML event `beforeactivate`.
+    /// <summary>Create a handler for HTML event <c>beforeactivate</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline beforeactivate (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onbeforeactivate" callback
 
-    /// Create a handler for HTML event `beforedeactivate`.
+    /// <summary>Create a handler for HTML event <c>beforedeactivate</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline beforedeactivate (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onbeforedeactivate" callback
 
-    /// Create a handler for HTML event `deactivate`.
+    /// <summary>Create a handler for HTML event <c>deactivate</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline deactivate (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "ondeactivate" callback
 
-    /// Create a handler for HTML event `ended`.
+    /// <summary>Create a handler for HTML event <c>ended</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline ended (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onended" callback
 
-    /// Create a handler for HTML event `fullscreenchange`.
+    /// <summary>Create a handler for HTML event <c>fullscreenchange</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline fullscreenchange (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onfullscreenchange" callback
 
-    /// Create a handler for HTML event `fullscreenerror`.
+    /// <summary>Create a handler for HTML event <c>fullscreenerror</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline fullscreenerror (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onfullscreenerror" callback
 
-    /// Create a handler for HTML event `loadeddata`.
+    /// <summary>Create a handler for HTML event <c>loadeddata</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline loadeddata (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onloadeddata" callback
 
-    /// Create a handler for HTML event `loadedmetadata`.
+    /// <summary>Create a handler for HTML event <c>loadedmetadata</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline loadedmetadata (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onloadedmetadata" callback
 
-    /// Create a handler for HTML event `pointerlockchange`.
+    /// <summary>Create a handler for HTML event <c>pointerlockchange</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline pointerlockchange (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onpointerlockchange" callback
 
-    /// Create a handler for HTML event `pointerlockerror`.
+    /// <summary>Create a handler for HTML event <c>pointerlockerror</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline pointerlockerror (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onpointerlockerror" callback
 
-    /// Create a handler for HTML event `readystatechange`.
+    /// <summary>Create a handler for HTML event <c>readystatechange</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline readystatechange (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onreadystatechange" callback
 
-    /// Create a handler for HTML event `scroll`.
+    /// <summary>Create a handler for HTML event <c>scroll</c>.</summary>
+    /// <param name="callback">The event callback.</param>
     let inline scroll (callback: EventArgs -> unit) : Attr =
         attr.callback<EventArgs> "onscroll" callback
 
 // END EVENTS
 
-    /// Event handlers returning type `Async<unit>`.
+    /// <summary>Event handlers returning type <see cref="T:Async`1" />.</summary>
     module async =
 
-        /// Create an asynchronous handler for a HTML event of type EventArgs.
+        /// <summary>Create an asynchronous handler for a HTML event of type <typeparamref name="T" />.</summary>
+        /// <typeparam name="T">The event type.</typeparam>
+        /// <param name="eventName">The name of the event, without the "on" prefix.</param>
+        /// <param name="callback">The event callback.</param>
         let inline event<'T> eventName (callback: 'T -> Async<unit>) =
             attr.async.callback<'T> ("on" + eventName) callback
 
 // BEGIN ASYNCEVENTS
-        /// Create an asynchronous handler for HTML event `focus`.
+        /// <summary>Create an asynchronous handler for HTML event <c>focus</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline focus (callback: FocusEventArgs -> Async<unit>) : Attr =
             attr.async.callback<FocusEventArgs> "onfocus" callback
-        /// Create an asynchronous handler for HTML event `blur`.
+        /// <summary>Create an asynchronous handler for HTML event <c>blur</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline blur (callback: FocusEventArgs -> Async<unit>) : Attr =
             attr.async.callback<FocusEventArgs> "onblur" callback
-        /// Create an asynchronous handler for HTML event `focusin`.
+        /// <summary>Create an asynchronous handler for HTML event <c>focusin</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline focusin (callback: FocusEventArgs -> Async<unit>) : Attr =
             attr.async.callback<FocusEventArgs> "onfocusin" callback
-        /// Create an asynchronous handler for HTML event `focusout`.
+        /// <summary>Create an asynchronous handler for HTML event <c>focusout</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline focusout (callback: FocusEventArgs -> Async<unit>) : Attr =
             attr.async.callback<FocusEventArgs> "onfocusout" callback
-        /// Create an asynchronous handler for HTML event `mouseover`.
+        /// <summary>Create an asynchronous handler for HTML event <c>mouseover</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline mouseover (callback: MouseEventArgs -> Async<unit>) : Attr =
             attr.async.callback<MouseEventArgs> "onmouseover" callback
-        /// Create an asynchronous handler for HTML event `mouseout`.
+        /// <summary>Create an asynchronous handler for HTML event <c>mouseout</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline mouseout (callback: MouseEventArgs -> Async<unit>) : Attr =
             attr.async.callback<MouseEventArgs> "onmouseout" callback
-        /// Create an asynchronous handler for HTML event `mousemove`.
+        /// <summary>Create an asynchronous handler for HTML event <c>mousemove</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline mousemove (callback: MouseEventArgs -> Async<unit>) : Attr =
             attr.async.callback<MouseEventArgs> "onmousemove" callback
-        /// Create an asynchronous handler for HTML event `mousedown`.
+        /// <summary>Create an asynchronous handler for HTML event <c>mousedown</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline mousedown (callback: MouseEventArgs -> Async<unit>) : Attr =
             attr.async.callback<MouseEventArgs> "onmousedown" callback
-        /// Create an asynchronous handler for HTML event `mouseup`.
+        /// <summary>Create an asynchronous handler for HTML event <c>mouseup</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline mouseup (callback: MouseEventArgs -> Async<unit>) : Attr =
             attr.async.callback<MouseEventArgs> "onmouseup" callback
-        /// Create an asynchronous handler for HTML event `click`.
+        /// <summary>Create an asynchronous handler for HTML event <c>click</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline click (callback: MouseEventArgs -> Async<unit>) : Attr =
             attr.async.callback<MouseEventArgs> "onclick" callback
-        /// Create an asynchronous handler for HTML event `dblclick`.
+        /// <summary>Create an asynchronous handler for HTML event <c>dblclick</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline dblclick (callback: MouseEventArgs -> Async<unit>) : Attr =
             attr.async.callback<MouseEventArgs> "ondblclick" callback
-        /// Create an asynchronous handler for HTML event `wheel`.
+        /// <summary>Create an asynchronous handler for HTML event <c>wheel</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline wheel (callback: MouseEventArgs -> Async<unit>) : Attr =
             attr.async.callback<MouseEventArgs> "onwheel" callback
-        /// Create an asynchronous handler for HTML event `mousewheel`.
+        /// <summary>Create an asynchronous handler for HTML event <c>mousewheel</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline mousewheel (callback: MouseEventArgs -> Async<unit>) : Attr =
             attr.async.callback<MouseEventArgs> "onmousewheel" callback
-        /// Create an asynchronous handler for HTML event `contextmenu`.
+        /// <summary>Create an asynchronous handler for HTML event <c>contextmenu</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline contextmenu (callback: MouseEventArgs -> Async<unit>) : Attr =
             attr.async.callback<MouseEventArgs> "oncontextmenu" callback
-        /// Create an asynchronous handler for HTML event `drag`.
+        /// <summary>Create an asynchronous handler for HTML event <c>drag</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline drag (callback: DragEventArgs -> Async<unit>) : Attr =
             attr.async.callback<DragEventArgs> "ondrag" callback
-        /// Create an asynchronous handler for HTML event `dragend`.
+        /// <summary>Create an asynchronous handler for HTML event <c>dragend</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline dragend (callback: DragEventArgs -> Async<unit>) : Attr =
             attr.async.callback<DragEventArgs> "ondragend" callback
-        /// Create an asynchronous handler for HTML event `dragenter`.
+        /// <summary>Create an asynchronous handler for HTML event <c>dragenter</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline dragenter (callback: DragEventArgs -> Async<unit>) : Attr =
             attr.async.callback<DragEventArgs> "ondragenter" callback
-        /// Create an asynchronous handler for HTML event `dragleave`.
+        /// <summary>Create an asynchronous handler for HTML event <c>dragleave</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline dragleave (callback: DragEventArgs -> Async<unit>) : Attr =
             attr.async.callback<DragEventArgs> "ondragleave" callback
-        /// Create an asynchronous handler for HTML event `dragover`.
+        /// <summary>Create an asynchronous handler for HTML event <c>dragover</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline dragover (callback: DragEventArgs -> Async<unit>) : Attr =
             attr.async.callback<DragEventArgs> "ondragover" callback
-        /// Create an asynchronous handler for HTML event `dragstart`.
+        /// <summary>Create an asynchronous handler for HTML event <c>dragstart</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline dragstart (callback: DragEventArgs -> Async<unit>) : Attr =
             attr.async.callback<DragEventArgs> "ondragstart" callback
-        /// Create an asynchronous handler for HTML event `drop`.
+        /// <summary>Create an asynchronous handler for HTML event <c>drop</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline drop (callback: DragEventArgs -> Async<unit>) : Attr =
             attr.async.callback<DragEventArgs> "ondrop" callback
-        /// Create an asynchronous handler for HTML event `keydown`.
+        /// <summary>Create an asynchronous handler for HTML event <c>keydown</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline keydown (callback: KeyboardEventArgs -> Async<unit>) : Attr =
             attr.async.callback<KeyboardEventArgs> "onkeydown" callback
-        /// Create an asynchronous handler for HTML event `keyup`.
+        /// <summary>Create an asynchronous handler for HTML event <c>keyup</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline keyup (callback: KeyboardEventArgs -> Async<unit>) : Attr =
             attr.async.callback<KeyboardEventArgs> "onkeyup" callback
-        /// Create an asynchronous handler for HTML event `keypress`.
+        /// <summary>Create an asynchronous handler for HTML event <c>keypress</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline keypress (callback: KeyboardEventArgs -> Async<unit>) : Attr =
             attr.async.callback<KeyboardEventArgs> "onkeypress" callback
-        /// Create an asynchronous handler for HTML event `change`.
+        /// <summary>Create an asynchronous handler for HTML event <c>change</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline change (callback: ChangeEventArgs -> Async<unit>) : Attr =
             attr.async.callback<ChangeEventArgs> "onchange" callback
-        /// Create an asynchronous handler for HTML event `input`.
+        /// <summary>Create an asynchronous handler for HTML event <c>input</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline input (callback: ChangeEventArgs -> Async<unit>) : Attr =
             attr.async.callback<ChangeEventArgs> "oninput" callback
-        /// Create an asynchronous handler for HTML event `invalid`.
+        /// <summary>Create an asynchronous handler for HTML event <c>invalid</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline invalid (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "oninvalid" callback
-        /// Create an asynchronous handler for HTML event `reset`.
+        /// <summary>Create an asynchronous handler for HTML event <c>reset</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline reset (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onreset" callback
-        /// Create an asynchronous handler for HTML event `select`.
+        /// <summary>Create an asynchronous handler for HTML event <c>select</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline select (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onselect" callback
-        /// Create an asynchronous handler for HTML event `selectstart`.
+        /// <summary>Create an asynchronous handler for HTML event <c>selectstart</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline selectstart (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onselectstart" callback
-        /// Create an asynchronous handler for HTML event `selectionchange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>selectionchange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline selectionchange (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onselectionchange" callback
-        /// Create an asynchronous handler for HTML event `submit`.
+        /// <summary>Create an asynchronous handler for HTML event <c>submit</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline submit (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onsubmit" callback
-        /// Create an asynchronous handler for HTML event `beforecopy`.
+        /// <summary>Create an asynchronous handler for HTML event <c>beforecopy</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline beforecopy (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onbeforecopy" callback
-        /// Create an asynchronous handler for HTML event `beforecut`.
+        /// <summary>Create an asynchronous handler for HTML event <c>beforecut</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline beforecut (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onbeforecut" callback
-        /// Create an asynchronous handler for HTML event `beforepaste`.
+        /// <summary>Create an asynchronous handler for HTML event <c>beforepaste</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline beforepaste (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onbeforepaste" callback
-        /// Create an asynchronous handler for HTML event `copy`.
+        /// <summary>Create an asynchronous handler for HTML event <c>copy</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline copy (callback: ClipboardEventArgs -> Async<unit>) : Attr =
             attr.async.callback<ClipboardEventArgs> "oncopy" callback
-        /// Create an asynchronous handler for HTML event `cut`.
+        /// <summary>Create an asynchronous handler for HTML event <c>cut</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline cut (callback: ClipboardEventArgs -> Async<unit>) : Attr =
             attr.async.callback<ClipboardEventArgs> "oncut" callback
-        /// Create an asynchronous handler for HTML event `paste`.
+        /// <summary>Create an asynchronous handler for HTML event <c>paste</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline paste (callback: ClipboardEventArgs -> Async<unit>) : Attr =
             attr.async.callback<ClipboardEventArgs> "onpaste" callback
-        /// Create an asynchronous handler for HTML event `touchcancel`.
+        /// <summary>Create an asynchronous handler for HTML event <c>touchcancel</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline touchcancel (callback: TouchEventArgs -> Async<unit>) : Attr =
             attr.async.callback<TouchEventArgs> "ontouchcancel" callback
-        /// Create an asynchronous handler for HTML event `touchend`.
+        /// <summary>Create an asynchronous handler for HTML event <c>touchend</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline touchend (callback: TouchEventArgs -> Async<unit>) : Attr =
             attr.async.callback<TouchEventArgs> "ontouchend" callback
-        /// Create an asynchronous handler for HTML event `touchmove`.
+        /// <summary>Create an asynchronous handler for HTML event <c>touchmove</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline touchmove (callback: TouchEventArgs -> Async<unit>) : Attr =
             attr.async.callback<TouchEventArgs> "ontouchmove" callback
-        /// Create an asynchronous handler for HTML event `touchstart`.
+        /// <summary>Create an asynchronous handler for HTML event <c>touchstart</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline touchstart (callback: TouchEventArgs -> Async<unit>) : Attr =
             attr.async.callback<TouchEventArgs> "ontouchstart" callback
-        /// Create an asynchronous handler for HTML event `touchenter`.
+        /// <summary>Create an asynchronous handler for HTML event <c>touchenter</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline touchenter (callback: TouchEventArgs -> Async<unit>) : Attr =
             attr.async.callback<TouchEventArgs> "ontouchenter" callback
-        /// Create an asynchronous handler for HTML event `touchleave`.
+        /// <summary>Create an asynchronous handler for HTML event <c>touchleave</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline touchleave (callback: TouchEventArgs -> Async<unit>) : Attr =
             attr.async.callback<TouchEventArgs> "ontouchleave" callback
-        /// Create an asynchronous handler for HTML event `pointercapture`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointercapture</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointercapture (callback: PointerEventArgs -> Async<unit>) : Attr =
             attr.async.callback<PointerEventArgs> "onpointercapture" callback
-        /// Create an asynchronous handler for HTML event `lostpointercapture`.
+        /// <summary>Create an asynchronous handler for HTML event <c>lostpointercapture</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline lostpointercapture (callback: PointerEventArgs -> Async<unit>) : Attr =
             attr.async.callback<PointerEventArgs> "onlostpointercapture" callback
-        /// Create an asynchronous handler for HTML event `pointercancel`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointercancel</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointercancel (callback: PointerEventArgs -> Async<unit>) : Attr =
             attr.async.callback<PointerEventArgs> "onpointercancel" callback
-        /// Create an asynchronous handler for HTML event `pointerdown`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerdown</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerdown (callback: PointerEventArgs -> Async<unit>) : Attr =
             attr.async.callback<PointerEventArgs> "onpointerdown" callback
-        /// Create an asynchronous handler for HTML event `pointerenter`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerenter</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerenter (callback: PointerEventArgs -> Async<unit>) : Attr =
             attr.async.callback<PointerEventArgs> "onpointerenter" callback
-        /// Create an asynchronous handler for HTML event `pointerleave`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerleave</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerleave (callback: PointerEventArgs -> Async<unit>) : Attr =
             attr.async.callback<PointerEventArgs> "onpointerleave" callback
-        /// Create an asynchronous handler for HTML event `pointermove`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointermove</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointermove (callback: PointerEventArgs -> Async<unit>) : Attr =
             attr.async.callback<PointerEventArgs> "onpointermove" callback
-        /// Create an asynchronous handler for HTML event `pointerout`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerout</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerout (callback: PointerEventArgs -> Async<unit>) : Attr =
             attr.async.callback<PointerEventArgs> "onpointerout" callback
-        /// Create an asynchronous handler for HTML event `pointerover`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerover</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerover (callback: PointerEventArgs -> Async<unit>) : Attr =
             attr.async.callback<PointerEventArgs> "onpointerover" callback
-        /// Create an asynchronous handler for HTML event `pointerup`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerup</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerup (callback: PointerEventArgs -> Async<unit>) : Attr =
             attr.async.callback<PointerEventArgs> "onpointerup" callback
-        /// Create an asynchronous handler for HTML event `canplay`.
+        /// <summary>Create an asynchronous handler for HTML event <c>canplay</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline canplay (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "oncanplay" callback
-        /// Create an asynchronous handler for HTML event `canplaythrough`.
+        /// <summary>Create an asynchronous handler for HTML event <c>canplaythrough</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline canplaythrough (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "oncanplaythrough" callback
-        /// Create an asynchronous handler for HTML event `cuechange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>cuechange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline cuechange (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "oncuechange" callback
-        /// Create an asynchronous handler for HTML event `durationchange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>durationchange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline durationchange (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "ondurationchange" callback
-        /// Create an asynchronous handler for HTML event `emptied`.
+        /// <summary>Create an asynchronous handler for HTML event <c>emptied</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline emptied (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onemptied" callback
-        /// Create an asynchronous handler for HTML event `pause`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pause</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pause (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onpause" callback
-        /// Create an asynchronous handler for HTML event `play`.
+        /// <summary>Create an asynchronous handler for HTML event <c>play</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline play (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onplay" callback
-        /// Create an asynchronous handler for HTML event `playing`.
+        /// <summary>Create an asynchronous handler for HTML event <c>playing</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline playing (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onplaying" callback
-        /// Create an asynchronous handler for HTML event `ratechange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>ratechange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline ratechange (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onratechange" callback
-        /// Create an asynchronous handler for HTML event `seeked`.
+        /// <summary>Create an asynchronous handler for HTML event <c>seeked</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline seeked (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onseeked" callback
-        /// Create an asynchronous handler for HTML event `seeking`.
+        /// <summary>Create an asynchronous handler for HTML event <c>seeking</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline seeking (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onseeking" callback
-        /// Create an asynchronous handler for HTML event `stalled`.
+        /// <summary>Create an asynchronous handler for HTML event <c>stalled</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline stalled (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onstalled" callback
-        /// Create an asynchronous handler for HTML event `stop`.
+        /// <summary>Create an asynchronous handler for HTML event <c>stop</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline stop (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onstop" callback
-        /// Create an asynchronous handler for HTML event `suspend`.
+        /// <summary>Create an asynchronous handler for HTML event <c>suspend</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline suspend (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onsuspend" callback
-        /// Create an asynchronous handler for HTML event `timeupdate`.
+        /// <summary>Create an asynchronous handler for HTML event <c>timeupdate</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline timeupdate (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "ontimeupdate" callback
-        /// Create an asynchronous handler for HTML event `volumechange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>volumechange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline volumechange (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onvolumechange" callback
-        /// Create an asynchronous handler for HTML event `waiting`.
+        /// <summary>Create an asynchronous handler for HTML event <c>waiting</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline waiting (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onwaiting" callback
-        /// Create an asynchronous handler for HTML event `loadstart`.
+        /// <summary>Create an asynchronous handler for HTML event <c>loadstart</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline loadstart (callback: ProgressEventArgs -> Async<unit>) : Attr =
             attr.async.callback<ProgressEventArgs> "onloadstart" callback
-        /// Create an asynchronous handler for HTML event `timeout`.
+        /// <summary>Create an asynchronous handler for HTML event <c>timeout</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline timeout (callback: ProgressEventArgs -> Async<unit>) : Attr =
             attr.async.callback<ProgressEventArgs> "ontimeout" callback
-        /// Create an asynchronous handler for HTML event `abort`.
+        /// <summary>Create an asynchronous handler for HTML event <c>abort</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline abort (callback: ProgressEventArgs -> Async<unit>) : Attr =
             attr.async.callback<ProgressEventArgs> "onabort" callback
-        /// Create an asynchronous handler for HTML event `load`.
+        /// <summary>Create an asynchronous handler for HTML event <c>load</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline load (callback: ProgressEventArgs -> Async<unit>) : Attr =
             attr.async.callback<ProgressEventArgs> "onload" callback
-        /// Create an asynchronous handler for HTML event `loadend`.
+        /// <summary>Create an asynchronous handler for HTML event <c>loadend</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline loadend (callback: ProgressEventArgs -> Async<unit>) : Attr =
             attr.async.callback<ProgressEventArgs> "onloadend" callback
-        /// Create an asynchronous handler for HTML event `progress`.
+        /// <summary>Create an asynchronous handler for HTML event <c>progress</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline progress (callback: ProgressEventArgs -> Async<unit>) : Attr =
             attr.async.callback<ProgressEventArgs> "onprogress" callback
-        /// Create an asynchronous handler for HTML event `error`.
+        /// <summary>Create an asynchronous handler for HTML event <c>error</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline error (callback: ProgressEventArgs -> Async<unit>) : Attr =
             attr.async.callback<ProgressEventArgs> "onerror" callback
-        /// Create an asynchronous handler for HTML event `activate`.
+        /// <summary>Create an asynchronous handler for HTML event <c>activate</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline activate (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onactivate" callback
-        /// Create an asynchronous handler for HTML event `beforeactivate`.
+        /// <summary>Create an asynchronous handler for HTML event <c>beforeactivate</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline beforeactivate (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onbeforeactivate" callback
-        /// Create an asynchronous handler for HTML event `beforedeactivate`.
+        /// <summary>Create an asynchronous handler for HTML event <c>beforedeactivate</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline beforedeactivate (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onbeforedeactivate" callback
-        /// Create an asynchronous handler for HTML event `deactivate`.
+        /// <summary>Create an asynchronous handler for HTML event <c>deactivate</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline deactivate (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "ondeactivate" callback
-        /// Create an asynchronous handler for HTML event `ended`.
+        /// <summary>Create an asynchronous handler for HTML event <c>ended</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline ended (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onended" callback
-        /// Create an asynchronous handler for HTML event `fullscreenchange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>fullscreenchange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline fullscreenchange (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onfullscreenchange" callback
-        /// Create an asynchronous handler for HTML event `fullscreenerror`.
+        /// <summary>Create an asynchronous handler for HTML event <c>fullscreenerror</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline fullscreenerror (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onfullscreenerror" callback
-        /// Create an asynchronous handler for HTML event `loadeddata`.
+        /// <summary>Create an asynchronous handler for HTML event <c>loadeddata</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline loadeddata (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onloadeddata" callback
-        /// Create an asynchronous handler for HTML event `loadedmetadata`.
+        /// <summary>Create an asynchronous handler for HTML event <c>loadedmetadata</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline loadedmetadata (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onloadedmetadata" callback
-        /// Create an asynchronous handler for HTML event `pointerlockchange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerlockchange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerlockchange (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onpointerlockchange" callback
-        /// Create an asynchronous handler for HTML event `pointerlockerror`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerlockerror</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerlockerror (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onpointerlockerror" callback
-        /// Create an asynchronous handler for HTML event `readystatechange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>readystatechange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline readystatechange (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onreadystatechange" callback
-        /// Create an asynchronous handler for HTML event `scroll`.
+        /// <summary>Create an asynchronous handler for HTML event <c>scroll</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline scroll (callback: EventArgs -> Async<unit>) : Attr =
             attr.async.callback<EventArgs> "onscroll" callback
 // END ASYNCEVENTS
 
-    /// Event handlers returning type `Task`.
+    /// <summary>Event handlers returning type <see cref="System.Threading.Tasks.Task" />.</summary>
     module task =
 
-        /// Create an asynchronous handler for a HTML event of type EventArgs.
+        /// <summary>Create an asynchronous handler for a HTML event of type <typeparamref name="T" />.</summary>
+        /// <typeparam name="T">The event type.</typeparam>
+        /// <param name="eventName">The name of the event, without the "on" prefix.</param>
+        /// <param name="callback">The event callback.</param>
         let inline event<'T> eventName (callback: 'T -> Task) =
             attr.task.callback<'T> ("on" + eventName) callback
 
 // BEGIN TASKEVENTS
-        /// Create an asynchronous handler for HTML event `focus`.
+        /// <summary>Create an asynchronous handler for HTML event <c>focus</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline focus (callback: FocusEventArgs -> Task) : Attr =
             attr.task.callback<FocusEventArgs> "onfocus" callback
-        /// Create an asynchronous handler for HTML event `blur`.
+        /// <summary>Create an asynchronous handler for HTML event <c>blur</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline blur (callback: FocusEventArgs -> Task) : Attr =
             attr.task.callback<FocusEventArgs> "onblur" callback
-        /// Create an asynchronous handler for HTML event `focusin`.
+        /// <summary>Create an asynchronous handler for HTML event <c>focusin</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline focusin (callback: FocusEventArgs -> Task) : Attr =
             attr.task.callback<FocusEventArgs> "onfocusin" callback
-        /// Create an asynchronous handler for HTML event `focusout`.
+        /// <summary>Create an asynchronous handler for HTML event <c>focusout</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline focusout (callback: FocusEventArgs -> Task) : Attr =
             attr.task.callback<FocusEventArgs> "onfocusout" callback
-        /// Create an asynchronous handler for HTML event `mouseover`.
+        /// <summary>Create an asynchronous handler for HTML event <c>mouseover</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline mouseover (callback: MouseEventArgs -> Task) : Attr =
             attr.task.callback<MouseEventArgs> "onmouseover" callback
-        /// Create an asynchronous handler for HTML event `mouseout`.
+        /// <summary>Create an asynchronous handler for HTML event <c>mouseout</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline mouseout (callback: MouseEventArgs -> Task) : Attr =
             attr.task.callback<MouseEventArgs> "onmouseout" callback
-        /// Create an asynchronous handler for HTML event `mousemove`.
+        /// <summary>Create an asynchronous handler for HTML event <c>mousemove</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline mousemove (callback: MouseEventArgs -> Task) : Attr =
             attr.task.callback<MouseEventArgs> "onmousemove" callback
-        /// Create an asynchronous handler for HTML event `mousedown`.
+        /// <summary>Create an asynchronous handler for HTML event <c>mousedown</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline mousedown (callback: MouseEventArgs -> Task) : Attr =
             attr.task.callback<MouseEventArgs> "onmousedown" callback
-        /// Create an asynchronous handler for HTML event `mouseup`.
+        /// <summary>Create an asynchronous handler for HTML event <c>mouseup</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline mouseup (callback: MouseEventArgs -> Task) : Attr =
             attr.task.callback<MouseEventArgs> "onmouseup" callback
-        /// Create an asynchronous handler for HTML event `click`.
+        /// <summary>Create an asynchronous handler for HTML event <c>click</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline click (callback: MouseEventArgs -> Task) : Attr =
             attr.task.callback<MouseEventArgs> "onclick" callback
-        /// Create an asynchronous handler for HTML event `dblclick`.
+        /// <summary>Create an asynchronous handler for HTML event <c>dblclick</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline dblclick (callback: MouseEventArgs -> Task) : Attr =
             attr.task.callback<MouseEventArgs> "ondblclick" callback
-        /// Create an asynchronous handler for HTML event `wheel`.
+        /// <summary>Create an asynchronous handler for HTML event <c>wheel</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline wheel (callback: MouseEventArgs -> Task) : Attr =
             attr.task.callback<MouseEventArgs> "onwheel" callback
-        /// Create an asynchronous handler for HTML event `mousewheel`.
+        /// <summary>Create an asynchronous handler for HTML event <c>mousewheel</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline mousewheel (callback: MouseEventArgs -> Task) : Attr =
             attr.task.callback<MouseEventArgs> "onmousewheel" callback
-        /// Create an asynchronous handler for HTML event `contextmenu`.
+        /// <summary>Create an asynchronous handler for HTML event <c>contextmenu</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline contextmenu (callback: MouseEventArgs -> Task) : Attr =
             attr.task.callback<MouseEventArgs> "oncontextmenu" callback
-        /// Create an asynchronous handler for HTML event `drag`.
+        /// <summary>Create an asynchronous handler for HTML event <c>drag</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline drag (callback: DragEventArgs -> Task) : Attr =
             attr.task.callback<DragEventArgs> "ondrag" callback
-        /// Create an asynchronous handler for HTML event `dragend`.
+        /// <summary>Create an asynchronous handler for HTML event <c>dragend</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline dragend (callback: DragEventArgs -> Task) : Attr =
             attr.task.callback<DragEventArgs> "ondragend" callback
-        /// Create an asynchronous handler for HTML event `dragenter`.
+        /// <summary>Create an asynchronous handler for HTML event <c>dragenter</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline dragenter (callback: DragEventArgs -> Task) : Attr =
             attr.task.callback<DragEventArgs> "ondragenter" callback
-        /// Create an asynchronous handler for HTML event `dragleave`.
+        /// <summary>Create an asynchronous handler for HTML event <c>dragleave</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline dragleave (callback: DragEventArgs -> Task) : Attr =
             attr.task.callback<DragEventArgs> "ondragleave" callback
-        /// Create an asynchronous handler for HTML event `dragover`.
+        /// <summary>Create an asynchronous handler for HTML event <c>dragover</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline dragover (callback: DragEventArgs -> Task) : Attr =
             attr.task.callback<DragEventArgs> "ondragover" callback
-        /// Create an asynchronous handler for HTML event `dragstart`.
+        /// <summary>Create an asynchronous handler for HTML event <c>dragstart</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline dragstart (callback: DragEventArgs -> Task) : Attr =
             attr.task.callback<DragEventArgs> "ondragstart" callback
-        /// Create an asynchronous handler for HTML event `drop`.
+        /// <summary>Create an asynchronous handler for HTML event <c>drop</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline drop (callback: DragEventArgs -> Task) : Attr =
             attr.task.callback<DragEventArgs> "ondrop" callback
-        /// Create an asynchronous handler for HTML event `keydown`.
+        /// <summary>Create an asynchronous handler for HTML event <c>keydown</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline keydown (callback: KeyboardEventArgs -> Task) : Attr =
             attr.task.callback<KeyboardEventArgs> "onkeydown" callback
-        /// Create an asynchronous handler for HTML event `keyup`.
+        /// <summary>Create an asynchronous handler for HTML event <c>keyup</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline keyup (callback: KeyboardEventArgs -> Task) : Attr =
             attr.task.callback<KeyboardEventArgs> "onkeyup" callback
-        /// Create an asynchronous handler for HTML event `keypress`.
+        /// <summary>Create an asynchronous handler for HTML event <c>keypress</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline keypress (callback: KeyboardEventArgs -> Task) : Attr =
             attr.task.callback<KeyboardEventArgs> "onkeypress" callback
-        /// Create an asynchronous handler for HTML event `change`.
+        /// <summary>Create an asynchronous handler for HTML event <c>change</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline change (callback: ChangeEventArgs -> Task) : Attr =
             attr.task.callback<ChangeEventArgs> "onchange" callback
-        /// Create an asynchronous handler for HTML event `input`.
+        /// <summary>Create an asynchronous handler for HTML event <c>input</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline input (callback: ChangeEventArgs -> Task) : Attr =
             attr.task.callback<ChangeEventArgs> "oninput" callback
-        /// Create an asynchronous handler for HTML event `invalid`.
+        /// <summary>Create an asynchronous handler for HTML event <c>invalid</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline invalid (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "oninvalid" callback
-        /// Create an asynchronous handler for HTML event `reset`.
+        /// <summary>Create an asynchronous handler for HTML event <c>reset</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline reset (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onreset" callback
-        /// Create an asynchronous handler for HTML event `select`.
+        /// <summary>Create an asynchronous handler for HTML event <c>select</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline select (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onselect" callback
-        /// Create an asynchronous handler for HTML event `selectstart`.
+        /// <summary>Create an asynchronous handler for HTML event <c>selectstart</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline selectstart (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onselectstart" callback
-        /// Create an asynchronous handler for HTML event `selectionchange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>selectionchange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline selectionchange (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onselectionchange" callback
-        /// Create an asynchronous handler for HTML event `submit`.
+        /// <summary>Create an asynchronous handler for HTML event <c>submit</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline submit (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onsubmit" callback
-        /// Create an asynchronous handler for HTML event `beforecopy`.
+        /// <summary>Create an asynchronous handler for HTML event <c>beforecopy</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline beforecopy (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onbeforecopy" callback
-        /// Create an asynchronous handler for HTML event `beforecut`.
+        /// <summary>Create an asynchronous handler for HTML event <c>beforecut</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline beforecut (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onbeforecut" callback
-        /// Create an asynchronous handler for HTML event `beforepaste`.
+        /// <summary>Create an asynchronous handler for HTML event <c>beforepaste</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline beforepaste (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onbeforepaste" callback
-        /// Create an asynchronous handler for HTML event `copy`.
+        /// <summary>Create an asynchronous handler for HTML event <c>copy</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline copy (callback: ClipboardEventArgs -> Task) : Attr =
             attr.task.callback<ClipboardEventArgs> "oncopy" callback
-        /// Create an asynchronous handler for HTML event `cut`.
+        /// <summary>Create an asynchronous handler for HTML event <c>cut</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline cut (callback: ClipboardEventArgs -> Task) : Attr =
             attr.task.callback<ClipboardEventArgs> "oncut" callback
-        /// Create an asynchronous handler for HTML event `paste`.
+        /// <summary>Create an asynchronous handler for HTML event <c>paste</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline paste (callback: ClipboardEventArgs -> Task) : Attr =
             attr.task.callback<ClipboardEventArgs> "onpaste" callback
-        /// Create an asynchronous handler for HTML event `touchcancel`.
+        /// <summary>Create an asynchronous handler for HTML event <c>touchcancel</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline touchcancel (callback: TouchEventArgs -> Task) : Attr =
             attr.task.callback<TouchEventArgs> "ontouchcancel" callback
-        /// Create an asynchronous handler for HTML event `touchend`.
+        /// <summary>Create an asynchronous handler for HTML event <c>touchend</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline touchend (callback: TouchEventArgs -> Task) : Attr =
             attr.task.callback<TouchEventArgs> "ontouchend" callback
-        /// Create an asynchronous handler for HTML event `touchmove`.
+        /// <summary>Create an asynchronous handler for HTML event <c>touchmove</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline touchmove (callback: TouchEventArgs -> Task) : Attr =
             attr.task.callback<TouchEventArgs> "ontouchmove" callback
-        /// Create an asynchronous handler for HTML event `touchstart`.
+        /// <summary>Create an asynchronous handler for HTML event <c>touchstart</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline touchstart (callback: TouchEventArgs -> Task) : Attr =
             attr.task.callback<TouchEventArgs> "ontouchstart" callback
-        /// Create an asynchronous handler for HTML event `touchenter`.
+        /// <summary>Create an asynchronous handler for HTML event <c>touchenter</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline touchenter (callback: TouchEventArgs -> Task) : Attr =
             attr.task.callback<TouchEventArgs> "ontouchenter" callback
-        /// Create an asynchronous handler for HTML event `touchleave`.
+        /// <summary>Create an asynchronous handler for HTML event <c>touchleave</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline touchleave (callback: TouchEventArgs -> Task) : Attr =
             attr.task.callback<TouchEventArgs> "ontouchleave" callback
-        /// Create an asynchronous handler for HTML event `pointercapture`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointercapture</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointercapture (callback: PointerEventArgs -> Task) : Attr =
             attr.task.callback<PointerEventArgs> "onpointercapture" callback
-        /// Create an asynchronous handler for HTML event `lostpointercapture`.
+        /// <summary>Create an asynchronous handler for HTML event <c>lostpointercapture</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline lostpointercapture (callback: PointerEventArgs -> Task) : Attr =
             attr.task.callback<PointerEventArgs> "onlostpointercapture" callback
-        /// Create an asynchronous handler for HTML event `pointercancel`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointercancel</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointercancel (callback: PointerEventArgs -> Task) : Attr =
             attr.task.callback<PointerEventArgs> "onpointercancel" callback
-        /// Create an asynchronous handler for HTML event `pointerdown`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerdown</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerdown (callback: PointerEventArgs -> Task) : Attr =
             attr.task.callback<PointerEventArgs> "onpointerdown" callback
-        /// Create an asynchronous handler for HTML event `pointerenter`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerenter</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerenter (callback: PointerEventArgs -> Task) : Attr =
             attr.task.callback<PointerEventArgs> "onpointerenter" callback
-        /// Create an asynchronous handler for HTML event `pointerleave`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerleave</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerleave (callback: PointerEventArgs -> Task) : Attr =
             attr.task.callback<PointerEventArgs> "onpointerleave" callback
-        /// Create an asynchronous handler for HTML event `pointermove`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointermove</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointermove (callback: PointerEventArgs -> Task) : Attr =
             attr.task.callback<PointerEventArgs> "onpointermove" callback
-        /// Create an asynchronous handler for HTML event `pointerout`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerout</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerout (callback: PointerEventArgs -> Task) : Attr =
             attr.task.callback<PointerEventArgs> "onpointerout" callback
-        /// Create an asynchronous handler for HTML event `pointerover`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerover</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerover (callback: PointerEventArgs -> Task) : Attr =
             attr.task.callback<PointerEventArgs> "onpointerover" callback
-        /// Create an asynchronous handler for HTML event `pointerup`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerup</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerup (callback: PointerEventArgs -> Task) : Attr =
             attr.task.callback<PointerEventArgs> "onpointerup" callback
-        /// Create an asynchronous handler for HTML event `canplay`.
+        /// <summary>Create an asynchronous handler for HTML event <c>canplay</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline canplay (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "oncanplay" callback
-        /// Create an asynchronous handler for HTML event `canplaythrough`.
+        /// <summary>Create an asynchronous handler for HTML event <c>canplaythrough</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline canplaythrough (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "oncanplaythrough" callback
-        /// Create an asynchronous handler for HTML event `cuechange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>cuechange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline cuechange (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "oncuechange" callback
-        /// Create an asynchronous handler for HTML event `durationchange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>durationchange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline durationchange (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "ondurationchange" callback
-        /// Create an asynchronous handler for HTML event `emptied`.
+        /// <summary>Create an asynchronous handler for HTML event <c>emptied</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline emptied (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onemptied" callback
-        /// Create an asynchronous handler for HTML event `pause`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pause</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pause (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onpause" callback
-        /// Create an asynchronous handler for HTML event `play`.
+        /// <summary>Create an asynchronous handler for HTML event <c>play</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline play (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onplay" callback
-        /// Create an asynchronous handler for HTML event `playing`.
+        /// <summary>Create an asynchronous handler for HTML event <c>playing</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline playing (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onplaying" callback
-        /// Create an asynchronous handler for HTML event `ratechange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>ratechange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline ratechange (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onratechange" callback
-        /// Create an asynchronous handler for HTML event `seeked`.
+        /// <summary>Create an asynchronous handler for HTML event <c>seeked</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline seeked (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onseeked" callback
-        /// Create an asynchronous handler for HTML event `seeking`.
+        /// <summary>Create an asynchronous handler for HTML event <c>seeking</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline seeking (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onseeking" callback
-        /// Create an asynchronous handler for HTML event `stalled`.
+        /// <summary>Create an asynchronous handler for HTML event <c>stalled</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline stalled (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onstalled" callback
-        /// Create an asynchronous handler for HTML event `stop`.
+        /// <summary>Create an asynchronous handler for HTML event <c>stop</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline stop (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onstop" callback
-        /// Create an asynchronous handler for HTML event `suspend`.
+        /// <summary>Create an asynchronous handler for HTML event <c>suspend</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline suspend (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onsuspend" callback
-        /// Create an asynchronous handler for HTML event `timeupdate`.
+        /// <summary>Create an asynchronous handler for HTML event <c>timeupdate</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline timeupdate (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "ontimeupdate" callback
-        /// Create an asynchronous handler for HTML event `volumechange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>volumechange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline volumechange (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onvolumechange" callback
-        /// Create an asynchronous handler for HTML event `waiting`.
+        /// <summary>Create an asynchronous handler for HTML event <c>waiting</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline waiting (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onwaiting" callback
-        /// Create an asynchronous handler for HTML event `loadstart`.
+        /// <summary>Create an asynchronous handler for HTML event <c>loadstart</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline loadstart (callback: ProgressEventArgs -> Task) : Attr =
             attr.task.callback<ProgressEventArgs> "onloadstart" callback
-        /// Create an asynchronous handler for HTML event `timeout`.
+        /// <summary>Create an asynchronous handler for HTML event <c>timeout</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline timeout (callback: ProgressEventArgs -> Task) : Attr =
             attr.task.callback<ProgressEventArgs> "ontimeout" callback
-        /// Create an asynchronous handler for HTML event `abort`.
+        /// <summary>Create an asynchronous handler for HTML event <c>abort</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline abort (callback: ProgressEventArgs -> Task) : Attr =
             attr.task.callback<ProgressEventArgs> "onabort" callback
-        /// Create an asynchronous handler for HTML event `load`.
+        /// <summary>Create an asynchronous handler for HTML event <c>load</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline load (callback: ProgressEventArgs -> Task) : Attr =
             attr.task.callback<ProgressEventArgs> "onload" callback
-        /// Create an asynchronous handler for HTML event `loadend`.
+        /// <summary>Create an asynchronous handler for HTML event <c>loadend</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline loadend (callback: ProgressEventArgs -> Task) : Attr =
             attr.task.callback<ProgressEventArgs> "onloadend" callback
-        /// Create an asynchronous handler for HTML event `progress`.
+        /// <summary>Create an asynchronous handler for HTML event <c>progress</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline progress (callback: ProgressEventArgs -> Task) : Attr =
             attr.task.callback<ProgressEventArgs> "onprogress" callback
-        /// Create an asynchronous handler for HTML event `error`.
+        /// <summary>Create an asynchronous handler for HTML event <c>error</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline error (callback: ProgressEventArgs -> Task) : Attr =
             attr.task.callback<ProgressEventArgs> "onerror" callback
-        /// Create an asynchronous handler for HTML event `activate`.
+        /// <summary>Create an asynchronous handler for HTML event <c>activate</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline activate (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onactivate" callback
-        /// Create an asynchronous handler for HTML event `beforeactivate`.
+        /// <summary>Create an asynchronous handler for HTML event <c>beforeactivate</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline beforeactivate (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onbeforeactivate" callback
-        /// Create an asynchronous handler for HTML event `beforedeactivate`.
+        /// <summary>Create an asynchronous handler for HTML event <c>beforedeactivate</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline beforedeactivate (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onbeforedeactivate" callback
-        /// Create an asynchronous handler for HTML event `deactivate`.
+        /// <summary>Create an asynchronous handler for HTML event <c>deactivate</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline deactivate (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "ondeactivate" callback
-        /// Create an asynchronous handler for HTML event `ended`.
+        /// <summary>Create an asynchronous handler for HTML event <c>ended</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline ended (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onended" callback
-        /// Create an asynchronous handler for HTML event `fullscreenchange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>fullscreenchange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline fullscreenchange (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onfullscreenchange" callback
-        /// Create an asynchronous handler for HTML event `fullscreenerror`.
+        /// <summary>Create an asynchronous handler for HTML event <c>fullscreenerror</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline fullscreenerror (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onfullscreenerror" callback
-        /// Create an asynchronous handler for HTML event `loadeddata`.
+        /// <summary>Create an asynchronous handler for HTML event <c>loadeddata</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline loadeddata (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onloadeddata" callback
-        /// Create an asynchronous handler for HTML event `loadedmetadata`.
+        /// <summary>Create an asynchronous handler for HTML event <c>loadedmetadata</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline loadedmetadata (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onloadedmetadata" callback
-        /// Create an asynchronous handler for HTML event `pointerlockchange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerlockchange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerlockchange (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onpointerlockchange" callback
-        /// Create an asynchronous handler for HTML event `pointerlockerror`.
+        /// <summary>Create an asynchronous handler for HTML event <c>pointerlockerror</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline pointerlockerror (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onpointerlockerror" callback
-        /// Create an asynchronous handler for HTML event `readystatechange`.
+        /// <summary>Create an asynchronous handler for HTML event <c>readystatechange</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline readystatechange (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onreadystatechange" callback
-        /// Create an asynchronous handler for HTML event `scroll`.
+        /// <summary>Create an asynchronous handler for HTML event <c>scroll</c>.</summary>
+        /// <param name="callback">The event callback.</param>
         let inline scroll (callback: EventArgs -> Task) : Attr =
             attr.task.callback<EventArgs> "onscroll" callback
 // END TASKEVENTS
@@ -2089,7 +2692,7 @@ module on =
 module bind =
 
 
-    /// [omit]
+    /// <exclude />
     [<System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)>]
     let inline binder< ^T, ^F, ^B, ^O
                         when ^F : (static member CreateBinder : EventCallbackFactory * obj * Action< ^T> * ^T * CultureInfo -> EventCallback<ChangeEventArgs>)
@@ -2102,177 +2705,351 @@ module bind =
                     (EventCallback.Factory, receiver, Action<_> callback, currentValue, cultureInfo)))
             sequence + 2)
 
-    /// Bind a boolean to the value of a checkbox.
+    /// <summary>Bind a boolean to the value of a checkbox.</summary>
+    /// <param name="value">The current checked state.</param>
+    /// <param name="callback">The function called when the checked state changes.</param>
     let inline ``checked`` value callback = binder<bool, EventCallbackFactoryBinderExtensions, BindConverter, bool> "onchange" "checked" value callback null
 
-    /// Bind to the value of an input.
-    /// The value is updated on the oninput event.
+    /// <summary>
+    /// Bind to the value of an input. The value is updated on the <c>oninput</c> event.
+    /// </summary>
     module input =
 
-        /// Bind a string to the value of an input.
-        /// The value is updated on the oninput event.
+        /// <summary>
+        /// Bind a string to the value of an input. The value is updated on the <c>oninput</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline string value callback = binder<string, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback null
 
-        /// Bind an integer to the value of an input.
-        /// The value is updated on the oninput event.
+        /// <summary>
+        /// Bind an integer to the value of an input. The value is updated on the <c>oninput</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline int value callback = binder<int, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback null
 
-        /// Bind an int64 to the value of an input.
-        /// The value is updated on the oninput event.
+        /// <summary>
+        /// Bind an int64 to the value of an input. The value is updated on the <c>oninput</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline int64 value callback = binder<int64, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback null
 
-        /// Bind a float to the value of an input.
-        /// The value is updated on the oninput event.
+        /// <summary>
+        /// Bind a float to the value of an input. The value is updated on the <c>oninput</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline float value callback = binder<float, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback null
 
-        /// Bind a float32 to the value of an input.
-        /// The value is updated on the oninput event.
+        /// <summary>
+        /// Bind a float32 to the value of an input. The value is updated on the <c>oninput</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline float32 value callback = binder<float32, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback null
 
-        /// Bind a decimal to the value of an input.
-        /// The value is updated on the oninput event.
+        /// <summary>
+        /// Bind a decimal to the value of an input. The value is updated on the <c>oninput</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline decimal value callback = binder<decimal, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback null
 
-        /// Bind a DateTime to the value of an input.
-        /// The value is updated on the oninput event.
+        /// <summary>
+        /// Bind a DateTime to the value of an input. The value is updated on the <c>oninput</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline dateTime value callback = binder<DateTime, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback null
 
-        /// Bind a DateTimeOffset to the value of an input.
-        /// The value is updated on the oninput event.
+        /// <summary>
+        /// Bind a DateTimeOffset to the value of an input. The value is updated on the <c>oninput</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline dateTimeOffset value callback = binder<DateTimeOffset, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback null
 
-    /// Bind to the value of an input.
-    /// The value is updated on the onchange event.
+    /// <summary>
+    /// Bind to the value of an input. The value is updated on the <c>onchange</c> event.
+    /// </summary>
     module change =
 
-        /// Bind a string to the value of an input.
-        /// The value is updated on the onchange event.
+        /// <summary>
+        /// Bind a string to the value of an input. The value is updated on the <c>onchange</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline string value callback = binder<string, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback null
 
-        /// Bind an integer to the value of an input.
-        /// The value is updated on the onchange event.
+        /// <summary>
+        /// Bind an integer to the value of an input. The value is updated on the <c>onchange</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline int value callback = binder<int, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback null
 
-        /// Bind an int64 to the value of an input.
-        /// The value is updated on the onchange event.
+        /// <summary>
+        /// Bind an int64 to the value of an input. The value is updated on the <c>onchange</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline int64 value callback = binder<int64, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback null
 
-        /// Bind a float to the value of an input.
-        /// The value is updated on the onchange event.
+        /// <summary>
+        /// Bind a float to the value of an input. The value is updated on the <c>onchange</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline float value callback = binder<float, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback null
 
-        /// Bind a float32 to the value of an input.
-        /// The value is updated on the onchange event.
+        /// <summary>
+        /// Bind a float32 to the value of an input. The value is updated on the <c>onchange</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline float32 value callback = binder<float32, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback null
 
-        /// Bind a decimal to the value of an input.
-        /// The value is updated on the onchange event.
+        /// <summary>
+        /// Bind a decimal to the value of an input. The value is updated on the <c>onchange</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline decimal value callback = binder<decimal, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback null
 
-        /// Bind a DateTime to the value of an input.
-        /// The value is updated on the onchange event.
+        /// <summary>
+        /// Bind a DateTime to the value of an input. The value is updated on the <c>onchange</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline dateTime value callback = binder<DateTime, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback null
 
-        /// Bind a DateTimeOffset to the value of an input.
-        /// The value is updated on the onchange event.
+        /// <summary>
+        /// Bind a DateTimeOffset to the value of an input. The value is updated on the <c>onchange</c> event.
+        /// </summary>
+        /// <param name="value">The current input state.</param>
+        /// <param name="callback">The function called when the input state changes.</param>
         let inline dateTimeOffset value callback = binder<DateTimeOffset, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback null
 
-    /// Bind to the value of an input and convert using the given CultureInfo.
+    /// <summary>
+    /// Bind to the value of an input and convert using the given <see cref="T:System.Globalization.CultureInfo" />.
+    /// </summary>
     module withCulture =
 
-        /// Bind to the value of an input.
-        /// The value is updated on the oninput event.
+        /// <summary>
+        /// Bind to the value of an input. The value is updated on the <c>oninput</c> event.
+        /// </summary>
         module input =
 
-            /// Bind a string to the value of an input.
-            /// The value is updated on the oninput event.
+            /// <summary>
+            /// Bind a string to the value of an input. The value is updated on the <c>oninput</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline string culture value callback = binder<string, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback culture
 
-            /// Bind an integer to the value of an input.
-            /// The value is updated on the oninput event.
+            /// <summary>
+            /// Bind an integer to the value of an input. The value is updated on the <c>oninput</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline int culture value callback = binder<int, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback culture
 
-            /// Bind an int64 to the value of an input.
-            /// The value is updated on the oninput event.
+            /// <summary>
+            /// Bind an int64 to the value of an input. The value is updated on the <c>oninput</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline int64 culture value callback = binder<int64, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback culture
 
-            /// Bind a float to the value of an input.
-            /// The value is updated on the oninput event.
+            /// <summary>
+            /// Bind a float to the value of an input. The value is updated on the <c>oninput</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline float culture value callback = binder<float, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback culture
 
-            /// Bind a float32 to the value of an input.
-            /// The value is updated on the oninput event.
+            /// <summary>
+            /// Bind a float32 to the value of an input. The value is updated on the <c>oninput</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline float32 culture value callback = binder<float32, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback culture
 
-            /// Bind a decimal to the value of an input.
-            /// The value is updated on the oninput event.
+            /// <summary>
+            /// Bind a decimal to the value of an input. The value is updated on the <c>oninput</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline decimal culture value callback = binder<decimal, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback culture
 
-            /// Bind a DateTime to the value of an input.
-            /// The value is updated on the oninput event.
+            /// <summary>
+            /// Bind a DateTime to the value of an input. The value is updated on the <c>oninput</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline dateTime culture value callback = binder<DateTime, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback culture
 
-            /// Bind a DateTimeOffset to the value of an input.
-            /// The value is updated on the oninput event.
+            /// <summary>
+            /// Bind a DateTimeOffset to the value of an input. The value is updated on the <c>oninput</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline dateTimeOffset culture value callback = binder<DateTimeOffset, EventCallbackFactoryBinderExtensions, BindConverter, string> "oninput" "value" value callback culture
 
-        /// Bind to the value of an input.
-        /// The value is updated on the onchange event.
+        /// <summary>
+        /// Bind to the value of an input. The value is updated on the <c>onchange</c> event.
+        /// </summary>
         module change =
 
-            /// Bind a string to the value of an input.
-            /// The value is updated on the onchange event.
+            /// <summary>
+            /// Bind a string to the value of an input. The value is updated on the <c>onchange</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline string culture value callback = binder<string, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback culture
 
-            /// Bind an integer to the value of an input.
-            /// The value is updated on the onchange event.
+            /// <summary>
+            /// Bind an integer to the value of an input. The value is updated on the <c>onchange</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline int culture value callback = binder<int, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback culture
 
-            /// Bind an int64 to the value of an input.
-            /// The value is updated on the onchange event.
+            /// <summary>
+            /// Bind an int64 to the value of an input. The value is updated on the <c>onchange</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline int64 culture value callback = binder<int64, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback culture
 
-            /// Bind a float to the value of an input.
-            /// The value is updated on the onchange event.
+            /// <summary>
+            /// Bind a float to the value of an input. The value is updated on the <c>onchange</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline float culture value callback = binder<float, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback culture
 
-            /// Bind a float32 to the value of an input.
-            /// The value is updated on the onchange event.
+            /// <summary>
+            /// Bind a float32 to the value of an input. The value is updated on the <c>onchange</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline float32 culture value callback = binder<float32, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback culture
 
-            /// Bind a decimal to the value of an input.
-            /// The value is updated on the onchange event.
+            /// <summary>
+            /// Bind a decimal to the value of an input. The value is updated on the <c>onchange</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline decimal culture value callback = binder<decimal, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback culture
 
-            /// Bind a DateTime to the value of an input.
-            /// The value is updated on the onchange event.
+            /// <summary>
+            /// Bind a DateTime to the value of an input. The value is updated on the <c>onchange</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline dateTime culture value callback = binder<DateTime, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback culture
 
-            /// Bind a DateTimeOffset to the value of an input.
-            /// The value is updated on the onchange event.
+            /// <summary>
+            /// Bind a DateTimeOffset to the value of an input. The value is updated on the <c>onchange</c> event.
+            /// </summary>
+            /// <param name="culture">The culture to use to parse the value.</param>
+            /// <param name="value">The current input state.</param>
+            /// <param name="callback">The function called when the input state changes.</param>
             let inline dateTimeOffset culture value callback = binder<DateTimeOffset, EventCallbackFactoryBinderExtensions, BindConverter, string> "onchange" "value" value callback culture
 
+/// <summary>Functions to create Virtualize components.</summary>
 module virtualize =
     open System.Collections.Generic
     open Microsoft.AspNetCore.Components.Web.Virtualization
 
+    /// <summary>Pass a direct collection of items to a Virtualize component.</summary>
+    /// <param name="items">The collection of items.</param>
+    /// <example>
+    /// <code lang="fsharp">
+    /// virtualize.comp {
+    ///     let! item = virtualize.items (seq { 1 .. 1000 })
+    ///     div { $"Item number {item}" }
+    /// }
+    /// </code>
+    /// </example>
     let inline items (items: IReadOnlyCollection<'item>) =
         VirtualizeItemsDeclaration<'item>(fun b i ->
-            b.AddAttribute(i, "Items", Virtualize.Internals.Collection<'item> items)
+            let coll =
+                match items with
+                | :? ICollection<'item> as coll -> coll
+                | _ -> Virtualize.Internals.Collection<'item> items
+            b.AddAttribute(i, "Items", coll)
             i + 1)
 
+    /// <summary>Generate the items of a Virtualize component on the fly.</summary>
+    /// <param name="itemsProvider">The function that generates items on the fly.</param>
+    /// <example>
+    /// <code lang="fsharp">
+    /// virtualize.comp {
+    ///     let! item = virtualize.itemsProvider <| fun request ->
+    ///         ValueTask(task {
+    ///             let items = seq { request.StartIndex .. request.StartIndex + request.Count - 1 }
+    ///             return ItemsProviderResult(items, 1000)
+    ///         })
+    ///     div { $"Item number {item}" }
+    /// }
+    /// </code>
+    /// </example>
     let inline itemsProvider ([<InlineIfLambda>] itemsProvider: ItemsProviderRequest -> ValueTask<ItemsProviderResult<'item>>) =
         VirtualizeItemsDeclaration<'item>(fun b i ->
             b.AddAttribute(i, "ItemsProvider", ItemsProviderDelegate<'item> itemsProvider)
             i + 1)
 
+    /// <summary>Computation expression builder to create a Virtualize component.</summary>
+    /// <typeparam name="item">The type of item in the collection to virtualize.</typeparam>
+    /// <remarks>
+    /// The contents of the computation expression should be:
+    ///   1. component parameters, if any;
+    ///   2. <see langword="let!" /> to bind the current item to <see cref="M:items" /> or <see cref="M:itemsProvider" />;
+    ///   3. the body of an item.
+    /// </remarks>
+    /// <example>
+    /// <code lang="fsharp">
+    /// virtualize.comp {
+    ///     virtualize.itemSize 30
+    ///     let! item = virtualize.items (seq { 1 .. 1000 })
+    ///     div {
+    ///         $"Item number {item}"
+    ///     }
+    /// }
+    /// </code>
+    /// </example>
     let inline comp<'item> = VirtualizeBuilder<'item>()
 
+    /// <summary>A component parameter indicating the placeholder content shown while an item is loading.</summary>
+    /// <param name="v">The placeholder content.</param>
     let inline placeholder ([<InlineIfLambda>] v: PlaceholderContext -> Node) =
         attr.fragmentWith "Placeholder" v
 
+    /// <summary>A component parameter indicating the height of an item in CSS points.</summary>
+    /// <param name="v">The height of an item.</param>
     let inline itemSize (v: single) =
         "ItemSize" => v
 
+    /// <summary>A component parameter indicating the number of extra items to load for smooth scrolling.</summary>
+    /// <param name="v">The number of extra items to load.</param>
     let inline overscanCount (v: int) =
         "OverscanCount" => v

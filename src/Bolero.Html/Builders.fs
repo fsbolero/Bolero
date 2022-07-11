@@ -24,15 +24,26 @@ open System
 open Microsoft.AspNetCore.Components
 open Bolero
 
-/// Render the current element or component's reference.
-type RefContent = delegate of obj * Rendering.RenderTreeBuilder * int -> int
+/// <summary>Render the current element or component's reference.</summary>
+/// <param name="receiver">The containing component.</param>
+/// <param name="builder">The rendering builder.</param>
+/// <param name="sequence">The rendering sequence number.</param>
+type RefContent = delegate of receiver: obj * builder: Rendering.RenderTreeBuilder * sequence: int -> int
 
-/// Render the ChildContent attribute.
-type ChildContentAttr = delegate of obj * Rendering.RenderTreeBuilder * int -> int
+/// <summary>Render the ChildContent attribute.</summary>
+/// <param name="receiver">The containing component.</param>
+/// <param name="builder">The rendering builder.</param>
+/// <param name="sequence">The rendering sequence number.</param>
+type ChildContentAttr = delegate of receiver: obj * builder: Rendering.RenderTreeBuilder * sequence: int -> int
 
+/// <summary>
 /// Render the current element or component's key, reference and child content.
 /// The child content may be either direct children at the end, or a ChildContent attribute at the beginning.
-type ChildAndRefContent = delegate of obj * Rendering.RenderTreeBuilder * int -> int
+/// </summary>
+/// <param name="receiver">The containing component.</param>
+/// <param name="builder">The rendering builder.</param>
+/// <param name="sequence">The rendering sequence number.</param>
+type ChildAndRefContent = delegate of receiver: obj * builder: Rendering.RenderTreeBuilder * sequence: int -> int
 
 type [<Struct; NoComparison; NoEquality>] AttrBuilder =
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr

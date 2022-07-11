@@ -145,6 +145,7 @@ module Node =
     /// <summary>Wrap a Blazor RenderFragment in a Bolero Node.</summary>
     /// <param name="fragment">The Blazor RenderFragment.</param>
     /// <returns>A Bolero Node representing the Blazor RenderFragment.</returns>
+    /// <seealso cref="M:Bolero.Html.fragment" />
     let inline Fragment (fragment: RenderFragment) = Node(fun _ tb i ->
         tb.OpenRegion(i)
         fragment.Invoke(tb)

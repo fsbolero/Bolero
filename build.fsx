@@ -114,8 +114,8 @@ Target.create "tags" (fun _ ->
         replace (Tags.GetSample().Rows) "TAGS" (fun s tag ->
             let esc = escapeDashes tag.Name
             let ident = if tag.NeedsEscape then "``" + esc + "``" else esc
-            s.AppendLine(sprintf """/// Create an HTML `<%s>` element.""" tag.Name)
-             .AppendLine(        """/// [category: HTML tag names]""")
+            s.AppendLine(sprintf """/// <summary>Computation expression to create an HTML <c>&lt;%s&gt;</c> element.</summary>""" tag.Name)
+             .AppendLine(        """/// <category>HTML tag names</category>""")
              .AppendLine(sprintf """let %s : ElementBuilder = elt "%s" """ ident tag.Name)
              .AppendLine()
         )
@@ -125,26 +125,30 @@ Target.create "tags" (fun _ ->
                 if attr.NeedsRename then esc + "'"
                 elif attr.NeedsEscape then "``" + esc + "``"
                 else esc
-            s.AppendLine(sprintf """    /// Create an HTML `%s` attribute.""" attr.Name)
+            s.AppendLine(sprintf """    /// <summary>Create an HTML <c>%s</c> attribute.</summary>""" attr.Name)
+             .AppendLine(        """    /// <param name="v">The value of the attribute.</param>""")
              .AppendLine(sprintf """    let inline %s (v: obj) : Attr = "%s" => v""" ident attr.Name)
              .AppendLine()
         )
         >> replace (Events.GetSample().Rows) "EVENTS" (fun s event ->
             let esc = escapeDashes event.Name
-            s.AppendLine(sprintf """    /// Create a handler for HTML event `%s`.""" event.Name)
+            s.AppendLine(sprintf """    /// <summary>Create a handler for HTML event <c>%s</c>.</summary>""" event.Name)
+             .AppendLine(        """    /// <param name="callback">The event callback.</param>""")
              .AppendLine(sprintf """    let inline %s (callback: %sEventArgs -> unit) : Attr =""" esc event.Type)
              .AppendLine(sprintf """        attr.callback<%sEventArgs> "on%s" callback""" event.Type esc)
              .AppendLine()
         )
         >> replace (Events.GetSample().Rows) "ASYNCEVENTS" (fun s event ->
             let esc = escapeDashes event.Name
-            s.AppendLine(sprintf """        /// Create an asynchronous handler for HTML event `%s`.""" event.Name)
+            s.AppendLine(sprintf """        /// <summary>Create an asynchronous handler for HTML event <c>%s</c>.</summary>""" event.Name)
+             .AppendLine(        """        /// <param name="callback">The event callback.</param>""")
              .AppendLine(sprintf """        let inline %s (callback: %sEventArgs -> Async<unit>) : Attr =""" esc event.Type)
              .AppendLine(sprintf """            attr.async.callback<%sEventArgs> "on%s" callback""" event.Type esc)
         )
         >> replace (Events.GetSample().Rows) "TASKEVENTS" (fun s event ->
             let esc = escapeDashes event.Name
-            s.AppendLine(sprintf """        /// Create an asynchronous handler for HTML event `%s`.""" event.Name)
+            s.AppendLine(sprintf """        /// <summary>Create an asynchronous handler for HTML event <c>%s</c>.</summary>""" event.Name)
+             .AppendLine(        """        /// <param name="callback">The event callback.</param>""")
              .AppendLine(sprintf """        let inline %s (callback: %sEventArgs -> Task) : Attr =""" esc event.Type)
              .AppendLine(sprintf """            attr.task.callback<%sEventArgs> "on%s" callback""" event.Type esc)
         )
