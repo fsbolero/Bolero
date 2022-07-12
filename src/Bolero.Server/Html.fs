@@ -26,6 +26,7 @@ open Bolero
 open Bolero.Builders
 open Bolero.Server
 
+/// <exclude />
 type [<Struct; NoComparison; NoEquality>] DoctypeHtmlBuilder =
 
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
@@ -107,7 +108,8 @@ type [<Struct; NoComparison; NoEquality>] DoctypeHtmlBuilder =
 module Html =
     open Bolero.Html
 
-    /// Insert a Blazor component inside a static page.
+    /// <summary>Insert a Blazor component inside a static page.</summary>
+    /// <typeparam name="T">The component type.</typeparam>
     [<Obsolete "Use comp instead">]
     let rootComp<'T when 'T :> IComponent> =
         ComponentWithAttrsAndNoChildrenBuilder<Components.RootComponent>(attrs {
@@ -117,8 +119,12 @@ module Html =
     /// Insert the required scripts to run Blazor components.
     let boleroScript = comp<Components.BoleroScript>
 
-    /// Create a doctype declaration.
+    /// <summary>Create a doctype declaration.</summary>
+    /// <param name="decl">The declaration value.</param>
     let doctype (decl: string) = rawHtml $"<!DOCTYPE {decl}>\n"
 
-    /// Create an `<html>` element preceded by the standard "html" doctype declaration.
+    /// <summary>
+    /// Computation expression builder to create an <c>&lt;html&gt;</c> element
+    /// preceded by the standard "html" doctype declaration.
+    /// </summary>
     let doctypeHtml = DoctypeHtmlBuilder()

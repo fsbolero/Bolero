@@ -32,28 +32,37 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Bolero.Remoting
 
-/// [omit]
+/// <exclude />
 type IRemoteHandler =
     abstract Handler : IRemoteService
 
-/// [omit]
+/// <exclude />
 [<AbstractClass>]
 type RemoteHandler<'T when 'T :> IRemoteService>() =
     abstract Handler : 'T
     interface IRemoteHandler with
         member this.Handler = this.Handler :> IRemoteService
 
-/// The context to inject in a remote service to authorize remote functions.
+/// <summary>The context to inject in a remote service to authorize remote functions.</summary>
 type IRemoteContext =
     inherit IHttpContextAccessor
 
-    /// Indicate that a remote function is only available to authenticated users.
-    abstract Authorize<'req, 'resp> : ('req -> Async<'resp>) -> ('req -> Async<'resp>)
+    /// <summary>Indicate that a remote function is only available to authenticated users.</summary>
+    /// <typeparam name="req">The input request type.</typeparam>
+    /// <typeparam name="resp">The output response type.</typeparam>
+    /// <param name="request">The request handler to authorize.</param>
+    /// <returns>The authorized request handler.</returns>
+    abstract Authorize<'req, 'resp> : request: ('req -> Async<'resp>) -> ('req -> Async<'resp>)
 
-    /// Indicate that a remote function is available to users that match the given requirements.
-    abstract AuthorizeWith<'req, 'resp> : seq<IAuthorizeData> -> ('req -> Async<'resp>) -> ('req -> Async<'resp>)
+    /// <summary>Indicate that a remote function is available to users that match the given requirements.</summary>
+    /// <typeparam name="req">The input request type.</typeparam>
+    /// <typeparam name="resp">The output response type.</typeparam>
+    /// <param name="authorizeData">The authorization requirements.</param>
+    /// <param name="request">The request handler to authorize.</param>
+    /// <returns>The authorized request handler.</returns>
+    abstract AuthorizeWith<'req, 'resp> : authorizeData: seq<IAuthorizeData> -> request: ('req -> Async<'resp>) -> ('req -> Async<'resp>)
 
-/// [omit]
+/// <exclude />
 type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationService, authPolicyProvider: IAuthorizationPolicyProvider) =
 
     let authorizeWith authData f =
@@ -166,43 +175,68 @@ type ServerRemotingExtensions =
             let basePath = basePath handler
             RemotingService(basePath, typeof<'T>, handler, configureSerialization))
 
-    /// Add a remote service at the given path.
+    /// <summary>Add a remote service at the given path.</summary>
+    /// <typeparam name="T">The remote service type. Must be a record whose fields are functions of the form <c>Request -&gt; Async&lt;Response&gt;</c>.</typeparam>
+    /// <param name="basePath">The base path under which the remote service is served.</param>
+    /// <param name="handler">The function that builds the remote service.</param>
+    /// <param name="configureSerialization">Configure the JSON serialization of request and response values.</param>
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: IRemoteContext -> 'T, ?configureSerialization) =
         ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), handler, configureSerialization)
 
-    /// Add a remote service at the given path.
+    /// <summary>Add a remote service at the given path.</summary>
+    /// <typeparam name="T">The remote service type. Must be a record whose fields are functions of the form <c>Request -&gt; Async&lt;Response&gt;</c>.</typeparam>
+    /// <param name="basePath">The base path under which the remote service is served.</param>
+    /// <param name="handler">The remote service.</param>
+    /// <param name="configureSerialization">Configure the JSON serialization of request and response values.</param>
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: PathString, handler: 'T, ?configureSerialization) =
         ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> basePath), (fun _ -> handler), configureSerialization)
 
-    /// Add a remote service at the given path.
+    /// <summary>Add a remote service at the given path.</summary>
+    /// <typeparam name="T">The remote service type. Must be a record whose fields are functions of the form <c>Request -&gt; Async&lt;Response&gt;</c>.</typeparam>
+    /// <param name="basePath">The base path under which the remote service is served.</param>
+    /// <param name="handler">The function that builds the remote service.</param>
+    /// <param name="configureSerialization">Configure the JSON serialization of request and response values.</param>
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: IRemoteContext -> 'T, ?configureSerialization) =
         ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), handler, configureSerialization)
 
-    /// Add a remote service at the given path.
+    /// <summary>Add a remote service at the given path.</summary>
+    /// <typeparam name="T">The remote service type. Must be a record whose fields are functions of the form <c>Request -&gt; Async&lt;Response&gt;</c>.</typeparam>
+    /// <param name="basePath">The base path under which the remote service is served.</param>
+    /// <param name="handler">The remote service.</param>
+    /// <param name="configureSerialization">Configure the JSON serialization of request and response values.</param>
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct>(this: IServiceCollection, basePath: string, handler: 'T, ?configureSerialization) =
         ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun _ -> PathString basePath), (fun _ -> handler), configureSerialization)
 
-    /// Add a remote service.
+    /// <summary>Add a remote service.</summary>
+    /// <typeparam name="T">The remote service type. Must be a record whose fields are functions of the form <c>Request -&gt; Async&lt;Response&gt;</c>.</typeparam>
+    /// <param name="handler">The function that builds the remote service.</param>
+    /// <param name="configureSerialization">Configure the JSON serialization of request and response values.</param>
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: IRemoteContext -> 'T, ?configureSerialization) =
         ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), handler, configureSerialization)
 
-    /// Add a remote service.
+    /// <summary>Add a remote service.</summary>
+    /// <typeparam name="T">The remote service type. Must be a record whose fields are functions of the form <c>Request -&gt; Async&lt;Response&gt;</c>.</typeparam>
+    /// <param name="handler">The function that builds the remote service.</param>
+    /// <param name="configureSerialization">Configure the JSON serialization of request and response values.</param>
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(this: IServiceCollection, handler: 'T, ?configureSerialization) =
         ServerRemotingExtensions.AddRemotingImpl<'T>(this, (fun h -> PathString h.BasePath), (fun _ -> handler), configureSerialization)
 
-    /// Add a remote service using dependency injection.
+    /// <summary>Add a remote service using dependency injection.</summary>
+    /// <typeparam name="T">The remote service type. Must be a record whose fields are functions of the form <c>Request -&gt; Async&lt;Response&gt;</c>.</typeparam>
+    /// <param name="configureSerialization">Configure the JSON serialization of request and response values.</param>
     [<Extension>]
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteHandler>(this: IServiceCollection, ?configureSerialization) =
         ServerRemotingExtensions.AddRemotingImpl(this.AddSingleton<'T>(), fun services ->
             let handler = services.GetRequiredService<'T>().Handler
             RemotingService(PathString handler.BasePath, handler.GetType(), handler, configureSerialization))
 
+    /// <summary>Add the middleware that serves Bolero remote services.</summary>
     [<Extension>]
     static member UseRemoting(this: IApplicationBuilder) =
         let handlers =

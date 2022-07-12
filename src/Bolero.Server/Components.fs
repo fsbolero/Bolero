@@ -172,6 +172,12 @@ module Rendering =
         render renderComp (frames.Array.AsSpan(0, frames.Count)) Normal sb |> ignore
         sb.ToString()
 
+    /// <summary>Render a Bolero page to a string.</summary>
+    /// <param name="page">The Bolero page.</param>
+    /// <param name="httpContext">The ASP.NET HTTP context.</param>
+    /// <param name="htmlHelper">The Razor HTML helper.</param>
+    /// <param name="boleroConfig">The Bolero configuration.</param>
+    /// <returns>A string containing the HTML representation of the page.</returns>
     let renderPage (page: Node) httpContext htmlHelper boleroConfig =
         let renderComp =
             { new IRenderComponents with
@@ -182,6 +188,10 @@ module Rendering =
                     sb }
         renderWith renderComp page
 
+    /// <summary>Render a Bolero node to a string.</summary>
+    /// <param name="page">The Bolero node.</param>
+    /// <returns>A string containing the HTML representation of the node.</returns>
+    /// <remarks>Blazor components contained in the node are ignored.</remarks>
     let renderPlain (node: Node) =
         let renderComp =
             { new IRenderComponents with

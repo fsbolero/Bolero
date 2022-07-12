@@ -35,6 +35,9 @@ exception RemoteUnauthorizedException with
 exception RemoteException of HttpResponseMessage
 
 /// <summary>Indicate that this type is a remote service, served at the given base URL path.</summary>
+/// <remarks>
+/// The type must be a record whose fields are functions of the form <c>Request -&gt; Async&lt;Response&gt;</c>.
+/// </remarks>
 type IRemoteService =
     abstract BasePath : string
 
@@ -42,7 +45,7 @@ type IRemoteService =
 type IRemoteProvider =
 
     /// <summary>Get the remote service of the given type, whose URL has the given base path.</summary>
-    /// <typeparam name="T">The remote service type.</typeparam>
+    /// <typeparam name="T">The remote service type. Must be a record whose fields are functions of the form <c>Request -&gt; Async&lt;Response&gt;</c>.</typeparam>
     /// <param name="basePath">The base URL path.</param>
     /// <returns>The remote service.</returns>
     abstract GetService<'T> : basePath: string -> 'T
@@ -50,7 +53,7 @@ type IRemoteProvider =
     /// <summary>
     /// Get the remote service of the given type, whose URL is determined by its <see cref="T:IRemoteService" /> implementation.
     /// </summary>
-    /// <typeparam name="T">The remote service type.</typeparam>
+    /// <typeparam name="T">The remote service type. Must be a record whose fields are functions of the form <c>Request -&gt; Async&lt;Response&gt;</c>.</typeparam>
     /// <returns>The remote service.</returns>
     abstract GetService<'T when 'T :> IRemoteService> : unit -> 'T
 

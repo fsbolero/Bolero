@@ -23,14 +23,21 @@ namespace Bolero.Server
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Hosting
 
+/// <summary>
+/// The Bolero hosting configuration set by <see cref="M:Bolero.Server.ServerComponentsExtensions.AddBoleroHost" />.
+/// </summary>
 type IBoleroHostConfig =
+    /// <summary>If true, use server-side Bolero; if false, use WebAssembly.</summary>
     abstract IsServer: bool
+    /// <summary>If true, prerender the initial view in the served HTML.</summary>
     abstract IsPrerendered: bool
 
+/// <exclude />
 type IBoleroHostBaseConfig =
     abstract IsServer: bool
     abstract IsPrerendered: bool
 
+/// <exclude />
 type BoleroHostConfig(baseConfig: IBoleroHostBaseConfig, env: IHostEnvironment, ctx: IHttpContextAccessor) =
 
     member val IsServer =

@@ -37,17 +37,26 @@ open Bolero
 [<Extension>]
 type ServerComponentsExtensions =
 
-    /// Render a Bolero component in a Razor page.
+    /// <summary>Render a Bolero component in a Razor page.</summary>
+    /// <param name="html">The injected HTML helper.</param>
+    /// <param name="componentType">The Bolero component type.</param>
+    /// <param name="config">The injected Bolero hosting configuration.</param>
+    /// <param name="parameters">An <see cref="T:System.Object" /> containing the parameters to pass to the component.</param>
     [<Extension>]
     static member RenderComponentAsync(html: IHtmlHelper, componentType: Type, config: IBoleroHostConfig, [<Optional; DefaultParameterValue null>] parameters: obj) =
         Components.Rendering.renderComponentAsync html componentType config parameters
 
-    /// Render a Bolero component in a Razor page.
+    /// <summary>Render a Bolero component in a Razor page.</summary>
+    /// <typeparam name="T">The Bolero component type.</typeparam>
+    /// <param name="html">The injected HTML helper.</param>
+    /// <param name="config">The injected Bolero hosting configuration.</param>
+    /// <param name="parameters">An <see cref="T:System.Object" /> containing the parameters to pass to the component.</param>
     [<Extension>]
     static member RenderComponentAsync<'T when 'T :> IComponent>(html: IHtmlHelper, config: IBoleroHostConfig, [<Optional; DefaultParameterValue null>] parameters: obj) =
         Components.Rendering.renderComponentAsync html typeof<'T> config parameters
 
-    /// Render the given page in the HTTP response body.
+    /// <summary>Render the given page in the HTTP response body.</summary>
+    /// <param name="page">The page to render.</param>
     [<Extension>]
     static member RenderPage(this: HttpContext, page: Node) : Task = upcast task {
         let htmlHelper = this.RequestServices.GetRequiredService<IHtmlHelper>()
@@ -58,17 +67,25 @@ type ServerComponentsExtensions =
         return! this.Response.Body.WriteAsync(ReadOnlyMemory body)
     }
 
-    /// Create a HTML page from the given Bolero element as MVC content.
+    /// <summary>Create a HTML page from the given Bolero element as MVC content.</summary>
+    /// <param name="page">The page to return.</param>
     [<Extension>]
     static member BoleroPage(_this: Controller, page: Node) =
         new BoleroPageResult(page)
 
-    /// Render the JavaScript tag needed by Bolero in a Razor page.
+    /// <summary>Render the JavaScript tag needed by Bolero in a Razor page.</summary>
+    /// <param name="config">The injected Bolero hosting configuration.</param>
     [<Extension>]
     static member RenderBoleroScript(html: IHtmlHelper, config: IBoleroHostConfig) =
         html.Raw(BoleroHostConfig.Body(config))
 
-    /// Configure the hosting of server-side and WebAssembly Bolero components.
+    /// <summary>Configure the hosting of server-side and WebAssembly Bolero components.</summary>
+    /// <param name="server">If true, use server-side Bolero; if false, use WebAssembly. Default is false.</param>
+    /// <param name="prerendered">If true, prerender the initial view in the served HTML. Default is true.</param>
+    /// <param name="devToggle">
+    /// If true and ASP.NET Core is running in development environment, query parameter <c>?server=bool</c>
+    /// can be passed to use the given mode.
+    /// </param>
     [<Extension>]
     static member AddBoleroHost(this: IServiceCollection, ?server: bool, ?prerendered: bool, ?devToggle: bool) =
         let server = defaultArg server false
@@ -87,14 +104,20 @@ type ServerComponentsExtensions =
                     member _.IsServer = server
                     member _.IsPrerendered = prerendered })
 
+    /// <summary>
     /// Adds a route endpoint that will match requests for non-file-names with the lowest possible priority.
     /// The request will be routed to a Bolero page.
+    /// </summary>
+    /// <param name="page">The page to serve.</param>
     [<Extension>]
     static member MapFallbackToBolero(this: IEndpointRouteBuilder, page: Bolero.Node) =
         this.MapFallbackToBolero(fun _ctx -> page)
 
+    /// <summary>
     /// Adds a route endpoint that will match requests for non-file-names with the lowest possible priority.
     /// The request will be routed to a Bolero page.
+    /// </summary>
+    /// <param name="page">A function that generates the page to serve.</param>
     [<Extension>]
     static member MapFallbackToBolero(this: IEndpointRouteBuilder, page: HttpContext -> Bolero.Node) =
         this.MapFallback(fun ctx ->
@@ -103,6 +126,7 @@ type ServerComponentsExtensions =
                 ctx.Response.ContentType <- "text/html; charset=UTF-8"
             ctx.RenderPage(page))
 
+/// <exclude />
 and BoleroPageResult(page: Node) =
 
     interface IActionResult with
