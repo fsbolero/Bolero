@@ -150,14 +150,10 @@ module Rendering =
                         |> render renderComp (frames.Slice(frame.ComponentSubtreeLength)) Normal
                     | _ ->
                         failwith "Invalid use of rootComp"
-                elif frame.ComponentType = typeof<BoleroScript> then
-                    if frame.ComponentSubtreeLength <> 1 then
-                        failwith "Invalid use of boleroScript"
-                    renderComp.RenderComponent(typeof<BoleroScript>, sb, null, true)
-                    |> render renderComp (frames.Slice(1)) Normal
                 else
                     let attributes = getComponentAttributes (frames.Slice(1, frame.ComponentSubtreeLength - 1))
-                    renderComp.RenderComponent(frame.ComponentType, sb, attributes, false)
+                    let forceStatic = frame.ComponentType = typeof<BoleroScript>
+                    renderComp.RenderComponent(frame.ComponentType, sb, attributes, forceStatic)
                     |> render renderComp (frames.Slice(frame.ComponentSubtreeLength)) Normal
             | RenderTreeFrameType.ComponentReferenceCapture
             | RenderTreeFrameType.ElementReferenceCapture
