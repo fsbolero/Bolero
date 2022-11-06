@@ -110,17 +110,21 @@ module Rendering =
                 | _ -> ()
             attributes
 
-    let rec private render (renderComp: IRenderComponents) (frames: ReadOnlySpan<RenderTreeFrame>) (state: RenderState) (sb: StringBuilder) : unit =
-        if not frames.IsEmpty then
+    let rec private render (renderComp: IRenderComponents) (frames: ReadOnlySpan<RenderTreeFrame>) (state: RenderState) (sb: StringBuilder) : RenderState =
+        if frames.IsEmpty then
+            state
+        else
             let frame = &frames[0]
             match frame.FrameType with
             | RenderTreeFrameType.Element ->
                 if state = InElement then sb.Append(">") |> ignore
-                sb.Append("<").Append(frame.ElementName)
-                |> render renderComp (frames.Slice(1, frame.ElementSubtreeLength - 1)) InElement
-                if selfClosingElements.Contains(frame.ElementName) then
+                let state =
+                    sb.Append("<").Append(frame.ElementName)
+                    |> render renderComp (frames.Slice(1, frame.ElementSubtreeLength - 1)) InElement
+                if state = InElement && selfClosingElements.Contains(frame.ElementName) then
                     sb.Append("/>")
                 else
+                    if state = InElement then sb.Append(">") |> ignore
                     sb.Append("</").Append(frame.ElementName).Append(">")
                 |> render renderComp (frames.Slice(frame.ElementSubtreeLength)) Normal
             | RenderTreeFrameType.Text ->
@@ -158,7 +162,7 @@ module Rendering =
             | RenderTreeFrameType.ElementReferenceCapture
             | RenderTreeFrameType.None
             | _ ->
-                ()
+                state
 
     let private renderWith (renderComp: IRenderComponents) (node: Node) =
         let matchCache = Node.MakeMatchCache()
@@ -166,7 +170,7 @@ module Rendering =
         node.Invoke(null, renderTreeBuilder, matchCache, 0) |> ignore
         let frames = renderTreeBuilder.GetFrames()
         let sb = StringBuilder()
-        render renderComp (frames.Array.AsSpan(0, frames.Count)) Normal sb
+        render renderComp (frames.Array.AsSpan(0, frames.Count)) Normal sb |> ignore
         sb.ToString()
 
     let renderPage (page: Node) httpContext htmlHelper boleroConfig =
