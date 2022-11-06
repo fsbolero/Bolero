@@ -182,6 +182,5 @@ module Rendering =
     let renderPlain (node: Node) =
         let renderComp =
             { new IRenderComponents with
-                member _.RenderComponent(_, _, _, _) =
-                    failwith "Components not supported in plain HTML" }
+                member _.RenderComponent(_, sb, _, _) = sb }
         renderWith renderComp node
