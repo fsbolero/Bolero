@@ -38,14 +38,6 @@ open Microsoft.AspNetCore.Mvc.ViewFeatures
 open Bolero
 open Bolero.Server
 
-type Page() =
-    inherit Component()
-
-    [<Parameter>]
-    member val Node = Unchecked.defaultof<Node> with get, set
-
-    override this.Render() = this.Node
-
 type RootComponent() =
     inherit ComponentBase()
 
