@@ -40,19 +40,21 @@ type ServerComponentsExtensions =
     /// Render a Bolero component in a Razor page.
     [<Extension>]
     static member RenderComponentAsync(html: IHtmlHelper, componentType: Type, config: IBoleroHostConfig, [<Optional; DefaultParameterValue null>] parameters: obj) =
-        Components.Impl.renderComponentAsync html componentType config parameters
+        Components.Rendering.renderComponentAsync html componentType config parameters
 
     /// Render a Bolero component in a Razor page.
     [<Extension>]
     static member RenderComponentAsync<'T when 'T :> IComponent>(html: IHtmlHelper, config: IBoleroHostConfig, [<Optional; DefaultParameterValue null>] parameters: obj) =
-        Components.Impl.renderComponentAsync html typeof<'T> config parameters
+        Components.Rendering.renderComponentAsync html typeof<'T> config parameters
 
     /// Render the given page in the HTTP response body.
     [<Extension>]
     static member RenderPage(this: HttpContext, page: Node) : Task = upcast task {
         let htmlHelper = this.RequestServices.GetRequiredService<IHtmlHelper>()
-        let! body = Components.Impl.renderComp typeof<Components.Page> this htmlHelper Components.Impl.Page (dict ["Node", box page])
-        let body = body |> System.Text.Encoding.UTF8.GetBytes
+        let boleroConfig = this.RequestServices.GetRequiredService<IBoleroHostConfig>()
+        let body =
+            Components.Rendering.renderPage page this htmlHelper boleroConfig
+            |> System.Text.Encoding.UTF8.GetBytes
         return! this.Response.Body.WriteAsync(ReadOnlyMemory body)
     }
 

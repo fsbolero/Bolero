@@ -34,7 +34,7 @@ let index = doctypeHtml {
     body {
         div {
             attr.id "main"
-            rootComp<Bolero.Test.Client.Main.MyApp>
+            comp<Bolero.Test.Client.Main.MyApp>
         }
         hr
         a {
