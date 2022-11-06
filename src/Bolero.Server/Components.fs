@@ -103,8 +103,21 @@ module Rendering =
         | InElement
 
     type private IRenderComponents =
-        abstract RenderComponent : componentType: Type * stringBuilder: StringBuilder * forceStatic: bool -> StringBuilder
+        abstract RenderComponent : componentType: Type * stringBuilder: StringBuilder * attributes: IDictionary<string, obj> * forceStatic: bool -> StringBuilder
         abstract RenderBoleroString : unit -> string
+
+    let private emptyAttributes = dict<string, obj> []
+
+    let private getComponentAttributes (frames: ReadOnlySpan<RenderTreeFrame>) =
+        if frames.IsEmpty then
+            emptyAttributes
+        else
+            let attributes = Dictionary()
+            for frame in frames do
+                match frame.FrameType with
+                | RenderTreeFrameType.Attribute -> attributes.Add(frame.AttributeName, frame.AttributeValue)
+                | _ -> ()
+            attributes
 
     let rec private render (renderComp: IRenderComponents) (frames: ReadOnlySpan<RenderTreeFrame>) (state: RenderState) (sb: StringBuilder) : unit =
         if not frames.IsEmpty then
@@ -118,7 +131,7 @@ module Rendering =
                     sb.Append("/>")
                 else
                     sb.Append("</").Append(frame.ElementName).Append(">")
-                |> render renderComp (frames.Slice(1 + frame.ElementSubtreeLength - 1)) Normal
+                |> render renderComp (frames.Slice(frame.ElementSubtreeLength)) Normal
             | RenderTreeFrameType.Text ->
                 if state = InElement then sb.Append(">") |> ignore
                 sb.Append(HtmlEncoder.Default.Encode frame.TextContent)
@@ -137,23 +150,23 @@ module Rendering =
             | RenderTreeFrameType.Component ->
                 if state = InElement then sb.Append(">") |> ignore
                 if frame.ComponentType = typeof<RootComponent> then
-                    if not (frame.ComponentSubtreeLength = 2
-                            && frames[1].FrameType = RenderTreeFrameType.Attribute
-                            && frames[1].AttributeName = "ComponentType") then
+                    let attributes = getComponentAttributes (frames.Slice(1, frame.ComponentSubtreeLength - 1))
+                    match attributes.TryGetValue("ComponentType") with
+                    | true, (:? Type as componentType) ->
+                        attributes.Remove("ComponentType") |> ignore
+                        renderComp.RenderComponent(componentType, sb, attributes, false)
+                        |> render renderComp (frames.Slice(frame.ComponentSubtreeLength)) Normal
+                    | _ ->
                         failwith "Invalid use of rootComp"
-                    let componentType = frames[1].AttributeValue :?> Type
-                    renderComp.RenderComponent(componentType, sb, false)
-                    |> render renderComp (frames.Slice(2)) Normal
                 elif frame.ComponentType = typeof<BoleroScript> then
                     if frame.ComponentSubtreeLength <> 1 then
                         failwith "Invalid use of boleroScript"
-                    renderComp.RenderComponent(typeof<BoleroScript>, sb, true)
+                    renderComp.RenderComponent(typeof<BoleroScript>, sb, null, true)
                     |> render renderComp (frames.Slice(1)) Normal
                 else
-                    if frame.ComponentSubtreeLength <> 1 then
-                        failwith "Passing parameters to components not supported yet"
-                    renderComp.RenderComponent(frame.ComponentType, sb, false)
-                    |> render renderComp (frames.Slice(1)) Normal
+                    let attributes = getComponentAttributes (frames.Slice(1, frame.ComponentSubtreeLength - 1))
+                    renderComp.RenderComponent(frame.ComponentType, sb, attributes, false)
+                    |> render renderComp (frames.Slice(frame.ComponentSubtreeLength)) Normal
             | RenderTreeFrameType.ComponentReferenceCapture
             | RenderTreeFrameType.ElementReferenceCapture
             | RenderTreeFrameType.None
@@ -172,9 +185,9 @@ module Rendering =
     let renderPage (page: Node) httpContext htmlHelper boleroConfig =
         let renderComp =
             { new IRenderComponents with
-                member _.RenderComponent(ty, sb, forceStatic) =
+                member _.RenderComponent(ty, sb, attributes, forceStatic) =
                     let renderType = if forceStatic then Page else FromConfig boleroConfig
-                    (renderCompTo sb ty httpContext htmlHelper renderType null)
+                    (renderCompTo sb ty httpContext htmlHelper renderType attributes)
                         .GetAwaiter().GetResult()
                     sb
                 member _.RenderBoleroString() =
@@ -184,7 +197,7 @@ module Rendering =
     let renderPlain (node: Node) =
         let renderComp =
             { new IRenderComponents with
-                member _.RenderComponent(_, _, _) =
+                member _.RenderComponent(_, _, _, _) =
                     failwith "Components not supported in plain HTML"
                 member _.RenderBoleroString() =
                     failwith "Components not supported in plain HTML" }
