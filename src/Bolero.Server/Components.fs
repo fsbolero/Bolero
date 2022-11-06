@@ -96,7 +96,6 @@ module Rendering =
 
     type private IRenderComponents =
         abstract RenderComponent : componentType: Type * stringBuilder: StringBuilder * attributes: IDictionary<string, obj> * forceStatic: bool -> StringBuilder
-        abstract RenderBoleroString : unit -> string
 
     let private emptyAttributes = dict<string, obj> []
 
@@ -177,16 +176,12 @@ module Rendering =
                     let renderType = if forceStatic then Page else FromConfig boleroConfig
                     (renderCompTo sb ty httpContext htmlHelper renderType attributes)
                         .GetAwaiter().GetResult()
-                    sb
-                member _.RenderBoleroString() =
-                    BoleroHostConfig.Body(boleroConfig) }
+                    sb }
         renderWith renderComp page
 
     let renderPlain (node: Node) =
         let renderComp =
             { new IRenderComponents with
                 member _.RenderComponent(_, _, _, _) =
-                    failwith "Components not supported in plain HTML"
-                member _.RenderBoleroString() =
                     failwith "Components not supported in plain HTML" }
         renderWith renderComp node
