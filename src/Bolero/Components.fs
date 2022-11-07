@@ -34,11 +34,9 @@ open Elmish
 type Component() =
     inherit ComponentBase()
 
-    let matchCache = Node.MakeMatchCache()
-
     override this.BuildRenderTree(builder) =
         base.BuildRenderTree(builder)
-        this.Render().Invoke(this, builder, matchCache, 0) |> ignore
+        this.Render().Invoke(this, builder, 0) |> ignore
 
     /// The rendered contents of the component.
     abstract Render : unit -> Node

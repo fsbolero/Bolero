@@ -165,9 +165,8 @@ module Rendering =
                 state
 
     let private renderWith (renderComp: IRenderComponents) (node: Node) =
-        let matchCache = Node.MakeMatchCache()
         use renderTreeBuilder = new RenderTreeBuilder()
-        node.Invoke(null, renderTreeBuilder, matchCache, 0) |> ignore
+        node.Invoke(null, renderTreeBuilder, 0) |> ignore
         let frames = renderTreeBuilder.GetFrames()
         let sb = StringBuilder()
         render renderComp (frames.Array.AsSpan(0, frames.Count)) Normal sb |> ignore

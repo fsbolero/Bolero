@@ -63,10 +63,7 @@ let inline (=>) name value = Attr.Make name value
 /// If it's a union, `mkNode` must only match on the case.
 /// [category: HTML elements]
 let inline cond<'T> (matching: 'T) (mkNode: 'T -> Node) =
-    if typeof<'T> = typeof<bool> then
-        Node.Cond (unbox<bool> matching) (mkNode matching)
-    else
-        Node.Match matching (mkNode matching)
+    Node.Match matching (mkNode matching)
 
 /// Create a fragment that concatenates nodes for each item in a sequence.
 /// [category: HTML elements]
@@ -709,7 +706,7 @@ module attr =
 
     /// Bind an element or component reference.
     let inline ref (r: Ref<'T>) : RefContent =
-        RefContent(fun _ b _ i ->
+        RefContent(fun _ b i ->
             r.Render(b, i))
 
     /// Bind an element or component reference.
@@ -719,7 +716,7 @@ module attr =
 
     /// Set an element's unique key among a sequence of similar elements.
     let inline key (k: obj) : Attr =
-        Attr(fun _ b _ i ->
+        Attr(fun _ b i ->
             b.SetKey(k)
             i)
 
@@ -733,7 +730,7 @@ module attr =
     /// Use this function for Blazor component attributes of type `EventCallback<T>`.
     /// Note: for HTML event handlers, prefer functions from the module `on`.
     let inline callback<'T> (name: string) ([<InlineIfLambda>] value: 'T -> unit) =
-        Attr(fun receiver builder _ sequence ->
+        Attr(fun receiver builder sequence ->
             builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Action<'T>(value)))
             sequence + 1)
 
@@ -743,7 +740,7 @@ module attr =
         /// Use this function for Blazor component attributes of type `EventCallback<T>`.
         /// Note: for HTML event handlers, prefer functions from the module `on.async`.
         let inline callback<'T> (name: string) ([<InlineIfLambda>] value: 'T -> Async<unit>) =
-            Attr(fun receiver builder _ sequence ->
+            Attr(fun receiver builder sequence ->
                 builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Func<'T, Task>(fun x -> Async.StartImmediateAsTask (value x) :> Task)))
                 sequence + 1)
 
@@ -753,25 +750,25 @@ module attr =
         /// Use this function for Blazor component attributes of type `EventCallback<T>`.
         /// Note: for HTML event handlers, prefer functions from the module `on.task`.
         let inline callback<'T> (name: string) ([<InlineIfLambda>] value: 'T -> Task) =
-            Attr(fun receiver builder _ sequence ->
+            Attr(fun receiver builder sequence ->
                 builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Func<'T, Task>(value)))
                 sequence + 1)
 
     /// Create an attribute whose value is an HTML fragment.
     /// Use this function for Blazor component attributes of type `RenderFragment`.
     let inline fragment name ([<InlineIfLambda>] node: Node) =
-        Attr(fun receiver builder matchCache sequence ->
+        Attr(fun receiver builder sequence ->
             builder.AddAttribute(sequence, name, RenderFragment(fun rt ->
-                node.Invoke(receiver, rt, matchCache, 0) |> ignore))
+                node.Invoke(receiver, rt, 0) |> ignore))
             sequence + 1)
 
     /// Create an attribute whose value is a parameterized HTML fragment.
     /// Use this function for Blazor component attributes of type `RenderFragment<T>`.
     let inline fragmentWith name ([<InlineIfLambda>] node: 'a -> Node) =
-        Attr(fun receiver builder matchCache sequence ->
+        Attr(fun receiver builder sequence ->
             builder.AddAttribute(sequence, name, RenderFragment<_>(fun ctx ->
                 RenderFragment(fun rt ->
-                    (node ctx).Invoke(receiver, rt, matchCache, 0) |> ignore)))
+                    (node ctx).Invoke(receiver, rt, 0) |> ignore)))
             sequence + 1)
 
 // BEGIN ATTRS
@@ -1143,14 +1140,14 @@ module on =
 
     /// Prevent the default event behavior for a given HTML event.
     let inline preventDefault eventName (value: bool) =
-        Attr(fun _ builder _ sequence ->
+        Attr(fun _ builder sequence ->
             builder.AddEventPreventDefaultAttribute(sequence, eventName, value)
             sequence + 1
         )
 
     /// Stop the propagation to parent elements of a given HTML event.
     let inline stopPropagation eventName (value: bool) =
-        Attr(fun _ builder _ sequence ->
+        Attr(fun _ builder sequence ->
             builder.AddEventStopPropagationAttribute(sequence, eventName, value)
             sequence + 1
         )
@@ -2098,7 +2095,7 @@ module bind =
                         when ^F : (static member CreateBinder : EventCallbackFactory * obj * Action< ^T> * ^T * CultureInfo -> EventCallback<ChangeEventArgs>)
                         and ^B : (static member FormatValue : ^T * CultureInfo -> ^O)>
             (eventName: string) (valueAttribute: string) (currentValue: ^T) (callback: ^T -> unit) cultureInfo =
-        Attr(fun receiver builder matchCache sequence ->
+        Attr(fun receiver builder sequence ->
             builder.AddAttribute(sequence, valueAttribute, (^B : (static member FormatValue : ^T * CultureInfo -> ^O)(currentValue, cultureInfo)))
             builder.AddAttribute(sequence + 1, eventName,
                 (^F : (static member CreateBinder : EventCallbackFactory * obj * Action< ^T> * ^T * CultureInfo -> EventCallback<ChangeEventArgs>)

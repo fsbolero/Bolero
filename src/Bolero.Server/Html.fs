@@ -31,75 +31,75 @@ type [<Struct; NoComparison; NoEquality>] DoctypeHtmlBuilder =
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
     member inline _.Yield([<InlineIfLambda>] node: Node) = node
     member inline this.Yield(text: string) =
-        this.Yield(Node(fun _ b _ i ->
+        this.Yield(Node(fun _ b i ->
             b.AddContent(i, text)
             i + 1))
     member inline this.Yield(fragment: RenderFragment) =
-        this.Yield(Node(fun _ b _ i ->
+        this.Yield(Node(fun _ b i ->
             b.AddContent(i, fragment)
             i + 1))
     member inline this.Yield(eb: ElementBuilder) =
-        this.Yield(Node(fun c b m i ->
+        this.Yield(Node(fun c b i ->
             b.OpenElement(i, eb.Name)
             b.CloseElement()
             i + 1))
     member inline this.Yield(_comp: ComponentBuilder<'T>) =
-        this.Yield(Node(fun c b m i ->
+        this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
             b.CloseComponent()
             i + 1))
     member inline this.Yield(comp: ComponentBuilder) =
-        this.Yield(Node(fun c b m i ->
+        this.Yield(Node(fun c b i ->
             b.OpenComponent(i, comp.Type)
             b.CloseComponent()
             i + 1))
     member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
         let attrs : Attr = comp.Attrs
-        this.Yield(Node(fun c b m i ->
+        this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
-            let i = attrs.Invoke(c, b, m, i + 1)
+            let i = attrs.Invoke(c, b, i + 1)
             b.CloseComponent()
             i))
     member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
         let attrs : Attr = comp.Attrs
-        this.Yield(Node(fun c b m i ->
+        this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
-            let i = attrs.Invoke(c, b, m, i + 1)
+            let i = attrs.Invoke(c, b, i + 1)
             b.CloseComponent()
             i))
 
-    member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b m i -> a().Invoke(c, b, m, i))
-    member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b m i -> n().Invoke(c, b, m, i))
+    member inline _.Delay([<InlineIfLambda>] a: unit -> Attr) = Attr(fun c b i -> a().Invoke(c, b, i))
+    member inline _.Delay([<InlineIfLambda>] n: unit -> Node) = Node(fun c b i -> n().Invoke(c, b, i))
 
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Attr) =
-        Attr(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
+        Attr(fun c b i ->
+            let i = x1.Invoke(c, b, i)
+            x2.Invoke(c, b, i))
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Node) =
-        Attr(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
+        Attr(fun c b i ->
+            let i = x1.Invoke(c, b, i)
+            x2.Invoke(c, b, i))
     member inline _.Combine([<InlineIfLambda>] x1: Node, [<InlineIfLambda>] x2: Node) =
-        Node(fun c b m i ->
-            let i = x1.Invoke(c, b, m, i)
-            x2.Invoke(c, b, m, i))
+        Node(fun c b i ->
+            let i = x1.Invoke(c, b, i)
+            x2.Invoke(c, b, i))
 
     member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
         this.Yield(Node.ForEach s f)
 
     member inline this.Run([<InlineIfLambda>] content: Node) =
-        Node(fun c b m i ->
+        Node(fun c b i ->
             b.AddMarkupContent(i, "<!DOCTYPE html>\n")
             b.OpenElement(i + 1, "html")
-            let i = content.Invoke(c, b, m, i + 2)
+            let i = content.Invoke(c, b, i + 2)
             b.CloseElement()
             i)
 
     member inline this.Run([<InlineIfLambda>] content: Attr) =
-        Node(fun c b m i ->
+        Node(fun c b i ->
             b.AddMarkupContent(i, "<!DOCTYPE html>\n")
             b.OpenElement(i + 1, "html")
-            let i = content.Invoke(c, b, m, i + 2)
+            let i = content.Invoke(c, b, i + 2)
             b.CloseElement()
             i)
 
