@@ -20,6 +20,7 @@
 
 namespace Bolero.Server
 
+open System
 open Microsoft.AspNetCore.Components
 open Bolero
 open Bolero.Builders
@@ -107,13 +108,14 @@ module Html =
     open Bolero.Html
 
     /// Insert a Blazor component inside a static page.
+    [<Obsolete "Use comp instead">]
     let rootComp<'T when 'T :> IComponent> =
         ComponentWithAttrsAndNoChildrenBuilder<Components.RootComponent>(attrs {
             "ComponentType" => typeof<'T>
         })
 
     /// Insert the required scripts to run Blazor components.
-    let boleroScript = comp<Components.BoleroScript> { attr.empty() }
+    let boleroScript = comp<Components.BoleroScript>
 
     /// Create a doctype declaration.
     let doctype (decl: string) = rawHtml $"<!DOCTYPE {decl}>\n"
