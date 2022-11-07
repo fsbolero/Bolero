@@ -26,18 +26,18 @@ open Microsoft.AspNetCore.Components
 /// HTML attribute or Blazor component parameter.
 /// Use `Bolero.Html.attr` or `(=>)` to create attributes.
 /// [category: HTML]
-type Attr = delegate of obj * Rendering.RenderTreeBuilder * (Type -> int * (obj -> int)) * int -> int
+type Attr = delegate of obj * Rendering.RenderTreeBuilder * int -> int
 
 module Attr =
 
-    let inline Make (name: string) (value: 'T) = Attr(fun _ tb _ i ->
+    let inline Make (name: string) (value: 'T) = Attr(fun _ tb i ->
         tb.AddAttribute(i, name, box value)
         i + 1)
 
-    let inline Attrs (attrs: seq<Attr>) = Attr(fun comp tb matchCache i ->
+    let inline Attrs (attrs: seq<Attr>) = Attr(fun comp tb i ->
         let mutable i = i
         for attr in attrs do
-            i <- attr.Invoke(comp, tb, matchCache, i)
+            i <- attr.Invoke(comp, tb, i)
         i)
 
-    let inline Empty() = Attr(fun _ _ _ i -> i)
+    let inline Empty() = Attr(fun _ _ i -> i)
