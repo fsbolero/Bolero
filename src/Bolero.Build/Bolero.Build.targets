@@ -2,6 +2,7 @@
 <Project>
   <PropertyGroup Condition="'$(BoleroTaskAssemblyPath)' == ''">
     <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\tools\Bolero.Build.dll</BoleroTaskAssemblyPath>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly><!-- See https://github.com/fsbolero/Bolero/issues/279 -->
   </PropertyGroup>
   <UsingTask AssemblyFile="$(BoleroTaskAssemblyPath)" TaskName="Bolero.Build.BoleroTask"
     Condition="'$(BoleroStripAssemblies)' != 'False'" />
