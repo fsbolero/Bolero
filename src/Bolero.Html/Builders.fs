@@ -68,7 +68,7 @@ type [<Struct; NoComparison; NoEquality>] ConcatBuilder =
             b.OpenElement(i, eb.Name)
             b.CloseElement()
             i + 1))
-    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+    member inline this.Yield<'T when 'T :> IComponent>(_comp: ComponentBuilder<'T>) =
         this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
             b.CloseComponent()
@@ -78,14 +78,14 @@ type [<Struct; NoComparison; NoEquality>] ConcatBuilder =
             b.OpenComponent(i, comp.Type)
             b.CloseComponent()
             i + 1))
-    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+    member inline this.Yield<'T when 'T :> IComponent>(comp: ComponentWithAttrsBuilder<'T>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
             let i = attrs.Invoke(c, b, i + 1)
             b.CloseComponent()
             i))
-    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+    member inline this.Yield<'T when 'T :> IComponent>(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
@@ -100,7 +100,7 @@ type [<Struct; NoComparison; NoEquality>] ConcatBuilder =
             let i = x1.Invoke(c, b, i)
             x2.Invoke(c, b, i))
 
-    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+    member inline this.For<'T>(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
         this.Yield(Node.ForEach s f)
 
 // This is the only builder where generated code becomes worse if it is a struct,
@@ -125,7 +125,7 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
             b.OpenElement(i, eb.Name)
             b.CloseElement()
             i + 1))
-    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+    member inline this.Yield<'T when 'T :> IComponent>(_comp: ComponentBuilder<'T>) =
         this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
             b.CloseComponent()
@@ -135,14 +135,14 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
             b.OpenComponent(i, comp.Type)
             b.CloseComponent()
             i + 1))
-    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+    member inline this.Yield<'T when 'T :> IComponent>(comp: ComponentWithAttrsBuilder<'T>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
             let i = attrs.Invoke(c, b, i + 1)
             b.CloseComponent()
             i))
-    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+    member inline this.Yield<'T when 'T :> IComponent>(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
@@ -174,7 +174,7 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
             let i = x1.Invoke(c, b, i)
             x2.Invoke(c, b, i))
 
-    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+    member inline this.For<'T>(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
         this.Yield(Node.ForEach s f)
 
     member inline _.Combine([<InlineIfLambda>] x1: Attr, [<InlineIfLambda>] x2: Node) =
@@ -234,9 +234,9 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder<'T when 'T :> ICompone
             b.OpenElement(i, eb.Name)
             b.CloseElement()
             i + 1))
-    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+    member inline this.Yield<'U when 'U :> IComponent>(_comp: ComponentBuilder<'U>) =
         this.Yield(Node(fun c b i ->
-            b.OpenComponent<'T>(i)
+            b.OpenComponent<'U>(i)
             b.CloseComponent()
             i + 1))
     member inline this.Yield(comp: ComponentBuilder) =
@@ -244,17 +244,17 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder<'T when 'T :> ICompone
             b.OpenComponent(i, comp.Type)
             b.CloseComponent()
             i + 1))
-    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+    member inline this.Yield<'U when 'U :> IComponent>(comp: ComponentWithAttrsBuilder<'U>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
-            b.OpenComponent<'T>(i)
+            b.OpenComponent<'U>(i)
             let i = attrs.Invoke(c, b, i + 1)
             b.CloseComponent()
             i))
-    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+    member inline this.Yield<'U when 'U :> IComponent>(comp: ComponentWithAttrsAndNoChildrenBuilder<'U>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
-            b.OpenComponent<'T>(i)
+            b.OpenComponent<'U>(i)
             let i = attrs.Invoke(c, b, i + 1)
             b.CloseComponent()
             i))
@@ -283,7 +283,7 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder<'T when 'T :> ICompone
             let i = x1.Invoke(c, b, i)
             x2.Invoke(c, b, i))
 
-    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+    member inline this.For<'U>(s: seq<'U>, [<InlineIfLambda>] f: 'U -> Node) =
         this.Yield(Node.ForEach s f)
 
     member inline _.WrapNode([<InlineIfLambda>] n: Node) =
@@ -363,7 +363,7 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder =
             b.OpenElement(i, eb.Name)
             b.CloseElement()
             i + 1))
-    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+    member inline this.Yield<'T when 'T :> IComponent>(_comp: ComponentBuilder<'T>) =
         this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
             b.CloseComponent()
@@ -373,14 +373,14 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder =
             b.OpenComponent(i, comp.Type)
             b.CloseComponent()
             i + 1))
-    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+    member inline this.Yield<'T when 'T :> IComponent>(comp: ComponentWithAttrsBuilder<'T>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
             let i = attrs.Invoke(c, b, i + 1)
             b.CloseComponent()
             i))
-    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+    member inline this.Yield<'T when 'T :> IComponent>(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
@@ -413,7 +413,7 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder =
             let i = x1.Invoke(c, b, i)
             x2.Invoke(c, b, i))
 
-    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+    member inline this.For<'T>(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
         this.Yield(Node.ForEach s f)
 
     member inline _.WrapNode([<InlineIfLambda>] n: Node) =
@@ -496,9 +496,9 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsAndNoChildrenBuilder<
             b.OpenElement(i, eb.Name)
             b.CloseElement()
             i + 1))
-    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+    member inline this.Yield<'U when 'U :> IComponent>(_comp: ComponentBuilder<'U>) =
         this.Yield(Node(fun c b i ->
-            b.OpenComponent<'T>(i)
+            b.OpenComponent<'U>(i)
             b.CloseComponent()
             i + 1))
     member inline this.Yield(comp: ComponentBuilder) =
@@ -506,17 +506,17 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsAndNoChildrenBuilder<
             b.OpenComponent(i, comp.Type)
             b.CloseComponent()
             i + 1))
-    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+    member inline this.Yield<'U when 'U :> IComponent>(comp: ComponentWithAttrsBuilder<'U>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
-            b.OpenComponent<'T>(i)
+            b.OpenComponent<'U>(i)
             let i = attrs.Invoke(c, b, i + 1)
             b.CloseComponent()
             i))
-    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+    member inline this.Yield<'U when 'U :> IComponent>(comp: ComponentWithAttrsAndNoChildrenBuilder<'U>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
-            b.OpenComponent<'T>(i)
+            b.OpenComponent<'U>(i)
             let i = attrs.Invoke(c, b, i + 1)
             b.CloseComponent()
             i))
@@ -546,7 +546,7 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsAndNoChildrenBuilder<
             let i = x1.Invoke(c, b, i)
             x2.Invoke(c, b, i))
 
-    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+    member inline this.For<'U>(s: seq<'U>, [<InlineIfLambda>] f: 'U -> Node) =
         this.Yield(Node.ForEach s f)
 
     member inline _.Yield(ref: Ref<'T>) = RefContent(fun _ b i -> ref.Render(b, i))
@@ -589,9 +589,9 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsBuilder<'T when 'T :>
             b.OpenElement(i, eb.Name)
             b.CloseElement()
             i + 1))
-    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+    member inline this.Yield<'U when 'U :> IComponent>(_comp: ComponentBuilder<'U>) =
         this.Yield(Node(fun c b i ->
-            b.OpenComponent<'T>(i)
+            b.OpenComponent<'U>(i)
             b.CloseComponent()
             i + 1))
     member inline this.Yield(comp: ComponentBuilder) =
@@ -599,17 +599,17 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsBuilder<'T when 'T :>
             b.OpenComponent(i, comp.Type)
             b.CloseComponent()
             i + 1))
-    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+    member inline this.Yield<'U when 'U :> IComponent>(comp: ComponentWithAttrsBuilder<'U>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
-            b.OpenComponent<'T>(i)
+            b.OpenComponent<'U>(i)
             let i = attrs.Invoke(c, b, i + 1)
             b.CloseComponent()
             i))
-    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+    member inline this.Yield<'U when 'U :> IComponent>(comp: ComponentWithAttrsAndNoChildrenBuilder<'U>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
-            b.OpenComponent<'T>(i)
+            b.OpenComponent<'U>(i)
             let i = attrs.Invoke(c, b, i + 1)
             b.CloseComponent()
             i))
@@ -639,7 +639,7 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsBuilder<'T when 'T :>
             let i = x1.Invoke(c, b, i)
             x2.Invoke(c, b, i))
 
-    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+    member inline this.For<'U>(s: seq<'U>, [<InlineIfLambda>] f: 'U -> Node) =
         this.Yield(Node.ForEach s f)
 
     member inline _.WrapNode([<InlineIfLambda>] n: Node) =
@@ -726,7 +726,7 @@ type [<Struct; NoComparison; NoEquality>] VirtualizeBuilder<'Item> =
             b.OpenElement(i, eb.Name)
             b.CloseElement()
             i + 1))
-    member inline this.Yield(_comp: ComponentBuilder<'T>) =
+    member inline this.Yield<'T when 'T :> IComponent>(_comp: ComponentBuilder<'T>) =
         this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
             b.CloseComponent()
@@ -736,14 +736,14 @@ type [<Struct; NoComparison; NoEquality>] VirtualizeBuilder<'Item> =
             b.OpenComponent(i, comp.Type)
             b.CloseComponent()
             i + 1))
-    member inline this.Yield(comp: ComponentWithAttrsBuilder<'T>) =
+    member inline this.Yield<'T when 'T :> IComponent>(comp: ComponentWithAttrsBuilder<'T>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
             let i = attrs.Invoke(c, b, i + 1)
             b.CloseComponent()
             i))
-    member inline this.Yield(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
+    member inline this.Yield<'T when 'T :> IComponent>(comp: ComponentWithAttrsAndNoChildrenBuilder<'T>) =
         let attrs : Attr = comp.Attrs
         this.Yield(Node(fun c b i ->
             b.OpenComponent<'T>(i)
@@ -777,7 +777,7 @@ type [<Struct; NoComparison; NoEquality>] VirtualizeBuilder<'Item> =
             let i = x1.Invoke(c, b, i)
             x2.Invoke(c, b, i))
 
-    member inline this.For(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
+    member inline this.For<'T>(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
         this.Yield(Node.ForEach s f)
 
     member inline _.WrapNode([<InlineIfLambda>] n: Node) =
@@ -803,7 +803,8 @@ type [<Struct; NoComparison; NoEquality>] VirtualizeBuilder<'Item> =
     member inline this.Combine([<InlineIfLambda>] x1: RefContent, [<InlineIfLambda>] x2: Node) =
         this.Combine(x1, this.WrapNode(x2))
 
-    member inline _.Yield(ref: Ref<'T>) = RefContent(fun _ b i -> ref.Render(b, i))
+    member inline _.Yield(ref: Ref<Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<'Item>>) =
+        RefContent(fun _ b i -> ref.Render(b, i))
 
     member inline this.Run([<InlineIfLambda>] x: ChildContentAttr) =
         Node(fun c b i ->
