@@ -28,7 +28,8 @@ open Microsoft.JSInterop
 open Elmish
 open Bolero.Remoting
 
-/// Elmish commands for remote calls and JavaScript interop.
+/// <summary>Elmish commands for remote calls and JavaScript interop.</summary>
+/// <category>Elmish</category>
 module Cmd =
 
     let private wrapAuthorized (f: 'req -> Async<'resp>) : 'req -> Async<option<'resp>> =
@@ -50,17 +51,36 @@ module Cmd =
 
     module OfAuthorized =
 
+        /// <summary>
         /// Command that will call a remote Bolero function with authorization and map the result
-        /// into successful Some if authorized, successful None if not, or error (of exception)
+        /// into successful Some if authorized, successful None if not, or error (of exception).
+        /// </summary>
+        /// <param name="f">The remote function.</param>
+        /// <param name="arg">The argument to the remote function.</param>
+        /// <param name="ofSuccess">Construct a message from a successful response.</param>
+        /// <param name="ofError">Construct a message from an error response.</param>
+        /// <returns>An Elmish command that will call the remote function and dispatch messages based on the result.</returns>
         let either (f: 'req -> Async<'resp>) (arg: 'req) (ofSuccess: option<'resp> -> 'msg) (ofError: exn -> 'msg) : Cmd<'msg> =
             Cmd.OfAsync.either (wrapAuthorized f) arg ofSuccess ofError
 
+        /// <summary>
         /// Command that will call a remote Bolero function with authorization and map the result
-        /// into Some if authorized, None if not, discarding any possible error
+        /// into Some if authorized, None if not, discarding any possible error.
+        /// </summary>
+        /// <param name="f">The remote function.</param>
+        /// <param name="arg">The argument to the remote function.</param>
+        /// <param name="ofSuccess">Construct a message from a successful response.</param>
+        /// <returns>An Elmish command that will call the remote function and dispatch messages based on the result.</returns>
         let perform (f: 'req -> Async<'resp>) (arg: 'req) (ofSuccess: option<'resp> -> 'msg) : Cmd<'msg> =
             Cmd.OfAsync.perform (wrapAuthorized f) arg ofSuccess
 
-        /// Command that will call a remote Bolero function with authorization and map the error (of exception)
+        /// <summary>
+        /// Command that will call a remote Bolero function with authorization and map the error (of exception).
+        /// </summary>
+        /// <param name="f">The remote function.</param>
+        /// <param name="arg">The argument to the remote function.</param>
+        /// <param name="ofError">Construct a message from an error response.</param>
+        /// <returns>An Elmish command that will call the remote function and dispatch messages based on the result.</returns>
         let attempt (f: 'req -> Async<'resp>) (arg: 'req) (ofError: exn -> 'msg) : Cmd<'msg> =
             Cmd.OfAsync.attempt (wrapAuthorized f) arg ofError
 
@@ -70,17 +90,39 @@ module Cmd =
             () // <-- Forces compiling this into a function-returning function rather than a 3-arg function
             fun args -> js.InvokeAsync(jsFunctionName, args).AsTask()
 
-        /// Command that will perform a JavaScript interop call and map the result to a message
+        /// <summary>
+        /// Command that will perform a JavaScript interop call and map the result to a message.
         /// or error (of exception)
+        /// </summary>
+        /// <param name="js">The JavaScript runtime, retrieved via dependency injection on a component.</param>
+        /// <param name="jsFunctionName">The name of the JavaScript function to call.</param>
+        /// <param name="args">The arguments passed to the JavaScript function.</param>
+        /// <param name="ofSuccess">Construct a message from a successful return value.</param>
+        /// <param name="ofError">Construct a message from an error.</param>
+        /// <returns>An Elmish command that will call the JavaScript function and dispatch messages based on the result.</returns>
         let either (js: IJSRuntime) (jsFunctionName: string) (args: obj[]) (ofSuccess: 'res -> 'msg) (ofError: exn -> 'msg) : Cmd<'msg> =
             Cmd.OfTask.either (invoke js jsFunctionName) args ofSuccess ofError
 
+        /// <summary>
         /// Command that will perform a JavaScript interop call and map the result to a message
-        /// discarding any possible error
+        /// discarding any possible error.
+        /// </summary>
+        /// <param name="js">The JavaScript runtime, retrieved via dependency injection on a component.</param>
+        /// <param name="jsFunctionName">The name of the JavaScript function to call.</param>
+        /// <param name="args">The arguments passed to the JavaScript function.</param>
+        /// <param name="ofSuccess">Construct a message from a successful return value.</param>
+        /// <returns>An Elmish command that will call the JavaScript function and dispatch messages based on the result.</returns>
         let perform (js: IJSRuntime) (jsFunctionName: string) (args: obj[]) (ofSuccess: 'res -> 'msg) : Cmd<'msg> =
             Cmd.OfTask.perform (invoke js jsFunctionName) args ofSuccess
 
-        /// Command that will perform a JavaScript interop call and map the error (of exception)
+        /// <summary>
+        /// Command that will perform a JavaScript interop call and map the error (of exception).
+        /// </summary>
+        /// <param name="js">The JavaScript runtime, retrieved via dependency injection on a component.</param>
+        /// <param name="jsFunctionName">The name of the JavaScript function to call.</param>
+        /// <param name="args">The arguments passed to the JavaScript function.</param>
+        /// <param name="ofError">Construct a message from an error.</param>
+        /// <returns>An Elmish command that will call the JavaScript function and dispatch messages based on the result.</returns>
         let attempt (js: IJSRuntime) (jsFunctionName: string) (args: obj[]) (ofError: exn -> 'msg) : Cmd<'msg> =
             Cmd.OfTask.attempt (invoke js jsFunctionName) args ofError
 

@@ -24,26 +24,28 @@ open System
 open Microsoft.AspNetCore.Components
 
 type [<AbstractClass>] Ref() =
-    /// [omit]
+    /// <exclude />
     abstract Render : Rendering.RenderTreeBuilder * int -> int
 
-/// A utility to bind a reference to a rendered component.
-/// See https://fsbolero.io/docs/Blazor#html-element-references
-/// [category: HTML]
+/// <summary>A utility to bind a reference to a rendered component.</summary>
+/// <seealso href="https://fsbolero.io/docs/Blazor#html-element-references" />
+/// <category>HTML</category>
 type Ref<'T>() =
     inherit Ref()
 
-    /// The element or component reference.
-    /// None if it hasn't been bound using attr.ref.
+    /// <summary>
+    /// The element or component reference. This is <c>Some</c> if it has been bound using <see cref="M:attr.ref" />
+    /// or by inserting it in a component computation expression.
+    /// </summary>
     member val Value = None with get, set
 
     override this.Render(builder, sequence) =
         builder.AddComponentReferenceCapture(sequence, fun v -> this.Value <- tryUnbox<'T> v)
         sequence + 1
 
-/// A utility to bind a reference to a rendered HTML element.
-/// See https://fsbolero.io/docs/Blazor#html-element-references
-/// [category: HTML]
+/// <summary>A utility to bind a reference to a rendered HTML element.</summary>
+/// <seealso href="https://fsbolero.io/docs/Blazor#html-element-references" />
+/// <category>HTML</category>
 type HtmlRef() =
     inherit Ref<ElementReference>()
 
@@ -51,8 +53,8 @@ type HtmlRef() =
         builder.AddElementReferenceCapture(sequence, fun v -> this.Value <- Some v)
         sequence + 1
 
-/// A utility to bind a reference to a rendered HTML element.
-/// See https://fsbolero.io/docs/Blazor#html-element-references
-/// [category: HTML]
+/// <summary>A utility to bind a reference to a rendered HTML element.</summary>
+/// <seealso href="https://fsbolero.io/docs/Blazor#html-element-references" />
+/// <category>HTML</category>
 [<Obsolete "Use HtmlRef.">]
 type ElementReferenceBinder = HtmlRef

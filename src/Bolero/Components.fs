@@ -28,8 +28,8 @@ open Microsoft.Extensions.Logging
 open Microsoft.JSInterop
 open Elmish
 
-/// Base class for components built from `Bolero.Node`s.
-/// [category: Components]
+/// <summary>Base class for components built from <see cref="T:Bolero.Node" />s.</summary>
+/// <category>Components</category>
 [<AbstractClass>]
 type Component() =
     inherit ComponentBase()
@@ -38,45 +38,50 @@ type Component() =
         base.BuildRenderTree(builder)
         this.Render().Invoke(this, builder, 0) |> ignore
 
-    /// The rendered contents of the component.
+    /// <summary>The rendered contents of the component.</summary>
     abstract Render : unit -> Node
 
-/// Base class for components with a typed model.
-/// [category: Components]
+/// <summary>Base class for components with a typed model.</summary>
+/// <category>Components</category>
 [<AbstractClass>]
 type Component<'model>() =
     inherit Component()
 
-    /// The optional custom equality check
-    // Uses default equality from base class
+    /// <summary>
+    /// The custom equality check. By default, uses reference equality.
+    /// </summary>
     [<Parameter>]
     member val Equal = (fun m1 m2 -> obj.ReferenceEquals(m1, m2)) with get, set
 
-    /// Compare the old model with the new to decide whether this component
-    /// needs to be re-rendered.
+    /// <summary>
+    /// Compare the old model with the new to decide whether this component needs to be re-rendered.
+    /// By default, uses <see cref="M:Equal" />.
+    /// </summary>
     abstract member ShouldRender : oldModel: 'model * newModel: 'model -> bool
     default this.ShouldRender(oldModel, newModel) =
         not <| this.Equal oldModel newModel
 
-/// Base class for components that are part of an Elmish view.
-/// [category: Components]
+/// <summary>Base class for components that are part of an Elmish view.</summary>
+/// <category>Components</category>
 [<AbstractClass>]
 type ElmishComponent<'model, 'msg>() =
     inherit Component<'model>()
 
     member val internal OldModel = Unchecked.defaultof<'model> with get, set
 
-    /// The current value of the Elmish model.
-    /// Can be just a part of the full program's model.
+    /// <summary>The current value of the Elmish model. Can be just a part of the full program's model.</summary>
     [<Parameter>]
     member val Model = Unchecked.defaultof<'model> with get, set
 
-    /// The Elmish dispatch function.
+    /// <summary>The Elmish dispatch function.</summary>
     [<Parameter>]
     member val Dispatch = Unchecked.defaultof<Dispatch<'msg>> with get, set
 
-    /// The Elmish view function.
-    abstract View : 'model -> Dispatch<'msg> -> Node
+    /// <summary>The Elmish view function.</summary>
+    /// <param name="model">The Elmish model.</param>
+    /// <param name="dispatch">The Elmish dispatch function.</param>
+    /// <returns>The rendered view.</returns>
+    abstract View : model: 'model -> dispatch: Dispatch<'msg> -> Node
 
     override this.ShouldRender() =
         this.ShouldRender(this.OldModel, this.Model)
@@ -85,7 +90,7 @@ type ElmishComponent<'model, 'msg>() =
         this.OldModel <- this.Model
         this.View this.Model this.Dispatch
 
-/// [omit]
+/// <exclude />
 type LazyComponent<'model,'msg>() =
     inherit ElmishComponent<'model,'msg>()
 
@@ -95,15 +100,15 @@ type LazyComponent<'model,'msg>() =
 
     override this.View model dispatch = this.ViewFunction model dispatch
 
-/// [omit]
+/// <exclude />
 type IProgramComponent =
     abstract Services : IServiceProvider
 
-/// [omit]
+/// <exclude />
 type Program<'model, 'msg> = Program<ProgramComponent<'model, 'msg>, 'model, 'msg, Node>
 
-/// Base class for components that run an Elmish program.
-/// [category: Components]
+/// <summary>Base class for components that run an Elmish program.</summary>
+/// <category>Components</category>
 and [<AbstractClass>]
     ProgramComponent<'model, 'msg>() =
     inherit Component<'model>()
@@ -118,26 +123,28 @@ and [<AbstractClass>]
         view <- Program.view program model dispatch
         oldModel <- Some model
 
-    /// [omit]
+    /// <exclude />
     [<Inject>]
     member val NavigationManager = Unchecked.defaultof<NavigationManager> with get, set
-    /// [omit]
+    /// <exclude />
     [<Inject>]
     member val Services = Unchecked.defaultof<IServiceProvider> with get, set
-    /// The JavaScript interoperation runtime.
+    /// <summary>The JavaScript interoperation runtime. Provided by dependency injection.</summary>
     [<Inject>]
     member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
-    /// [omit]
+    /// <exclude />
     [<Inject>]
     member val NavigationInterception = Unchecked.defaultof<INavigationInterception> with get, set
     [<Inject>]
     member val private Log = Unchecked.defaultof<ILogger<ProgramComponent<'model, 'msg>>> with get, set
 
+    /// <summary>
     /// The component's dispatch method.
     /// This property is initialized during the component's OnInitialized phase.
+    /// </summary>
     member _.Dispatch = dispatch
 
-    /// The Elmish program to run.
+    /// <summary>The Elmish program to run.</summary>
     abstract Program : Program<'model, 'msg>
 
     interface IProgramComponent with

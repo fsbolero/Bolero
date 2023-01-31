@@ -18,7 +18,7 @@
 //
 // $end{copyright}
 
-/// [omit]
+/// <exclude />
 module Bolero.Virtualize.Internals
 
 open System
