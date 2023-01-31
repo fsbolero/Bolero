@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.21
+
+* [#261](https://github.com/fsbolero/Bolero/issues/261) Fix prerendering of components inside server-side Bolero.Html.
+
+* To instantiate a client-side component inside server-side Bolero.Html, the standard `comp<T>` can now be used instead of the dedicated `rootComp<T>`.
+
+* [#275](https://github.com/fsbolero/Bolero/issues/275) Add new module `Bolero.Server.Components.Rendering` with functions:
+
+    * `renderPlain : Node -> string` renders a node to raw HTML. Blazor components are ignored.
+
+    * `renderPage : Node -> HttpContext -> IHtmlHelper -> IBoleroHostConfig -> string` also renders a node to raw HTML. Blazor components are rendered according to the given host config.
+
+
+* [#279](https://github.com/fsbolero/Bolero/issues/279) Bolero.Build: Disable the production of a reference assembly.
+
+* [#285](https://github.com/fsbolero/Bolero/issues/285) Fix typed component builders so that nested components aren't forced to have the same type.
+
+
 ## 0.20
 
 * Upgrade dependency to .NET 6.
