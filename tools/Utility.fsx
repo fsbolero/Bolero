@@ -109,11 +109,3 @@ let unchangedIfIdentical filename generate =
             File.Move(tempFilename, filename)
     else
         generate filename
-
-// Manage the fact that we run fake from the .paket/fake directory
-let origDir = Directory.GetCurrentDirectory()
-Directory.SetCurrentDirectory slnDir
-Target.createFinal "reset-dir" (fun _ ->
-    Directory.SetCurrentDirectory(origDir)
-)
-Target.activateFinal "reset-dir"
