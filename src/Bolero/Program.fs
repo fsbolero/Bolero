@@ -30,7 +30,7 @@ open Elmish
 /// </summary>
 /// <param name="router">The router.</param>
 /// <param name="program">The Elmish program.</param>
-/// <returns>The Elmish program configured with routing.</param>
+/// <returns>The Elmish program configured with routing.</returns>
 let withRouter
         (router: IRouter<'model, 'msg>)
         (program: Program<'model, 'msg>) =
@@ -50,7 +50,7 @@ let withRouter
 /// <param name="makeMessage">Function that creates a message from an endpoint value.</param>
 /// <param name="getEndPoint">Function that extracts the current endpoint from the model.</param>
 /// <param name="program">The Elmish program.</param>
-/// <returns>The Elmish program configured with routing.</param>
+/// <returns>The Elmish program configured with routing.</returns>
 let withRouterInfer
         (makeMessage: 'ep -> 'msg)
         (getEndPoint: 'model -> 'ep)

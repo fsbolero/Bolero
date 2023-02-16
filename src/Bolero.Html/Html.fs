@@ -3004,7 +3004,7 @@ module virtualize =
     /// <example>
     /// <code lang="fsharp">
     /// virtualize.comp {
-    ///     let! item = virtualize.itemsProvider <| fun request ->
+    ///     let! item = virtualize.itemsProvider &lt;| fun request ->
     ///         ValueTask(task {
     ///             let items = seq { request.StartIndex .. request.StartIndex + request.Count - 1 }
     ///             return ItemsProviderResult(items, 1000)

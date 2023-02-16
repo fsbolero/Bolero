@@ -134,7 +134,7 @@ module Node =
     /// </summary>
     /// <param name="items">The items used to generate HTML fragments.</param>
     /// <param name="mkNode">The function that generates an HTML fragment from an item.</param>
-    /// <returns>The HTML fragments generated and concatenated into one.</param>
+    /// <returns>The HTML fragments generated and concatenated into one.</returns>
     let inline ForEach (items: seq<'T>) ([<InlineIfLambda>] mkNode: 'T -> Node) = Node(fun comp tb i ->
         tb.OpenRegion(i)
         for item in items do
