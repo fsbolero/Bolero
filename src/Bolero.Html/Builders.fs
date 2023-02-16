@@ -103,6 +103,8 @@ type [<Struct; NoComparison; NoEquality>] ConcatBuilder =
     member inline this.For<'T>(s: seq<'T>, [<InlineIfLambda>] f: 'T -> Node) =
         this.Yield(Node.ForEach s f)
 
+    member inline this.Zero() = Node(fun _ _ i -> i)
+
 // This is the only builder where generated code becomes worse if it is a struct,
 // but since the vast majority of its uses are stored in a global, it's not too big a deal to make it a class.
 and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
@@ -215,6 +217,8 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
             let i = content.Invoke(c, b, i + 1)
             b.CloseElement()
             i)
+
+    member inline this.Zero() = Node(fun _ _ i -> i)
 
 and [<Struct; NoComparison; NoEquality>] ComponentBuilder<'T when 'T :> IComponent> =
 
@@ -341,6 +345,8 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder<'T when 'T :> ICompone
 
     member inline this.Run([<InlineIfLambda>] x: Node) =
         this.Run(this.WrapNode(x))
+
+    member inline this.Zero() = Node(fun _ _ i -> i)
 
 and [<Struct; NoComparison; NoEquality>] ComponentBuilder =
 
@@ -476,6 +482,8 @@ and [<Struct; NoComparison; NoEquality>] ComponentBuilder =
     member inline this.Run([<InlineIfLambda>] x: Node) =
         this.Run(this.WrapNode(x))
 
+    member inline this.Zero() = Node(fun _ _ i -> i)
+
 and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsAndNoChildrenBuilder<'T when 'T :> IComponent> =
     val public Attrs : Attr
     new (attrs: Attr) = { Attrs = attrs }
@@ -568,6 +576,8 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsAndNoChildrenBuilder<
             let i = x.Invoke(c, b, i)
             b.CloseComponent()
             i)
+
+    member inline this.Zero() = Node(fun _ _ i -> i)
 
 and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsBuilder<'T when 'T :> IComponent> =
     val public Attrs : Attr
@@ -706,6 +716,8 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsBuilder<'T when 'T :>
     member inline this.Run([<InlineIfLambda>] x: Node) =
         this.Run(this.WrapNode(x))
 
+    member inline this.Zero() = Node(fun _ _ i -> i)
+
 type VirtualizeItemsDeclaration<'T> = delegate of Rendering.RenderTreeBuilder * int -> int
 
 type [<Struct; NoComparison; NoEquality>] VirtualizeBuilder<'Item> =
@@ -843,3 +855,5 @@ type [<Struct; NoComparison; NoEquality>] VirtualizeBuilder<'Item> =
                 RenderFragment(fun rt ->
                     (cont ctx).Invoke(c, rt, 0) |> ignore)))
             items.Invoke(b, i + 1))
+
+    member inline this.Zero() = Node(fun _ _ i -> i)

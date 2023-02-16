@@ -21,10 +21,8 @@
 module Utility
 
 #if UTILITY_FROM_PAKET
-#load "../../../../.fake/build.fsx/intellisense.fsx"
 let [<Literal>] slnDir = __SOURCE_DIRECTORY__ + "/../../../.."
 #else
-#load "../.fake/build.fsx/intellisense.fsx"
 let [<Literal>] slnDir = __SOURCE_DIRECTORY__ + "/.."
 #endif
 
@@ -32,6 +30,13 @@ open System.IO
 open Fake.Core
 open Fake.DotNet
 open Fake.IO
+
+let ctx =
+    match System.Environment.GetCommandLineArgs() |> List.ofArray with
+    | cmd :: args -> Context.FakeExecutionContext.Create false cmd args
+    | _ -> failwith "Impossible"
+
+Context.setExecutionContext (Context.Fake ctx)
 
 let runProc dir env cmd args transform onError =
     let out =

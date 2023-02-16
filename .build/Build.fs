@@ -1,4 +1,4 @@
-// $begin{copyright}
+﻿// $begin{copyright}
 //
 // This file is part of Bolero
 //
@@ -18,15 +18,7 @@
 //
 // $end{copyright}
 
-#r "paket:
-nuget Fake.Core.Target
-nuget Fake.IO.FileSystem
-nuget Fake.DotNet.AssemblyInfoFile
-nuget Fake.DotNet.Cli
-nuget Fake.DotNet.Paket
-nuget FSharp.Data ~> 3.0-beta
-//"
-#load "tools/Utility.fsx"
+module Build
 
 open System.IO
 open System.Net.Http

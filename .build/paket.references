@@ -1,0 +1,7 @@
+﻿group fake
+Fake.Core.Target
+Fake.IO.FileSystem
+Fake.DotNet.AssemblyInfoFile
+Fake.DotNet.Cli
+Fake.DotNet.Paket
+FSharp.Data

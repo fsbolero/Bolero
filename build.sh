@@ -2,4 +2,5 @@
 set -e
 
 dotnet tool restore
-dotnet fake -v build "$@"
+dotnet paket restore
+dotnet run --project .build -- "$@"

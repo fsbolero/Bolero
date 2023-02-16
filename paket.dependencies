@@ -30,6 +30,18 @@ framework: netstandard2.0
 nuget Mono.Cecil ~> 0.11.0
 nuget Microsoft.Build.Utilities.Core ~> 15.0
 
+group fake
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: net6.0
+
+nuget Fake.Core.Target
+nuget Fake.IO.FileSystem
+nuget Fake.DotNet.AssemblyInfoFile
+nuget Fake.DotNet.Cli
+nuget Fake.DotNet.Paket
+nuget FSharp.Data ~> 3.0-beta
+
 group tests
 source https://api.nuget.org/v3/index.json
 storage: none
