@@ -248,7 +248,9 @@ module Program =
     let Main args =
         let builder = WebAssemblyHostBuilder.CreateDefault(args)
         builder.RootComponents.Add<MyApp>("#main")
-        builder.Services.AddRemoting(builder.HostEnvironment) |> ignore
+        builder.Services.AddRemoting<MyApi>(builder.HostEnvironment) |> ignore
+        builder.Services.AddRemoting(configureHttpClient = fun http ->
+            http.BaseAddress <- System.Uri "http://this-shouldnt-be-used-by-myapi") |> ignore
         builder.Services.AddScoped<AuthenticationStateProvider, DummyAuthProvider>() |> ignore
         builder.Services.AddAuthorizationCore() |> ignore
         builder.Build().RunAsync() |> ignore
