@@ -93,8 +93,8 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
         let output =
             typeof<RemotingService>.GetMethod("InvokeForClientSide", flags)
                 .MakeGenericMethod(method.ArgumentType, method.ReturnType)
-        fun (ctx: HttpContext) ->
-            output.Invoke(this, [|meth; ctx|]) :?> Task
+        Func<_, _>(fun (ctx: HttpContext) ->
+            output.Invoke(this, [|meth; ctx|]) :?> Task)
 
     let methodData =
         match RemotingExtensions.ExtractRemoteMethods ty with
@@ -105,7 +105,10 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
         | Ok methods ->
             methods
 
-    let methods = dict [for m in methodData -> m.Name, makeHandler m]
+    let methods = dict [
+        for m in methodData do
+            m.Name, {| m with Handler = makeHandler m |}
+    ]
 
     let serOptions = JsonSerializerOptions()
     do match configureSerialization with
@@ -132,16 +135,20 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
         if ctx.Request.Method = "POST" && ctx.Request.Path.StartsWithSegments(basePath, &restPath) then
             let methodName = restPath.Value.TrimStart('/')
             match methods.TryGetValue(methodName) with
-            | true, handle -> Some (handle ctx)
+            | true, method -> Some (method.Handler.Invoke(ctx))
             | false, _ -> None
         else
             None
 
     member this.Map(endpoints: IEndpointRouteBuilder) =
         methods
-        |> Seq.map (fun (KeyValue(methodName, handle)) ->
+        |> Seq.map (fun (KeyValue(methodName, method)) ->
             let path = $"{basePath}/{methodName}"
-            endpoints.MapPost(path, Func<_, _>(handle))
+            endpoints.MapPost(path, method.Handler)
+                .Accepts(method.ArgumentType, "application/json")
+                .Produces(200, method.ReturnType, "application/json")
+                .WithDisplayName($"Remote method {method.Name} on service {this.ServiceType.Name}")
+                .WithTags("Bolero.Remoting")
             :> IEndpointConventionBuilder)
 
 /// Provides remote service implementations when running in Server-side Blazor.
