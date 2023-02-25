@@ -40,7 +40,8 @@ let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
         let s = dotnetOutput "nbgv" ["get-version"; "-v"; "SemVer2"]
         s.Trim()
     if BuildServer.buildServer = BuildServer.LocalBuild then
-        let p = "Bolero." + v + if v.Contains("-") then ".local." else "-local."
+        let v = v + if v.Contains("-") then ".local." else "-local."
+        let p = "Bolero." + v
         let currentVer =
             if Directory.Exists "build" then
                 Directory.EnumerateFiles ("build", p + "*")
@@ -56,7 +57,7 @@ let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
                     None)
             |> Seq.append [ 0I ]
             |> Seq.max
-        v + ".local." + string (currentVer + 1I)
+        v + string (currentVer + 1I)
     else v
 )
 let testUploadUrl = getArgOpt "--push-tests"
