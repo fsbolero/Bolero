@@ -49,9 +49,12 @@ type RemoteResponse<'resp> =
 type IConfigureSerialization =
     abstract ConfigureSerialization: JsonSerializerOptions -> unit
 
+type internal ClientRemoteProvider =
+    static member HttpClientName = typeof<ClientRemoteProvider>.FullName
+
 /// <summary>Provides remote service implementations when running in WebAssembly.</summary>
 /// <exclude />
-type ClientRemoteProvider(http: HttpClient, configureSerialization: IConfigureSerialization) =
+type ClientRemoteProvider<'T> private (http: HttpClient, configureSerialization: IConfigureSerialization) =
 
     let serOptions = JsonSerializerOptions()
     do configureSerialization.ConfigureSerialization(serOptions)
@@ -74,30 +77,37 @@ type ClientRemoteProvider(http: HttpClient, configureSerialization: IConfigureSe
         |> http.SendAsync
         |> Async.AwaitTask
 
-    member this.SendAndParse<'T>(method, requestUri, content) = async {
+    new (httpClientFactory: IHttpClientFactory, configureSerialization: IConfigureSerialization) =
+        let http = httpClientFactory.CreateClient(ClientRemoteProvider.HttpClientName)
+        ClientRemoteProvider(http, configureSerialization)
+
+    static member Typed(http: HttpClient, configureSerialization: IConfigureSerialization) =
+        ClientRemoteProvider(http, configureSerialization)
+
+    member this.SendAndParse<'Res>(method, requestUri, content) = async {
         let! resp = send method requestUri content
         match resp.StatusCode with
         | HttpStatusCode.OK ->
             let! respBody = resp.Content.ReadAsStreamAsync() |> Async.AwaitTask
-            return! JsonSerializer.DeserializeAsync<'T>(respBody, serOptions).AsTask() |> Async.AwaitTask
+            return! JsonSerializer.DeserializeAsync<'Res>(respBody, serOptions).AsTask() |> Async.AwaitTask
         | HttpStatusCode.Unauthorized ->
             return raise RemoteUnauthorizedException
         | _ ->
             return raise (RemoteException resp)
     }
 
-    member this.MakeRemoteProxy(ty: Type, baseUri: string ref) =
-        match RemotingExtensions.ExtractRemoteMethods(ty) with
+    member this.MakeRemoteProxy(baseUri: string ref) =
+        match RemotingExtensions.ExtractRemoteMethods(typeof<'T>) with
         | Error errors ->
             raise <| AggregateException(
-                "Cannot create remoting handler for type " + ty.FullName,
+                "Cannot create remoting handler for type " + typeof<'T>.FullName,
                 [| for e in errors -> exn e |])
         | Ok methods ->
-            let ctor = FSharpValue.PreComputeRecordConstructor(ty, true)
+            let ctor = FSharpValue.PreComputeRecordConstructor(typeof<'T>, true)
             methods
             |> Array.map (fun method ->
                 let post =
-                    typeof<ClientRemoteProvider>.GetMethod("SendAndParse")
+                    typeof<ClientRemoteProvider<'T>>.GetMethod("SendAndParse")
                         .MakeGenericMethod([|method.ReturnType|])
                 FSharpValue.MakeFunction(method.FunctionType, fun arg ->
                     let uri = baseUri.Value + method.Name
@@ -105,22 +115,28 @@ type ClientRemoteProvider(http: HttpClient, configureSerialization: IConfigureSe
                 )
             )
             |> ctor
+            :?> 'T
 
-    interface IRemoteProvider with
-
-        member this.GetService<'T>(basePath: string) =
-            let basePath = normalizeBasePath(basePath)
-            this.MakeRemoteProxy(typeof<'T>, ref basePath) :?> 'T
-
-        member this.GetService<'T when 'T :> IRemoteService>() =
+    interface IRemoteProvider<'T> with
+        member this.GetService(getBasePath) =
             let basePath = ref ""
-            let proxy = this.MakeRemoteProxy(typeof<'T>, basePath) :?> 'T
-            basePath.Value <- normalizeBasePath proxy.BasePath
+            let proxy = this.MakeRemoteProxy(basePath)
+            basePath.Value <- normalizeBasePath (getBasePath proxy)
             proxy
 
 /// <summary>Extension methods to enable support for remoting in ProgramComponent.</summary>
 [<Extension>]
 type ClientRemotingExtensions =
+
+    static member private ConfigureHttpClientFromEnv(env: IWebAssemblyHostEnvironment) =
+        fun (httpClient: HttpClient) -> httpClient.BaseAddress <- Uri(env.BaseAddress)
+
+    static member private ConfigureSerialization(configureSerialization: option<JsonSerializerOptions -> unit>) =
+        { new IConfigureSerialization with
+            member _.ConfigureSerialization(serOptions) =
+                match configureSerialization with
+                | None -> serOptions.Converters.Add(JsonFSharpConverter())
+                | Some f -> f serOptions }
 
     /// <summary>Enable support for remoting in ProgramComponent when running in WebAssembly.</summary>
     /// <param name="services">The DI service collection.</param>
@@ -132,7 +148,7 @@ type ClientRemotingExtensions =
     [<Extension>]
     static member AddRemoting(services: IServiceCollection, env: IWebAssemblyHostEnvironment, ?configureSerialization: JsonSerializerOptions -> unit) =
         ClientRemotingExtensions.AddRemoting(services,
-            (fun httpClient -> httpClient.BaseAddress <- Uri(env.BaseAddress)),
+            ClientRemotingExtensions.ConfigureHttpClientFromEnv(env),
             ?configureSerialization = configureSerialization)
 
     /// <summary>Enable support for remoting in ProgramComponent when running in WebAssembly.</summary>
@@ -144,11 +160,34 @@ type ClientRemotingExtensions =
     /// <returns>The HttpClient builder for remote calls.</returns>
     [<Extension>]
     static member AddRemoting(services: IServiceCollection, configureHttpClient: HttpClient -> unit, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
-        services.AddSingleton({
-            new IConfigureSerialization with
-                member _.ConfigureSerialization(serOptions) =
-                    match configureSerialization with
-                    | None -> serOptions.Converters.Add(JsonFSharpConverter())
-                    | Some f -> f serOptions
-        }) |> ignore
-        services.AddHttpClient<IRemoteProvider, ClientRemoteProvider>(configureHttpClient)
+        services.AddSingleton(ClientRemotingExtensions.ConfigureSerialization(configureSerialization)) |> ignore
+        services.Add(ServiceDescriptor(typedefof<IRemoteProvider<_>>, typedefof<ClientRemoteProvider<_>>, ServiceLifetime.Singleton))
+        services.AddHttpClient(ClientRemoteProvider.HttpClientName, configureClient = configureHttpClient)
+
+    /// <summary>Enable support for the given remote service in ProgramComponent when running in WebAssembly.</summary>
+    /// <param name="services">The DI service collection.</param>
+    /// <param name="env">The WebAssembly host environment.</param>
+    /// <param name="configureSerialization">
+    /// Callback that configures the JSON serialization for remote arguments and return values.
+    /// </param>
+    /// <typeparam name="Service">The remote service.</typeparam>
+    /// <returns>The HttpClient builder for remote calls.</returns>
+    [<Extension>]
+    static member AddRemoting<'Service>(services: IServiceCollection, env: IWebAssemblyHostEnvironment, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
+        ClientRemotingExtensions.AddRemoting<'Service>(services,
+            ClientRemotingExtensions.ConfigureHttpClientFromEnv(env),
+            ?configureSerialization = configureSerialization)
+
+    /// <summary>Enable support for the given remote service in ProgramComponent when running in WebAssembly.</summary>
+    /// <param name="services">The DI service collection.</param>
+    /// <param name="configureHttpClient">Callback that configures the HttpClient.</param>
+    /// <param name="configureSerialization">
+    /// Callback that configures the JSON serialization for remote arguments and return values.
+    /// </param>
+    /// <typeparam name="Service">The remote service.</typeparam>
+    /// <returns>The HttpClient builder for remote calls.</returns>
+    [<Extension>]
+    static member AddRemoting<'Service>(services: IServiceCollection, configureHttpClient: HttpClient -> unit, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
+        services.AddHttpClient<IRemoteProvider<'Service>, ClientRemoteProvider<'Service>>(factory = fun httpClient services ->
+            configureHttpClient httpClient
+            ClientRemoteProvider<'Service>.Typed(httpClient, ClientRemotingExtensions.ConfigureSerialization(configureSerialization)))

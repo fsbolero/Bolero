@@ -137,9 +137,9 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
             None
 
 /// Provides remote service implementations when running in Server-side Blazor.
-type internal ServerRemoteProvider(services: seq<RemotingService>) =
+type internal ServerRemoteProvider<'T>(services: seq<RemotingService>) =
 
-    member this.GetService<'T>() =
+    member this.GetService() =
         services
         |> Seq.tryPick (fun s ->
             if s.ServiceType = typeof<'T> then
@@ -150,22 +150,19 @@ type internal ServerRemoteProvider(services: seq<RemotingService>) =
         |> Option.defaultWith (fun () ->
             failwith $"Remote service not registered: {typeof<'T>.FullName}")
 
-    interface IRemoteProvider with
+    interface IRemoteProvider<'T> with
 
-        member this.GetService<'T>(_basePath: string) =
-            this.GetService<'T>()
-
-        member this.GetService<'T when 'T :> IRemoteService>() =
-            this.GetService<'T>()
+        member this.GetService(_basePath: 'T -> string) =
+            this.GetService()
 
 /// Extension methods to enable support for remoting in the ASP.NET Core server side.
 [<Extension>]
 type ServerRemotingExtensions =
 
     static member private AddRemotingImpl(this: IServiceCollection, getService: IServiceProvider -> RemotingService) =
+        this.Add(ServiceDescriptor(typedefof<IRemoteProvider<_>>, typedefof<ServerRemoteProvider<_>>, ServiceLifetime.Transient))
         this.AddSingleton<RemotingService>(getService)
             .AddSingleton<IRemoteContext, RemoteContext>()
-            .AddTransient<IRemoteProvider, ServerRemoteProvider>()
             .AddHttpContextAccessor()
 
     static member private AddRemotingImpl<'T when 'T : not struct>(this: IServiceCollection, basePath: 'T -> PathString, handler: IRemoteContext -> 'T, configureSerialization: option<JsonSerializerOptions -> unit>) =

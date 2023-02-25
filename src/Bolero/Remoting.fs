@@ -41,21 +41,14 @@ exception RemoteException of HttpResponseMessage
 type IRemoteService =
     abstract BasePath : string
 
-/// <summary>Provides remote service implementations.</summary>
-type IRemoteProvider =
-
+/// <summary>Provides a remote service implementation.</summary>
+/// <typeparam name="Service">The remote service.</typeparam>
+type IRemoteProvider<'Service> =
     /// <summary>Get the remote service of the given type, whose URL has the given base path.</summary>
     /// <typeparam name="T">The remote service type. Must be a record whose fields are functions of the form <c>Request -&gt; Async&lt;Response&gt;</c>.</typeparam>
-    /// <param name="basePath">The base URL path.</param>
+    /// <param name="getBasePath">The base URL path.</param>
     /// <returns>The remote service.</returns>
-    abstract GetService<'T> : basePath: string -> 'T
-
-    /// <summary>
-    /// Get the remote service of the given type, whose URL is determined by its <see cref="T:IRemoteService" /> implementation.
-    /// </summary>
-    /// <typeparam name="T">The remote service type. Must be a record whose fields are functions of the form <c>Request -&gt; Async&lt;Response&gt;</c>.</typeparam>
-    /// <returns>The remote service.</returns>
-    abstract GetService<'T when 'T :> IRemoteService> : unit -> 'T
+    abstract GetService : getBasePath: ('Service -> string) -> 'Service
 
 /// <exclude />
 type RemoteMethodDefinition =
@@ -72,8 +65,8 @@ type RemotingExtensions =
 
     /// <exclude />
     [<Extension>]
-    static member RemoteProvider(this: IProgramComponent) =
-        this.Services.GetRequiredService<IRemoteProvider>()
+    static member RemoteProvider<'T>(this: IProgramComponent) =
+        this.Services.GetRequiredService<IRemoteProvider<'T>>()
 
     /// <summary>Get an instance of the given remote service, whose URL has the given base path.</summary>
     /// <typeparam name="T">The remote service type.</typeparam>
@@ -81,17 +74,16 @@ type RemotingExtensions =
     /// <returns>The remote service.</returns>
     [<Extension>]
     static member Remote<'T>(this: IProgramComponent, basePath: string) =
-        this.RemoteProvider().GetService<'T>(basePath)
+        this.RemoteProvider<'T>().GetService(fun _ -> basePath)
 
     /// <summary>
     /// Get an instance of the given remote service, whose URL is determined by its <see cref="T:IRemoteService" /> implementation.
     /// </summary>
     /// <typeparam name="T">The remote service type.</typeparam>
-    /// <param name="basePath">The base URL path.</param>
     /// <returns>The remote service.</returns>
     [<Extension>]
     static member Remote<'T when 'T :> IRemoteService>(this: IProgramComponent) =
-        this.RemoteProvider().GetService<'T>()
+        this.RemoteProvider<'T>().GetService(fun x -> x.BasePath)
 
     /// <exclude />
     static member ExtractRemoteMethods(ty: Type) : Result<RemoteMethodDefinition[], list<string>> =
