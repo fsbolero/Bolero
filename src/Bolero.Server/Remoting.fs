@@ -255,6 +255,26 @@ type ServerRemotingExtensions =
         )
 
     /// <summary>Serve Bolero remote services.</summary>
+    /// <remarks>
+    /// This method should be called before any call to the non-generic <see cref="M:MapBoleroRemoting"/>.
+    /// Otherwise, additional configuration done on the returned <see cref="T:RouteHandlerBuilder"/> will be ignored.
+    /// </remarks>
+    [<Extension>]
+    static member MapBoleroRemoting<'T>(endpoints: IEndpointRouteBuilder) =
+        match
+            endpoints.ServiceProvider.GetServices<RemotingService>()
+            |> Seq.tryFind (fun service -> service.ServiceType = typeof<'T>)
+        with
+        | None ->
+            failwith $"\
+                Remote service not registered: {typeof<'T>.FullName}. \
+                Use services.AddRemoting<{typeof<'T>.Name}>() to register it."
+        | Some service ->
+            service.Map(endpoints)
+            |> Array.ofSeq
+            |> RouteHandlerBuilder
+
+    /// <summary>Serve Bolero remote services.</summary>
     [<Extension>]
     static member MapBoleroRemoting(endpoints: IEndpointRouteBuilder) =
         endpoints.ServiceProvider.GetServices<RemotingService>()
