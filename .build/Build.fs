@@ -83,7 +83,7 @@ type Events = FSharp.Data.CsvProvider<eventsFile>
 
 let escapeDashes s =
     Regex("-(.)").Replace(s, fun (m: Match) ->
-        m.Groups.[1].Value.ToUpperInvariant())
+        m.Groups[1].Value.ToUpperInvariant())
 
 let replace rows marker writeItem input =
     Regex(sprintf """(?<=// BEGIN %s\r?\n)(?:\w|\W)*(?=// END %s)""" marker marker,
@@ -222,8 +222,8 @@ Target.create "update-chromedriver" (fun _ ->
     if Environment.isUnix then
         try
             let v = (shellOutput "google-chrome" ["--version"]).Trim()
-            let v = v.[v.LastIndexOf(' ') + 1 ..].Split('.')
-            Some $"{v.[0]}.{v.[1]}"
+            let v = v[v.LastIndexOf(' ') + 1 ..].Split('.')
+            Some $"{v[0]}.{v[1]}"
         with _ ->
             Trace.traceImportant "Cannot find installed google-chrome version."
             None
@@ -252,15 +252,16 @@ Target.create "all" ignore
 "corebuild"
     ==> "build"
     ==> "pack"
+    |> ignore
 
-"build" ==> "run-client"
-"build" ==> "run-server"
-"build" ==> "run-remoting"
+"build" ==> "run-client" |> ignore
+"build" ==> "run-server" |> ignore
+"build" ==> "run-remoting" |> ignore
 
-"build" ?=> "test"
-"build" ?=> "test-debug"
+"build" ?=> "test" |> ignore
+"build" ?=> "test-debug" |> ignore
 
-"test" ==> "all"
-"pack" ==> "all"
+"test" ==> "all" |> ignore
+"pack" ==> "all" |> ignore
 
 Target.runOrDefaultWithArguments "build"
