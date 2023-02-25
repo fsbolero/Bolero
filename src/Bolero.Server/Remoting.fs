@@ -29,6 +29,7 @@ open System.Threading.Tasks
 open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Routing
 open Microsoft.Extensions.DependencyInjection
 open Bolero.Remoting
 
@@ -136,6 +137,13 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
         else
             None
 
+    member this.Map(endpoints: IEndpointRouteBuilder) =
+        methods
+        |> Seq.map (fun (KeyValue(methodName, handle)) ->
+            let path = $"{basePath}/{methodName}"
+            endpoints.MapPost(path, Func<_, _>(handle))
+            :> IEndpointConventionBuilder)
+
 /// Provides remote service implementations when running in Server-side Blazor.
 type internal ServerRemoteProvider<'T>(services: seq<RemotingService>) =
 
@@ -234,6 +242,7 @@ type ServerRemotingExtensions =
             RemotingService(PathString handler.BasePath, handler.GetType(), handler, configureSerialization))
 
     /// <summary>Add the middleware that serves Bolero remote services.</summary>
+    [<Obsolete "Use endpoint routing with MapBoleroRemoting.">]
     [<Extension>]
     static member UseRemoting(this: IApplicationBuilder) =
         let handlers =
@@ -244,3 +253,11 @@ type ServerRemotingExtensions =
             |> Array.tryPick (fun h -> h.TryHandle(ctx))
             |> Option.defaultWith next.Invoke
         )
+
+    /// <summary>Serve Bolero remote services.</summary>
+    [<Extension>]
+    static member MapBoleroRemoting(endpoints: IEndpointRouteBuilder) =
+        endpoints.ServiceProvider.GetServices<RemotingService>()
+        |> Seq.collect (fun service -> service.Map(endpoints))
+        |> Array.ofSeq
+        |> RouteHandlerBuilder

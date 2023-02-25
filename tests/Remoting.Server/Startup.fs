@@ -100,19 +100,18 @@ type Startup() =
 
     member this.Configure(app: IApplicationBuilder, env: IHostEnvironment) =
         app.UseAuthentication()
-            .UseRemoting()
             .UseStaticFiles()
             .UseRouting()
             .UseBlazorFrameworkFiles()
             .UseEndpoints(fun endpoints ->
                 endpoints.MapBlazorHub() |> ignore
+                endpoints.MapBoleroRemoting() |> ignore
                 endpoints.MapFallbackToBolero(Page.index) |> ignore)
         |> ignore
 
         if env.IsDevelopment() then
             app.UseDeveloperExceptionPage()
                 .UseWebAssemblyDebugging()
-                |> ignore
 
 module Main =
     [<EntryPoint>]

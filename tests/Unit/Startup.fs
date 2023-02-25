@@ -104,11 +104,11 @@ type Startup() =
 
     member this.Configure(app: IApplicationBuilder) =
         app .UseAuthentication()
-            .UseRemoting()
             .UseStaticFiles()
             .UseRouting()
             .UseBlazorFrameworkFiles()
             .UseEndpoints(fun endpoints ->
                 endpoints.MapBlazorHub() |> ignore
+                endpoints.MapBoleroRemoting() |> ignore
                 endpoints.MapFallbackToBolero(Page.index) |> ignore)
         |> ignore
