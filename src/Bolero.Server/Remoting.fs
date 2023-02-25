@@ -85,6 +85,17 @@ type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationServic
         member _.Authorize f = authorizeWith [AuthorizeAttribute()] f
         member _.AuthorizeWith authData f = authorizeWith authData f
 
+type IRemoteServiceMetadata =
+    abstract Type: Type
+    abstract BasePath: PathString
+
+type IRemoteMethodMetadata =
+    abstract Service: IRemoteServiceMetadata
+    abstract Name: string
+    abstract ArgumentType: Type
+    abstract ReturnType: Type
+    abstract Handler: Func<HttpContext, Task>
+
 type internal RemotingService(basePath: PathString, ty: Type, handler: obj, configureSerialization: option<JsonSerializerOptions -> unit>) as this =
 
     let flags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
@@ -105,9 +116,20 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
         | Ok methods ->
             methods
 
+    let service =
+        { new IRemoteServiceMetadata with
+            member _.Type = ty
+            member _.BasePath = basePath }
+
     let methods = dict [
         for m in methodData do
-            m.Name, {| m with Handler = makeHandler m |}
+            m.Name,
+            { new IRemoteMethodMetadata with
+                member _.Service = service
+                member _.Name = m.Name
+                member _.ArgumentType = m.ArgumentType
+                member _.ReturnType = m.ReturnType
+                member _.Handler = makeHandler m }
     ]
 
     let serOptions = JsonSerializerOptions()
@@ -145,10 +167,11 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
         |> Seq.map (fun (KeyValue(methodName, method)) ->
             let path = $"{basePath}/{methodName}"
             endpoints.MapPost(path, method.Handler)
-                .Accepts(method.ArgumentType, "application/json")
+                .Accepts(method.ArgumentType, false, "application/json")
                 .Produces(200, method.ReturnType, "application/json")
                 .WithDisplayName($"Remote method {method.Name} on service {this.ServiceType.Name}")
                 .WithTags("Bolero.Remoting")
+                .WithMetadata(method)
             :> IEndpointConventionBuilder)
 
 /// Provides remote service implementations when running in Server-side Blazor.
