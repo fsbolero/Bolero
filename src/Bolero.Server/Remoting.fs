@@ -162,17 +162,19 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
         else
             None
 
-    member this.Map(endpoints: IEndpointRouteBuilder) =
+    member this.Map(endpoints: IEndpointRouteBuilder, buildEndpoint: (IRemoteMethodMetadata ->  IEndpointConventionBuilder -> unit) option) =
         methods
         |> Seq.map (fun (KeyValue(methodName, method)) ->
             let path = $"{basePath}/{methodName}"
-            endpoints.MapPost(path, method.Handler)
-                .Accepts(method.ArgumentType, false, "application/json")
-                .Produces(200, method.ReturnType, "application/json")
-                .WithDisplayName($"Remote method {method.Name} on service {this.ServiceType.Name}")
-                .WithTags("Bolero.Remoting")
-                .WithMetadata(method)
-            :> IEndpointConventionBuilder)
+            let ep =
+                endpoints.MapPost(path, method.Handler)
+                    .Accepts(method.ArgumentType, false, "application/json")
+                    .Produces(200, method.ReturnType, "application/json")
+                    .WithDisplayName($"Remote method {method.Name} on service {typeof<'service>.Name}")
+                    .WithTags("Bolero.Remoting")
+                    .WithMetadata(method)
+            buildEndpoint |> Option.iter (fun f -> f method ep)
+            ep :> IEndpointConventionBuilder)
 
 /// Provides remote service implementations when running in Server-side Blazor.
 type internal ServerRemoteProvider<'T>(services: seq<RemotingService>) =
@@ -290,7 +292,7 @@ type ServerRemotingExtensions =
     /// Otherwise, additional configuration done on the returned <see cref="T:RouteHandlerBuilder"/> will be ignored.
     /// </remarks>
     [<Extension>]
-    static member MapBoleroRemoting<'T>(endpoints: IEndpointRouteBuilder) =
+    static member MapBoleroRemoting<'T>(endpoints: IEndpointRouteBuilder, ?buildEndpoint: IRemoteMethodMetadata ->  IEndpointConventionBuilder -> unit) =
         match
             endpoints.ServiceProvider.GetServices<RemotingService>()
             |> Seq.tryFind (fun service -> service.ServiceType = typeof<'T>)
@@ -300,14 +302,14 @@ type ServerRemotingExtensions =
                 Remote service not registered: {typeof<'T>.FullName}. \
                 Use services.AddRemoting<{typeof<'T>.Name}>() to register it."
         | Some service ->
-            service.Map(endpoints)
+            service.Map(endpoints, buildEndpoint)
             |> Array.ofSeq
             |> RouteHandlerBuilder
 
     /// <summary>Serve Bolero remote services.</summary>
     [<Extension>]
-    static member MapBoleroRemoting(endpoints: IEndpointRouteBuilder) =
+    static member MapBoleroRemoting(endpoints: IEndpointRouteBuilder, ?buildEndpoint: IRemoteMethodMetadata ->  IEndpointConventionBuilder -> unit) =
         endpoints.ServiceProvider.GetServices<RemotingService>()
-        |> Seq.collect (fun service -> service.Map(endpoints))
+        |> Seq.collect (fun service -> service.Map(endpoints, buildEndpoint))
         |> Array.ofSeq
         |> RouteHandlerBuilder
