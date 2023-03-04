@@ -3,6 +3,7 @@
 open System
 open System.Collections
 open System.Collections.Generic
+open System.Reflection
 open System.Runtime.CompilerServices
 open System.Text.Json
 open System.Threading
@@ -11,6 +12,7 @@ open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Metadata
+open Microsoft.AspNetCore.Mvc
 open Microsoft.AspNetCore.Routing
 open Microsoft.AspNetCore.Routing.Patterns
 open Microsoft.Extensions.DependencyInjection
@@ -44,6 +46,35 @@ type EndpointsRemoteContext(http: IHttpContextAccessor, authService: IAuthorizat
         member this.Authorize<'req,'resp> f = unbox (this.AuthorizeWith<'req, 'resp>([AuthorizeAttribute()], f))
         member this.AuthorizeWith<'req,'resp> authData f = unbox (this.AuthorizeWith<'req,'resp>(authData, f))
 
+type RemoteParameterInfo(memberInfo, method: IRemoteMethodMetadata) =
+    inherit ParameterInfo()
+    override _.Name = "body"
+    override _.Member = memberInfo
+    override _.ParameterType = method.ArgumentType
+    override _.HasDefaultValue = false
+    override _.DefaultValue = null
+    override _.GetCustomAttributesData() =
+        [| { new CustomAttributeData() with
+               override _.Constructor = typeof<FromBodyAttribute>.GetConstructor([||]) } |]
+
+type RemoteMethodInfo(method: IRemoteMethodMetadata) =
+    inherit MethodInfo()
+    override this.GetBaseDefinition() = null
+    override this.ReturnTypeCustomAttributes = null
+    override this.ReturnType = method.ReturnType
+    override this.GetMethodImplementationFlags() = MethodImplAttributes.Managed
+    override this.GetParameters() = [| RemoteParameterInfo(this, method) |]
+    override this.Invoke(_, _, _, _, _) = raise (NotImplementedException())
+    override this.Attributes = MethodAttributes.Static ||| MethodAttributes.Public
+    override this.MethodHandle = raise (NotImplementedException())
+    override this.GetCustomAttributes(_) = [||]
+    override this.GetCustomAttributes(_, _) = [||]
+    override this.GetCustomAttributesData() = [||]
+    override this.IsDefined(_, _) = raise (NotImplementedException())
+    override this.DeclaringType = method.Service.Type
+    override this.Name = method.Name
+    override this.ReflectedType = null
+
 type internal RemotingServiceEndpointBuilder(service: RemotingService, buildEndpoint: (IRemoteMethodMetadata ->  IEndpointConventionBuilder -> unit) option) =
 
     let endpoints =
@@ -60,8 +91,11 @@ type internal RemotingServiceEndpointBuilder(service: RemotingService, buildEndp
                    member _.ContentTypes = ["application/json"]
                    member _.StatusCode = 200
                    member _.Type = method.ReturnType }
+               RemoteMethodInfo(method)
                method
-               TagsAttribute("Bolero.Remoting") ] : obj list)
+               { new IHttpMethodMetadata with
+                   member _.AcceptCorsPreflight = true
+                   member _.HttpMethods = ["POST"] } ] : obj list)
             |> List.iter endpoint.Metadata.Add
 
             match method.Function with
@@ -77,12 +111,23 @@ type internal RemotingServiceEndpointBuilder(service: RemotingService, buildEndp
 
             endpoint
         )
+        |> Array.ofSeq
+
+    let finally' = ResizeArray()
 
     member _.ServiceType = service.ServiceType
 
-    interface IEnumerable<RouteEndpointBuilder> with
-        member this.GetEnumerator(): IEnumerator<RouteEndpointBuilder> = endpoints.GetEnumerator()
-        member this.GetEnumerator(): IEnumerator = endpoints.GetEnumerator()
+    member _.EndpointBuilders = endpoints
+
+    member _.Finally(f: Action<EndpointBuilder>) =
+        finally'.Add(f)
+
+    member _.ApplyFinally() =
+        for f in finally' do
+            for endpoint in endpoints do
+                f.Invoke(endpoint)
+        finally'.Clear()
+        endpoints
 
 type internal RemotingEndpointDataSource() =
     inherit EndpointDataSource()
@@ -110,7 +155,11 @@ type internal RemotingEndpointDataSource() =
             let endpointBuilder = RemotingServiceEndpointBuilder(service, buildEndpoint)
             endpointBuilders.Add(endpointBuilder)
             { new IEndpointConventionBuilder with
-                member _.Add(f) = Seq.iter f.Invoke endpointBuilder }
+                member _.Add(f) = Seq.iter f.Invoke endpointBuilder.EndpointBuilders
+#if NET7_0_OR_GREATER
+                member _.Finally(f) = endpointBuilder.Finally(f)
+#endif
+            }
 
     member _.AddServicesIfNotAlreadyAdded(services: seq<RemotingService>, buildEndpoint: (IRemoteMethodMetadata ->  IEndpointConventionBuilder -> unit) option) =
         withLock <| fun () ->
@@ -121,7 +170,11 @@ type internal RemotingEndpointDataSource() =
                 |> Array.ofSeq
             Seq.iter endpointBuilders.Add builders
             { new IEndpointConventionBuilder with
-                member _.Add(f) = Seq.iter (Seq.iter f.Invoke) builders }
+                member _.Add(f) = builders |> Seq.iter (fun b -> Seq.iter f.Invoke b.EndpointBuilders)
+#if NET7_0_OR_GREATER
+                member _.Finally(f) = builders |> Seq.iter (fun b -> b.Finally(f))
+#endif
+            }
 
     static member Get(endpoints: IEndpointRouteBuilder) =
         endpoints.DataSources
@@ -135,7 +188,7 @@ type internal RemotingEndpointDataSource() =
 
     override _.Endpoints =
         endpointBuilders
-        |> Seq.concat
+        |> Seq.collect (fun b -> b.ApplyFinally())
         |> Seq.map (fun b -> b.Build())
         |> Array.ofSeq
         :> IReadOnlyList<Endpoint>

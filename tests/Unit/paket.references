@@ -1,5 +1,5 @@
-Microsoft.AspNetCore.Components.WebAssembly.Server
 group tests
+Microsoft.AspNetCore.Components.WebAssembly.Server
 FsCheck.NUnit
 nunit
 NUnit3TestAdapter

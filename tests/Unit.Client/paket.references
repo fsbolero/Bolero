@@ -1,3 +1,4 @@
+group tests
 FSharp.Core
 Elmish
 Microsoft.AspNetCore.Components.Authorization

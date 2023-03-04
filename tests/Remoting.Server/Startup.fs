@@ -21,10 +21,13 @@
 namespace Bolero.Tests.Remoting
 
 open System
+open Bolero.Tests.Remoting.Client
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
+open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Mvc
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
@@ -97,16 +100,22 @@ type Startup() =
             .AddBoleroHost()
             .AddServerSideBlazor()
         |> ignore
+        services.AddSwaggerGen() |> ignore
+        services.AddEndpointsApiExplorer() |> ignore
 
-    member this.Configure(app: IApplicationBuilder, env: IHostEnvironment) =
+    member this.Configure(app: IApplicationBuilder, env: IHostEnvironment, log: ILogger<Startup>) =
         app.UseAuthentication()
             .UseStaticFiles()
+            .UseSwagger()
+            .UseSwaggerUI()
             .UseRouting()
             .UseAuthorization()
             .UseBlazorFrameworkFiles()
             .UseEndpoints(fun endpoints ->
                 endpoints.MapBlazorHub() |> ignore
-                endpoints.MapBoleroRemoting() |> ignore
+                endpoints.MapBoleroRemoting()
+                    .WithOpenApi()
+                |> ignore
                 endpoints.MapFallbackToBolero(Page.index) |> ignore)
         |> ignore
 

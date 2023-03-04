@@ -1,3 +1,4 @@
+group tests
 Microsoft.AspNetCore.Components.WebAssembly.DevServer
 FSharp.Core
 Elmish
