@@ -3,3 +3,4 @@ Microsoft.AspNetCore.Components.WebAssembly.Server
 FSharp.Core
 Swashbuckle.AspNetCore
 Microsoft.AspNetCore.OpenApi
+FSharp.SystemTextJson.Swagger

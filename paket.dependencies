@@ -49,6 +49,7 @@ framework: net7.0
 nuget FSharp.Core
 nuget Elmish ~> 3.1
 nuget FsCheck.NUnit ~> 2.12
+nuget FSharp.SystemTextJson.Swagger
 nuget Microsoft.AspNetCore.OpenApi
 nuget Microsoft.AspNetCore.Components.Authorization
 nuget Microsoft.AspNetCore.Components.WebAssembly
