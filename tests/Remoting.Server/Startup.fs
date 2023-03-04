@@ -93,7 +93,7 @@ type Startup() =
             .AddCookie()
             |> ignore
         services
-            .AddRemoting<MyApiHandler>()
+            .AddBoleroRemoting<MyApiHandler>()
             .AddBoleroHost()
             .AddServerSideBlazor()
         |> ignore
@@ -102,6 +102,7 @@ type Startup() =
         app.UseAuthentication()
             .UseStaticFiles()
             .UseRouting()
+            .UseAuthorization()
             .UseBlazorFrameworkFiles()
             .UseEndpoints(fun endpoints ->
                 endpoints.MapBlazorHub() |> ignore

@@ -59,6 +59,9 @@ type ClientRemoteProvider<'T> private (http: HttpClient, configureSerialization:
     let serOptions = JsonSerializerOptions()
     do configureSerialization.ConfigureSerialization(serOptions)
 
+    // So that the default ASP.NET Core authentication doesn't redirect to login.
+    do http.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest")
+
     let normalizeBasePath (basePath: string) =
         let baseAddress = http.BaseAddress.OriginalString
         let sb = StringBuilder(baseAddress)

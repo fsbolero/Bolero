@@ -29,7 +29,6 @@ open System.Threading.Tasks
 open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Routing
 open Microsoft.Extensions.DependencyInjection
 open Bolero.Remoting
 
@@ -66,9 +65,7 @@ type IRemoteContext =
 /// <exclude />
 type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationService, authPolicyProvider: IAuthorizationPolicyProvider) =
 
-    let authorizeWith authData f =
-        if Seq.isEmpty authData then f else
-        let tAuthPolicy = AuthorizationPolicy.CombineAsync(authPolicyProvider, authData)
+    static member Handle<'req, 'resp>(tAuthPolicy: Task<AuthorizationPolicy>, authService: IAuthorizationService, http: IHttpContextAccessor, f: 'req -> Async<'resp>) : 'req -> Async<'resp> =
         fun req -> async {
             let! authPolicy = tAuthPolicy |> Async.AwaitTask
             let! authResult = authService.AuthorizeAsync(http.HttpContext.User, authPolicy) |> Async.AwaitTask
@@ -78,34 +75,45 @@ type RemoteContext(http: IHttpContextAccessor, authService: IAuthorizationServic
                 return raise RemoteUnauthorizedException
         }
 
+    member this.AuthorizeWith<'req, 'resp>(authData, f) =
+        let tAuthPolicy = AuthorizationPolicy.CombineAsync(authPolicyProvider, authData)
+        RemoteContext.Handle<'req, 'resp>(tAuthPolicy, authService, http, f)
+
     interface IHttpContextAccessor with
         member _.HttpContext with get () = http.HttpContext and set v = http.HttpContext <- v
 
     interface IRemoteContext with
-        member _.Authorize f = authorizeWith [AuthorizeAttribute()] f
-        member _.AuthorizeWith authData f = authorizeWith authData f
+        member this.Authorize<'req,'resp> f = this.AuthorizeWith<'req, 'resp>([AuthorizeAttribute()], f)
+        member this.AuthorizeWith<'req,'resp> authData f = this.AuthorizeWith<'req,'resp>(authData, f)
 
+/// <summary>
+/// Information about a remote service.
+/// </summary>
 type IRemoteServiceMetadata =
     abstract Type: Type
     abstract BasePath: PathString
 
+/// <summary>
+/// Information about a remote method.
+/// </summary>
 type IRemoteMethodMetadata =
     abstract Service: IRemoteServiceMetadata
     abstract Name: string
     abstract ArgumentType: Type
     abstract ReturnType: Type
-    abstract Handler: Func<HttpContext, Task>
+    abstract Handler: RequestDelegate
+    abstract Function: obj
 
 type internal RemotingService(basePath: PathString, ty: Type, handler: obj, configureSerialization: option<JsonSerializerOptions -> unit>) as this =
 
     let flags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
     let makeHandler (method: RemoteMethodDefinition) =
-        let meth = ty.GetProperty(method.Name).GetValue(handler)
+        let func = ty.GetProperty(method.Name).GetValue(handler)
         let output =
             typeof<RemotingService>.GetMethod("InvokeForClientSide", flags)
                 .MakeGenericMethod(method.ArgumentType, method.ReturnType)
-        Func<_, _>(fun (ctx: HttpContext) ->
-            output.Invoke(this, [|meth; ctx|]) :?> Task)
+        func, RequestDelegate(fun (ctx: HttpContext) ->
+            output.Invoke(this, [|func; ctx|]) :?> Task)
 
     let methodData =
         match RemotingExtensions.ExtractRemoteMethods ty with
@@ -123,13 +131,15 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
 
     let methods = dict [
         for m in methodData do
+            let func, handler = makeHandler m
             m.Name,
             { new IRemoteMethodMetadata with
                 member _.Service = service
                 member _.Name = m.Name
                 member _.ArgumentType = m.ArgumentType
                 member _.ReturnType = m.ReturnType
-                member _.Handler = makeHandler m }
+                member _.Handler = handler
+                member _.Function = func }
     ]
 
     let serOptions = JsonSerializerOptions()
@@ -137,7 +147,13 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
         | None -> serOptions.Converters.Add(JsonFSharpConverter())
         | Some f -> f serOptions
 
-    member val ServerSideService = handler
+    member _.ServerSideService = handler
+
+    member _.ServiceType = ty
+
+    member _.Methods = methods
+
+    member _.BasePath = basePath
 
     member private _.InvokeForClientSide<'req, 'resp>(func: 'req -> Async<'resp>, ctx: HttpContext) : Task =
         task {
@@ -147,10 +163,7 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
                 return! JsonSerializer.SerializeAsync<'resp>(ctx.Response.Body, x, serOptions)
             with exn when (exn.GetBaseException() :? RemoteUnauthorizedException) ->
                 ctx.Response.StatusCode <- StatusCodes.Status401Unauthorized
-                // TODO: allow customizing based on what failed?
         } :> Task
-
-    member this.ServiceType = ty
 
     member this.TryHandle(ctx: HttpContext) : option<Task> =
         let mutable restPath = PathString.Empty
@@ -161,20 +174,6 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
             | false, _ -> None
         else
             None
-
-    member this.Map(endpoints: IEndpointRouteBuilder, buildEndpoint: (IRemoteMethodMetadata ->  IEndpointConventionBuilder -> unit) option) =
-        methods
-        |> Seq.map (fun (KeyValue(methodName, method)) ->
-            let path = $"{basePath}/{methodName}"
-            let ep =
-                endpoints.MapPost(path, method.Handler)
-                    .Accepts(method.ArgumentType, false, "application/json")
-                    .Produces(200, method.ReturnType, "application/json")
-                    .WithDisplayName($"Remote method {method.Name} on service {typeof<'service>.Name}")
-                    .WithTags("Bolero.Remoting")
-                    .WithMetadata(method)
-            buildEndpoint |> Option.iter (fun f -> f method ep)
-            ep :> IEndpointConventionBuilder)
 
 /// Provides remote service implementations when running in Server-side Blazor.
 type internal ServerRemoteProvider<'T>(services: seq<RemotingService>) =
@@ -274,7 +273,6 @@ type ServerRemotingExtensions =
             RemotingService(PathString handler.BasePath, handler.GetType(), handler, configureSerialization))
 
     /// <summary>Add the middleware that serves Bolero remote services.</summary>
-    [<Obsolete "Use endpoint routing with MapBoleroRemoting.">]
     [<Extension>]
     static member UseRemoting(this: IApplicationBuilder) =
         let handlers =
@@ -285,31 +283,3 @@ type ServerRemotingExtensions =
             |> Array.tryPick (fun h -> h.TryHandle(ctx))
             |> Option.defaultWith next.Invoke
         )
-
-    /// <summary>Serve Bolero remote services.</summary>
-    /// <remarks>
-    /// This method should be called before any call to the non-generic <see cref="M:MapBoleroRemoting"/>.
-    /// Otherwise, additional configuration done on the returned <see cref="T:RouteHandlerBuilder"/> will be ignored.
-    /// </remarks>
-    [<Extension>]
-    static member MapBoleroRemoting<'T>(endpoints: IEndpointRouteBuilder, ?buildEndpoint: IRemoteMethodMetadata ->  IEndpointConventionBuilder -> unit) =
-        match
-            endpoints.ServiceProvider.GetServices<RemotingService>()
-            |> Seq.tryFind (fun service -> service.ServiceType = typeof<'T>)
-        with
-        | None ->
-            failwith $"\
-                Remote service not registered: {typeof<'T>.FullName}. \
-                Use services.AddRemoting<{typeof<'T>.Name}>() to register it."
-        | Some service ->
-            service.Map(endpoints, buildEndpoint)
-            |> Array.ofSeq
-            |> RouteHandlerBuilder
-
-    /// <summary>Serve Bolero remote services.</summary>
-    [<Extension>]
-    static member MapBoleroRemoting(endpoints: IEndpointRouteBuilder, ?buildEndpoint: IRemoteMethodMetadata ->  IEndpointConventionBuilder -> unit) =
-        endpoints.ServiceProvider.GetServices<RemotingService>()
-        |> Seq.collect (fun service -> service.Map(endpoints, buildEndpoint))
-        |> Array.ofSeq
-        |> RouteHandlerBuilder
