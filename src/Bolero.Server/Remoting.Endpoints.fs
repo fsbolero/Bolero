@@ -1,35 +1,32 @@
 ﻿namespace Bolero.Remoting.Server
 
 open System
-open System.Collections
 open System.Collections.Generic
 open System.Reflection
-open System.Runtime.CompilerServices
-open System.Text.Json
 open System.Threading
-open Bolero.Remoting
-open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Http.Metadata
 open Microsoft.AspNetCore.Mvc
 open Microsoft.AspNetCore.Routing
 open Microsoft.AspNetCore.Routing.Patterns
-open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Primitives
 
-type RemoteParameterInfo(memberInfo, method: IRemoteMethodMetadata) =
+type internal RemoteParameterInfo(memberInfo, method: IRemoteMethodMetadata) =
     inherit ParameterInfo()
+
+    let attributes =
+        [| { new CustomAttributeData() with
+               override _.Constructor = typeof<FromBodyAttribute>.GetConstructor([||]) } |]
+
     override _.Name = "body"
     override _.Member = memberInfo
     override _.ParameterType = method.ArgumentType
     override _.HasDefaultValue = false
     override _.DefaultValue = null
-    override _.GetCustomAttributesData() =
-        [| { new CustomAttributeData() with
-               override _.Constructor = typeof<FromBodyAttribute>.GetConstructor([||]) } |]
+    override _.GetCustomAttributesData() = attributes
 
-type RemoteMethodInfo(method: IRemoteMethodMetadata) =
+type internal RemoteMethodInfo(method: IRemoteMethodMetadata) =
     inherit MethodInfo()
     override this.GetBaseDefinition() = null
     override this.ReturnTypeCustomAttributes = null
@@ -63,11 +60,11 @@ type internal RemotingServiceEndpointBuilder(service: RemotingService, buildEndp
                    member _.ContentTypes = ["application/json"]
                    member _.StatusCode = 200
                    member _.Type = method.ReturnType }
-               RemoteMethodInfo(method)
-               method
                { new IHttpMethodMetadata with
                    member _.AcceptCorsPreflight = true
-                   member _.HttpMethods = ["POST"] } ] : obj list)
+                   member _.HttpMethods = ["POST"] }
+               RemoteMethodInfo(method)
+               method ] : obj list)
             |> List.iter endpoint.Metadata.Add
 
             match method.Function with
