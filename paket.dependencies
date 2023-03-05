@@ -32,7 +32,7 @@ nuget Microsoft.Build.Utilities.Core ~> 15.0
 group fake
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: net6.0
+framework: net7.0
 
 nuget Fake.Core.Target
 nuget Fake.IO.FileSystem
