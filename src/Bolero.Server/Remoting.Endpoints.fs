@@ -44,7 +44,7 @@ type internal RemoteMethodInfo(method: IRemoteMethodMetadata) =
     override this.Name = method.Name
     override this.ReflectedType = null
 
-type internal RemotingServiceEndpointBuilder(service: RemotingService, buildEndpoint: (IRemoteMethodMetadata ->  IEndpointConventionBuilder -> unit) option) =
+type internal RemotingServiceEndpointBuilder(service: RemotingService, buildEndpoint: Action<IRemoteMethodMetadata, IEndpointConventionBuilder>) =
 
     let endpoints =
         service.Methods
@@ -73,10 +73,11 @@ type internal RemotingServiceEndpointBuilder(service: RemotingService, buildEndp
                 |> Seq.iter endpoint.Metadata.Add
             | _ -> ()
 
-            buildEndpoint |> Option.iter (fun buildEndpoint ->
-                { new IEndpointConventionBuilder with
-                    member _.Add(f) = f.Invoke(endpoint) }
-                |> buildEndpoint method)
+            if not (isNull buildEndpoint) then
+                buildEndpoint.Invoke(
+                    method,
+                    { new IEndpointConventionBuilder with
+                        member _.Add(f) = f.Invoke(endpoint) })
 
             endpoint
         )
@@ -118,7 +119,7 @@ type internal RemotingEndpointDataSource() =
             oldCancellationTokenSource.Cancel()
             res
 
-    member _.AddService(service: RemotingService, buildEndpoint: (IRemoteMethodMetadata ->  IEndpointConventionBuilder -> unit) option) =
+    member _.AddService(service: RemotingService, buildEndpoint: Action<IRemoteMethodMetadata, IEndpointConventionBuilder>) =
         withLock <| fun () ->
             endpointBuilders.RemoveAll(fun b -> b.ServiceType = service.ServiceType) |> ignore
             let endpointBuilder = RemotingServiceEndpointBuilder(service, buildEndpoint)
@@ -130,7 +131,7 @@ type internal RemotingEndpointDataSource() =
 #endif
             }
 
-    member _.AddServicesIfNotAlreadyAdded(services: seq<RemotingService>, buildEndpoint: (IRemoteMethodMetadata ->  IEndpointConventionBuilder -> unit) option) =
+    member _.AddServicesIfNotAlreadyAdded(services: seq<RemotingService>, buildEndpoint: Action<IRemoteMethodMetadata, IEndpointConventionBuilder>) =
         withLock <| fun () ->
             let builders =
                 services

@@ -110,7 +110,7 @@ type IRemoteMethodMetadata =
     abstract Handler: RequestDelegate
     abstract Function: obj
 
-type internal RemotingService(basePath: PathString, ty: Type, handler: obj, configureSerialization: option<JsonSerializerOptions -> unit>) as this =
+type internal RemotingService(basePath: PathString, ty: Type, handler: obj, configureSerialization: Action<JsonSerializerOptions>) as this =
 
     let flags = BindingFlags.Public ||| BindingFlags.NonPublic ||| BindingFlags.Instance
     let makeHandler (method: RemoteMethodDefinition) =
@@ -150,8 +150,8 @@ type internal RemotingService(basePath: PathString, ty: Type, handler: obj, conf
 
     let serOptions = JsonSerializerOptions()
     do match configureSerialization with
-        | None -> serOptions.Converters.Add(JsonFSharpConverter())
-        | Some f -> f serOptions
+        | null -> serOptions.Converters.Add(JsonFSharpConverter())
+        | f -> f.Invoke(serOptions)
 
     member _.ServerSideService = handler
 
