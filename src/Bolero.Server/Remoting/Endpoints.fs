@@ -18,6 +18,9 @@ open Microsoft.AspNetCore.Routing.Patterns
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Primitives
 
+type internal IAuthorizedMethodHandler =
+    abstract AuthorizeData: array<IAuthorizeData>
+
 type internal AuthorizedMethodHandler<'req, 'resp>(authData: seq<IAuthorizeData>, f: 'req -> Async<'resp>) =
     inherit FSharp.Core.FSharpFunc<'req, Async<'resp>>()
 

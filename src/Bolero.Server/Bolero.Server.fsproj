@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="HttpContext.fs" />
+    <Compile Include="Remoting\Common.fs" />
     <Compile Include="Remoting\Middleware.fs" />
     <Compile Include="Remoting\Endpoints.fs" />
     <Compile Include="HostConfig.fs" />
