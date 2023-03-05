@@ -9,6 +9,7 @@
     <Compile Include="HttpContext.fs" />
     <Compile Include="Remoting.Middleware.fs" />
     <Compile Include="Remoting.Endpoints.fs" />
+    <Compile Include="Remoting.Extensions.fs" />
     <Compile Include="HostConfig.fs" />
     <Compile Include="Components.fs" />
     <Compile Include="Html.fs" />
