@@ -23,7 +23,6 @@ namespace Bolero.Remoting.Server
 open System
 open System.Runtime.CompilerServices
 open System.Text.Json
-open System.Threading.Tasks
 open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
@@ -44,6 +43,16 @@ type internal MiddlewareRemoteContext(http: IHttpContextAccessor, authService: I
                 return raise RemoteUnauthorizedException
         })
 
+type internal RemotingMiddleware(handlers: seq<RemotingService>) =
+
+    let handlers = Array.ofSeq handlers
+
+    interface IMiddleware with
+        member _.InvokeAsync(ctx, next) =
+            handlers
+            |> Array.tryPick (fun h -> h.TryHandle(ctx))
+            |> Option.defaultWith (fun () -> next.Invoke(ctx))
+
 [<AutoOpen>]
 module private MiddlewareRemotingExtensionsHelpers =
 
@@ -57,6 +66,7 @@ module private MiddlewareRemotingExtensionsHelpers =
         services.AddSingleton<RemotingService>(getService)
                 .AddSingleton<IRemoteContext, MiddlewareRemoteContext>()
                 .AddHttpContextAccessor()
+                .AddSingleton<RemotingMiddleware>()
 
     let addTypedRemoting<'T>
             (services: IServiceCollection)
@@ -204,11 +214,4 @@ type MiddlewareRemotingExtensions =
     /// <summary>Add the middleware that serves Bolero remote services.</summary>
     [<Extension>]
     static member UseRemoting(this: IApplicationBuilder) =
-        let handlers =
-            this.ApplicationServices.GetServices<RemotingService>()
-            |> Array.ofSeq
-        this.Use(fun ctx (next: Func<Task>) ->
-            handlers
-            |> Array.tryPick (fun h -> h.TryHandle(ctx))
-            |> Option.defaultWith next.Invoke
-        )
+        this.UseMiddleware<RemotingMiddleware>()
