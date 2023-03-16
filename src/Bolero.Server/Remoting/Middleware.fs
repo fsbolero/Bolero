@@ -94,7 +94,7 @@ type MiddlewareRemotingExtensions =
     /// Use this method to enable <c>app.UseRemoting()</c>.
     /// Use <c>AddBoleroRemoting()</c> instead to enable <c>endpoints.MapBoleroRemoting()</c>.
     /// </remarks>
-    [<Extension>]
+    [<Extension; Obsolete "Use AddBoleroRemoting and endpoint routing">]
     static member AddRemoting<'T when 'T : not struct>(
             this: IServiceCollection,
             basePath: PathString,
@@ -113,7 +113,7 @@ type MiddlewareRemotingExtensions =
     /// Use this method to enable <c>app.UseRemoting()</c>.
     /// Use <c>AddBoleroRemoting()</c> instead to enable <c>endpoints.MapBoleroRemoting()</c>.
     /// </remarks>
-    [<Extension>]
+    [<Extension; Obsolete "Use AddBoleroRemoting and endpoint routing">]
     static member AddRemoting<'T when 'T : not struct>(
             this: IServiceCollection,
             basePath: PathString,
@@ -132,7 +132,7 @@ type MiddlewareRemotingExtensions =
     /// Use this method to enable <c>app.UseRemoting()</c>.
     /// Use <c>AddBoleroRemoting()</c> instead to enable <c>endpoints.MapBoleroRemoting()</c>.
     /// </remarks>
-    [<Extension>]
+    [<Extension; Obsolete "Use AddBoleroRemoting and endpoint routing">]
     static member AddRemoting<'T when 'T : not struct>(
             this: IServiceCollection,
             basePath: string,
@@ -151,7 +151,7 @@ type MiddlewareRemotingExtensions =
     /// Use this method to enable <c>app.UseRemoting()</c>.
     /// Use <c>AddBoleroRemoting()</c> instead to enable <c>endpoints.MapBoleroRemoting()</c>.
     /// </remarks>
-    [<Extension>]
+    [<Extension; Obsolete "Use AddBoleroRemoting and endpoint routing">]
     static member AddRemoting<'T when 'T : not struct>(
             this: IServiceCollection,
             basePath: string,
@@ -169,7 +169,7 @@ type MiddlewareRemotingExtensions =
     /// Use this method to enable <c>app.UseRemoting()</c>.
     /// Use <c>AddBoleroRemoting()</c> instead to enable <c>endpoints.MapBoleroRemoting()</c>.
     /// </remarks>
-    [<Extension>]
+    [<Extension; Obsolete "Use AddBoleroRemoting and endpoint routing">]
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(
             this: IServiceCollection,
             handler: IRemoteContext -> 'T,
@@ -186,7 +186,7 @@ type MiddlewareRemotingExtensions =
     /// Use this method to enable <c>app.UseRemoting()</c>.
     /// Use <c>AddBoleroRemoting()</c> instead to enable <c>endpoints.MapBoleroRemoting()</c>.
     /// </remarks>
-    [<Extension>]
+    [<Extension; Obsolete "Use AddBoleroRemoting and endpoint routing">]
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteService>(
             this: IServiceCollection,
             handler: 'T,
@@ -202,7 +202,7 @@ type MiddlewareRemotingExtensions =
     /// Use this method to enable <c>app.UseRemoting()</c>.
     /// Use <c>AddBoleroRemoting()</c> instead to enable <c>endpoints.MapBoleroRemoting()</c>.
     /// </remarks>
-    [<Extension>]
+    [<Extension; Obsolete "Use AddBoleroRemoting and endpoint routing">]
     static member AddRemoting<'T when 'T : not struct and 'T :> IRemoteHandler>(
             this: IServiceCollection,
             ?configureSerialization: JsonSerializerOptions -> unit
@@ -212,6 +212,6 @@ type MiddlewareRemotingExtensions =
             RemotingService(PathString handler.BasePath, handler.GetType(), handler, convertOptionalAction configureSerialization))
 
     /// <summary>Add the middleware that serves Bolero remote services.</summary>
-    [<Extension>]
+    [<Extension; Obsolete "Use endpoint routing with MapBoleroRouting">]
     static member UseRemoting(this: IApplicationBuilder) =
         this.UseMiddleware<RemotingMiddleware>()
