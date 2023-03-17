@@ -97,18 +97,19 @@ type Startup() =
             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie()
                 .Services
-            .AddRemoting(remoteHandler)
+            .AddBoleroRemoting(remoteHandler)
             .AddBoleroHost(prerendered = false)
             .AddServerSideBlazor()
         |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
         app .UseAuthentication()
-            .UseRemoting()
             .UseStaticFiles()
             .UseRouting()
+            .UseAuthorization()
             .UseBlazorFrameworkFiles()
             .UseEndpoints(fun endpoints ->
                 endpoints.MapBlazorHub() |> ignore
+                endpoints.MapBoleroRemoting() |> ignore
                 endpoints.MapFallbackToBolero(Page.index) |> ignore)
         |> ignore

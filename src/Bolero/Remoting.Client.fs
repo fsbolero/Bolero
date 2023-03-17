@@ -59,6 +59,9 @@ type ClientRemoteProvider<'T> private (http: HttpClient, configureSerialization:
     let serOptions = JsonSerializerOptions()
     do configureSerialization.ConfigureSerialization(serOptions)
 
+    // So that the default ASP.NET Core authentication doesn't redirect to login.
+    do http.DefaultRequestHeaders.Add("X-Requested-With", "XMLHttpRequest")
+
     let normalizeBasePath (basePath: string) =
         let baseAddress = http.BaseAddress.OriginalString
         let sb = StringBuilder(baseAddress)
@@ -146,10 +149,21 @@ type ClientRemotingExtensions =
     /// </param>
     /// <returns>The HttpClient builder for remote calls.</returns>
     [<Extension>]
-    static member AddRemoting(services: IServiceCollection, env: IWebAssemblyHostEnvironment, ?configureSerialization: JsonSerializerOptions -> unit) =
+    static member AddBoleroRemoting(services: IServiceCollection, env: IWebAssemblyHostEnvironment, ?configureSerialization: JsonSerializerOptions -> unit) =
         ClientRemotingExtensions.AddRemoting(services,
             ClientRemotingExtensions.ConfigureHttpClientFromEnv(env),
             ?configureSerialization = configureSerialization)
+
+    /// <summary>Enable support for remoting in ProgramComponent when running in WebAssembly.</summary>
+    /// <param name="services">The DI service collection.</param>
+    /// <param name="env">The WebAssembly host environment.</param>
+    /// <param name="configureSerialization">
+    /// Callback that configures the JSON serialization for remote arguments and return values.
+    /// </param>
+    /// <returns>The HttpClient builder for remote calls.</returns>
+    [<Extension; Obsolete "Use AddBoleroRemoting">]
+    static member AddRemoting(services: IServiceCollection, env: IWebAssemblyHostEnvironment, ?configureSerialization: JsonSerializerOptions -> unit) =
+        services.AddBoleroRemoting(env, ?configureSerialization = configureSerialization)
 
     /// <summary>Enable support for remoting in ProgramComponent when running in WebAssembly.</summary>
     /// <param name="services">The DI service collection.</param>
@@ -159,10 +173,21 @@ type ClientRemotingExtensions =
     /// </param>
     /// <returns>The HttpClient builder for remote calls.</returns>
     [<Extension>]
-    static member AddRemoting(services: IServiceCollection, configureHttpClient: HttpClient -> unit, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
+    static member AddBoleroRemoting(services: IServiceCollection, configureHttpClient: HttpClient -> unit, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
         services.AddSingleton(ClientRemotingExtensions.ConfigureSerialization(configureSerialization)) |> ignore
         services.Add(ServiceDescriptor(typedefof<IRemoteProvider<_>>, typedefof<ClientRemoteProvider<_>>, ServiceLifetime.Singleton))
         services.AddHttpClient(ClientRemoteProvider.HttpClientName, configureClient = configureHttpClient)
+
+    /// <summary>Enable support for remoting in ProgramComponent when running in WebAssembly.</summary>
+    /// <param name="services">The DI service collection.</param>
+    /// <param name="configureHttpClient">Callback that configures the HttpClient.</param>
+    /// <param name="configureSerialization">
+    /// Callback that configures the JSON serialization for remote arguments and return values.
+    /// </param>
+    /// <returns>The HttpClient builder for remote calls.</returns>
+    [<Extension; Obsolete "Use AddBoleroRemoting">]
+    static member AddRemoting(services: IServiceCollection, configureHttpClient: HttpClient -> unit, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
+        services.AddBoleroRemoting(configureHttpClient, ?configureSerialization = configureSerialization)
 
     /// <summary>Enable support for the given remote service in ProgramComponent when running in WebAssembly.</summary>
     /// <param name="services">The DI service collection.</param>
@@ -173,8 +198,8 @@ type ClientRemotingExtensions =
     /// <typeparam name="Service">The remote service.</typeparam>
     /// <returns>The HttpClient builder for remote calls.</returns>
     [<Extension>]
-    static member AddRemoting<'Service>(services: IServiceCollection, env: IWebAssemblyHostEnvironment, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
-        ClientRemotingExtensions.AddRemoting<'Service>(services,
+    static member AddBoleroRemoting<'Service>(services: IServiceCollection, env: IWebAssemblyHostEnvironment, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
+        ClientRemotingExtensions.AddBoleroRemoting<'Service>(services,
             ClientRemotingExtensions.ConfigureHttpClientFromEnv(env),
             ?configureSerialization = configureSerialization)
 
@@ -187,7 +212,7 @@ type ClientRemotingExtensions =
     /// <typeparam name="Service">The remote service.</typeparam>
     /// <returns>The HttpClient builder for remote calls.</returns>
     [<Extension>]
-    static member AddRemoting<'Service>(services: IServiceCollection, configureHttpClient: HttpClient -> unit, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
+    static member AddBoleroRemoting<'Service>(services: IServiceCollection, configureHttpClient: HttpClient -> unit, ?configureSerialization: JsonSerializerOptions -> unit) : IHttpClientBuilder =
         services.AddHttpClient<IRemoteProvider<'Service>, ClientRemoteProvider<'Service>>(factory = fun httpClient services ->
             configureHttpClient httpClient
             ClientRemoteProvider<'Service>.Typed(httpClient, ClientRemotingExtensions.ConfigureSerialization(configureSerialization)))

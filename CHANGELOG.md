@@ -1,5 +1,21 @@
 # Changelog
 
+## vNext
+
+* [#289](https://github.com/fsbolero/Bolero/issues/289) Add endpoint routing for remote services.
+
+    * Add extension methods `IServiceCollection.AddBoleroRemoting()` in `Bolero.Server`, with the same overloads as the existing `AddRemoting()`, to register remote services for endpoint routing.
+
+    * Add extension method `IEndpointRouteBuilder.MapBoleroRemoting(?buildEndpoint)` that sets up endpoint routing for all registered services.
+      The function `buildEndpoint` configures the endpoint for a given method.
+      The returned `IEndpointConventionBuilder` configures all the endpoints.
+
+    * Add typed version of `IEndpointRouteBuilder.MapBoleroRemoting<_>(?buildEndpoint)` to set up a specific remote service.
+
+    * Make `IServiceCollection.AddRemoting()` and `IApplicationBuilder.UseRemoting()` obsolete, and add `IServiceCollection.AddBoleroRemoting()` in `Bolero.Client` as equivalent of `AddRemoting()`.
+
+* [#280](https://github.com/fsbolero/Bolero/issues/280) Add typed version of `IServiceCollection.AddBoleroRemoting<_>()` in `Bolero.Client` to configure the HttpClient and serialization of a given remote service separately.
+
 ## 0.21
 
 * [#261](https://github.com/fsbolero/Bolero/issues/261) Fix prerendering of components inside server-side Bolero.Html.

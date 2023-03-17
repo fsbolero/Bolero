@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <OutputType>Library</OutputType>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="HttpContext.fs" />
-    <Compile Include="Remoting.fs" />
+    <Compile Include="Remoting\Common.fs" />
+    <Compile Include="Remoting\Middleware.fs" />
+    <Compile Include="Remoting\Endpoints.fs" />
     <Compile Include="HostConfig.fs" />
     <Compile Include="Components.fs" />
     <Compile Include="Html.fs" />
