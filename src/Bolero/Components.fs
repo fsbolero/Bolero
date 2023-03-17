@@ -194,7 +194,7 @@ and [<AbstractClass>]
                     model, setDispatch :: cmd)
                 id id
                 (fun _ model dispatch -> setState model dispatch)
-                id
+                id id
         runProgramLoop <- Program'.runFirstRender this program
         setState <- fun model dispatch ->
             match oldModel with
