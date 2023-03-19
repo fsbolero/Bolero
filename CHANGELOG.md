@@ -16,6 +16,8 @@
 
 * [#280](https://github.com/fsbolero/Bolero/issues/280) Add typed version of `IServiceCollection.AddBoleroRemoting<_>()` in `Bolero.Client` to configure the HttpClient and serialization of a given remote service separately.
 
+* [#288](https://github.com/fsbolero/Bolero/issues/288) Update Elmish to [version 4](https://elmish.github.io/elmish/release_notes.html#4.0.1).
+
 ## 0.21
 
 * [#261](https://github.com/fsbolero/Bolero/issues/261) Fix prerendering of components inside server-side Bolero.Html.
