@@ -22,6 +22,7 @@ module Bolero.Templating.CodeGen
 
 open System
 open System.Reflection
+open Bolero.Templating.Parsing
 open FSharp.Quotations
 open Microsoft.AspNetCore.Components
 open ProviderImplementation.ProvidedTypes
@@ -142,8 +143,7 @@ let PopulateOne (filename: option<string>) (subTemp: option<string>) (ty: Provid
     ]
 
 /// Populate the members of the provided type for a root template and its nested templates.
-let Populate (mainTy: ProvidedTypeDefinition) (pathOrHtml: string) (rootFolder: string) =
-    let content = Parsing.ParseFileOrContent pathOrHtml rootFolder
+let Populate (mainTy: ProvidedTypeDefinition) (content: ParsedTemplates) =
     let filename = content.Filename
     PopulateOne filename None mainTy content.Main
     for KeyValue(name, content) in content.Nested do
