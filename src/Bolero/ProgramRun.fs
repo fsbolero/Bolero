@@ -2,7 +2,6 @@
 // https://github.com/elmish/elmish/issues/210
 // As soon as the above issue is solved, this file can go.
 namespace Elmish
-open System.Reflection
 
 [<Struct>]
 type internal RingState<'item> =
@@ -57,42 +56,57 @@ module internal Program' =
         let internal exec onError (dispatch: Dispatch<'msg>) (cmd: Cmd<'msg>) =
             cmd |> List.iter (fun call -> try call dispatch with ex -> onError ex)
 
+    module Subs = Sub.Internal
+
     let runFirstRender (arg: 'arg) (program: Program<'arg, 'model, 'msg, 'view>) =
-        let ty = typeof<Program<'arg, 'model, 'msg, 'view>>
-        // An ugly way to extract init and update because they're private
-        let init = ty.GetProperty("init", BindingFlags.NonPublic ||| BindingFlags.Instance).GetValue(program) :?> _
-        let update = ty.GetProperty("update", BindingFlags.NonPublic ||| BindingFlags.Instance).GetValue(program) :?> _
-        let subscribe = ty.GetProperty("subscribe", BindingFlags.NonPublic ||| BindingFlags.Instance).GetValue(program) :?> _
+        // An ugly way to extract properties from the program because they're private
+        let init = Program.init program
+        let update = Program.update program
+        let setState = Program.setState program
+        let onError = Program.onError program
+        let mutable subscribe = fun _ -> []
+        let mutable termination = (fun _ -> false), ignore
+        program
+        |> Program.mapSubscription (fun f -> subscribe <- f; f)
+        |> Program.mapTermination (fun f -> termination <- f; f)
+        |> ignore
 
         let (model,cmd) = init arg
+        let sub = subscribe model
+        let toTerminate, terminate = termination
         let rb = RingBuffer 10
         let mutable reentered = false
         let mutable state = model
+        let mutable activeSubs = Subs.empty
+        let mutable terminated = false
         let rec dispatch msg =
-            if reentered then
+            if not terminated then
                 rb.Push msg
-            else
-                reentered <- true
-                let mutable nextMsg = Some msg
-                while Option.isSome nextMsg do
-                    let msg = nextMsg.Value
-                    try
-                        let (model',cmd') = update msg state
-                        Program.setState program model' dispatch
-                        cmd' |> Cmd.exec (fun ex -> Program.onError program (sprintf "Error in command while handling: %A" msg, ex)) dispatch
-                        state <- model'
-                    with ex ->
-                        Program.onError program (sprintf "Unable to process the message: %A" msg, ex)
+                if not reentered then
+                    reentered <- true
+                    processMsgs ()
+                    reentered <- false
+        and processMsgs () =
+            let mutable nextMsg = rb.Pop()
+            while not terminated && Option.isSome nextMsg do
+                let msg = nextMsg.Value
+                if toTerminate msg then
+                    Subs.Fx.stop onError activeSubs
+                    terminate state
+                    terminated <- true
+                else
+                    let (model',cmd') = update msg state
+                    let sub' = subscribe model'
+                    setState model' dispatch
+                    cmd' |> Cmd.exec (fun ex -> onError (sprintf "Error handling the message: %A" msg, ex)) dispatch
+                    state <- model'
+                    activeSubs <- Subs.diff activeSubs sub' |> Subs.Fx.change onError dispatch
                     nextMsg <- rb.Pop()
-                reentered <- false
 
-        Program.setState program model dispatch
+        reentered <- true
+        setState model dispatch
         fun () ->
-            let sub =
-                try
-                    subscribe model
-                with ex ->
-                    Program.onError program ("Unable to subscribe:", ex)
-                    Cmd.none
-            Cmd.batch [sub; cmd]
-            |> Cmd.exec (fun ex -> Program.onError program ("Error initializing:", ex)) dispatch
+            cmd |> Cmd.exec (fun ex -> onError (sprintf "Error intitializing:", ex)) dispatch
+            activeSubs <- Subs.diff activeSubs sub |> Subs.Fx.change onError dispatch
+            processMsgs ()
+            reentered <- false

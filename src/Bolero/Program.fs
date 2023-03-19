@@ -41,7 +41,7 @@ let withRouter
             let update = typeof<Program<'model, 'msg>>.GetProperty("update", BindingFlags.NonPublic ||| BindingFlags.Instance).GetValue(program) :?> _
             let model, compCmd = comp.InitRouter(router, update, model)
             model, initCmd @ compCmd)
-        id id id id
+        id id id id id
 
 /// <summary>
 /// Attach a router inferred from `makeMessage` and `getEndPoint` to `program`

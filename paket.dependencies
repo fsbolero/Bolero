@@ -7,7 +7,7 @@ strategy: min
 nuget FSharp.Core >= 6.0 content: none
 nuget FSharp.SystemTextJson >= 0.19.13
 nuget HtmlAgilityPack >= 1.11.39
-nuget Elmish ~> 3.1
+nuget Elmish ~> 4.0
 nuget Microsoft.AspNetCore.Components.Authorization >= 6.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 6.0
 nuget Microsoft.Extensions.Configuration.Binder >= 6.0
@@ -47,7 +47,7 @@ storage: none
 framework: net7.0
 
 nuget FSharp.Core
-nuget Elmish ~> 3.1
+nuget Elmish ~> 4.0
 nuget FsCheck.NUnit ~> 2.12
 nuget FSharp.SystemTextJson.Swagger
 nuget Microsoft.AspNetCore.OpenApi
