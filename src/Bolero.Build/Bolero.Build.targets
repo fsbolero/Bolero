@@ -4,9 +4,33 @@
     <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\tools\Bolero.Build.dll</BoleroTaskAssemblyPath>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly><!-- See https://github.com/fsbolero/Bolero/issues/279 -->
   </PropertyGroup>
-  <UsingTask AssemblyFile="$(BoleroTaskAssemblyPath)" TaskName="Bolero.Build.BoleroTask"
-    Condition="'$(BoleroStripAssemblies)' != 'False'" />
-  <Target Name="StripFSharp" AfterTargets="ILLink" Condition="'$(BoleroStripAssemblies)' != 'False'">
-    <BoleroTask AssembliesDir="$(IntermediateLinkDir)" ReferencePath="@(ManagedAssemblyToLink)" />
+  <PropertyGroup>
+    <_BoleroScopedCssSourceFile>$(BaseIntermediateOutputPath)CssScopes.fs</_BoleroScopedCssSourceFile>
+  </PropertyGroup>
+
+  <UsingTask AssemblyFile="$(BoleroTaskAssemblyPath)" TaskName="Bolero.Build.BoleroStripFSharpMetadata"
+             Condition="'$(BoleroStripAssemblies)' != 'False'" />
+  <UsingTask AssemblyFile="$(BoleroTaskAssemblyPath)" TaskName="Bolero.Build.BoleroApplyCssScopes" />
+
+  <!-- Strip F# metadata embedded files -->
+  <Target Name="_BoleroStripFSharpMetadata" AfterTargets="ILLink" Condition="'$(BoleroStripAssemblies)' != 'False'">
+    <BoleroStripFSharpMetadata AssembliesDir="$(IntermediateLinkDir)" ReferencePath="@(ManagedAssemblyToLink)" />
+  </Target>
+
+  <!-- Generate the CSS Scope identifier for *.bolero.css -->
+  <Target Name="_BoleroComputeCssScope" DependsOnTargets="_ResolveCssScopes">
+    <ComputeCssScope ScopedCssInput="@(BoleroScopedCss)" Targetname="$(TargetName)">
+      <Output TaskParameter="ScopedCss" ItemName="_BoleroScopedCss" />
+    </ComputeCssScope>
+  </Target>
+
+  <!-- Generate CssScopes.fs and add *.bolero.css to Razor's _ScopedCss -->
+  <Target Name="_BoleroApplyCssScopes" DependsOnTargets="_BoleroComputeCssScope" BeforeTargets="_ResolveScopedCssOutputs;CoreCompile"
+          Inputs="@(_BoleroScopedCss)" Outputs="$(_BoleroScopedCssSourceFile)">
+    <BoleroApplyCssScopes ScopedCss="@(_BoleroScopedCss)" ScopedCssSourceFile="$(_BoleroScopedCssSourceFile)" />
+    <ItemGroup>
+      <CompileBefore Include="$(_BoleroScopedCssSourceFile)" />
+      <_ScopedCss Include="@(_BoleroScopedCss)" />
+    </ItemGroup>
   </Target>
 </Project>

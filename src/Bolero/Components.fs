@@ -34,6 +34,9 @@ open Elmish
 type Component() =
     inherit ComponentBase()
 
+    abstract CssScope : string
+    default _.CssScope = null
+
     override this.BuildRenderTree(builder) =
         base.BuildRenderTree(builder)
         this.Render().Invoke(this, builder, 0) |> ignore

@@ -30,6 +30,7 @@ let index = doctypeHtml {
         title { "Bolero (server side)" }
         meta { attr.charset "UTF-8" }
         ``base`` { attr.href "/" }
+        link { attr.rel "stylesheet"; attr.href "Client.styles.css" }
     }
     body {
         div {

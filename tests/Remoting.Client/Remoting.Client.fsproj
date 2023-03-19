@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+  <Import Project="..\..\src\Bolero.Build\Bolero.Build.props" />
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\src\Bolero.Build\bin\$(Configuration)\netstandard2.0\Bolero.Build.dll</BoleroTaskAssemblyPath>
