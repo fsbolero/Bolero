@@ -10,12 +10,12 @@
   <ItemGroup>
     <Compile Include="Attr.fs" />
     <Compile Include="Node.fs" />
-    <Compile Include="TemplatingInternals.fs" />
     <Compile Include="Router.fs" />
     <Compile Include="ProgramRun.fs" />
     <Compile Include="Components.fs" />
     <Compile Include="Virtualize.fs" />
     <Compile Include="Ref.fs" />
+    <Compile Include="TemplatingInternals.fs" />
     <Compile Include="Remoting.fs" />
     <Compile Include="Remoting.Client.fs" />
     <Compile Include="Cmd.fs" />

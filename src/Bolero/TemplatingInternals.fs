@@ -56,6 +56,11 @@ type Events =
             f.Invoke(unbox<bool> e.Value)
         )
 
+type Ref =
+
+    static member MakeAttr(ref: HtmlRef) =
+        Attr(fun _ b i -> ref.Render(b, i))
+
 type TemplateNode() =
     /// For internal use only.
     member val Holes : obj[] = null with get, set
