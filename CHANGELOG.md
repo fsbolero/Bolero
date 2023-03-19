@@ -18,6 +18,18 @@
 
 * [#288](https://github.com/fsbolero/Bolero/issues/288) Update Elmish to [version 4](https://elmish.github.io/elmish/release_notes.html#4.0.1).
 
+* [#296](https://github.com/fsbolero/Bolero/issues/296) Add [CSS isolation](https://learn.microsoft.com/en-us/aspnet/core/blazor/components/css-isolation) for Bolero components.
+    Files ending in `.bolero.css` are treated as component-specific styles which can be applied to a component type with the following property:
+
+    ```fsharp
+    override _.CssScope = CssScopes.MyApp
+    ```
+
+    where `CssScopes` is a compiler-generated module and `MyApp` is the name of the style file without `.bolero.css` extension.
+
+    The MSBuild item `BoleroScopedCss` can be used to add component-specific CSS files.
+    Its metadata `ScopeName` determines the name of the corresponding value in the `CssScopes` module.
+
 ## 0.21
 
 * [#261](https://github.com/fsbolero/Bolero/issues/261) Fix prerendering of components inside server-side Bolero.Html.

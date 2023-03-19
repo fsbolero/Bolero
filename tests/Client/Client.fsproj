@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+  <Import Project="..\..\src\Bolero.Build\Bolero.Build.props" />
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <DefineConstants Condition="'$(GhPages)' != ''">$(DefineConstants);GHPAGES</DefineConstants>
@@ -8,8 +9,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Main.fs" />
+    <Content Include="MyApp.bolero.css" />
     <Compile Include="Startup.fs" />
     <None Include="paket.references" />
+    <BoleroScopedCss Update="MyApp.bolero.css" ScopeName="CustomScope" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Bolero.Html\Bolero.Html.fsproj" />

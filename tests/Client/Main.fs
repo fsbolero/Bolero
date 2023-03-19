@@ -328,7 +328,6 @@ let view js model dispatch =
     concat {
         rawHtml """
             <div style="color:gray">The links below should have blue background based on the current page.</div>
-            <style>.active { background: lightblue; }</style>
         """
         p {
             navLink NavLinkMatch.All { router.HRef Form; "Form" }
@@ -349,6 +348,8 @@ let view js model dispatch =
 
 type MyApp() =
     inherit ProgramComponent<Model, Message>()
+
+    override _.CssScope = CssScopes.CustomScope
 
     override this.Program =
         Program.mkProgram (fun _ -> initModel(), []) update (view this.JSRuntime)

@@ -22,6 +22,7 @@ namespace Bolero.Builders
 
 open System
 open Microsoft.AspNetCore.Components
+open Microsoft.AspNetCore.Components.Rendering
 open Bolero
 
 /// <summary>Render the current element or component's reference.</summary>
@@ -111,6 +112,15 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
     val public Name: string
     new(name) = { Name = name }
 
+    member inline private _.AddCssScope(c: obj, b: RenderTreeBuilder, i: int) =
+        match c with
+        | :? Component as c ->
+            match c.CssScope with
+            | null -> ()
+            | s -> b.AddAttribute(i, s)
+        | _ -> ()
+        i + 1
+
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr
     member inline _.Yield([<InlineIfLambda>] ref: RefContent) = ref
     member inline _.Yield([<InlineIfLambda>] node: Node) = node
@@ -193,6 +203,7 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
     member inline this.Run([<InlineIfLambda>] content: Node) =
         Node(fun c b i ->
             b.OpenElement(i, this.Name)
+            let i = this.AddCssScope(c, b, i)
             let i = content.Invoke(c, b, i + 1)
             b.CloseElement()
             i)
@@ -200,6 +211,7 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
     member inline this.Run([<InlineIfLambda>] content: Attr) =
         Node(fun c b i ->
             b.OpenElement(i, this.Name)
+            let i = this.AddCssScope(c, b, i)
             let i = content.Invoke(c, b, i + 1)
             b.CloseElement()
             i)
@@ -207,6 +219,7 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
     member inline this.Run([<InlineIfLambda>] content: RefContent) =
         Node(fun c b i ->
             b.OpenElement(i, this.Name)
+            let i = this.AddCssScope(c, b, i)
             let i = content.Invoke(c, b, i + 1)
             b.CloseElement()
             i)
@@ -214,6 +227,7 @@ and [<Sealed; NoComparison; NoEquality>] ElementBuilder =
     member inline this.Run([<InlineIfLambda>] content: ChildAndRefContent) =
         Node(fun c b i ->
             b.OpenElement(i, this.Name)
+            let i = this.AddCssScope(c, b, i)
             let i = content.Invoke(c, b, i + 1)
             b.CloseElement()
             i)

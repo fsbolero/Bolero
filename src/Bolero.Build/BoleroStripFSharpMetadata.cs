@@ -27,10 +27,12 @@ using Mono.Cecil;
 
 namespace Bolero.Build {
 
-    public class BoleroTask : Task {
+    public class BoleroStripFSharpMetadata : Task {
 
+        [Required]
         public ITaskItem[] AssembliesDir { get; set; }
 
+        [Required]
         public ITaskItem[] ReferencePath { get; set; }
 
         private void StripFile(string f, IAssemblyResolver resolver) {
