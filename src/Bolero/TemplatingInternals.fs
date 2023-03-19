@@ -59,7 +59,10 @@ type Events =
 type Ref =
 
     static member MakeAttr(ref: HtmlRef) =
-        Attr(fun _ b i -> ref.Render(b, i))
+        if isNull (box ref) then
+            Attr.Empty()
+        else
+            Attr(fun _ b i -> ref.Render(b, i))
 
 type TemplateNode() =
     /// For internal use only.

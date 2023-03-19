@@ -174,7 +174,7 @@ type BindTester() =
             .VarOnchange3(this.VarOnchange3, fun (v: float) -> this.VarOnchange3 <- v)
             .Elt()
 
-type Refs = Template<"""<button class="template-ref" ref="${MyRef}" onclick="${Click}">Initial ref content</button>""">
+type Refs = Template<"""<button class="${Class}" ref="${MyRef}" onclick="${Click}">Initial ref content</button>""">
 
 type RefTester() =
     inherit Component()
@@ -185,13 +185,19 @@ type RefTester() =
     member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
 
     override this.Render() =
-        Refs()
-            .MyRef(elt)
-            .Click(fun _ ->
-                match elt.Value with
-                | Some elt -> this.JSRuntime.InvokeVoidAsync("setContent", elt, "Template ref is bound") |> ignore
-                | None -> ())
-            .Elt()
+        concat {
+            Refs()
+                .MyRef(elt)
+                .Class("template-ref")
+                .Click(fun _ ->
+                    match elt.Value with
+                    | Some elt -> this.JSRuntime.InvokeVoidAsync("setContent", elt, "Template ref is bound") |> ignore
+                    | None -> ())
+                .Elt()
+
+            // Check that not passing the ref doesn't break anything.
+            Refs().Elt()
+        }
 
 type ``Regression #11`` = Template<"""<span class="${Hole}">${Hole}</span>""">
 
