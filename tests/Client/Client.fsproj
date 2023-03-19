@@ -12,6 +12,7 @@
     <Content Include="MyApp.bolero.css" />
     <Compile Include="Startup.fs" />
     <None Include="paket.references" />
+    <BoleroScopedCss Update="MyApp.bolero.css" ScopeName="CustomScope" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Bolero.Html\Bolero.Html.fsproj" />

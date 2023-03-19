@@ -349,7 +349,7 @@ let view js model dispatch =
 type MyApp() =
     inherit ProgramComponent<Model, Message>()
 
-    override _.CssScope = CssScopes.MyApp
+    override _.CssScope = CssScopes.CustomScope
 
     override this.Program =
         Program.mkProgram (fun _ -> initModel(), []) update (view this.JSRuntime)

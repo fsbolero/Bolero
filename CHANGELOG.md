@@ -27,6 +27,9 @@
 
     where `CssScopes` is a compiler-generated module and `MyApp` is the name of the style file without `.bolero.css` extension.
 
+    The MSBuild item `BoleroScopedCss` can be used to add component-specific CSS files.
+    Its metadata `ScopeName` determines the name of the corresponding value in the `CssScopes` module.
+
 ## 0.21
 
 * [#261](https://github.com/fsbolero/Bolero/issues/261) Fix prerendering of components inside server-side Bolero.Html.

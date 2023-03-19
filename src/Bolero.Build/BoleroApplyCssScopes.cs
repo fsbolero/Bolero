@@ -19,9 +19,9 @@ namespace Bolero.Build
             file.WriteLine("module internal CssScopes");
             foreach (var item in ScopedCss)
             {
-                var filename = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(item.ItemSpec));
+                var scopeName = item.GetMetadata("ScopeName");
                 var scope = item.GetMetadata("CssScope");
-                file.WriteLine($"""let [<Literal>] ``{filename}`` = "{scope}";""");
+                file.WriteLine($"""let [<Literal>] ``{scopeName}`` = "{scope}";""");
             }
             return true;
         }
