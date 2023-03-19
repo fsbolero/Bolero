@@ -30,6 +30,8 @@
     The MSBuild item `BoleroScopedCss` can be used to add component-specific CSS files.
     Its metadata `ScopeName` determines the name of the corresponding value in the `CssScopes` module.
 
+* [#269](https://github.com/fsbolero/Bolero/issues/269) Add a Zero method to the HTML builders to allow raising exceptions in the body.
+
 ## 0.21
 
 * [#261](https://github.com/fsbolero/Bolero/issues/261) Fix prerendering of components inside server-side Bolero.Html.
