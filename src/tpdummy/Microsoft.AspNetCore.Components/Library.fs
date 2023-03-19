@@ -3,6 +3,7 @@ namespace Microsoft.AspNetCore.Components
 type ChangeEventArgs = member _.Value = obj()
 type IComponent = interface end
 type ComponentBase() = interface IComponent
+type ElementReference = class end
 
 namespace Microsoft.AspNetCore.Components.Rendering
 
@@ -20,6 +21,8 @@ type RenderTreeBuilder =
     member _.AddMarkupContent(_: int, _: string) : unit = raise (NotImplementedException())
     member _.OpenRegion(_: int) : unit = raise (NotImplementedException())
     member _.CloseRegion() : unit = raise (NotImplementedException())
+    member _.AddComponentReferenceCapture(_: int, _: Action<obj>) = raise (NotImplementedException())
+    member _.AddElementReferenceCapture(_: int, _: Action<ElementReference>) = raise (NotImplementedException())
 
 namespace Microsoft.AspNetCore.Components
 

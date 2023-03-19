@@ -48,6 +48,8 @@ type HoleType =
     | Attribute
     /// An attribute value hole.
     | AttributeValue
+    /// A `ref` attribute hole.
+    | Ref
 
 module HoleType =
 
@@ -141,6 +143,7 @@ type Expr =
     | WrapVars of vars: list<VarSubstitution> * expr: Expr
     | Fst of varName: string
     | Snd of varName: string
+    | HtmlRef of varName: string
 
 type Vars = Map<string, HoleType>
 
@@ -295,6 +298,8 @@ let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : Parsed =
     | _, [VarContent varName] ->
         if name = "attr" then
             WithVars (Map [varName, Attribute]) parsed.Expr
+        elif name = "ref" then
+            WithVars (Map [varName, HoleType.Ref]) [HtmlRef varName]
         elif name.StartsWith "on" then
             MakeEventHandler name varName
         else

@@ -20,9 +20,12 @@
 
 module Bolero.Tests.Client.Templating
 
+open System.Threading.Tasks
 open Bolero
 open Bolero.Html
+open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Web
+open Microsoft.JSInterop
 
 type Inline = Template<"""
     <div class="inline">
@@ -171,6 +174,31 @@ type BindTester() =
             .VarOnchange3(this.VarOnchange3, fun (v: float) -> this.VarOnchange3 <- v)
             .Elt()
 
+type Refs = Template<"""<button class="${Class}" ref="${MyRef}" onclick="${Click}">Initial ref content</button>""">
+
+type RefTester() =
+    inherit Component()
+
+    let elt = HtmlRef()
+
+    [<Inject>]
+    member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
+
+    override this.Render() =
+        concat {
+            Refs()
+                .MyRef(elt)
+                .Class("template-ref")
+                .Click(fun _ ->
+                    match elt.Value with
+                    | Some elt -> this.JSRuntime.InvokeVoidAsync("setContent", elt, "Template ref is bound") |> ignore
+                    | None -> ())
+                .Elt()
+
+            // Check that not passing the ref doesn't break anything.
+            Refs().Elt()
+        }
+
 type ``Regression #11`` = Template<"""<span class="${Hole}">${Hole}</span>""">
 
 type ``Regression #256`` = Template<"""
@@ -214,4 +242,5 @@ let Tests() =
             .Elt()
         comp<EventTester>
         comp<BindTester>
+        comp<RefTester>
     }

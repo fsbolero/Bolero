@@ -27,6 +27,7 @@ open FSharp.Quotations
 open Microsoft.AspNetCore.Components
 open ProviderImplementation.ProvidedTypes
 open Bolero
+open Bolero.TemplatingInternals
 
 /// Event handler type whose argument is the given type.
 let EventHandlerOf (argType: Type) : Type =
@@ -41,6 +42,7 @@ let TypeOf (holeType: Parsing.HoleType) : Type =
     | Parsing.DataBinding _ -> typeof<obj * Action<ChangeEventArgs>>
     | Parsing.Attribute -> typeof<Attr>
     | Parsing.AttributeValue -> typeof<obj>
+    | Parsing.Ref -> typeof<HtmlRef>
 
 /// Wrap the filler `expr`, of type `outerType`, to make it fit into a hole of type `innerType`.
 /// Return `None` if no wrapping is needed.
@@ -86,7 +88,7 @@ let rec ConvertAttrTextPart (vars: Map<string, Expr>) (text: Parsing.Expr) : Exp
         <@ (%e).ToString() @>
     | Parsing.WrapVars (subst, text) ->
         WrapAndConvert vars subst ConvertAttrTextPart text
-    | Parsing.Fst _ | Parsing.Snd _ | Parsing.Attr _ | Parsing.Elt _ ->
+    | Parsing.Fst _ | Parsing.Snd _ | Parsing.Attr _ | Parsing.Elt _ | Parsing.HtmlRef _ ->
         failwith $"Invalid text: {text}"
 
 let rec ConvertAttrValue (vars: Map<string, Expr>) (text: Parsing.Expr) : Expr<obj> =
@@ -105,7 +107,7 @@ let rec ConvertAttrValue (vars: Map<string, Expr>) (text: Parsing.Expr) : Expr<o
         box (Expr.TupleGet(vars.[varName], 1))
     | Parsing.WrapVars (subst, text) ->
         WrapAndConvert vars subst ConvertAttrValue text
-    | Parsing.Attr _ | Parsing.Elt _ ->
+    | Parsing.Attr _ | Parsing.Elt _ | Parsing.HtmlRef _ ->
         failwith $"Invalid attr value: {text}"
 
 let rec ConvertAttr (vars: Map<string, Expr>) (attr: Parsing.Expr) : Expr<Attr> =
@@ -120,6 +122,9 @@ let rec ConvertAttr (vars: Map<string, Expr>) (attr: Parsing.Expr) : Expr<Attr> 
         vars.[varName] |> Expr.Cast
     | Parsing.WrapVars (subst, attr) ->
         WrapAndConvert vars subst ConvertAttr attr
+    | Parsing.HtmlRef varName ->
+        let ref = vars.[varName] |> Expr.Cast
+        <@ Ref.MakeAttr(%ref) @>
     | Parsing.Fst _ | Parsing.Snd _ | Parsing.PlainHtml _ | Parsing.Elt _ ->
         failwith $"Invalid attribute: {attr}"
 
@@ -131,13 +136,17 @@ let rec ConvertNode (vars: Map<string, Expr>) (node: Parsing.Expr) : Expr<Node> 
     | Parsing.PlainHtml string ->
         <@ Node.RawHtml string @>
     | Parsing.Elt (name, attrs, children) ->
-        let attrs = TExpr.Array<Attr> (Seq.map (ConvertAttr vars) attrs)
+        let attrs =
+            attrs
+            |> Seq.sortBy (function Parsing.HtmlRef _ -> 1 | _ -> 0)
+            |> Seq.map (ConvertAttr vars)
+            |> TExpr.Array<Attr>
         let children = TExpr.Array<Node> (Seq.map (ConvertNode vars) children)
         <@ Node.Elt name %attrs %children @>
     | Parsing.VarContent varName ->
         vars.[varName] |> Expr.Cast
     | Parsing.WrapVars (subst, node) ->
         WrapAndConvert vars subst ConvertNode node
-    | Parsing.Fst _ | Parsing.Snd _ | Parsing.Attr _ ->
+    | Parsing.Fst _ | Parsing.Snd _ | Parsing.Attr _ | Parsing.HtmlRef _ ->
         failwith $"Invalid node: {node}"
 

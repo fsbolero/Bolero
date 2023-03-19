@@ -44,6 +44,7 @@ let MakeCtor (holes: Parsing.Vars) =
                 | Parsing.HoleType.DataBinding _ -> <@ box (null, Events.NoOp<ChangeEventArgs>()) @>
                 | Parsing.HoleType.Attribute -> <@ box (Attr.Empty()) @>
                 | Parsing.HoleType.AttributeValue -> <@ null @>
+                | Parsing.HoleType.Ref -> <@ null @>
         ]
         <@@ (%getThis args).Holes <- %holes @@>)
 
@@ -96,6 +97,11 @@ let HoleMethodBodies (holeType: Parsing.HoleType) : (ProvidedParameter list * (E
         [
             ["value" => typeof<obj>], fun args ->
                 <@@ %%args.[1] @@>
+        ]
+    | Parsing.HoleType.Ref ->
+        [
+            ["value" => typeof<HtmlRef>], fun args ->
+                <@@ box (%%args.[1]: HtmlRef) @@>
         ]
 
 let MakeHoleMethods (holeName: string) (holeType: Parsing.HoleType) (index: int) (containerTy: ProvidedTypeDefinition) =

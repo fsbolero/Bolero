@@ -231,6 +231,13 @@ module Templating =
         testNull <@ elt.ById("Nested2") @>
 
     [<Test>]
+    let ``Template element ref``() =
+        let btn = elt.ByClass("template-ref")
+        testNotNull <@ btn @>
+        btn.Click()
+        elt.Eventually <@ btn.Text = "Template ref is bound" @>
+
+    [<Test>]
     let ``Regression #11: common hole in attrs and children``() =
         test <@ elt.ByClass("regression-11").Text = "regression-11" @>
 

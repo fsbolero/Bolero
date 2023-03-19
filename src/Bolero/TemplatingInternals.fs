@@ -56,6 +56,14 @@ type Events =
             f.Invoke(unbox<bool> e.Value)
         )
 
+type Ref =
+
+    static member MakeAttr(ref: HtmlRef) =
+        if isNull (box ref) then
+            Attr.Empty()
+        else
+            Attr(fun _ b i -> ref.Render(b, i))
+
 type TemplateNode() =
     /// For internal use only.
     member val Holes : obj[] = null with get, set
