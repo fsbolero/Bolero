@@ -16,7 +16,7 @@ Bug reports and feature proposals should be submitted on [the issue tracker](htt
 
 In the instructions below, `build` means `./build.sh` on Linux and OSX, and `.\build.cmd` on Windows.
 
-Alternatively, you can restore the dotnet tools with `dotnet tools restore`, and then build with `dotnet fake build`.
+Alternatively, you can restore the dotnet tools with `dotnet tool restore`, and then build with `dotnet run --project .build`.
 
 ### How to build
 
@@ -80,11 +80,13 @@ The project in this repository are structure as follows.
 
 * `src/`: The Bolero libraries and tools.
 
-    * `Bolero/`: The main client-side library. Includes the HTML element and attribute types and functions, Elmish components, client-side Remoting bits (including JSON serialization), and routing.
+    * `Bolero/`: The main client-side library. Includes the HTML element and attribute types, Elmish components, client-side Remoting bits, and routing.
+
+    * `Bolero.Html/`: The client-side library for HTML element builders and attribute functions.
 
     * `Bolero.Server/`: The main server-side library. Includes the server-side Remoting bits (ASP.NET Core service).
 
-    * `Bolero.Build/`: The build task. Strips sigdata/optdata from F# assemblies, to reduce the served content size.
+    * `Bolero.Build/`: The build task. Strips sigdata/optdata from F# assemblies, to reduce the served content size, and applies CSS scopes.
 
     * `Bolero.Templating/`: The Type Provider Design-Time Component for HTML templating.
 
@@ -113,6 +115,8 @@ The automated tests are located in the `tests/Unit/` and `tests/Unit.Client` pro
 
 * [NUnit](https://nunit.org/) as the testing framework.
 
+* [Unquote](https://github.com/SwensenSoftware/unquote) for assertions.
+
 * [FsCheck](https://fscheck.github.io/FsCheck/) for property checking.
 
 * [Selenium](https://docs.seleniumhq.org/) to run and automate a headless browser.
@@ -135,4 +139,4 @@ So, in summary, a UI test category `Foo` consists of:
 
 * A Bolero component defined in `tests/Unit.Client/Foo.fs` and added to `tests/Unit.Client/App.fs`;
 
-* NUnit tests defined in `tests/Unit/Foo.fs`, using `NodeFixture` to query and interact with the component.
+* NUnit tests defined in `tests/Unit/Tests/Foo.fs`, using `NodeFixture` to query and interact with the component.

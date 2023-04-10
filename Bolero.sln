@@ -34,6 +34,12 @@ EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Bolero.Server", "src\Bolero.Server\Bolero.Server.fsproj", "{328CE686-3CB0-4AC7-9779-866ABE310DF6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B2AD96BA-4DC4-4C14-BB2A-BCBADD0E7527}"
+	ProjectSection(SolutionItems) = preProject
+		CHANGELOG.md = CHANGELOG.md
+		CONTRIBUTING.md = CONTRIBUTING.md
+		LICENSE.md = LICENSE.md
+		README.md = README.md
+	EndProjectSection
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Bolero.Templating.Provider", "src\Bolero.Templating.Provider\Bolero.Templating.Provider.fsproj", "{770469C8-531A-4317-9BCE-DFF61E79B944}"
 EndProject
