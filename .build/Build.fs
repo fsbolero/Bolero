@@ -109,7 +109,7 @@ Target.create "tags" (fun _ ->
             let ident = if tag.NeedsEscape then "``" + esc + "``" else esc
             s.AppendLine(sprintf """/// <summary>Computation expression to create an HTML <c>&lt;%s&gt;</c> element.</summary>""" tag.Name)
              .AppendLine(        """/// <category>HTML tag names</category>""")
-             .AppendLine(sprintf """let %s : ElementBuilder = elt "%s" """ ident tag.Name)
+             .AppendLine(sprintf "let %s : ElementBuilder = elt \"%s\"" ident tag.Name)
              .AppendLine()
         )
         >> replace (Attrs.GetSample().Rows) "ATTRS" (fun s attr ->

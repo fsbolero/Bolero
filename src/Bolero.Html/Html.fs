@@ -344,527 +344,527 @@ let inline navLink (``match``: Routing.NavLinkMatch) =
 // BEGIN TAGS
 /// <summary>Computation expression to create an HTML <c>&lt;a&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let a : ElementBuilder = elt "a" 
+let a : ElementBuilder = elt "a"
 
 /// <summary>Computation expression to create an HTML <c>&lt;abbr&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let abbr : ElementBuilder = elt "abbr" 
+let abbr : ElementBuilder = elt "abbr"
 
 /// <summary>Computation expression to create an HTML <c>&lt;acronym&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let acronym : ElementBuilder = elt "acronym" 
+let acronym : ElementBuilder = elt "acronym"
 
 /// <summary>Computation expression to create an HTML <c>&lt;address&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let address : ElementBuilder = elt "address" 
+let address : ElementBuilder = elt "address"
 
 /// <summary>Computation expression to create an HTML <c>&lt;applet&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let applet : ElementBuilder = elt "applet" 
+let applet : ElementBuilder = elt "applet"
 
 /// <summary>Computation expression to create an HTML <c>&lt;area&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let area : ElementBuilder = elt "area" 
+let area : ElementBuilder = elt "area"
 
 /// <summary>Computation expression to create an HTML <c>&lt;article&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let article : ElementBuilder = elt "article" 
+let article : ElementBuilder = elt "article"
 
 /// <summary>Computation expression to create an HTML <c>&lt;aside&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let aside : ElementBuilder = elt "aside" 
+let aside : ElementBuilder = elt "aside"
 
 /// <summary>Computation expression to create an HTML <c>&lt;audio&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let audio : ElementBuilder = elt "audio" 
+let audio : ElementBuilder = elt "audio"
 
 /// <summary>Computation expression to create an HTML <c>&lt;b&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let b : ElementBuilder = elt "b" 
+let b : ElementBuilder = elt "b"
 
 /// <summary>Computation expression to create an HTML <c>&lt;base&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let ``base`` : ElementBuilder = elt "base" 
+let ``base`` : ElementBuilder = elt "base"
 
 /// <summary>Computation expression to create an HTML <c>&lt;basefont&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let basefont : ElementBuilder = elt "basefont" 
+let basefont : ElementBuilder = elt "basefont"
 
 /// <summary>Computation expression to create an HTML <c>&lt;bdi&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let bdi : ElementBuilder = elt "bdi" 
+let bdi : ElementBuilder = elt "bdi"
 
 /// <summary>Computation expression to create an HTML <c>&lt;bdo&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let bdo : ElementBuilder = elt "bdo" 
+let bdo : ElementBuilder = elt "bdo"
 
 /// <summary>Computation expression to create an HTML <c>&lt;big&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let big : ElementBuilder = elt "big" 
+let big : ElementBuilder = elt "big"
 
 /// <summary>Computation expression to create an HTML <c>&lt;blockquote&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let blockquote : ElementBuilder = elt "blockquote" 
+let blockquote : ElementBuilder = elt "blockquote"
 
 /// <summary>Computation expression to create an HTML <c>&lt;body&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let body : ElementBuilder = elt "body" 
+let body : ElementBuilder = elt "body"
 
 /// <summary>Computation expression to create an HTML <c>&lt;br&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let br : ElementBuilder = elt "br" 
+let br : ElementBuilder = elt "br"
 
 /// <summary>Computation expression to create an HTML <c>&lt;button&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let button : ElementBuilder = elt "button" 
+let button : ElementBuilder = elt "button"
 
 /// <summary>Computation expression to create an HTML <c>&lt;canvas&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let canvas : ElementBuilder = elt "canvas" 
+let canvas : ElementBuilder = elt "canvas"
 
 /// <summary>Computation expression to create an HTML <c>&lt;caption&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let caption : ElementBuilder = elt "caption" 
+let caption : ElementBuilder = elt "caption"
 
 /// <summary>Computation expression to create an HTML <c>&lt;center&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let center : ElementBuilder = elt "center" 
+let center : ElementBuilder = elt "center"
 
 /// <summary>Computation expression to create an HTML <c>&lt;cite&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let cite : ElementBuilder = elt "cite" 
+let cite : ElementBuilder = elt "cite"
 
 /// <summary>Computation expression to create an HTML <c>&lt;code&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let code : ElementBuilder = elt "code" 
+let code : ElementBuilder = elt "code"
 
 /// <summary>Computation expression to create an HTML <c>&lt;col&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let col : ElementBuilder = elt "col" 
+let col : ElementBuilder = elt "col"
 
 /// <summary>Computation expression to create an HTML <c>&lt;colgroup&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let colgroup : ElementBuilder = elt "colgroup" 
+let colgroup : ElementBuilder = elt "colgroup"
 
 /// <summary>Computation expression to create an HTML <c>&lt;content&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let content : ElementBuilder = elt "content" 
+let content : ElementBuilder = elt "content"
 
 /// <summary>Computation expression to create an HTML <c>&lt;data&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let data : ElementBuilder = elt "data" 
+let data : ElementBuilder = elt "data"
 
 /// <summary>Computation expression to create an HTML <c>&lt;datalist&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let datalist : ElementBuilder = elt "datalist" 
+let datalist : ElementBuilder = elt "datalist"
 
 /// <summary>Computation expression to create an HTML <c>&lt;dd&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let dd : ElementBuilder = elt "dd" 
+let dd : ElementBuilder = elt "dd"
 
 /// <summary>Computation expression to create an HTML <c>&lt;del&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let del : ElementBuilder = elt "del" 
+let del : ElementBuilder = elt "del"
 
 /// <summary>Computation expression to create an HTML <c>&lt;details&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let details : ElementBuilder = elt "details" 
+let details : ElementBuilder = elt "details"
 
 /// <summary>Computation expression to create an HTML <c>&lt;dfn&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let dfn : ElementBuilder = elt "dfn" 
+let dfn : ElementBuilder = elt "dfn"
 
 /// <summary>Computation expression to create an HTML <c>&lt;dialog&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let dialog : ElementBuilder = elt "dialog" 
+let dialog : ElementBuilder = elt "dialog"
 
 /// <summary>Computation expression to create an HTML <c>&lt;dir&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let dir : ElementBuilder = elt "dir" 
+let dir : ElementBuilder = elt "dir"
 
 /// <summary>Computation expression to create an HTML <c>&lt;div&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let div : ElementBuilder = elt "div" 
+let div : ElementBuilder = elt "div"
 
 /// <summary>Computation expression to create an HTML <c>&lt;dl&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let dl : ElementBuilder = elt "dl" 
+let dl : ElementBuilder = elt "dl"
 
 /// <summary>Computation expression to create an HTML <c>&lt;dt&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let dt : ElementBuilder = elt "dt" 
+let dt : ElementBuilder = elt "dt"
 
 /// <summary>Computation expression to create an HTML <c>&lt;element&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let element : ElementBuilder = elt "element" 
+let element : ElementBuilder = elt "element"
 
 /// <summary>Computation expression to create an HTML <c>&lt;em&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let em : ElementBuilder = elt "em" 
+let em : ElementBuilder = elt "em"
 
 /// <summary>Computation expression to create an HTML <c>&lt;embed&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let embed : ElementBuilder = elt "embed" 
+let embed : ElementBuilder = elt "embed"
 
 /// <summary>Computation expression to create an HTML <c>&lt;fieldset&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let fieldset : ElementBuilder = elt "fieldset" 
+let fieldset : ElementBuilder = elt "fieldset"
 
 /// <summary>Computation expression to create an HTML <c>&lt;figcaption&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let figcaption : ElementBuilder = elt "figcaption" 
+let figcaption : ElementBuilder = elt "figcaption"
 
 /// <summary>Computation expression to create an HTML <c>&lt;figure&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let figure : ElementBuilder = elt "figure" 
+let figure : ElementBuilder = elt "figure"
 
 /// <summary>Computation expression to create an HTML <c>&lt;font&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let font : ElementBuilder = elt "font" 
+let font : ElementBuilder = elt "font"
 
 /// <summary>Computation expression to create an HTML <c>&lt;footer&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let footer : ElementBuilder = elt "footer" 
+let footer : ElementBuilder = elt "footer"
 
 /// <summary>Computation expression to create an HTML <c>&lt;form&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let form : ElementBuilder = elt "form" 
+let form : ElementBuilder = elt "form"
 
 /// <summary>Computation expression to create an HTML <c>&lt;frame&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let frame : ElementBuilder = elt "frame" 
+let frame : ElementBuilder = elt "frame"
 
 /// <summary>Computation expression to create an HTML <c>&lt;frameset&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let frameset : ElementBuilder = elt "frameset" 
+let frameset : ElementBuilder = elt "frameset"
 
 /// <summary>Computation expression to create an HTML <c>&lt;h1&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let h1 : ElementBuilder = elt "h1" 
+let h1 : ElementBuilder = elt "h1"
 
 /// <summary>Computation expression to create an HTML <c>&lt;h2&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let h2 : ElementBuilder = elt "h2" 
+let h2 : ElementBuilder = elt "h2"
 
 /// <summary>Computation expression to create an HTML <c>&lt;h3&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let h3 : ElementBuilder = elt "h3" 
+let h3 : ElementBuilder = elt "h3"
 
 /// <summary>Computation expression to create an HTML <c>&lt;h4&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let h4 : ElementBuilder = elt "h4" 
+let h4 : ElementBuilder = elt "h4"
 
 /// <summary>Computation expression to create an HTML <c>&lt;h5&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let h5 : ElementBuilder = elt "h5" 
+let h5 : ElementBuilder = elt "h5"
 
 /// <summary>Computation expression to create an HTML <c>&lt;h6&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let h6 : ElementBuilder = elt "h6" 
+let h6 : ElementBuilder = elt "h6"
 
 /// <summary>Computation expression to create an HTML <c>&lt;head&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let head : ElementBuilder = elt "head" 
+let head : ElementBuilder = elt "head"
 
 /// <summary>Computation expression to create an HTML <c>&lt;header&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let header : ElementBuilder = elt "header" 
+let header : ElementBuilder = elt "header"
 
 /// <summary>Computation expression to create an HTML <c>&lt;hr&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let hr : ElementBuilder = elt "hr" 
+let hr : ElementBuilder = elt "hr"
 
 /// <summary>Computation expression to create an HTML <c>&lt;html&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let html : ElementBuilder = elt "html" 
+let html : ElementBuilder = elt "html"
 
 /// <summary>Computation expression to create an HTML <c>&lt;i&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let i : ElementBuilder = elt "i" 
+let i : ElementBuilder = elt "i"
 
 /// <summary>Computation expression to create an HTML <c>&lt;iframe&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let iframe : ElementBuilder = elt "iframe" 
+let iframe : ElementBuilder = elt "iframe"
 
 /// <summary>Computation expression to create an HTML <c>&lt;img&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let img : ElementBuilder = elt "img" 
+let img : ElementBuilder = elt "img"
 
 /// <summary>Computation expression to create an HTML <c>&lt;input&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let input : ElementBuilder = elt "input" 
+let input : ElementBuilder = elt "input"
 
 /// <summary>Computation expression to create an HTML <c>&lt;ins&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let ins : ElementBuilder = elt "ins" 
+let ins : ElementBuilder = elt "ins"
 
 /// <summary>Computation expression to create an HTML <c>&lt;kbd&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let kbd : ElementBuilder = elt "kbd" 
+let kbd : ElementBuilder = elt "kbd"
 
 /// <summary>Computation expression to create an HTML <c>&lt;label&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let label : ElementBuilder = elt "label" 
+let label : ElementBuilder = elt "label"
 
 /// <summary>Computation expression to create an HTML <c>&lt;legend&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let legend : ElementBuilder = elt "legend" 
+let legend : ElementBuilder = elt "legend"
 
 /// <summary>Computation expression to create an HTML <c>&lt;li&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let li : ElementBuilder = elt "li" 
+let li : ElementBuilder = elt "li"
 
 /// <summary>Computation expression to create an HTML <c>&lt;link&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let link : ElementBuilder = elt "link" 
+let link : ElementBuilder = elt "link"
 
 /// <summary>Computation expression to create an HTML <c>&lt;main&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let main : ElementBuilder = elt "main" 
+let main : ElementBuilder = elt "main"
 
 /// <summary>Computation expression to create an HTML <c>&lt;map&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let map : ElementBuilder = elt "map" 
+let map : ElementBuilder = elt "map"
 
 /// <summary>Computation expression to create an HTML <c>&lt;mark&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let mark : ElementBuilder = elt "mark" 
+let mark : ElementBuilder = elt "mark"
 
 /// <summary>Computation expression to create an HTML <c>&lt;menu&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let menu : ElementBuilder = elt "menu" 
+let menu : ElementBuilder = elt "menu"
 
 /// <summary>Computation expression to create an HTML <c>&lt;menuitem&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let menuitem : ElementBuilder = elt "menuitem" 
+let menuitem : ElementBuilder = elt "menuitem"
 
 /// <summary>Computation expression to create an HTML <c>&lt;meta&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let meta : ElementBuilder = elt "meta" 
+let meta : ElementBuilder = elt "meta"
 
 /// <summary>Computation expression to create an HTML <c>&lt;meter&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let meter : ElementBuilder = elt "meter" 
+let meter : ElementBuilder = elt "meter"
 
 /// <summary>Computation expression to create an HTML <c>&lt;nav&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let nav : ElementBuilder = elt "nav" 
+let nav : ElementBuilder = elt "nav"
 
 /// <summary>Computation expression to create an HTML <c>&lt;noembed&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let noembed : ElementBuilder = elt "noembed" 
+let noembed : ElementBuilder = elt "noembed"
 
 /// <summary>Computation expression to create an HTML <c>&lt;noframes&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let noframes : ElementBuilder = elt "noframes" 
+let noframes : ElementBuilder = elt "noframes"
 
 /// <summary>Computation expression to create an HTML <c>&lt;noscript&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let noscript : ElementBuilder = elt "noscript" 
+let noscript : ElementBuilder = elt "noscript"
 
 /// <summary>Computation expression to create an HTML <c>&lt;object&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let object : ElementBuilder = elt "object" 
+let object : ElementBuilder = elt "object"
 
 /// <summary>Computation expression to create an HTML <c>&lt;ol&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let ol : ElementBuilder = elt "ol" 
+let ol : ElementBuilder = elt "ol"
 
 /// <summary>Computation expression to create an HTML <c>&lt;optgroup&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let optgroup : ElementBuilder = elt "optgroup" 
+let optgroup : ElementBuilder = elt "optgroup"
 
 /// <summary>Computation expression to create an HTML <c>&lt;option&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let option : ElementBuilder = elt "option" 
+let option : ElementBuilder = elt "option"
 
 /// <summary>Computation expression to create an HTML <c>&lt;output&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let output : ElementBuilder = elt "output" 
+let output : ElementBuilder = elt "output"
 
 /// <summary>Computation expression to create an HTML <c>&lt;p&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let p : ElementBuilder = elt "p" 
+let p : ElementBuilder = elt "p"
 
 /// <summary>Computation expression to create an HTML <c>&lt;param&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let param : ElementBuilder = elt "param" 
+let param : ElementBuilder = elt "param"
 
 /// <summary>Computation expression to create an HTML <c>&lt;picture&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let picture : ElementBuilder = elt "picture" 
+let picture : ElementBuilder = elt "picture"
 
 /// <summary>Computation expression to create an HTML <c>&lt;pre&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let pre : ElementBuilder = elt "pre" 
+let pre : ElementBuilder = elt "pre"
 
 /// <summary>Computation expression to create an HTML <c>&lt;progress&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let progress : ElementBuilder = elt "progress" 
+let progress : ElementBuilder = elt "progress"
 
 /// <summary>Computation expression to create an HTML <c>&lt;q&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let q : ElementBuilder = elt "q" 
+let q : ElementBuilder = elt "q"
 
 /// <summary>Computation expression to create an HTML <c>&lt;rb&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let rb : ElementBuilder = elt "rb" 
+let rb : ElementBuilder = elt "rb"
 
 /// <summary>Computation expression to create an HTML <c>&lt;rp&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let rp : ElementBuilder = elt "rp" 
+let rp : ElementBuilder = elt "rp"
 
 /// <summary>Computation expression to create an HTML <c>&lt;rt&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let rt : ElementBuilder = elt "rt" 
+let rt : ElementBuilder = elt "rt"
 
 /// <summary>Computation expression to create an HTML <c>&lt;rtc&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let rtc : ElementBuilder = elt "rtc" 
+let rtc : ElementBuilder = elt "rtc"
 
 /// <summary>Computation expression to create an HTML <c>&lt;ruby&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let ruby : ElementBuilder = elt "ruby" 
+let ruby : ElementBuilder = elt "ruby"
 
 /// <summary>Computation expression to create an HTML <c>&lt;s&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let s : ElementBuilder = elt "s" 
+let s : ElementBuilder = elt "s"
 
 /// <summary>Computation expression to create an HTML <c>&lt;samp&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let samp : ElementBuilder = elt "samp" 
+let samp : ElementBuilder = elt "samp"
 
 /// <summary>Computation expression to create an HTML <c>&lt;script&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let script : ElementBuilder = elt "script" 
+let script : ElementBuilder = elt "script"
 
 /// <summary>Computation expression to create an HTML <c>&lt;section&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let section : ElementBuilder = elt "section" 
+let section : ElementBuilder = elt "section"
 
 /// <summary>Computation expression to create an HTML <c>&lt;select&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let select : ElementBuilder = elt "select" 
+let select : ElementBuilder = elt "select"
 
 /// <summary>Computation expression to create an HTML <c>&lt;shadow&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let shadow : ElementBuilder = elt "shadow" 
+let shadow : ElementBuilder = elt "shadow"
 
 /// <summary>Computation expression to create an HTML <c>&lt;slot&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let slot : ElementBuilder = elt "slot" 
+let slot : ElementBuilder = elt "slot"
 
 /// <summary>Computation expression to create an HTML <c>&lt;small&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let small : ElementBuilder = elt "small" 
+let small : ElementBuilder = elt "small"
 
 /// <summary>Computation expression to create an HTML <c>&lt;source&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let source : ElementBuilder = elt "source" 
+let source : ElementBuilder = elt "source"
 
 /// <summary>Computation expression to create an HTML <c>&lt;span&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let span : ElementBuilder = elt "span" 
+let span : ElementBuilder = elt "span"
 
 /// <summary>Computation expression to create an HTML <c>&lt;strike&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let strike : ElementBuilder = elt "strike" 
+let strike : ElementBuilder = elt "strike"
 
 /// <summary>Computation expression to create an HTML <c>&lt;strong&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let strong : ElementBuilder = elt "strong" 
+let strong : ElementBuilder = elt "strong"
 
 /// <summary>Computation expression to create an HTML <c>&lt;style&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let style : ElementBuilder = elt "style" 
+let style : ElementBuilder = elt "style"
 
 /// <summary>Computation expression to create an HTML <c>&lt;sub&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let sub : ElementBuilder = elt "sub" 
+let sub : ElementBuilder = elt "sub"
 
 /// <summary>Computation expression to create an HTML <c>&lt;summary&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let summary : ElementBuilder = elt "summary" 
+let summary : ElementBuilder = elt "summary"
 
 /// <summary>Computation expression to create an HTML <c>&lt;sup&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let sup : ElementBuilder = elt "sup" 
+let sup : ElementBuilder = elt "sup"
 
 /// <summary>Computation expression to create an HTML <c>&lt;svg&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let svg : ElementBuilder = elt "svg" 
+let svg : ElementBuilder = elt "svg"
 
 /// <summary>Computation expression to create an HTML <c>&lt;table&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let table : ElementBuilder = elt "table" 
+let table : ElementBuilder = elt "table"
 
 /// <summary>Computation expression to create an HTML <c>&lt;tbody&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let tbody : ElementBuilder = elt "tbody" 
+let tbody : ElementBuilder = elt "tbody"
 
 /// <summary>Computation expression to create an HTML <c>&lt;td&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let td : ElementBuilder = elt "td" 
+let td : ElementBuilder = elt "td"
 
 /// <summary>Computation expression to create an HTML <c>&lt;template&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let template : ElementBuilder = elt "template" 
+let template : ElementBuilder = elt "template"
 
 /// <summary>Computation expression to create an HTML <c>&lt;textarea&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let textarea : ElementBuilder = elt "textarea" 
+let textarea : ElementBuilder = elt "textarea"
 
 /// <summary>Computation expression to create an HTML <c>&lt;tfoot&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let tfoot : ElementBuilder = elt "tfoot" 
+let tfoot : ElementBuilder = elt "tfoot"
 
 /// <summary>Computation expression to create an HTML <c>&lt;th&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let th : ElementBuilder = elt "th" 
+let th : ElementBuilder = elt "th"
 
 /// <summary>Computation expression to create an HTML <c>&lt;thead&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let thead : ElementBuilder = elt "thead" 
+let thead : ElementBuilder = elt "thead"
 
 /// <summary>Computation expression to create an HTML <c>&lt;time&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let time : ElementBuilder = elt "time" 
+let time : ElementBuilder = elt "time"
 
 /// <summary>Computation expression to create an HTML <c>&lt;title&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let title : ElementBuilder = elt "title" 
+let title : ElementBuilder = elt "title"
 
 /// <summary>Computation expression to create an HTML <c>&lt;tr&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let tr : ElementBuilder = elt "tr" 
+let tr : ElementBuilder = elt "tr"
 
 /// <summary>Computation expression to create an HTML <c>&lt;track&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let track : ElementBuilder = elt "track" 
+let track : ElementBuilder = elt "track"
 
 /// <summary>Computation expression to create an HTML <c>&lt;tt&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let tt : ElementBuilder = elt "tt" 
+let tt : ElementBuilder = elt "tt"
 
 /// <summary>Computation expression to create an HTML <c>&lt;u&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let u : ElementBuilder = elt "u" 
+let u : ElementBuilder = elt "u"
 
 /// <summary>Computation expression to create an HTML <c>&lt;ul&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let ul : ElementBuilder = elt "ul" 
+let ul : ElementBuilder = elt "ul"
 
 /// <summary>Computation expression to create an HTML <c>&lt;var&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let var : ElementBuilder = elt "var" 
+let var : ElementBuilder = elt "var"
 
 /// <summary>Computation expression to create an HTML <c>&lt;video&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let video : ElementBuilder = elt "video" 
+let video : ElementBuilder = elt "video"
 
 /// <summary>Computation expression to create an HTML <c>&lt;wbr&gt;</c> element.</summary>
 /// <category>HTML tag names</category>
-let wbr : ElementBuilder = elt "wbr" 
+let wbr : ElementBuilder = elt "wbr"
 
 // END TAGS
 
@@ -3023,7 +3023,7 @@ module virtualize =
     /// <remarks>
     /// The contents of the computation expression should be:
     ///   1. component parameters, if any;
-    ///   2. <see langword="let!" /> to bind the current item to <see cref="M:items" /> or <see cref="M:itemsProvider" />;
+    ///   2. <c>let!</c> to bind the current item to <see cref="M:items" /> or <see cref="M:itemsProvider" />;
     ///   3. the body of an item.
     /// </remarks>
     /// <example>
