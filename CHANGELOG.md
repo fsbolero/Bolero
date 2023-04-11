@@ -1,6 +1,6 @@
 # Changelog
 
-## vNext
+## 0.22
 
 * [#289](https://github.com/fsbolero/Bolero/issues/289) Add endpoint routing for remote services.
 
@@ -29,6 +29,9 @@
 
     The MSBuild item `BoleroScopedCss` can be used to add component-specific CSS files.
     Its metadata `ScopeName` determines the name of the corresponding value in the `CssScopes` module.
+
+* [#290](https://github.com/fsbolero/Bolero/issues/290) Add support for HTML element references in HTML templates.
+    In a template, an attribute `ref="MyRef"` will generate a method `.MyRef()` taking an `HtmlRef` as argument.
 
 * [#269](https://github.com/fsbolero/Bolero/issues/269) Add a Zero method to the HTML builders to allow raising exceptions in the body.
 
