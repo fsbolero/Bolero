@@ -21,9 +21,25 @@ To get started, you need the following installed:
 
 * .NET SDK 6.0. Download it [here](https://dotnet.microsoft.com/download).
 
-Then:
+Then, to create and run a sample application:
 
-* Run `build.cmd`
+* Install the Bolero project templates:
+
+    ```shell
+    dotnet new -i Bolero.Templates
+    ```
+* Create a new project:
+
+    ```shell
+    dotnet new bolero-app -o MyBoleroApp
+    ```
+
+* Run it:
+
+    ```shell
+    cd MyBoleroApp
+    dotnet run --project src/MyBoleroApp.Server
+    ```
 
 To learn more, you can check [the documentation](https://fsbolero.io/docs).
 
