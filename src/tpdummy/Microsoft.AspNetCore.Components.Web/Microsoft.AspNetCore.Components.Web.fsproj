@@ -1,15 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="Library.fs" />
+    <Content Include="paket.references" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Microsoft.AspNetCore.Components\Microsoft.AspNetCore.Components.fsproj" />
   </ItemGroup>
-
+  <Import Project="..\..\..\.paket\Paket.Restore.targets" />
 </Project>
