@@ -7,7 +7,7 @@ strategy: min
 nuget FSharp.Core >= 6.0 content: none
 nuget FSharp.SystemTextJson >= 0.19.13
 nuget HtmlAgilityPack >= 1.11.39
-nuget Elmish ~> 4.0
+nuget Elmish >= 4.0.1 < 5.0
 nuget Microsoft.AspNetCore.Components.Authorization >= 6.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 6.0
 nuget Microsoft.Extensions.Configuration.Binder >= 6.0

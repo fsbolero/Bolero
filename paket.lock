@@ -4,9 +4,8 @@ LOWEST_MATCHING: TRUE
 RESTRICTION: || (== net6.0) (== net7.0) (== netstandard2.0)
 NUGET
   remote: https://api.nuget.org/v3/index.json
-    Elmish (4.0)
-      FSharp.Core (>= 6.0.7)
-    FSharp.Core (6.0.7) - content: none
+    Elmish (4.0.1)
+    FSharp.Core (6.0) - content: none
     FSharp.SystemTextJson (0.19.13)
       FSharp.Core (>= 4.7)
       System.Text.Json (>= 6.0)
