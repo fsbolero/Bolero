@@ -8,8 +8,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".build", ".build", "{E6F0FD
 		paket.dependencies = paket.dependencies
 		paket.lock = paket.lock
 		Directory.Build.props = Directory.Build.props
-		build.cmd = build.cmd
-		build.sh = build.sh
+		build.ps1 = build.ps1
 		global.json = global.json
 	EndProjectSection
 EndProject

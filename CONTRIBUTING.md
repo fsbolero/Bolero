@@ -14,14 +14,14 @@ Bug reports and feature proposals should be submitted on [the issue tracker](htt
 
 ## Working with this repository
 
-In the instructions below, `build` means `./build.sh` on Linux and OSX, and `.\build.cmd` on Windows.
+The instructions below use the PowerShell script `build.ps1`, which will work on Windows and Unix with .NET SDK installed.
 
 Alternatively, you can restore the dotnet tools with `dotnet tool restore`, and then build with `dotnet run --project .build`.
 
 ### How to build
 
 ```
-build
+./build.ps1
 ```
 
 ### How to run the test projects
@@ -29,7 +29,7 @@ build
 * Run the unit tests:
 
     ```
-    build -t test
+    ./build.ps1 -t test
     ```
 
 * Debug the unit tests in Visual Studio Code:
@@ -37,7 +37,7 @@ build
     1. Run the unit tests in debug mode:
 
         ```
-        build -t test-debug
+        ./build.ps1 -t test-debug
         ```
 
         (Or in VS Code: "Run Test Task" -> "Unit Tests (debug)")
@@ -59,19 +59,19 @@ build
 * Run the test web application on the client in WebAssembly:
 
     ```
-    build -t run-client
+    ./build.ps1 -t run-client
     ```
 
 * Run the test web application on the server side using Blazor.Server:
 
     ```
-    build -t run-server
+    ./build.ps1 -t run-server
     ```
 
 * Run the test web application for remoting:
 
     ```
-    build -t run-remoting
+    ./build.ps1 -t run-remoting
     ```
 
 ## Project structure
@@ -93,21 +93,21 @@ The project in this repository are structure as follows.
 * `tests`: The test projects and unit test suite.
 
     * `Unit/`: The automated tests suite.  
-        Can be run using `build -t test`.
+        Can be run using `./build.ps1 -t test`.
 
     * `Unit.Client/`: The client application for the automated tests suite.
 
     * `Client/`: A test client-side application.  
-        Can be run using `build -t run-client`.
+        Can be run using `./build.ps1 -t run-client`.
 
     * `Server/`: An ASP.NET Core application that serves `Client` as a server-side Blazor component.  
-        Can be run using `build -t run-server`.
+        Can be run using `./build.ps1 -t run-server`.
 
     * `Remoting.Client/`: A test client-side application that uses remoting.  
         Cannot be run standalone, as it requires the corresponding server side.
 
     * `Remoting.Server/`: An ASP.NET Core application that serves `Remoting.Client` as its client side and contains a server implementation for its remoting API.  
-        Can be run using `build -t run-remoting`.
+        Can be run using `./build.ps1 -t run-remoting`.
 
 ## Automated tests
 
