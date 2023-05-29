@@ -2,8 +2,8 @@
 <Project>
   <ItemGroup>
     <BoleroScopedCss Include="**/*.bolero.css">
-      <!-- For "Foo/Bar.bolero.css", %(Filename) is "Bar.bolero". GetFileName() gives us "Bar". -->
-      <ScopeName>$([System.IO.Path]::GetFileName('%(Filename)')</ScopeName>
+      <!-- For "Foo/Bar.bolero.css", %(Filename) is "Bar.bolero". GetFileNameWithoutExtension() gives us "Bar". -->
+      <ScopeName>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</ScopeName>
     </BoleroScopedCss>
   </ItemGroup>
 </Project>
