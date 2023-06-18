@@ -159,7 +159,11 @@ exception InvalidRouter of kind: InvalidRouterKind with
 /// <seealso href="https://fsbolero.io/docs/Routing#page-models" />
 /// <category>Routing</category>
 [<CLIMutable>]
-type PageModel<'T> = { Model: 'T }
+type PageModel<'T> =
+    { Model: 'T }
+
+    member internal this.SetModel(value) =
+        (Unsafe.AsRef<'T> &this.Model) <- value
 
 [<AutoOpen>]
 module private RouterImpl =
@@ -746,7 +750,7 @@ module Router =
     /// </param>
     /// <param name="value">The value of the page model to put inside <paramref name="pageModel" />.</param>
     let definePageModel (pageModel: PageModel<'T>) (value: 'T) =
-        pageModel.GetType().GetProperty("Model").SetValue(pageModel, value)
+        pageModel.SetModel(value)
 
 /// <category>Routing</category>
 [<Extension>]
