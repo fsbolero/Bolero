@@ -45,7 +45,7 @@ type BoleroHostConfig(baseConfig: IBoleroHostBaseConfig, env: IHostEnvironment, 
         let mutable parsed = false
         if env.IsDevelopment()
             && ctx.HttpContext.Request.Query.TryGetValue("server", &queryParam)
-            && bool.TryParse(queryParam.[0], &parsed)
+            && bool.TryParse(queryParam[0], &parsed)
         then
             parsed
         else

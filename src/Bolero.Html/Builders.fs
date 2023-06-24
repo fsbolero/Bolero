@@ -29,13 +29,13 @@ open Bolero
 /// <param name="receiver">The containing component.</param>
 /// <param name="builder">The rendering builder.</param>
 /// <param name="sequence">The rendering sequence number.</param>
-type RefContent = delegate of receiver: obj * builder: Rendering.RenderTreeBuilder * sequence: int -> int
+type RefContent = delegate of receiver: obj * builder: RenderTreeBuilder * sequence: int -> int
 
 /// <summary>Render the ChildContent attribute.</summary>
 /// <param name="receiver">The containing component.</param>
 /// <param name="builder">The rendering builder.</param>
 /// <param name="sequence">The rendering sequence number.</param>
-type ChildContentAttr = delegate of receiver: obj * builder: Rendering.RenderTreeBuilder * sequence: int -> int
+type ChildContentAttr = delegate of receiver: obj * builder: RenderTreeBuilder * sequence: int -> int
 
 /// <summary>
 /// Render the current element or component's key, reference and child content.
@@ -732,7 +732,7 @@ and [<Struct; NoComparison; NoEquality>] ComponentWithAttrsBuilder<'T when 'T :>
 
     member inline this.Zero() = Node(fun _ _ i -> i)
 
-type VirtualizeItemsDeclaration<'T> = delegate of Rendering.RenderTreeBuilder * int -> int
+type VirtualizeItemsDeclaration<'T> = delegate of RenderTreeBuilder * int -> int
 
 type [<Struct; NoComparison; NoEquality>] VirtualizeBuilder<'Item> =
 

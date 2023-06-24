@@ -158,8 +158,8 @@ let inline forEach<'T> (items: seq<'T>) (mkNode: 'T -> Node) =
 /// <summary>Wrap a Blazor RenderFragment in a Bolero Node.</summary>
 /// <param name="fragment">The Blazor RenderFragment.</param>
 /// <returns>A Bolero Node representing the Blazor RenderFragment.</returns>
-let inline fragment (frag: RenderFragment) =
-    Node.Fragment frag
+let inline fragment (fragment: RenderFragment) =
+    Node.Fragment fragment
 
 /// <summary>Computation expression builder to create a Blazor component.</summary>
 /// <typeparam name="T">The Blazor component type.</typeparam>

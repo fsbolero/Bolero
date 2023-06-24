@@ -20,7 +20,6 @@
 
 namespace Bolero
 
-open System
 open Microsoft.AspNetCore.Components
 
 /// <summary>

@@ -166,7 +166,7 @@ module private RouterImpl =
     open System.Text.RegularExpressions
 
     type ArraySegment<'T> with
-        member this.Item with get(i) = this.Array.[this.Offset + i]
+        member this.Item with get i = this.Array[this.Offset + i]
 
     type SegmentParserResult = option<obj * list<string>>
     type SegmentParser = list<string> -> SegmentParserResult
@@ -386,7 +386,7 @@ module private RouterImpl =
             let targs = ty.GetGenericArguments()
             let unboxer = typeof<Unboxer>.GetMethod("List", FLAGS_STATIC).MakeGenericMethod(targs)
             let decons = typeof<Decons>.GetMethod("List", FLAGS_STATIC).MakeGenericMethod(targs)
-            targs.[0], Rest(
+            targs[0], Rest(
                 (fun x -> unboxer.Invoke(null, [|x|])),
                 (fun x -> decons.Invoke(null, [|x|]) :?> _)
             )
@@ -419,13 +419,13 @@ module private RouterImpl =
             let dummyArgs = Array.zeroCreate fields.Length
             fields |> Array.iteri (fun i field ->
                 if field.PropertyType.IsValueType then
-                    dummyArgs.[i] <- Activator.CreateInstance(field.PropertyType, true))
+                    dummyArgs[i] <- Activator.CreateInstance(field.PropertyType, true))
             let model = FSharpValue.MakeRecord(ty, [|null|])
-            dummyArgs.[i] <- model
+            dummyArgs[i] <- model
             let dummy = ctor dummyArgs
             defaultPageModel dummy
             fun vals ->
-                vals.[i] <- model
+                vals[i] <- model
                 ctor vals
 
     let parseEndPointCase getSegment (defaultPageModel: obj -> unit) (case: UnionCaseInfo) =
@@ -466,15 +466,15 @@ module private RouterImpl =
                     else
                         let m = fragmentParameterRE.Match(frag)
                         if not m.Success then fail (InvalidRouterKind.ParameterSyntax(case, frag))
-                        let fieldName = m.Groups.[2].Value
+                        let fieldName = m.Groups[2].Value
                         match fields |> Array.tryFindIndex (fun p -> p.Name = fieldName) with
                         | Some i ->
-                            let p = fields.[i]
+                            let p = fields[i]
                             if not (unboundFields.Remove(fieldName)) then
                                 fail (InvalidRouterKind.DuplicateField(case, fieldName))
                             let ty = p.PropertyType
                             let eltTy, modifier =
-                                match m.Groups.[1].Value with
+                                match m.Groups[1].Value with
                                 | "" -> ty, Basic
                                 | "*" ->
                                     if fragIx <> fragCount - 1 then
@@ -505,7 +505,7 @@ module private RouterImpl =
                     match constants.TryGetValue(s) with
                     | true, x -> x
                     | false, _ -> []
-                constants.[s] <- { case with segments = rest } :: existing
+                constants[s] <- { case with segments = rest } :: existing
             | Parameter param :: rest ->
                 match parameter with
                 | Some (case', param', ps) ->
@@ -555,30 +555,30 @@ module private RouterImpl =
                             match param.segment.parse l with
                             | None -> None
                             | Some (o, rest) ->
-                                for (case, fieldCount, i) in param.index do
+                                for case, fieldCount, i in param.index do
                                     let a =
                                         match d.TryGetValue(case) with
                                         | true, a -> a
                                         | false, _ ->
                                             let a = Array.zeroCreate fieldCount
-                                            d.[case] <- a
+                                            d[case] <- a
                                             a
-                                    a.[i] <- o
+                                    a[i] <- o
                                 run nextParser rest
                         | { modifier = Rest(restBuild, _) } as param, nextParser ->
                             let restValues = ResizeArray()
                             let rec parse l =
                                 match param.segment.parse l, l with
                                 | None, [] ->
-                                    for (case, fieldCount, i) in param.index do
+                                    for case, fieldCount, i in param.index do
                                         let a =
                                             match d.TryGetValue(case) with
                                             | true, a -> a
                                             | false, _ ->
                                                 let a = Array.zeroCreate fieldCount
-                                                d.[case] <- a
+                                                d[case] <- a
                                                 a
-                                        a.[i] <- restBuild restValues
+                                        a[i] <- restBuild restValues
                                     run nextParser []
                                 | None, _::_ -> None
                                 | Some (o, rest), _ ->
@@ -597,10 +597,10 @@ module private RouterImpl =
                 if i = fields.Length then
                     Some (ctor args, fragments)
                 else
-                    match fields.[i].parse fragments with
+                    match fields[i].parse fragments with
                     | None -> None
                     | Some (x, rest) ->
-                        args.[i] <- x
+                        args[i] <- x
                         go (i + 1) rest
             go 0 fragments
 
@@ -620,11 +620,11 @@ module private RouterImpl =
             case.segments |> List.collect (function
                 | Constant s -> [s]
                 | Parameter({ modifier = Basic } as param) ->
-                    let (_, _, i) = param.index |> List.find (fun (case', _, _) -> case' = case.info)
-                    param.segment.write vals.[i]
+                    let _, _, i = param.index |> List.find (fun (case', _, _) -> case' = case.info)
+                    param.segment.write vals[i]
                 | Parameter({ modifier = Rest(_, decons) } as param) ->
-                    let (_, _, i) = param.index |> List.find (fun (case', _, _) -> case' = case.info)
-                    [ for x in decons vals.[i] do yield! param.segment.write x ]
+                    let _, _, i = param.index |> List.find (fun (case', _, _) -> case' = case.info)
+                    [ for x in decons vals[i] do yield! param.segment.write x ]
             )
 
     let unionSegment (getSegment: Type -> Segment) (defaultPageModel: obj -> unit) (ty: Type) : Segment =
@@ -634,7 +634,7 @@ module private RouterImpl =
         let write =
             let writers = Array.map writeUnionCase cases
             let tagReader = FSharpValue.PreComputeUnionTagReader(ty, true)
-            fun r -> writers.[tagReader r] r
+            fun r -> writers[tagReader r] r
         let parse = parseUnion cases
         { parse = parse; write = write }
 
@@ -665,13 +665,13 @@ module private RouterImpl =
                 parse = fun x -> segment.Value.parse x
                 write = fun x -> segment.Value.write x
             }
-            cache.[ty] <- segment.Value
+            cache[ty] <- segment.Value
             let getSegment = getSegment cache ignore
             segment.Value <-
                 if ty.IsArray && ty.GetArrayRank() = 1 then
                     arraySegment getSegment (ty.GetElementType())
                 elif ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<list<_>> then
-                    listSegment getSegment (ty.GetGenericArguments().[0])
+                    listSegment getSegment (ty.GetGenericArguments()[0])
                 elif FSharpType.IsUnion(ty, true) then
                     unionSegment getSegment defaultPageModel ty
                 elif FSharpType.IsTuple(ty) then
@@ -680,7 +680,7 @@ module private RouterImpl =
                     recordSegment getSegment ty
                 else
                     fail (InvalidRouterKind.UnsupportedType ty)
-            cache.[ty] <- segment.Value
+            cache[ty] <- segment.Value
             segment.Value
 
 /// <summary>Functions for building Routers that bind page navigation with Elmish.</summary>

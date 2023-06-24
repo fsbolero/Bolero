@@ -19,7 +19,7 @@ type internal RingBuffer<'item>(size) =
     let mutable state : 'item RingState =
         Writable (Array.zeroCreate (max size 10), 0)
 
-    member __.Pop() =
+    member _.Pop() =
         match state with
         | ReadWritable (items, wix, rix) ->
             let rix' = (rix + 1) % items.Length
@@ -28,18 +28,18 @@ type internal RingBuffer<'item>(size) =
                 state <- Writable(items, wix)
             | _ ->
                 state <- ReadWritable(items, wix, rix')
-            Some items.[rix]
+            Some items[rix]
         | _ ->
             None
 
-    member __.Push (item:'item) =
+    member _.Push (item:'item) =
         match state with
         | Writable (items, ix) ->
-            items.[ix] <- item
+            items[ix] <- item
             let wix = (ix + 1) % items.Length
             state <- ReadWritable(items, wix, ix)
         | ReadWritable (items, wix, rix) ->
-            items.[wix] <- item
+            items[wix] <- item
             let wix' = (wix + 1) % items.Length
             match wix' = rix with
             | true ->
@@ -71,7 +71,7 @@ module internal Program' =
         |> Program.mapTermination (fun f -> termination <- f; f)
         |> ignore
 
-        let (model,cmd) = init arg
+        let model,cmd = init arg
         let sub = subscribe model
         let toTerminate, terminate = termination
         let rb = RingBuffer 10
@@ -95,10 +95,10 @@ module internal Program' =
                     terminate state
                     terminated <- true
                 else
-                    let (model',cmd') = update msg state
+                    let model',cmd' = update msg state
                     let sub' = subscribe model'
                     setState model' dispatch
-                    cmd' |> Cmd.exec (fun ex -> onError (sprintf "Error handling the message: %A" msg, ex)) dispatch
+                    cmd' |> Cmd.exec (fun ex -> onError ( $"Error handling the message: %A{msg}", ex)) dispatch
                     state <- model'
                     activeSubs <- Subs.diff activeSubs sub' |> Subs.Fx.change onError dispatch
                     nextMsg <- rb.Pop()
@@ -106,7 +106,7 @@ module internal Program' =
         reentered <- true
         setState model dispatch
         fun () ->
-            cmd |> Cmd.exec (fun ex -> onError (sprintf "Error intitializing:", ex)) dispatch
+            cmd |> Cmd.exec (fun ex -> onError ("Error intitializing:", ex)) dispatch
             activeSubs <- Subs.diff activeSubs sub |> Subs.Fx.change onError dispatch
             processMsgs ()
             reentered <- false

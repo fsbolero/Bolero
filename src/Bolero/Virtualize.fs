@@ -50,7 +50,7 @@ type Collection<'T>(coll: IReadOnlyCollection<'T>) =
                 raise (ArgumentException("Destination array was not long enough.", nameof destinationArray))
             let mutable i = arrayIndex
             for x in coll do
-                destinationArray.[i] <- x
+                destinationArray[i] <- x
                 i <- i + 1
 
         member _.Contains(_item) = false

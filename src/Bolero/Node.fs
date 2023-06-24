@@ -81,7 +81,7 @@ module Node =
         tb.AddContent(i, text)
         i + 1)
 
-    /// <summary>Create an HTML fragment fram raw HTML.</summary>
+    /// <summary>Create an HTML fragment from raw HTML.</summary>
     /// <param name="html">The raw HTML.</param>
     /// <returns>An HTML fragment.</returns>
     /// <seealso cref="M:Bolero.Html.rawHtml" />

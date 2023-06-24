@@ -70,7 +70,7 @@ type TemplateNode() =
 
 [<AllowNullLiteral>]
 type IClient =
-    /// subtemplate is null to request the full file template.
+    /// sub-template is null to request the full file template.
     abstract RequestTemplate : filename: string * subtemplate: string -> option<Map<string, obj> -> Node>
     abstract SetOnChange : (unit -> unit) -> unit
     abstract FileChanged : filename: string * content: string -> unit

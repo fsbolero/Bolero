@@ -189,7 +189,7 @@ module Rendering =
         renderWith renderComp page
 
     /// <summary>Render a Bolero node to a string.</summary>
-    /// <param name="page">The Bolero node.</param>
+    /// <param name="node">The Bolero node.</param>
     /// <returns>A string containing the HTML representation of the node.</returns>
     /// <remarks>Blazor components contained in the node are ignored.</remarks>
     let renderPlain (node: Node) =

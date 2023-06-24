@@ -66,7 +66,7 @@ type ClientRemoteProvider<'T> private (http: HttpClient, configureSerialization:
         let baseAddress = http.BaseAddress.OriginalString
         let sb = StringBuilder(baseAddress)
         match baseAddress.EndsWith("/"), basePath.StartsWith("/") with
-        | true, true -> sb.Append(basePath.[1..]) |> ignore
+        | true, true -> sb.Append(basePath[1..]) |> ignore
         | false, false -> sb.Append('/').Append(basePath) |> ignore
         | _ -> sb.Append(basePath) |> ignore
         if not (basePath.EndsWith("/")) then sb.Append('/') |> ignore
