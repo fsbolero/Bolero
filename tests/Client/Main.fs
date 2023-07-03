@@ -33,7 +33,7 @@ type Page =
     | [<EndPoint "/">] Form
     | [<EndPoint "/collection">] Collection
     | [<EndPoint "/collection-item/{key}">] Item of key: int * model: PageModel<int>
-    | [<EndPoint "/lazy">] Lazy
+    | [<EndPoint "/lazy?{value}&v2={value2}">] Lazy of value: int * value2: string
     | [<EndPoint "/virtual">] Virtual
 
 type Item =
@@ -102,7 +102,7 @@ let initModel _ =
     }
 
 let defaultPageModel = function
-    | Form | Collection | Lazy | Virtual -> ()
+    | Form | Collection | Lazy _ | Virtual -> ()
     | Item (_, m) -> Router.definePageModel m 10
 let router = Router.inferWithModel SetPage (fun m -> m.page) defaultPageModel
 
@@ -271,9 +271,10 @@ type ViewItemPage() =
             }
         }
 
-let viewLazy model dispatch =
+let viewLazy i model dispatch =
     let lazyViewFunction = (fun m -> text $"Lazy values: ({m.value},{m.nonEqVal}), re-render random number check: {System.Random().Next()}")
     div {
+        p { string i }
         pre {
             text """
 let viewLazy model dispatch =
@@ -334,7 +335,7 @@ let view js model dispatch =
             text " "
             navLink NavLinkMatch.Prefix { router.HRef Collection; "Collection" }
             text " "
-            navLink NavLinkMatch.Prefix { router.HRef Lazy; "Lazy" }
+            navLink NavLinkMatch.Prefix { attr.href (router.Link (Lazy (123, "abc"))); "Lazy" }
             text " "
             navLink NavLinkMatch.All { router.HRef Virtual; "Virtual" }
         }
@@ -342,7 +343,7 @@ let view js model dispatch =
             | Form -> viewForm js model dispatch
             | Collection -> viewCollection model dispatch
             | Item (k, m) -> ecomp<ViewItemPage,_,_> (k, model.items.[k], m.Model) dispatch { attr.empty() }
-            | Lazy -> viewLazy model dispatch
+            | Lazy (x, y) -> viewLazy (x, y) model dispatch
             | Virtual -> viewVirtual model dispatch
     }
 

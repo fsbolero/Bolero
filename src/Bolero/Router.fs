@@ -28,7 +28,9 @@ open System.Diagnostics.CodeAnalysis
 open System.Net
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
+open System.Text
 open FSharp.Reflection
+open Microsoft.FSharp.Core.CompilerServices
 
 /// <summary>A router that binds page navigation with Elmish.</summary>
 /// <typeparam name="model">The Elmish model type.</typeparam>
@@ -82,16 +84,23 @@ type Router<'ep, 'model, 'msg> =
 /// <summary>Declare how an F# union case matches to a URI.</summary>
 /// <category>Routing</category>
 [<AttributeUsage(AttributeTargets.Property, AllowMultiple = false)>]
-type EndPointAttribute
-    /// <summary>Declare how an F# union case matches to a URI.</summary>
-    /// <param name="endpoint">The endpoint URI path.</param>
-    (endpoint: string) =
+type EndPointAttribute(path, query) =
     inherit Attribute()
 
-    let endpoint = endpoint.Trim('/').Split('/')
+    /// <summary>Declare how an F# union case matches to a URI.</summary>
+    /// <param name="endpoint">The endpoint URI path and query.</param>
+    new (endpoint: string) =
+        let path, query =
+            match endpoint.IndexOf('?') with
+            | -1 -> endpoint, ""
+            | n -> endpoint[..n-1], endpoint[n+1..]
+        EndPointAttribute(path.Trim('/').Split('/'),query)
 
     /// The path that this endpoint recognizes.
-    member this.Path = endpoint
+    member this.Path = path
+
+    /// The query string that this endpoint recognizes.
+    member this.Query = query
 
 /// <summary>
 /// Declare that the given field of an F# union case matches the entire remainder of the URL path.
@@ -173,8 +182,8 @@ module private RouterImpl =
         member this.Item with get i = this.Array[this.Offset + i]
 
     type SegmentParserResult = option<obj * list<string>>
-    type SegmentParser = list<string> -> SegmentParserResult
-    type SegmentWriter = obj -> list<string>
+    type SegmentParser = list<string> -> Map<string, string> -> SegmentParserResult
+    type SegmentWriter = obj -> list<string> * Map<string, string>
     type Segment =
         {
             parse: SegmentParser
@@ -190,30 +199,33 @@ module private RouterImpl =
         else
             None
 
-    let inline defaultBaseTypeParser<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> = function
-        | [] -> None
-        | x :: rest ->
-            match tryParseBaseType<'T> x with
-            | Some x -> Some (box x, rest)
-            | None -> None
+    let inline defaultBaseTypeParser<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> : SegmentParser =
+        fun path query ->
+            match path with
+            | [] -> None
+            | x :: rest ->
+                match tryParseBaseType<'T> x with
+                | Some x -> Some (box x, rest)
+                | None -> None
 
     let inline baseTypeSegment<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
         {
             parse = defaultBaseTypeParser<'T>
-            write = fun x -> [string x]
+            write = fun x -> [string x], Map.empty
         }
 
     let baseTypes : IDictionary<Type, Segment> = dict [
         typeof<string>, {
-            parse = function
+            parse = fun path query ->
+                match path with
                 | [] -> None
                 | x :: rest -> Some (box (WebUtility.UrlDecode x), rest)
-            write = fun x -> [WebUtility.UrlEncode(unbox x)]
+            write = fun x -> [WebUtility.UrlEncode(unbox x)], Map.empty
         }
         typeof<bool>, {
             parse = defaultBaseTypeParser<bool>
             // `string true` returns capitalized "True", but we want lowercase "true".
-            write = fun x -> [(if unbox x then "true" else "false")]
+            write = fun x -> [(if unbox x then "true" else "false")], Map.empty
         }
         typeof<Byte>, baseTypeSegment<Byte>()
         typeof<SByte>, baseTypeSegment<SByte>()
@@ -228,26 +240,35 @@ module private RouterImpl =
         typeof<decimal>, baseTypeSegment<decimal>()
     ]
 
+    let merge (map1: Map<'k, 'v>) (map2: Map<'k, 'v>) =
+        Map.foldBack Map.add map1 map2
+
     let sequenceSegment getSegment (ty: Type) revAndConvert toListAndLength : Segment =
         let itemSegment = getSegment ty
-        let rec parse acc remainingLength fragments =
+        let rec parse acc remainingLength fragments query =
             if remainingLength = 0 then
                 Some (revAndConvert acc, fragments)
             else
-                match itemSegment.parse fragments with
+                match itemSegment.parse fragments query with
                 | None -> None
                 | Some (x, rest) ->
-                    parse (x :: acc) (remainingLength - 1) rest
+                    parse (x :: acc) (remainingLength - 1) rest query
         {
-            parse = function
+            parse = fun path query ->
+                match path with
                 | x :: rest ->
                     match Int32.TryParse(x) with
-                    | true, length -> parse [] length rest
+                    | true, length -> parse [] length rest query
                     | false, _ -> None
                 | _ -> None
             write = fun x ->
                 let list, (length: int) = toListAndLength x
-                string length :: List.collect itemSegment.write list
+                let path, query =
+                    (Map.empty, list)
+                    ||> List.mapFold (fun query item ->
+                        let segments, itemQuery = itemSegment.write item
+                        segments, merge itemQuery query)
+                (string length :: List.concat path), query
         }
 
     let [<Literal>] FLAGS_STATIC =
@@ -308,7 +329,7 @@ module private RouterImpl =
                 | _ -> false
 
     /// A {parameter} path segment.
-    type Parameter =
+    type SegmentParameter =
         {
             /// A parameter can be common among multiple union cases.
             /// `index` lists these cases, and for each of them, its total number of fields and the index of the field for this segment.
@@ -324,7 +345,16 @@ module private RouterImpl =
     /// Intermediate representation of a path segment.
     type UnionParserSegment =
         | Constant of string
-        | Parameter of Parameter
+        | Parameter of SegmentParameter
+
+    type QueryParameter =
+        {
+            index: int
+            segment: Segment
+            ``type``: Type
+            name: string
+            propName: string
+        }
 
     type UnionCase =
         {
@@ -332,6 +362,7 @@ module private RouterImpl =
             ctor: obj[] -> obj
             argCount: int
             segments: UnionParserSegment list
+            query: QueryParameter list
         }
 
     /// The parser for a union type at a given point in the path.
@@ -340,17 +371,17 @@ module private RouterImpl =
             /// All recognized "/constant" segments, associated with the parser for the rest of the path.
             constants: IDictionary<string, UnionParser>
             /// The recognized "/{parameter}" segment, if any.
-            parameter: option<Parameter * UnionParser>
+            parameter: option<SegmentParameter * UnionParser>
             /// The union case that parses correctly if the path ends here, if any.
             finalize: option<UnionCase>
         }
 
-    let parseEndPointCasePath (case: UnionCaseInfo) : list<string> =
-        case.GetCustomAttributes()
+    let parseEndPointCasePathAndQuery (case: UnionCaseInfo) : list<string> * string =
+        case.GetCustomAttributes(typeof<EndPointAttribute>)
         |> Array.tryPick (function
-            | :? EndPointAttribute as e -> Some (List.ofSeq e.Path)
+            | :? EndPointAttribute as e -> Some (List.ofSeq e.Path, e.Query)
             | _ -> None)
-        |> Option.defaultWith (fun () -> [case.Name])
+        |> Option.defaultWith (fun () -> [case.Name], "")
 
     let isConstantFragment (s: string) =
         not (s.Contains("{"))
@@ -432,14 +463,43 @@ module private RouterImpl =
                 vals[i] <- model
                 ctor vals
 
+    let parseQueryParameters getSegment (case: UnionCaseInfo) (query: string) : QueryParameter list =
+        let fields = case.GetFields()
+        query.Split('&', StringSplitOptions.RemoveEmptyEntries)
+        |> Seq.map (fun q ->
+            let paramName, propName =
+                match q.IndexOf('=') with
+                | -1 ->
+                    let name = fragmentParameterRE.Match(q).Groups[2].Value
+                    name, name
+                | n ->
+                    let name = q[..n-1]
+                    name, fragmentParameterRE.Match(q[n+1..]).Groups[2].Value
+            let index =
+                fields
+                |> Array.tryFindIndex (fun f -> f.Name = propName)
+                |> Option.defaultWith(fun () -> fail (InvalidRouterKind.UnknownField(case, propName)))
+            let prop = fields[index]
+            {
+                index = index
+                ``type`` = prop.PropertyType
+                segment = getSegment prop.PropertyType
+                name = paramName
+                propName = propName
+            })
+        |> List.ofSeq
+
     let parseEndPointCase getSegment (defaultPageModel: obj -> unit) (case: UnionCaseInfo) =
         let ctor = getCtor defaultPageModel case
         let fields = case.GetFields()
+        let path, query = parseEndPointCasePathAndQuery case
+        let query = parseQueryParameters getSegment case query
         let defaultFrags() =
             fields
             |> Array.mapi (fun i p ->
                 let ty = p.PropertyType
-                if isPageModel ty then None else
+                if isPageModel ty then None
+                elif query |> List.exists (fun q -> q.propName = p.Name) then None else
                 Some <| Parameter {
                     index = [case, fields.Length, i]
                     ``type`` = ty
@@ -449,20 +509,20 @@ module private RouterImpl =
                 })
             |> Array.choose id
             |> List.ofSeq
-        match parseEndPointCasePath case with
+        match path with
         // EndPoint "/"
-        | [] -> { info = case; ctor = ctor; argCount = fields.Length; segments = defaultFrags() }
+        | [] -> { info = case; ctor = ctor; argCount = fields.Length; segments = defaultFrags(); query = query }
         // EndPoint "/const"
         | [root] when isConstantFragment root ->
-            { info = case; ctor = ctor; argCount = fields.Length; segments = Constant root :: defaultFrags() }
+            { info = case; ctor = ctor; argCount = fields.Length; segments = Constant root :: defaultFrags(); query = query }
         // EndPoint <complex_path>
         | frags ->
             let unboundFields =
                 fields
-                |> Array.choose (fun f -> if isPageModel f.PropertyType then None else Some f.Name)
+                |> Array.choose (fun f -> if isPageModel f.PropertyType || query |> List.exists (fun q -> q.propName = f.Name) then None else Some f.Name)
                 |> HashSet
             let fragCount = frags.Length
-            let res =
+            let segments =
                 frags
                 |> List.mapi (fun fragIx frag ->
                     if isConstantFragment frag then
@@ -496,7 +556,7 @@ module private RouterImpl =
                 )
             if unboundFields.Count > 0 then
                 fail (InvalidRouterKind.MissingField(case, Seq.head unboundFields))
-            { info = case; ctor = ctor; argCount = fields.Length; segments = res }
+            { info = case; ctor = ctor; argCount = fields.Length; segments = segments; query = query }
 
     let rec mergeEndPointCaseFragments (cases: seq<UnionCase>) : UnionParser =
         let constants = Dictionary<string, _>()
@@ -512,7 +572,7 @@ module private RouterImpl =
                 constants[s] <- { case with segments = rest } :: existing
             | Parameter param :: rest ->
                 match parameter with
-                | Some (case', param', ps) ->
+                | Some (case', param': SegmentParameter, ps) ->
                     if param.``type`` <> param'.``type`` then
                         fail (InvalidRouterKind.ParameterTypeMismatch(case', param'.name, case.info, param.name))
                     if param.modifier <> param'.modifier then
@@ -540,23 +600,36 @@ module private RouterImpl =
         let parser = mergeEndPointCaseFragments cases
         fun l ->
             let d = Dictionary<UnionCaseInfo, obj[]>()
-            let rec run (parser: UnionParser) l =
+            let rec run (parser: UnionParser) segments query =
                 let finalize rest =
-                    parser.finalize |> Option.map (fun case ->
+                    parser.finalize |> Option.bind (fun case ->
                         let args =
                             match d.TryGetValue(case.info) with
                             | true, args -> args
                             | false, _ -> Array.zeroCreate case.argCount
-                        (case.ctor args, rest))
+                        let allQueryParamsAreHere =
+                            case.query
+                            |> List.forall (fun p ->
+                                match Map.tryFind p.name query with
+                                | None -> false // TODO optional param
+                                | Some v ->
+                                    match p.segment.parse [v] Map.empty with
+                                    | Some (x, []) ->
+                                        args[p.index] <- x
+                                        true
+                                    | _ -> false)
+                        if allQueryParamsAreHere then
+                            Some (case.ctor args, rest)
+                        else None)
                 let mutable constant = Unchecked.defaultof<_>
-                match l with
+                match segments with
                 | s :: rest when parser.constants.TryGetValue(s, &constant) ->
-                    run constant rest
-                | l ->
+                    run constant rest query
+                | segments ->
                     parser.parameter
                     |> Option.bind (function
                         | { modifier = Basic } as param, nextParser ->
-                            match param.segment.parse l with
+                            match param.segment.parse segments query with
                             | None -> None
                             | Some (o, rest) ->
                                 for case, fieldCount, i in param.index do
@@ -568,11 +641,11 @@ module private RouterImpl =
                                             d[case] <- a
                                             a
                                     a[i] <- o
-                                run nextParser rest
+                                run nextParser rest query
                         | { modifier = Rest(restBuild, _) } as param, nextParser ->
                             let restValues = ResizeArray()
-                            let rec parse l =
-                                match param.segment.parse l, l with
+                            let rec parse segments =
+                                match param.segment.parse segments query, segments with
                                 | None, [] ->
                                     for case, fieldCount, i in param.index do
                                         let a =
@@ -583,25 +656,25 @@ module private RouterImpl =
                                                 d[case] <- a
                                                 a
                                         a[i] <- restBuild restValues
-                                    run nextParser []
+                                    run nextParser [] query
                                 | None, _::_ -> None
                                 | Some (o, rest), _ ->
                                     restValues.Add(o)
                                     parse rest
-                            parse l
+                            parse segments
                     )
-                |> Option.orElseWith (fun () -> finalize l)
+                |> Option.orElseWith (fun () -> finalize segments)
             run parser l
 
     let parseConsecutiveTypes getSegment (tys: Type[]) (ctor: obj[] -> obj) : SegmentParser =
         let fields = Array.map getSegment tys
-        fun (fragments: list<string>) ->
+        fun (fragments: list<string>) query ->
             let args = Array.zeroCreate fields.Length
             let rec go i fragments =
                 if i = fields.Length then
                     Some (ctor args, fragments)
                 else
-                    match fields[i].parse fragments with
+                    match fields[i].parse fragments query with
                     | None -> None
                     | Some (x, rest) ->
                         args[i] <- x
@@ -611,8 +684,14 @@ module private RouterImpl =
     let writeConsecutiveTypes getSegment (tys: Type[]) (dector: obj -> obj[]) : SegmentWriter =
         let fields = tys |> Array.map (fun t -> (getSegment t).write)
         fun (r: obj) ->
-            Array.map2 (<|) fields (dector r)
-            |> List.concat
+            let mutable segments = ListCollector()
+            let query =
+                (Map.empty, fields, dector r)
+                |||> Array.fold2 (fun query field item ->
+                    let itemSegments, itemQuery = field item
+                    segments.AddMany(itemSegments)
+                    merge itemQuery query)
+            segments.Close(), query
 
     let caseDector (case: UnionCaseInfo) : obj -> obj[] =
         FSharpValue.PreComputeUnionReader(case, true)
@@ -621,15 +700,35 @@ module private RouterImpl =
         let dector = caseDector case.info
         fun o ->
             let vals = dector o
-            case.segments |> List.collect (function
-                | Constant s -> [s]
-                | Parameter({ modifier = Basic } as param) ->
-                    let _, _, i = param.index |> List.find (fun (case', _, _) -> case' = case.info)
-                    param.segment.write vals[i]
-                | Parameter({ modifier = Rest(_, decons) } as param) ->
-                    let _, _, i = param.index |> List.find (fun (case', _, _) -> case' = case.info)
-                    [ for x in decons vals[i] do yield! param.segment.write x ]
-            )
+            let mutable segments = ListCollector()
+            let query =
+                case.query
+                |> Seq.map (fun param ->
+                    match param.segment.write vals[param.index] with
+                    | [x], _ -> param.name, x
+                    | _ -> failwith "UH OH")
+                |> Map
+            let query =
+                (query, case.segments)
+                ||> List.fold (fun query item ->
+                    match item with
+                    | Constant s ->
+                        segments.Add(s)
+                        query
+                    | Parameter({ modifier = Basic } as param) ->
+                        let _, _, i = param.index |> List.find (fun (case', _, _) -> case' = case.info)
+                        let itemSegments, itemQuery = param.segment.write vals[i]
+                        segments.AddMany(itemSegments)
+                        merge itemQuery query
+                    | Parameter({ modifier = Rest(_, decons) } as param) ->
+                        let _, _, i = param.index |> List.find (fun (case', _, _) -> case' = case.info)
+                        (query, decons vals[i])
+                        ||> Seq.fold (fun query x ->
+                            let itemSegments, itemQuery = param.segment.write x
+                            segments.AddMany(itemSegments)
+                            merge itemQuery query)
+                )
+            segments.Close(), query
 
     let unionSegment (getSegment: Type -> Segment) (defaultPageModel: obj -> unit) (ty: Type) : Segment =
         let cases =
@@ -687,6 +786,20 @@ module private RouterImpl =
             cache[ty] <- segment.Value
             segment.Value
 
+    let splitPathAndQuery (pathAndQuery: string) : string list * Map<string, string> =
+        match pathAndQuery.IndexOf('?') with
+        | -1 -> pathAndQuery.Split('/') |> List.ofArray, Map.empty
+        | n ->
+            let path = pathAndQuery[..n-1].Split('/') |> List.ofArray
+            let query =
+                pathAndQuery[n+1..].Split('&')
+                |> Seq.map (fun s ->
+                    match s.IndexOf('=') with
+                    | -1 -> s, ""
+                    | n -> s[..n-1], s[n+1..])
+                |> Map
+            path, query
+
 /// <summary>Functions for building Routers that bind page navigation with Elmish.</summary>
 /// <category>Routing</category>
 module Router =
@@ -712,13 +825,23 @@ module Router =
         {
             getEndPoint = getEndPoint
             getRoute = fun ep ->
-                box ep
-                |> frag.write
-                |> String.concat "/"
+                let segments, query = frag.write (box ep)
+                let path = String.concat "/" segments
+                if Map.isEmpty query then
+                    path
+                else
+                    let sb = StringBuilder(path)
+                    query
+                    |> Seq.iteri (fun i (KeyValue(k, v)) ->
+                        sb.Append(if i = 0 then '?' else '&')
+                            .Append(k)
+                            .Append('=')
+                            .Append(v)
+                        |> ignore)
+                    sb.ToString()
             setRoute = fun path ->
-                path.Split('/')
-                |> List.ofArray
-                |> frag.parse
+                splitPathAndQuery path
+                ||> frag.parse
                 |> Option.bind (function
                     | x, [] -> Some (unbox<'ep> x |> makeMessage)
                     | _ -> None)
