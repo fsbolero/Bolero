@@ -33,7 +33,7 @@ type Page =
     | [<EndPoint "/">] Form
     | [<EndPoint "/collection">] Collection
     | [<EndPoint "/collection-item/{key}">] Item of key: int * model: PageModel<int>
-    | [<EndPoint "/lazy?{value}&v2={value2}">] Lazy of value: int * value2: string
+    | [<EndPoint "/lazy?{value}&v2={value2}">] Lazy of value: int * value2: string option
     | [<EndPoint "/virtual">] Virtual
 
 type Item =
@@ -335,7 +335,9 @@ let view js model dispatch =
             text " "
             navLink NavLinkMatch.Prefix { router.HRef Collection; "Collection" }
             text " "
-            navLink NavLinkMatch.Prefix { attr.href (router.Link (Lazy (123, "abc"))); "Lazy" }
+            navLink NavLinkMatch.Prefix { attr.href (router.Link (Lazy (123, Some "abc"))); "Lazy" }
+            text " "
+            navLink NavLinkMatch.Prefix { attr.href (router.Link (Lazy (123, None))); "Lazy" }
             text " "
             navLink NavLinkMatch.All { router.HRef Virtual; "Virtual" }
         }

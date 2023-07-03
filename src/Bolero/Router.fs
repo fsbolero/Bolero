@@ -178,13 +178,18 @@ type PageModel<'T> =
 module private RouterImpl =
     open System.Text.RegularExpressions
 
-    type ArraySegment<'T> with
-        member this.Item with get i = this.Array[this.Offset + i]
+    type SingleParser = string -> option<obj>
+    type SingleWriter = obj -> option<string>
+    type SingleSerializer =
+        {
+            parse: SingleParser
+            write: SingleWriter
+        }
 
     type SegmentParserResult = option<obj * list<string>>
     type SegmentParser = list<string> -> Map<string, string> -> SegmentParserResult
     type SegmentWriter = obj -> list<string> * Map<string, string>
-    type Segment =
+    type SegmentSerializer =
         {
             parse: SegmentParser
             write: SegmentWriter
@@ -199,51 +204,76 @@ module private RouterImpl =
         else
             None
 
-    let inline defaultBaseTypeParser<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> : SegmentParser =
-        fun path query ->
-            match path with
-            | [] -> None
-            | x :: rest ->
-                match tryParseBaseType<'T> x with
-                | Some x -> Some (box x, rest)
-                | None -> None
-
-    let inline baseTypeSegment<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () =
+    let inline baseTypeSingleSerializer<'T when 'T : (static member TryParse : string * byref<'T> -> bool)> () : SingleSerializer =
         {
-            parse = defaultBaseTypeParser<'T>
-            write = fun x -> [string x], Map.empty
+            parse = tryParseBaseType<'T>
+            write = string >> Some
         }
 
-    let baseTypes : IDictionary<Type, Segment> = dict [
-        typeof<string>, {
-            parse = fun path query ->
+    let singleSegmentSerializer (s: SingleSerializer) : SegmentSerializer =
+        {
+            parse = fun path _ ->
                 match path with
                 | [] -> None
-                | x :: rest -> Some (box (WebUtility.UrlDecode x), rest)
-            write = fun x -> [WebUtility.UrlEncode(unbox x)], Map.empty
+                | x :: rest ->
+                    match s.parse x with
+                    | Some x -> Some (x, rest)
+                    | None -> None
+            write = fun x -> Option.toList (s.write x), Map.empty
+        }
+
+    let baseTypeSingleSerializers : IDictionary<Type, SingleSerializer> = dict [
+        typeof<string>, {
+            parse = fun x -> Some (box (WebUtility.UrlDecode x))
+            write = fun x -> Some (WebUtility.UrlEncode (unbox x))
         }
         typeof<bool>, {
-            parse = defaultBaseTypeParser<bool>
+            parse = tryParseBaseType<bool>
             // `string true` returns capitalized "True", but we want lowercase "true".
-            write = fun x -> [(if unbox x then "true" else "false")], Map.empty
+            write = fun x -> Some (if unbox x then "true" else "false")
         }
-        typeof<Byte>, baseTypeSegment<Byte>()
-        typeof<SByte>, baseTypeSegment<SByte>()
-        typeof<Int16>, baseTypeSegment<Int16>()
-        typeof<UInt16>, baseTypeSegment<UInt16>()
-        typeof<Int32>, baseTypeSegment<Int32>()
-        typeof<UInt32>, baseTypeSegment<UInt32>()
-        typeof<Int64>, baseTypeSegment<Int64>()
-        typeof<UInt64>, baseTypeSegment<UInt64>()
-        typeof<single>, baseTypeSegment<single>()
-        typeof<float>, baseTypeSegment<float>()
-        typeof<decimal>, baseTypeSegment<decimal>()
+        typeof<Byte>, baseTypeSingleSerializer<Byte>()
+        typeof<SByte>, baseTypeSingleSerializer<SByte>()
+        typeof<Int16>, baseTypeSingleSerializer<Int16>()
+        typeof<UInt16>, baseTypeSingleSerializer<UInt16>()
+        typeof<Int32>, baseTypeSingleSerializer<Int32>()
+        typeof<UInt32>, baseTypeSingleSerializer<UInt32>()
+        typeof<Int64>, baseTypeSingleSerializer<Int64>()
+        typeof<UInt64>, baseTypeSingleSerializer<UInt64>()
+        typeof<single>, baseTypeSingleSerializer<single>()
+        typeof<float>, baseTypeSingleSerializer<float>()
+        typeof<decimal>, baseTypeSingleSerializer<decimal>()
     ]
+
+    let baseTypeSegmentSerializers : IDictionary<Type, SegmentSerializer> = dict [
+        for KeyValue(k, s) in baseTypeSingleSerializers do
+            k, singleSegmentSerializer s
+    ]
+
+    let getSingleSerializer (ty: Type) : SingleSerializer * bool =
+        match baseTypeSingleSerializers.TryGetValue(ty) with
+        | true, s -> s, false
+        | false, _ ->
+            if ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<option<_>> then
+                match baseTypeSingleSerializers.TryGetValue(ty.GetGenericArguments()[0]) with
+                | true, s ->
+                    let someCase = FSharpType.GetUnionCases(ty)[1]
+                    let someCtor = FSharpValue.PreComputeUnionConstructor(someCase)
+                    let someDector = FSharpValue.PreComputeUnionReader(someCase)
+                    {
+                        parse = s.parse >> Option.map (fun x -> someCtor [|x|])
+                        write = function
+                            | null -> None
+                            | x -> s.write (someDector x).[0]
+                    }, true
+                | false, _ -> fail (InvalidRouterKind.UnsupportedType ty)
+            else
+                fail (InvalidRouterKind.UnsupportedType ty)
 
     let merge (map1: Map<'k, 'v>) (map2: Map<'k, 'v>) =
         Map.foldBack Map.add map1 map2
 
-    let sequenceSegment getSegment (ty: Type) revAndConvert toListAndLength : Segment =
+    let sequenceSegment getSegment (ty: Type) revAndConvert toListAndLength : SegmentSerializer =
         let itemSegment = getSegment ty
         let rec parse acc remainingLength fragments query =
             if remainingLength = 0 then
@@ -284,12 +314,12 @@ module private RouterImpl =
     let arrayLengthAndBox<'T> (a: array<'T>) : list<obj> * int =
         [for x in a -> box x], a.Length
 
-    let arraySegment getSegment ty : Segment =
+    let arraySegment getSegment ty : SegmentSerializer =
         let arrayRevAndUnbox =
-            typeof<Segment>.DeclaringType.GetMethod("arrayRevAndUnbox", FLAGS_STATIC)
+            typeof<SegmentSerializer>.DeclaringType.GetMethod("arrayRevAndUnbox", FLAGS_STATIC)
                 .MakeGenericMethod([|ty|])
         let arrayLengthAndBox =
-            typeof<Segment>.DeclaringType.GetMethod("arrayLengthAndBox", FLAGS_STATIC)
+            typeof<SegmentSerializer>.DeclaringType.GetMethod("arrayLengthAndBox", FLAGS_STATIC)
                 .MakeGenericMethod([|ty|])
         sequenceSegment getSegment ty
             (fun l -> arrayRevAndUnbox.Invoke(null, [|l|]))
@@ -301,12 +331,12 @@ module private RouterImpl =
     let listLengthAndBox<'T> (l: list<'T>) : list<obj> * int =
         List.mapFold (fun l e -> box e, l + 1) 0 l
 
-    let listSegment getSegment ty : Segment =
+    let listSegment getSegment ty : SegmentSerializer =
         let listRevAndUnbox =
-            typeof<Segment>.DeclaringType.GetMethod("listRevAndUnbox", FLAGS_STATIC)
+            typeof<SegmentSerializer>.DeclaringType.GetMethod("listRevAndUnbox", FLAGS_STATIC)
                 .MakeGenericMethod([|ty|])
         let listLengthAndBox =
-            typeof<Segment>.DeclaringType.GetMethod("listLengthAndBox", FLAGS_STATIC)
+            typeof<SegmentSerializer>.DeclaringType.GetMethod("listLengthAndBox", FLAGS_STATIC)
                 .MakeGenericMethod([|ty|])
         sequenceSegment getSegment ty
             (fun l -> listRevAndUnbox.Invoke(null, [|l|]))
@@ -335,7 +365,7 @@ module private RouterImpl =
             /// `index` lists these cases, and for each of them, its total number of fields and the index of the field for this segment.
             index: list<UnionCaseInfo * int * int>
             ``type``: Type
-            segment: Segment
+            segment: SegmentSerializer
             modifier: ParameterModifier
             /// Note that several cases can have the same parameter with different names.
             /// In this case, the name field is taken from the first declared case.
@@ -350,8 +380,8 @@ module private RouterImpl =
     type QueryParameter =
         {
             index: int
-            segment: Segment
-            ``type``: Type
+            serializer: SingleSerializer
+            isOptional: bool
             name: string
             propName: string
         }
@@ -428,7 +458,8 @@ module private RouterImpl =
         else
             fail (InvalidRouterKind.InvalidRestType case)
 
-    let fragmentParameterRE = Regex(@"^\{([?*]?)([a-zA-Z0-9_]+)\}$", RegexOptions.Compiled)
+    let fragmentParameterRE = Regex(@"^\{([*]?)([a-zA-Z0-9_]+)\}$", RegexOptions.Compiled)
+    let queryParameterRE = Regex(@"^\{([a-zA-Z0-9_]+)\}$", RegexOptions.Compiled)
 
     let isPageModel (ty: Type) =
         ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<PageModel<_>>
@@ -463,27 +494,28 @@ module private RouterImpl =
                 vals[i] <- model
                 ctor vals
 
-    let parseQueryParameters getSegment (case: UnionCaseInfo) (query: string) : QueryParameter list =
+    let parseQueryParameters (case: UnionCaseInfo) (query: string) : QueryParameter list =
         let fields = case.GetFields()
         query.Split('&', StringSplitOptions.RemoveEmptyEntries)
         |> Seq.map (fun q ->
             let paramName, propName =
                 match q.IndexOf('=') with
                 | -1 ->
-                    let name = fragmentParameterRE.Match(q).Groups[2].Value
+                    let name = queryParameterRE.Match(q).Groups[1].Value
                     name, name
                 | n ->
                     let name = q[..n-1]
-                    name, fragmentParameterRE.Match(q[n+1..]).Groups[2].Value
+                    name, queryParameterRE.Match(q[n+1..]).Groups[1].Value
             let index =
                 fields
                 |> Array.tryFindIndex (fun f -> f.Name = propName)
                 |> Option.defaultWith(fun () -> fail (InvalidRouterKind.UnknownField(case, propName)))
             let prop = fields[index]
+            let serializer, isOptional = getSingleSerializer prop.PropertyType
             {
                 index = index
-                ``type`` = prop.PropertyType
-                segment = getSegment prop.PropertyType
+                serializer = serializer
+                isOptional = isOptional
                 name = paramName
                 propName = propName
             })
@@ -493,7 +525,7 @@ module private RouterImpl =
         let ctor = getCtor defaultPageModel case
         let fields = case.GetFields()
         let path, query = parseEndPointCasePathAndQuery case
-        let query = parseQueryParameters getSegment case query
+        let query = parseQueryParameters case query
         let defaultFrags() =
             fields
             |> Array.mapi (fun i p ->
@@ -611,10 +643,10 @@ module private RouterImpl =
                             case.query
                             |> List.forall (fun p ->
                                 match Map.tryFind p.name query with
-                                | None -> false // TODO optional param
+                                | None -> p.isOptional
                                 | Some v ->
-                                    match p.segment.parse [v] Map.empty with
-                                    | Some (x, []) ->
+                                    match p.serializer.parse v with
+                                    | Some x ->
                                         args[p.index] <- x
                                         true
                                     | _ -> false)
@@ -703,10 +735,9 @@ module private RouterImpl =
             let mutable segments = ListCollector()
             let query =
                 case.query
-                |> Seq.map (fun param ->
-                    match param.segment.write vals[param.index] with
-                    | [x], _ -> param.name, x
-                    | _ -> failwith "UH OH")
+                |> Seq.choose (fun param ->
+                    param.serializer.write vals[param.index]
+                    |> Option.map (fun s -> param.name, s))
                 |> Map
             let query =
                 (query, case.segments)
@@ -730,7 +761,7 @@ module private RouterImpl =
                 )
             segments.Close(), query
 
-    let unionSegment (getSegment: Type -> Segment) (defaultPageModel: obj -> unit) (ty: Type) : Segment =
+    let unionSegment (getSegment: Type -> SegmentSerializer) (defaultPageModel: obj -> unit) (ty: Type) : SegmentSerializer =
         let cases =
             FSharpType.GetUnionCases(ty, true)
             |> Array.map (parseEndPointCase getSegment defaultPageModel)
@@ -759,7 +790,7 @@ module private RouterImpl =
             write = writeConsecutiveTypes getSegment tys dector
         }
 
-    let rec getSegment (cache: Dictionary<Type, Segment>) (defaultPageModel: obj -> unit) (ty: Type) : Segment =
+    let rec getSegment (cache: Dictionary<Type, SegmentSerializer>) (defaultPageModel: obj -> unit) (ty: Type) : SegmentSerializer =
         match cache.TryGetValue(ty) with
         | true, x -> unbox x
         | false, _ ->
@@ -820,7 +851,7 @@ module Router =
             (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) (defaultPageModel: 'ep -> unit) =
         let ty = typeof<'ep>
         let cache = Dictionary()
-        for KeyValue(k, v) in baseTypes do cache.Add(k, v)
+        for KeyValue(k, v) in baseTypeSegmentSerializers do cache.Add(k, v)
         let frag = getSegment cache (unbox >> defaultPageModel) ty
         {
             getEndPoint = getEndPoint
