@@ -87,10 +87,11 @@ type ServerComponentsExtensions =
     /// can be passed to use the given mode.
     /// </param>
     [<Extension>]
-    static member AddBoleroHost(this: IServiceCollection, ?server: bool, ?prerendered: bool, ?devToggle: bool) =
-        let server = defaultArg server false
-        let prerendered = defaultArg prerendered true
-        let devToggle = defaultArg devToggle true
+    static member AddBoleroHost(
+            this: IServiceCollection,
+            [<Optional; DefaultParameterValue false>] server: bool,
+            [<Optional; DefaultParameterValue true>] prerendered: bool,
+            [<Optional; DefaultParameterValue true>] devToggle: bool) =
         if devToggle then
             this.AddSingleton(
                 { new IBoleroHostBaseConfig with
