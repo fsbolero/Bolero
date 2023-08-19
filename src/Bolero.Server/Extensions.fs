@@ -120,9 +120,9 @@ type ServerComponentsExtensions =
     /// </summary>
     /// <param name="page">A function that generates the page to serve.</param>
     [<Extension>]
-    static member MapFallbackToBolero(this: IEndpointRouteBuilder, page: HttpContext -> Bolero.Node) =
+    static member MapFallbackToBolero(this: IEndpointRouteBuilder, page: Func<HttpContext, Bolero.Node>) =
         this.MapFallback(fun ctx ->
-            let page = page ctx
+            let page = page.Invoke(ctx)
             if isNull ctx.Response.ContentType then
                 ctx.Response.ContentType <- "text/html; charset=UTF-8"
             ctx.RenderPage(page))
