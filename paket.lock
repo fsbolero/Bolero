@@ -549,7 +549,7 @@ NUGET
       Selenium.WebDriver (>= 4.8.1)
     Selenium.WebDriver (4.8.1)
       Newtonsoft.Json (>= 13.0.1)
-    Selenium.WebDriver.ChromeDriver (111.0.5563.6400)
+    Selenium.WebDriver.ChromeDriver (116.0.5845.9600)
     Swashbuckle.AspNetCore (6.5)
       Microsoft.Extensions.ApiDescription.Server (>= 6.0.5)
       Swashbuckle.AspNetCore.Swagger (>= 6.5)
