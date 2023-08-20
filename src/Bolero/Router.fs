@@ -250,22 +250,31 @@ module private RouterImpl =
             k, singleSegmentSerializer s
     ]
 
-    let getSingleSerializer (ty: Type) : SingleSerializer * bool =
+    let getSingleSerializer (ty: Type) : SingleSerializer * obj voption =
         match baseTypeSingleSerializers.TryGetValue(ty) with
-        | true, s -> s, false
+        | true, s -> s, ValueNone
         | false, _ ->
-            if ty.IsGenericType && ty.GetGenericTypeDefinition() = typedefof<option<_>> then
+            if ty.IsGenericType &&
+               (let gen = ty.GetGenericTypeDefinition()
+                gen = typedefof<option<_>> || gen = typedefof<voption<_>>)
+            then
                 match baseTypeSingleSerializers.TryGetValue(ty.GetGenericArguments()[0]) with
                 | true, s ->
-                    let someCase = FSharpType.GetUnionCases(ty)[1]
+                    let cases = FSharpType.GetUnionCases(ty)
+                    let noneCase = cases[0]
+                    let someCase = cases[1]
                     let someCtor = FSharpValue.PreComputeUnionConstructor(someCase)
                     let someDector = FSharpValue.PreComputeUnionReader(someCase)
+                    let none = FSharpValue.MakeUnion(noneCase, Array.empty)
+                    let getTag = FSharpValue.PreComputeUnionTagReader(ty)
                     {
                         parse = s.parse >> Option.map (fun x -> someCtor [|x|])
-                        write = function
-                            | null -> None
-                            | x -> s.write (someDector x).[0]
-                    }, true
+                        write = fun x ->
+                            if getTag x = 0 then
+                                None
+                            else
+                                s.write (someDector x).[0]
+                    }, ValueSome none
                 | false, _ -> fail (InvalidRouterKind.UnsupportedType ty)
             else
                 fail (InvalidRouterKind.UnsupportedType ty)
@@ -381,7 +390,7 @@ module private RouterImpl =
         {
             index: int
             serializer: SingleSerializer
-            isOptional: bool
+            optionalDefaultValue: obj voption
             name: string
             propName: string
         }
@@ -511,11 +520,11 @@ module private RouterImpl =
                 |> Array.tryFindIndex (fun f -> f.Name = propName)
                 |> Option.defaultWith(fun () -> fail (InvalidRouterKind.UnknownField(case, propName)))
             let prop = fields[index]
-            let serializer, isOptional = getSingleSerializer prop.PropertyType
+            let serializer, optionalDefaultValue = getSingleSerializer prop.PropertyType
             {
                 index = index
                 serializer = serializer
-                isOptional = isOptional
+                optionalDefaultValue = optionalDefaultValue
                 name = paramName
                 propName = propName
             })
@@ -643,13 +652,18 @@ module private RouterImpl =
                             case.query
                             |> List.forall (fun p ->
                                 match Map.tryFind p.name query with
-                                | None -> p.isOptional
+                                | None ->
+                                    match p.optionalDefaultValue with
+                                    | ValueSome def ->
+                                        args[p.index] <- def
+                                        true
+                                    | ValueNone -> false
                                 | Some v ->
                                     match p.serializer.parse v with
                                     | Some x ->
                                         args[p.index] <- x
                                         true
-                                    | _ -> false)
+                                    | None -> false)
                         if allQueryParamsAreHere then
                             Some (case.ctor args, rest)
                         else None)
