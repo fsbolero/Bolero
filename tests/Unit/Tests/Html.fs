@@ -240,3 +240,25 @@ module Html =
         testNotNull <@ btn @>
         btn.Click()
         elt.Eventually <@ btn.Text = "virt-keyref is bound: 10" @>
+
+    [<Test>]
+    let StopPropagation() =
+        let witness = elt.ByClass("stopPropagationWitness")
+        testNotNull <@ witness @>
+        elt.Eventually <@ witness.Text = "not propagated" @>
+
+        let btn = elt.ByClass("stopPropagationInput")
+        testNotNull <@ btn @>
+
+        btn.Click()
+        elt.Eventually <@ btn.Text = "clicked" @>
+        test <@ witness.Text = "not propagated" @>
+
+    [<Test>]
+    let PreventDefault() =
+        let input = elt.ByClass("preventDefaultInput")
+        testNotNull <@ input @>
+
+        input.Click()
+        elt.Eventually <@ input.Text = "clicked" @>
+        test <@ input.GetDomProperty("checked").Equals("false", StringComparison.OrdinalIgnoreCase) @>

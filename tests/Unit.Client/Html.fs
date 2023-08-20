@@ -47,6 +47,12 @@ type BoleroComponent() =
 
     let mutable forEachState = []
 
+    let mutable propagationValue = "not propagated"
+
+    let mutable propagationWaitCheckValue = "waiting"
+
+    let mutable preventDefaultValue = "not clicked"
+
     [<Parameter>]
     member val Ident = "" with get, set
 
@@ -89,6 +95,27 @@ type BoleroComponent() =
                 span { attr.``class`` ("forEachIs" + s) }
             for s in forEachState do
                 span { attr.``class`` ("forLoopIs" + s) }
+
+            div {
+                on.click (fun _ -> propagationValue <- "propagated")
+                input {
+                    on.stopPropagation "click" true
+                    on.click (fun _ -> propagationWaitCheckValue <- "clicked")
+                    attr.``class`` "stopPropagationInput"
+                    propagationWaitCheckValue
+                }
+                span {
+                    attr.``class`` "stopPropagationWitness"
+                    propagationValue
+                }
+            }
+
+            input {
+                attr.``class`` "preventDefaultInput"
+                on.preventDefault "click" true
+                on.click (fun _ -> preventDefaultValue <- "clicked")
+                preventDefaultValue
+            }
         }
 
 type Binds() =
