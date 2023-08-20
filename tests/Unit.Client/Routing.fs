@@ -47,6 +47,7 @@ type Page =
     | [<EndPoint "/with-rest-array/{*rest}">] WithRestArray of rest: (int * string)[]
     | [<EndPoint "/with-model">] WithModel of PageModel<int>
     | [<EndPoint "/with-model-args/{arg}">] WithModelAndArgs of arg: int * PageModel<string>
+    | [<EndPoint "/with-query/{arg}?named={n}&{implicit}&{optional}&{voptional}">] WithQuery of arg: int * n: int * implicit: int * optional: int option * voptional: int voption
 
 and InnerPage =
     | [<EndPoint "/">] InnerHome
@@ -113,6 +114,7 @@ let rec pageClass = function
     | WithRestArray a -> $"""withrestarray-{a |> Seq.map (fun (i, s) -> $"{i}-{s}") |> String.concat "-"}"""
     | WithModel _ -> "withmodel"
     | WithModelAndArgs (a, _) -> $"withmodelargs-{a}"
+    | WithQuery(a, b, c, d, e) -> $"withquery-{a}-{b}-{c}-{d}-{e}"
 
 let innerlinks =
     [
@@ -164,6 +166,8 @@ let baseLinks =
             "/with-rest-array/1/foo/2/bar",     WithRestArray [|(1, "foo"); (2, "bar")|]
             "/with-model",                      WithModel { Model = Unchecked.defaultof<_> }
             "/with-model-args/42",              WithModelAndArgs(42, { Model = Unchecked.defaultof<_> })
+            "/with-query/42?implicit=2&named=1&optional=3", WithQuery(42, 1, 2, Some 3, ValueNone)
+            "/with-query/42?implicit=5&named=4&voptional=3", WithQuery(42, 4, 5, None, ValueSome 3)
         ]
         for link, page in innerlinks do
             yield "/with-union" + link,                     WithUnion page
