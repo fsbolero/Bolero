@@ -144,9 +144,11 @@ let router : Router<Page, Model, Message> =
             | Custom i -> $"/custom/{i}"
         setRoute = fun s ->
             match s.Trim('/').Split('/') with
-            | [|""|] -> Some (SetPage Home)
-            | [|"custom"; i|] -> Some (SetPage (Custom (int i)))
+            | [|""|] -> Some Home
+            | [|"custom"; i|] -> Some (Custom (int i))
             | _ -> None
+        makeMessage = SetPage
+        notFound = None
     }
 
 type Tpl = Template<"main.html">

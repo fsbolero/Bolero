@@ -152,7 +152,7 @@ and NodeFixture(parent: unit -> IWebElement, by: By) =
 
     /// Assert that the given value is eventually non-null.
     member this.EventuallyNotNull(expr: Expr<'T>) =
-        this.Eventually <@ isNotNull %expr @>
+        this.Wait(fun () -> eval expr)
 
 [<AutoOpen>]
 module Extensions =

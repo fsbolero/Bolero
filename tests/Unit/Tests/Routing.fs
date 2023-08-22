@@ -30,14 +30,22 @@ module Routing =
     [<Test; TestCaseSource("links"); NonParallelizable>]
     let ``Click link``(linkCls: string, url: string, print: string) =
         elt.ByClass("link-" + linkCls).Click()
-        elt.Eventually <@ elt.ByClass("current-page").Text = print @>
+        let currentPage = elt.EventuallyNotNull <@ elt.ByClass("current-page") @>
+        elt.Eventually <@ currentPage.Text = print @>
         test <@ WebFixture.Driver.Url = WebFixture.Url + url @>
 
     [<Test; TestCaseSource("links"); NonParallelizable>]
     let ``Set by model``(linkCls: string, url: string, print: string) =
         elt.ByClass("btn-" + linkCls).Click()
-        elt.Eventually <@ elt.ByClass("current-page").Text = print @>
+        let currentPage = elt.EventuallyNotNull <@ elt.ByClass("current-page") @>
+        elt.Eventually <@ currentPage.Text = print @>
         test <@ WebFixture.Driver.Url = WebFixture.Url + url @>
+
+    [<Test; NonParallelizable>]
+    let ``Not found``() =
+        elt.ByClass("link-notfound").Click()
+        let currentPage = elt.EventuallyNotNull <@ elt.ByClass("current-page") @>
+        elt.Eventually <@ currentPage.Text = "NotFound" @>
 
     let failingRouter<'T> (expectedError: UnionCaseInfo[] -> InvalidRouterKind) =
         TestCaseData(
