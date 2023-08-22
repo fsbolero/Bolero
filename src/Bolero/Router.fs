@@ -921,8 +921,20 @@ module Router =
             (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) =
         inferWithModel makeMessage getEndPoint ignore
 
-    let withNotFound (notFound: 'ep) (r: Router<'ep, 'model, 'msg>) =
-        { r with notFound = Some notFound }
+    /// <summary>
+    /// Indicate the endpoint to switch to if the user initially navigates to an unknown uri.
+    /// </summary>
+    let withNotFound (notFound: 'ep) (router: Router<'ep, 'model, 'msg>) =
+        { router with notFound = Some notFound }
+
+    /// <summary>
+    /// Indicate the message to send if the user initially navigates to an unknown uri.
+    /// </summary>
+    let withNotFoundMsg (notFound: 'msg) (router: IRouter<'model, 'msg>) =
+        { new IRouter<'model, 'msg> with
+            member _.GetRoute(model) = router.GetRoute(model)
+            member _.SetRoute(uri) = router.SetRoute(uri)
+            member _.NotFound = Some notFound }
 
     /// <summary>
     /// An empty PageModel. Used when constructing an endpoint to pass to methods such as <see cref="M:Router`3.Link" />.
