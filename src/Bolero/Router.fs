@@ -43,6 +43,12 @@ type IRouter<'model, 'msg> =
     /// <summary>Get the message to send when the page navigates to <paramref name="uri" />.</summary>
     abstract SetRoute : uri: string -> option<'msg>
 
+    /// <summary>
+    /// The message to send if the user initially navigates to an unknown uri.
+    /// If None, don't send a message and stay on the initial page.
+    /// </summary>
+    abstract NotFound : option<'msg>
+
 /// <summary>A simple hand-written router.</summary>
 /// <typeparam name="model">The Elmish model type.</typeparam>
 /// <typeparam name="msg">The Elmish message type.</typeparam>
@@ -58,6 +64,7 @@ type Router<'model, 'msg> =
     interface IRouter<'model, 'msg> with
         member this.GetRoute(model) = this.getRoute model
         member this.SetRoute(uri) = this.setRoute uri
+        member this.NotFound = None
 
 /// <summary>A simple router where the endpoint corresponds to a value easily gettable from the model.</summary>
 /// <typeparam name="ep">The routing endpoint type.</typeparam>
@@ -71,7 +78,14 @@ type Router<'ep, 'model, 'msg> =
         /// <summary>Get the uri corresponding to an endpoint.</summary>
         getRoute: 'ep -> string
         /// <summary>Get the message to send when the page navigates to an uri.</summary>
-        setRoute: string -> option<'msg>
+        setRoute: string -> option<'ep>
+        /// <summary>Convert an endpoint into the message that sets it.</summary>
+        makeMessage: 'ep -> 'msg
+        /// <summary>
+        /// The endpoint to switch to if the user initially navigates to an unknown uri.
+        /// If None, stay on the initial page.
+        /// </summary>
+        notFound: option<'ep>
     }
 
     /// <summary>Get the uri for the given <paramref name="endpoint" />.</summary>
@@ -79,7 +93,8 @@ type Router<'ep, 'model, 'msg> =
 
     interface IRouter<'model, 'msg> with
         member this.GetRoute(model) = this.getRoute (this.getEndPoint model)
-        member this.SetRoute(uri) = this.setRoute uri
+        member this.SetRoute(uri) = this.setRoute uri |> Option.map this.makeMessage
+        member this.NotFound = Option.map this.makeMessage this.notFound
 
 /// <summary>Declare how an F# union case matches to a URI.</summary>
 /// <category>Routing</category>
@@ -888,8 +903,10 @@ module Router =
                 splitPathAndQuery path
                 ||> frag.parse
                 |> Option.bind (function
-                    | x, [] -> Some (unbox<'ep> x |> makeMessage)
+                    | x, [] -> Some (unbox<'ep> x)
                     | _ -> None)
+            makeMessage = makeMessage
+            notFound = None
         }
 
     /// <summary>
@@ -903,6 +920,9 @@ module Router =
     let infer<[<DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)>] 'ep, 'model, 'msg>
             (makeMessage: 'ep -> 'msg) (getEndPoint: 'model -> 'ep) =
         inferWithModel makeMessage getEndPoint ignore
+
+    let withNotFound (notFound: 'ep) (r: Router<'ep, 'model, 'msg>) =
+        { r with notFound = Some notFound }
 
     /// <summary>
     /// An empty PageModel. Used when constructing an endpoint to pass to methods such as <see cref="M:Router`3.Link" />.
