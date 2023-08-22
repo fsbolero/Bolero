@@ -87,10 +87,11 @@ type ServerComponentsExtensions =
     /// can be passed to use the given mode.
     /// </param>
     [<Extension>]
-    static member AddBoleroHost(this: IServiceCollection, ?server: bool, ?prerendered: bool, ?devToggle: bool) =
-        let server = defaultArg server false
-        let prerendered = defaultArg prerendered true
-        let devToggle = defaultArg devToggle true
+    static member AddBoleroHost(
+            this: IServiceCollection,
+            [<Optional; DefaultParameterValue false>] server: bool,
+            [<Optional; DefaultParameterValue true>] prerendered: bool,
+            [<Optional; DefaultParameterValue true>] devToggle: bool) =
         if devToggle then
             this.AddSingleton(
                 { new IBoleroHostBaseConfig with
@@ -119,9 +120,9 @@ type ServerComponentsExtensions =
     /// </summary>
     /// <param name="page">A function that generates the page to serve.</param>
     [<Extension>]
-    static member MapFallbackToBolero(this: IEndpointRouteBuilder, page: HttpContext -> Bolero.Node) =
+    static member MapFallbackToBolero(this: IEndpointRouteBuilder, page: Func<HttpContext, Bolero.Node>) =
         this.MapFallback(fun ctx ->
-            let page = page ctx
+            let page = page.Invoke(ctx)
             if isNull ctx.Response.ContentType then
                 ctx.Response.ContentType <- "text/html; charset=UTF-8"
             ctx.RenderPage(page))
