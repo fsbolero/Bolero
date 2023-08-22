@@ -33,8 +33,8 @@ open Utility
 
 let config = getArgWith "-c" <| fun o ->
     match o.Context.FinalTarget with
-    | "all" | "pack" -> "Release"
-    | _ -> "Debug"
+    | "test-debug" -> "Debug"
+    | _ -> "Release"
 let version = getArgOpt "-v" >> Option.defaultWith (fun () ->
     let v =
         let s = dotnetOutput "nbgv" ["get-version"; "-v"; "SemVer2"]
