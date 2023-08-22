@@ -1463,7 +1463,7 @@ module on =
     /// <param name="value">True to prevent the default event behavior.</param>
     let inline preventDefault eventName (value: bool) =
         Attr(fun _ builder sequence ->
-            builder.AddEventPreventDefaultAttribute(sequence, eventName, value)
+            builder.AddEventPreventDefaultAttribute(sequence, "on" + eventName, value)
             sequence + 1
         )
 
@@ -1472,7 +1472,7 @@ module on =
     /// <param name="value">True to prevent the propagation.</param>
     let inline stopPropagation eventName (value: bool) =
         Attr(fun _ builder sequence ->
-            builder.AddEventStopPropagationAttribute(sequence, eventName, value)
+            builder.AddEventStopPropagationAttribute(sequence, "on" + eventName, value)
             sequence + 1
         )
 
