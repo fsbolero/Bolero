@@ -45,11 +45,11 @@ module Html =
         inp.Clear()
 
         inp.SendKeys("ab")
-        elt.EventuallyNotNull <@ elt.ByClass("condBoolIs2") @>
+        elt.EventuallyNotNull <@ elt.ByClass("condBoolIs2") @> |> ignore
         testNull <@ elt.ByClass("condBoolIsNot2") @>
 
         inp.SendKeys("c")
-        elt.EventuallyNotNull <@ elt.ByClass("condBoolIsNot2") @>
+        elt.EventuallyNotNull <@ elt.ByClass("condBoolIsNot2") @> |> ignore
         testNull <@ elt.ByClass("condBoolIs2") @>
 
     [<Test>]
@@ -57,17 +57,17 @@ module Html =
         let inp = elt.ByClass("condUnionInput")
         inp.Clear()
 
-        elt.EventuallyNotNull <@ elt.ByClass("condUnionIsEmpty") @>
+        elt.EventuallyNotNull <@ elt.ByClass("condUnionIsEmpty") @> |> ignore
         testNull <@ elt.ByClass("condUnionIsOne") @>
         testNull <@ elt.ByClass("condUnionIsMany") @>
 
         inp.SendKeys("a")
-        elt.EventuallyNotNull <@ elt.ByClass("condUnionIsOne") @>
+        elt.EventuallyNotNull <@ elt.ByClass("condUnionIsOne") @> |> ignore
         testNull <@ elt.ByClass("condUnionIsEmpty") @>
         testNull <@ elt.ByClass("condUnionIsMany") @>
 
         inp.SendKeys("b")
-        elt.EventuallyNotNull <@ elt.ByClass("condUnionIsMany") @>
+        elt.EventuallyNotNull <@ elt.ByClass("condUnionIsMany") @> |> ignore
         testNull <@ elt.ByClass("condUnionIsOne") @>
         testNull <@ elt.ByClass("condUnionIsEmpty") @>
 
@@ -77,7 +77,7 @@ module Html =
         inp.Clear()
 
         inp.SendKeys("ABC")
-        elt.EventuallyNotNull <@ elt.ByClass("forEachIsA") @>
+        elt.EventuallyNotNull <@ elt.ByClass("forEachIsA") @> |> ignore
         testNotNull <@ elt.ByClass("forEachIsB") @>
         testNotNull <@ elt.ByClass("forEachIsC") @>
 
@@ -92,7 +92,7 @@ module Html =
         inp.Clear()
 
         inp.SendKeys("ABC")
-        elt.EventuallyNotNull <@ elt.ByClass("forLoopIsA") @>
+        elt.EventuallyNotNull <@ elt.ByClass("forLoopIsA") @> |> ignore
         testNotNull <@ elt.ByClass("forLoopIsB") @>
         testNotNull <@ elt.ByClass("forLoopIsC") @>
 

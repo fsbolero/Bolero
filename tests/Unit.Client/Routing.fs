@@ -26,6 +26,7 @@ open Elmish
 
 type Page =
     | [<EndPoint "/">] Home
+    | [<EndPoint "/not-found">] NotFound
     | [<EndPoint "/no-arg">] NoArg
     | [<EndPoint "/with-arg">] WithArg of string
     | [<EndPoint "/with-args">] WithArgs of string * int
@@ -80,7 +81,9 @@ let update msg model =
     | SetPage p -> { model with page = p }
 
 let router =
-    try Router.infer SetPage (fun m -> m.page)
+    try
+        Router.infer SetPage (fun m -> m.page)
+        |> Router.withNotFound NotFound
     with e ->
         eprintfn $"ROUTER ERROR: {e}"
         reraise()
@@ -93,6 +96,7 @@ let innerPageClass = function
 
 let rec pageClass = function
     | Home -> "home"
+    | NotFound -> "notfound"
     | NoArg -> "noarg"
     | WithArg x -> $"witharg-{x}"
     | WithArgs(x, y) -> $"withargs-{x}-{y}"
@@ -192,6 +196,11 @@ let view model dispatch =
                 on.click (fun _ -> dispatch (SetPage page))
                 url
             }
+        a {
+            attr.``class`` "link-notfound"
+            attr.href "/invalid-url"
+            "/not-found"
+        }
         span { attr.``class`` "current-page"; $"{model.page}" }
     }
 

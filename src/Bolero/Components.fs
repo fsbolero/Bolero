@@ -164,7 +164,8 @@ and [<AbstractClass>]
                     this.Log.LogInformation("Navigating to external address: {0}", e.Location)
                     this.NavigationManager.NavigateTo(e.Location, forceLoad = true)
                 else
-                    this.Log.LogInformation("No route found for this path: {0}", uri))
+                    this.Log.LogInformation("No route found for this path: {0}", uri)
+                    Option.iter dispatch router.NotFound)
 
     member internal this.GetCurrentUri() =
         let uri = this.NavigationManager.Uri
@@ -217,7 +218,9 @@ and [<AbstractClass>]
         | Some msg ->
             update msg initModel
         | None ->
-            initModel, []
+            match r.NotFound with
+            | Some msg -> update msg initModel
+            | None -> initModel, []
 
     override this.OnAfterRenderAsync(firstRender) =
         if firstRender then

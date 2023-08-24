@@ -31,6 +31,7 @@ open Microsoft.AspNetCore.Components.Web.Virtualization
 
 type Page =
     | [<EndPoint "/">] Form
+    | [<EndPoint "/not-found">] NotFound
     | [<EndPoint "/collection">] Collection
     | [<EndPoint "/collection-item/{key}">] Item of key: int * model: PageModel<int>
     | [<EndPoint "/lazy?{value}&v2={value2}">] Lazy of value: int * value2: string option
@@ -102,9 +103,11 @@ let initModel _ =
     }
 
 let defaultPageModel = function
-    | Form | Collection | Lazy _ | Virtual -> ()
+    | Form | Collection | Lazy _ | Virtual | NotFound -> ()
     | Item (_, m) -> Router.definePageModel m 10
-let router = Router.inferWithModel SetPage (fun m -> m.page) defaultPageModel
+let router =
+    Router.inferWithModel SetPage (fun m -> m.page) defaultPageModel
+    |> Router.withNotFound NotFound
 
 type MyRemoting =
     {
@@ -347,6 +350,7 @@ let view js model dispatch =
             | Item (k, m) -> ecomp<ViewItemPage,_,_> (k, model.items.[k], m.Model) dispatch { attr.empty() }
             | Lazy (x, y) -> viewLazy (x, y) model dispatch
             | Virtual -> viewVirtual model dispatch
+            | NotFound -> p { text "Not found" }
     }
 
 type MyApp() =
