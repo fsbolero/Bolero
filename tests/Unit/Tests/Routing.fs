@@ -1,6 +1,7 @@
 namespace Bolero.Tests.Web
 
 open System.Text.RegularExpressions
+open System.Threading
 open FSharp.Reflection
 open NUnit.Framework
 open OpenQA.Selenium
@@ -46,6 +47,20 @@ module Routing =
         elt.ByClass("link-notfound").Click()
         let currentPage = elt.EventuallyNotNull <@ elt.ByClass("current-page") @>
         elt.Eventually <@ currentPage.Text = "NotFound" @>
+
+    let asFloat (x: obj) =
+        match x with
+        | :? int64 as x -> float x
+        | :? float as x -> x
+        | _ -> failwith $"Unexpected type {x.GetType()}"
+
+    [<Test; NonParallelizable>]
+    let ``Link with anchor``() =
+        elt.ByClass("link-to-anchor").Click()
+        let anchor = elt.EventuallyNotNull <@ elt.ById("the-anchor") @>
+        elt.Eventually
+            <@ (WebFixture.Driver.ExecuteScript("""return arguments[0].getBoundingClientRect().top;""", anchor) |> asFloat)
+                = 0 @>
 
     let failingRouter<'T> (expectedError: UnionCaseInfo[] -> InvalidRouterKind) =
         TestCaseData(

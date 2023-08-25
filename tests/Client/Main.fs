@@ -351,6 +351,9 @@ let view js model dispatch =
             | Lazy (x, y) -> viewLazy (x, y) model dispatch
             | Virtual -> viewVirtual model dispatch
             | NotFound -> p { text "Not found" }
+        div { a { attr.href (router.Link Collection + "#page-bottom"); "Go to bottom" } }
+        div { attr.style "height: 2000px;" }
+        div { attr.id "page-bottom"; text "Page bottom!" }
     }
 
 type MyApp() =
