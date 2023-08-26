@@ -47,7 +47,7 @@ module Page =
             ``base`` { attr.href "/" }
         }
         body {
-            div { attr.id "main"; rootComp<Client.MyApp> }
+            div { attr.id "main"; comp<Client.MyApp> }
             script { attr.src "_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js" }
             boleroScript
         }

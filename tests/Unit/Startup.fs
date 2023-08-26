@@ -40,7 +40,7 @@ module Page =
             meta { attr.charset "utf-8" }
         }
         body {
-            div { attr.id "app"; rootComp<Bolero.Tests.Client.Tests> }
+            div { attr.id "app"; comp<Bolero.Tests.Client.Tests> }
             script {
                 rawHtml """
                     // Used by ElementBinder test:
