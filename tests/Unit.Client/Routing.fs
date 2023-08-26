@@ -27,6 +27,7 @@ open Elmish
 type Page =
     | [<EndPoint "/">] Home
     | [<EndPoint "/not-found">] NotFound
+    | [<EndPoint "/with-anchor">] WithAnchor
     | [<EndPoint "/no-arg">] NoArg
     | [<EndPoint "/with-arg">] WithArg of string
     | [<EndPoint "/with-args">] WithArgs of string * int
@@ -97,6 +98,7 @@ let innerPageClass = function
 let rec pageClass = function
     | Home -> "home"
     | NotFound -> "notfound"
+    | WithAnchor -> "withanchor"
     | NoArg -> "noarg"
     | WithArg x -> $"witharg-{x}"
     | WithArgs(x, y) -> $"withargs-{x}-{y}"
@@ -202,6 +204,24 @@ let view model dispatch =
             "/not-found"
         }
         span { attr.``class`` "current-page"; $"{model.page}" }
+        div {
+            a {
+                attr.``class`` "link-to-anchor"
+                router.HRef(WithAnchor, "the-anchor")
+                "go to anchor"
+            }
+        }
+        cond model.page <| function
+            | WithAnchor ->
+                concat {
+                    div { attr.style "height: 3000px" }
+                    div {
+                        attr.id "the-anchor"
+                        attr.style "height: 3000px"
+                        "the anchor"
+                    }
+                }
+            | _ -> empty()
     }
 
 type Test() =

@@ -89,7 +89,11 @@ type Router<'ep, 'model, 'msg> =
     }
 
     /// <summary>Get the uri for the given <paramref name="endpoint" />.</summary>
-    member this.Link(endpoint) = this.getRoute endpoint
+    member this.Link(endpoint, [<Optional>] hash: string) =
+        let link = this.getRoute endpoint
+        match hash with
+        | null -> link
+        | hash -> link + "#" + hash
 
     interface IRouter<'model, 'msg> with
         member this.GetRoute(model) = this.getRoute (this.getEndPoint model)
@@ -959,7 +963,8 @@ type RouterExtensions =
     /// <summary>Create an HTML href attribute pointing to the given endpoint.</summary>
     /// <param name="this">The router.</param>
     /// <param name="endpoint">The router endpoint.</param>
+    /// <param name="hash">The hash part of the URL, to scroll to the element with this id.</param>
     /// <returns>An <c>href</c> attribute pointing to the given endpoint.</returns>
     [<Extension>]
-    static member HRef(this: Router<'ep, _, _>, endpoint: 'ep) : Attr =
-        Attr.Make "href" (this.Link endpoint)
+    static member HRef(this: Router<'ep, _, _>, endpoint: 'ep, [<Optional>] hash: string) : Attr =
+        Attr.Make "href" (this.Link(endpoint, hash))

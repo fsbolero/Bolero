@@ -122,6 +122,7 @@ and [<AbstractClass>]
     let mutable dispatch = ignore<'msg>
     let mutable program = Unchecked.defaultof<Program<'model, 'msg>>
     let mutable router = None : option<IRouter<'model, 'msg>>
+    let mutable routeHash = None : option<string>
     let mutable setState = fun model dispatch ->
         view <- Program.view program model dispatch
         oldModel <- Some model
@@ -153,9 +154,17 @@ and [<AbstractClass>]
     interface IProgramComponent with
         member this.Services = this.Services
 
+    member private this.ParseUri (uri: string) =
+        let uri, hash =
+            match uri.IndexOf('#') with
+            | -1 -> uri, None
+            | n -> uri[..n-1], Some uri[n+1..]
+        routeHash <- hash
+        this.NavigationManager.ToBaseRelativePath(uri)
+
     member private this.OnLocationChanged (_: obj) (e: LocationChangedEventArgs) =
         router |> Option.iter (fun router ->
-            let uri = this.NavigationManager.ToBaseRelativePath(e.Location)
+            let uri = this.ParseUri e.Location
             match router.SetRoute uri with
             | Some route -> dispatch route
             | None ->
@@ -168,8 +177,7 @@ and [<AbstractClass>]
                     Option.iter dispatch router.NotFound)
 
     member internal this.GetCurrentUri() =
-        let uri = this.NavigationManager.Uri
-        this.NavigationManager.ToBaseRelativePath(uri)
+        this.ParseUri this.NavigationManager.Uri
 
     member internal _.StateHasChanged() =
         base.StateHasChanged()
@@ -230,7 +238,15 @@ and [<AbstractClass>]
             else
                 Task.CompletedTask
         else
-            Task.CompletedTask
+            match routeHash with
+            | None ->
+                Task.CompletedTask
+            | Some h ->
+                routeHash <- None
+                task {
+                    let! elt = this.JSRuntime.InvokeAsync<IJSObjectReference>("document.getElementById", h)
+                    return! elt.InvokeVoidAsync("scrollIntoView")
+                }
 
     override this.Render() =
         view
