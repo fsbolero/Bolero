@@ -21,6 +21,13 @@ nuget Nerdbank.GitVersioning copy_local: true, lowest_matching: false
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 
+group net8
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: net8.0
+
+nuget Microsoft.AspNetCore.Components.Web >= 8.0 preview
+
 group build
 source https://api.nuget.org/v3/index.json
 storage: none

@@ -401,6 +401,41 @@ NUGET
     System.Windows.Extensions (7.0)
       System.Drawing.Common (>= 7.0)
 
+GROUP net8
+STORAGE: NONE
+RESTRICTION: == net8.0
+NUGET
+  remote: https://api.nuget.org/v3/index.json
+    Microsoft.AspNetCore.Authorization (8.0.0-preview.7.23375.9)
+      Microsoft.AspNetCore.Metadata (>= 8.0.0-preview.7.23375.9)
+      Microsoft.Extensions.Logging.Abstractions (>= 8.0.0-preview.7.23375.6)
+      Microsoft.Extensions.Options (>= 8.0.0-preview.7.23375.6)
+    Microsoft.AspNetCore.Components (8.0.0-preview.7.23375.9)
+      Microsoft.AspNetCore.Authorization (>= 8.0.0-preview.7.23375.9)
+      Microsoft.AspNetCore.Components.Analyzers (>= 8.0.0-preview.7.23375.9)
+    Microsoft.AspNetCore.Components.Analyzers (8.0.0-preview.7.23375.9)
+    Microsoft.AspNetCore.Components.Forms (8.0.0-preview.7.23375.9)
+      Microsoft.AspNetCore.Components (>= 8.0.0-preview.7.23375.9)
+    Microsoft.AspNetCore.Components.Web (8.0.0-preview.7.23375.9)
+      Microsoft.AspNetCore.Components (>= 8.0.0-preview.7.23375.9)
+      Microsoft.AspNetCore.Components.Forms (>= 8.0.0-preview.7.23375.9)
+      Microsoft.Extensions.DependencyInjection (>= 8.0.0-preview.7.23375.6)
+      Microsoft.Extensions.Primitives (>= 8.0.0-preview.7.23375.6)
+      Microsoft.JSInterop (>= 8.0.0-preview.7.23375.9)
+      System.IO.Pipelines (>= 8.0.0-preview.7.23375.6)
+    Microsoft.AspNetCore.Metadata (8.0.0-preview.7.23375.9)
+    Microsoft.Extensions.DependencyInjection (8.0.0-preview.7.23375.6)
+      Microsoft.Extensions.DependencyInjection.Abstractions (>= 8.0.0-preview.7.23375.6)
+    Microsoft.Extensions.DependencyInjection.Abstractions (8.0.0-preview.7.23375.6)
+    Microsoft.Extensions.Logging.Abstractions (8.0.0-preview.7.23375.6)
+      Microsoft.Extensions.DependencyInjection.Abstractions (>= 8.0.0-preview.7.23375.6)
+    Microsoft.Extensions.Options (8.0.0-preview.7.23375.6)
+      Microsoft.Extensions.DependencyInjection.Abstractions (>= 8.0.0-preview.7.23375.6)
+      Microsoft.Extensions.Primitives (>= 8.0.0-preview.7.23375.6)
+    Microsoft.Extensions.Primitives (8.0.0-preview.7.23375.6)
+    Microsoft.JSInterop (8.0.0-preview.7.23375.9)
+    System.IO.Pipelines (8.0.0-preview.7.23375.6)
+
 GROUP tests
 STORAGE: NONE
 RESTRICTION: || (== net7.0) (== net8.0)
