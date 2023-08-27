@@ -1,5 +1,7 @@
 group tests
-Microsoft.AspNetCore.Components.WebAssembly
-Microsoft.AspNetCore.Components.WebAssembly.DevServer
 FSharp.Core
 Elmish
+
+group tests-net7
+Microsoft.AspNetCore.Components.WebAssembly
+Microsoft.AspNetCore.Components.WebAssembly.DevServer
