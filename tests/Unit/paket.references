@@ -8,5 +8,5 @@ Selenium.WebDriver
 Selenium.WebDriver.ChromeDriver
 Unquote
 
-group tests-net7
+group tests-net8
 Microsoft.AspNetCore.Components.WebAssembly.Server

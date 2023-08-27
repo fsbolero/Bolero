@@ -3,6 +3,6 @@ FSharp.Core
 Swashbuckle.AspNetCore
 FSharp.SystemTextJson.Swagger
 
-group tests-net7
+group tests-net8
 Microsoft.AspNetCore.OpenApi
 Microsoft.AspNetCore.Components.WebAssembly.Server
