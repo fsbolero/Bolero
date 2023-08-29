@@ -1,5 +1,46 @@
 # Changelog
 
+## 0.23
+
+* [#308](https://github.com/fsbolero/Bolero/issues/308) Add router functions to decide what to do when the URL is invalid.
+
+    * `Router.withNotFound` takes an endpoint to redirect to, and applies to a `Router<_, _, _>` (ie. an inferred router).
+
+    * `Router.withNotFoundMsg` takes an Elmish message to send, and applies to any `IRouter<_, _>` (including manual routers).
+
+    These functions apply when the initial URL is invalid, or when the URL is programmatically changed to be invalid.
+    They do not apply when the user clicks a link to an invalid URL, in order to allow external links.
+
+* [#309](https://github.com/fsbolero/Bolero/issues/309) Add support for query parameters in inferred routing with `EndPointAttribute`.
+
+    * `?paramName={fieldName}` adds query parameter `paramName` corresponding to the union field named `fieldName`. This parameter is mandatory if `fieldName` is a string, boolean or number, and optional if it is an option or voption of these types.
+
+    * `?{paramName}` is short for `?paramName={paramName}`.
+
+* [#313](https://github.com/fsbolero/Bolero/issues/313) Improve C# compatibility of server-side APIs.
+    For the following extension methods:
+
+    * `IServiceCollection.AddBoleroHost`
+    * `IServiceCollection.AddBoleroRouting`
+    * `IEndpointRouteBuilder.MapFallbackToBolero`
+
+    The following changes are applied:
+
+    * Optional arguments are changed from F#-style to C#-style. This is a source breaking change for callers who use explicit syntax `?argument = optionValue`.
+    * Function arguments are changed from F#-style functions to C#-style `Func` or `Action`.
+
+* [#315](https://github.com/fsbolero/Bolero/issues/315) Support adding hash component to routing URLs:
+
+    * Manually adding `+ "#foo"` to a routed URL will correctly scroll to the element named `foo` in the target page.
+
+    * Methods `IRouter.Link` and `IRouter.HRef` take a new optional argument `hash: string` to link to the corresponding `#hash` in the target page.
+
+* [#316](https://github.com/fsbolero/Bolero/issues/316) Fix `on.stopPropagation` and `on.preventDefault` to take event names without the `on` prefix, for consistency with `on.event`.
+
+* [#317](https://github.com/fsbolero/Bolero/issues/317) Fix .NET 8 compatibility of the MSBuild task for scoped CSS.
+
+* [#317](https://github.com/fsbolero/Bolero/issues/317) Fix .NET 8 compatibility of the server-side rendering of nodes.
+
 ## 0.22
 
 * [#289](https://github.com/fsbolero/Bolero/issues/289) Add endpoint routing for remote services.
