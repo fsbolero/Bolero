@@ -21,6 +21,13 @@ nuget Nerdbank.GitVersioning copy_local: true, lowest_matching: false
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 
+group net8
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: net8.0
+
+nuget Microsoft.AspNetCore.Components.Web >= 8.0 preview
+
 group build
 source https://api.nuget.org/v3/index.json
 storage: none
@@ -32,7 +39,7 @@ nuget Microsoft.Build.Utilities.Core ~> 15.0
 group fake
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: net7.0
+framework: net8.0
 
 nuget Fake.Core.Target
 nuget Fake.IO.FileSystem
@@ -44,18 +51,12 @@ nuget FSharp.Data ~> 3.0-beta
 group tests
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: net7.0
+framework: net7.0, net8.0
 
 nuget FSharp.Core
 nuget Elmish ~> 4.0
 nuget FsCheck.NUnit ~> 2.12
 nuget FSharp.SystemTextJson.Swagger
-nuget Microsoft.AspNetCore.OpenApi
-nuget Microsoft.AspNetCore.Components.Authorization
-nuget Microsoft.AspNetCore.Components.WebAssembly
-nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication
-nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer
-nuget Microsoft.AspNetCore.Components.WebAssembly.Server
 nuget Microsoft.NET.Test.Sdk 15.8.0
 nuget nunit ~> 3.10
 nuget NUnit3TestAdapter ~> 3.10
@@ -65,3 +66,27 @@ nuget Selenium.WebDriver.ChromeDriver
 nuget Swashbuckle.AspNetCore
 # nuget Selenium.WebDriver.GeckoDriver.Win64
 nuget Unquote
+
+group tests-net7
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: net7.0
+
+nuget Microsoft.AspNetCore.OpenApi ~> 7.0
+nuget Microsoft.AspNetCore.Components.Authorization ~> 7.0
+nuget Microsoft.AspNetCore.Components.WebAssembly ~> 7.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 7.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 7.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 7.0
+
+group tests-net8
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: net8.0
+
+nuget Microsoft.AspNetCore.OpenApi ~> 8.0 preview
+nuget Microsoft.AspNetCore.Components.Authorization ~> 8.0 preview
+nuget Microsoft.AspNetCore.Components.WebAssembly ~> 8.0 preview
+nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 8.0 preview
+nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 8.0 preview
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 8.0 preview

@@ -7,6 +7,14 @@
   <PropertyGroup>
     <_BoleroScopedCssSourceFile>$(BaseIntermediateOutputPath)CssScopes.fs</_BoleroScopedCssSourceFile>
   </PropertyGroup>
+  <PropertyGroup Condition="!$([MSBuild]::VersionGreaterThanOrEquals('$(NETCoreSdkVersion)', '8.0'))">
+    <_BoleroComputeCssScopeDependsOn>_ResolveCssScopes</_BoleroComputeCssScopeDependsOn>
+    <_BoleroApplyCssScopesBeforeTargets>_ResolveScopedCssOutputs;CoreCompile</_BoleroApplyCssScopesBeforeTargets>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::VersionGreaterThanOrEquals('$(NETCoreSdkVersion)', '8.0'))">
+    <_BoleroComputeCssScopeDependsOn>ResolveScopedCssInputs</_BoleroComputeCssScopeDependsOn>
+    <_BoleroApplyCssScopesBeforeTargets>ResolveScopedCssOutputs;CoreCompile</_BoleroApplyCssScopesBeforeTargets>
+  </PropertyGroup>
 
   <UsingTask AssemblyFile="$(BoleroTaskAssemblyPath)" TaskName="Bolero.Build.BoleroStripFSharpMetadata"
              Condition="'$(BoleroStripAssemblies)' != 'False'" />
@@ -18,14 +26,14 @@
   </Target>
 
   <!-- Generate the CSS Scope identifier for *.bolero.css -->
-  <Target Name="_BoleroComputeCssScope" DependsOnTargets="_ResolveCssScopes">
+  <Target Name="_BoleroComputeCssScope" DependsOnTargets="$(_BoleroComputeCssScopeDependsOn)">
     <ComputeCssScope ScopedCssInput="@(BoleroScopedCss)" Targetname="$(TargetName)">
       <Output TaskParameter="ScopedCss" ItemName="_BoleroScopedCss" />
     </ComputeCssScope>
   </Target>
 
   <!-- Generate CssScopes.fs and add *.bolero.css to Razor's _ScopedCss -->
-  <Target Name="_BoleroApplyCssScopes" DependsOnTargets="_BoleroComputeCssScope" BeforeTargets="_ResolveScopedCssOutputs;CoreCompile"
+  <Target Name="_BoleroApplyCssScopes" DependsOnTargets="_BoleroComputeCssScope" BeforeTargets="$(_BoleroApplyCssScopesBeforeTargets)"
           Inputs="@(_BoleroScopedCss);$(MSBuildThisFileFullPath)" Outputs="$(_BoleroScopedCssSourceFile)">
     <BoleroApplyCssScopes ScopedCss="@(_BoleroScopedCss)" ScopedCssSourceFile="$(_BoleroScopedCssSourceFile)" />
     <ItemGroup>

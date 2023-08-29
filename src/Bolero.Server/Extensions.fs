@@ -26,6 +26,9 @@ open System.Runtime.InteropServices
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Components
+#if NET8_0
+open Microsoft.AspNetCore.Components.Endpoints
+#endif
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Routing
 open Microsoft.AspNetCore.Mvc
@@ -61,8 +64,14 @@ type ServerComponentsExtensions =
     static member RenderPage(this: HttpContext, page: Node) : Task = upcast task {
         let htmlHelper = this.RequestServices.GetRequiredService<IHtmlHelper>()
         let boleroConfig = this.RequestServices.GetRequiredService<IBoleroHostConfig>()
+#if NET8_0
+        let prerenderer = this.RequestServices.GetRequiredService<IComponentPrerenderer>()
+#endif
         let body =
             Components.Rendering.renderPage page this htmlHelper boleroConfig
+#if NET8_0
+                prerenderer
+#endif
             |> System.Text.Encoding.UTF8.GetBytes
         return! this.Response.Body.WriteAsync(ReadOnlyMemory body)
     }

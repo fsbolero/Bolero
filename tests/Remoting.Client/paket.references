@@ -1,8 +1,10 @@
 group tests
-Microsoft.AspNetCore.Components.WebAssembly.DevServer
 FSharp.Core
 Elmish
+
+group tests-net8
+Microsoft.Extensions.Configuration.Binder
+Microsoft.AspNetCore.Components.WebAssembly.DevServer
 Microsoft.AspNetCore.Components.Authorization
 Microsoft.AspNetCore.Components.WebAssembly
 Microsoft.AspNetCore.Components.WebAssembly.Authentication
-Microsoft.Extensions.Configuration.Binder

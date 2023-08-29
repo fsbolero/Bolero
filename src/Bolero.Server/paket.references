@@ -1,3 +1,6 @@
 FSharp.Core
 Nerdbank.GitVersioning
 FSharp.SystemTextJson
+
+group net8
+Microsoft.AspNetCore.Components.Web

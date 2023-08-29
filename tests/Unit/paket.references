@@ -1,5 +1,4 @@
 group tests
-Microsoft.AspNetCore.Components.WebAssembly.Server
 FsCheck.NUnit
 nunit
 NUnit3TestAdapter
@@ -8,3 +7,6 @@ Selenium.Support
 Selenium.WebDriver
 Selenium.WebDriver.ChromeDriver
 Unquote
+
+group tests-net8
+Microsoft.AspNetCore.Components.WebAssembly.Server

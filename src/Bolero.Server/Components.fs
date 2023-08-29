@@ -29,6 +29,10 @@ open System.Text
 open System.Text.Encodings.Web
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Components
+#if NET8_0
+open Microsoft.AspNetCore.Components.Endpoints
+open Microsoft.AspNetCore.Components.Web
+#endif
 open Microsoft.AspNetCore.Components.RenderTree
 open Microsoft.AspNetCore.Components.Rendering
 open Microsoft.AspNetCore.Html
@@ -61,11 +65,13 @@ module Rendering =
     let private emptyContent = Task.FromResult { new IHtmlContent with member _.WriteTo(_, _) = () }
 
     let internal renderComponentAsync (html: IHtmlHelper) (componentType: Type) (config: IBoleroHostConfig) (parameters: obj) =
-        match config.IsServer, config.IsPrerendered with
-        | true,  true  -> html.RenderComponentAsync(componentType, RenderMode.ServerPrerendered, parameters)
-        | true,  false -> html.RenderComponentAsync(componentType, RenderMode.Server, parameters)
-        | false, true  -> html.RenderComponentAsync(componentType, RenderMode.Static, parameters)
-        | false, false -> emptyContent
+        let mode =
+            match config.IsServer, config.IsPrerendered with
+            | true,  true  -> RenderMode.ServerPrerendered
+            | true,  false -> RenderMode.Server
+            | false, true  -> RenderMode.WebAssemblyPrerendered
+            | false, false -> RenderMode.WebAssembly
+        html.RenderComponentAsync(componentType, mode, parameters)
 
     type [<Struct>] RenderType =
         | FromConfig of IBoleroHostConfig
@@ -78,14 +84,21 @@ module Rendering =
             (htmlHelper: IHtmlHelper)
             (renderType: RenderType)
             (parameters: obj)
+#if NET8_0
+            (prerenderer: IComponentPrerenderer)
+#endif
             = task {
         (htmlHelper :?> IViewContextAware).Contextualize(ViewContext(HttpContext = httpContext))
         let! htmlContent =
             match renderType with
             | FromConfig config -> renderComponentAsync htmlHelper componentType config parameters
             | Page -> htmlHelper.RenderComponentAsync(componentType, RenderMode.Static, parameters)
-        using (new StringWriter(sb)) <| fun writer ->
-            htmlContent.WriteTo(writer, HtmlEncoder.Default)
+        use writer = new StringWriter(sb)
+#if NET8_0
+        return! prerenderer.Dispatcher.InvokeAsync(fun () -> htmlContent.WriteTo(writer, HtmlEncoder.Default))
+#else
+        htmlContent.WriteTo(writer, HtmlEncoder.Default)
+#endif
     }
 
     let private selfClosingElements = HashSet [ "area"; "base"; "br"; "col"; "embed"; "hr"; "img"; "input"; "link"; "meta"; "param"; "source"; "track"; "wbr" ]
@@ -178,13 +191,20 @@ module Rendering =
     /// <param name="htmlHelper">The Razor HTML helper.</param>
     /// <param name="boleroConfig">The Bolero configuration.</param>
     /// <returns>A string containing the HTML representation of the page.</returns>
-    let renderPage (page: Node) httpContext htmlHelper boleroConfig =
+    let renderPage (page: Node) httpContext htmlHelper boleroConfig
+#if NET8_0
+            (prerenderer: IComponentPrerenderer)
+#endif
+        =
         let renderComp =
             { new IRenderComponents with
                 member _.RenderComponent(ty, sb, attributes, forceStatic) =
                     let renderType = if forceStatic then Page else FromConfig boleroConfig
-                    (renderCompTo sb ty httpContext htmlHelper renderType attributes)
-                        .GetAwaiter().GetResult()
+                    (renderCompTo sb ty httpContext htmlHelper renderType attributes
+#if NET8_0
+                        prerenderer
+#endif
+                     ).GetAwaiter().GetResult()
                     sb }
         renderWith renderComp page
 
