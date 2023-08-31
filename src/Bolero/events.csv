@@ -10,8 +10,8 @@ mousedown,Mouse
 mouseup,Mouse
 click,Mouse
 dblclick,Mouse
-wheel,Mouse
-mousewheel,Mouse
+wheel,Wheel
+mousewheel,Wheel
 contextmenu,Mouse
 drag,Drag
 dragend,Drag
@@ -76,7 +76,7 @@ abort,Progress
 load,Progress
 loadend,Progress
 progress,Progress
-error,Progress
+error,Error
 activate,
 beforeactivate,
 beforedeactivate,

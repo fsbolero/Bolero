@@ -24,6 +24,9 @@
     <None Include="Bolero.targets" />
     <None Include="paket.references" />
     <None Include="paket.template" />
+    <None Include="attrs.csv" />
+    <None Include="events.csv" />
+    <None Include="tags.csv" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Bolero.Build\Bolero.Build.csproj">

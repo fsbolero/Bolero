@@ -78,8 +78,8 @@ module HoleType =
         | "onmouseup" -> typeof<MouseEventArgs>
         | "onclick" -> typeof<MouseEventArgs>
         | "ondblclick" -> typeof<MouseEventArgs>
-        | "onwheel" -> typeof<MouseEventArgs>
-        | "onmousewheel" -> typeof<MouseEventArgs>
+        | "onwheel" -> typeof<WheelEventArgs>
+        | "onmousewheel" -> typeof<WheelEventArgs>
         | "oncontextmenu" -> typeof<MouseEventArgs>
         | "ondrag" -> typeof<DragEventArgs>
         | "ondragend" -> typeof<DragEventArgs>
@@ -118,7 +118,7 @@ module HoleType =
         | "onload" -> typeof<ProgressEventArgs>
         | "onloadend" -> typeof<ProgressEventArgs>
         | "onprogress" -> typeof<ProgressEventArgs>
-        | "onerror" -> typeof<ProgressEventArgs>
+        | "onerror" -> typeof<ErrorEventArgs>
 // END EVENTS
         | _ -> typeof<EventArgs>
 
