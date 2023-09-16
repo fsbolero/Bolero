@@ -41,6 +41,8 @@
 
 * [#317](https://github.com/fsbolero/Bolero/issues/317) Fix .NET 8 compatibility of the server-side rendering of nodes.
 
+* [#323](https://github.com/fsbolero/Bolero/issues/323) Use `WheelEventArgs` for wheel events and `ErrorEventArgs` for `on.error`.
+
 ## 0.22
 
 * [#289](https://github.com/fsbolero/Bolero/issues/289) Add endpoint routing for remote services.
