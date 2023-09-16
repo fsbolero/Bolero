@@ -1534,13 +1534,13 @@ module on =
 
     /// <summary>Create a handler for HTML event <c>wheel</c>.</summary>
     /// <param name="callback">The event callback.</param>
-    let inline wheel (callback: MouseEventArgs -> unit) : Attr =
-        attr.callback<MouseEventArgs> "onwheel" callback
+    let inline wheel (callback: WheelEventArgs -> unit) : Attr =
+        attr.callback<WheelEventArgs> "onwheel" callback
 
     /// <summary>Create a handler for HTML event <c>mousewheel</c>.</summary>
     /// <param name="callback">The event callback.</param>
-    let inline mousewheel (callback: MouseEventArgs -> unit) : Attr =
-        attr.callback<MouseEventArgs> "onmousewheel" callback
+    let inline mousewheel (callback: WheelEventArgs -> unit) : Attr =
+        attr.callback<WheelEventArgs> "onmousewheel" callback
 
     /// <summary>Create a handler for HTML event <c>contextmenu</c>.</summary>
     /// <param name="callback">The event callback.</param>
@@ -1864,8 +1864,8 @@ module on =
 
     /// <summary>Create a handler for HTML event <c>error</c>.</summary>
     /// <param name="callback">The event callback.</param>
-    let inline error (callback: ProgressEventArgs -> unit) : Attr =
-        attr.callback<ProgressEventArgs> "onerror" callback
+    let inline error (callback: ErrorEventArgs -> unit) : Attr =
+        attr.callback<ErrorEventArgs> "onerror" callback
 
     /// <summary>Create a handler for HTML event <c>activate</c>.</summary>
     /// <param name="callback">The event callback.</param>
@@ -1991,12 +1991,12 @@ module on =
             attr.async.callback<MouseEventArgs> "ondblclick" callback
         /// <summary>Create an asynchronous handler for HTML event <c>wheel</c>.</summary>
         /// <param name="callback">The event callback.</param>
-        let inline wheel (callback: MouseEventArgs -> Async<unit>) : Attr =
-            attr.async.callback<MouseEventArgs> "onwheel" callback
+        let inline wheel (callback: WheelEventArgs -> Async<unit>) : Attr =
+            attr.async.callback<WheelEventArgs> "onwheel" callback
         /// <summary>Create an asynchronous handler for HTML event <c>mousewheel</c>.</summary>
         /// <param name="callback">The event callback.</param>
-        let inline mousewheel (callback: MouseEventArgs -> Async<unit>) : Attr =
-            attr.async.callback<MouseEventArgs> "onmousewheel" callback
+        let inline mousewheel (callback: WheelEventArgs -> Async<unit>) : Attr =
+            attr.async.callback<WheelEventArgs> "onmousewheel" callback
         /// <summary>Create an asynchronous handler for HTML event <c>contextmenu</c>.</summary>
         /// <param name="callback">The event callback.</param>
         let inline contextmenu (callback: MouseEventArgs -> Async<unit>) : Attr =
@@ -2255,8 +2255,8 @@ module on =
             attr.async.callback<ProgressEventArgs> "onprogress" callback
         /// <summary>Create an asynchronous handler for HTML event <c>error</c>.</summary>
         /// <param name="callback">The event callback.</param>
-        let inline error (callback: ProgressEventArgs -> Async<unit>) : Attr =
-            attr.async.callback<ProgressEventArgs> "onerror" callback
+        let inline error (callback: ErrorEventArgs -> Async<unit>) : Attr =
+            attr.async.callback<ErrorEventArgs> "onerror" callback
         /// <summary>Create an asynchronous handler for HTML event <c>activate</c>.</summary>
         /// <param name="callback">The event callback.</param>
         let inline activate (callback: EventArgs -> Async<unit>) : Attr =
@@ -2368,12 +2368,12 @@ module on =
             attr.task.callback<MouseEventArgs> "ondblclick" callback
         /// <summary>Create an asynchronous handler for HTML event <c>wheel</c>.</summary>
         /// <param name="callback">The event callback.</param>
-        let inline wheel (callback: MouseEventArgs -> Task) : Attr =
-            attr.task.callback<MouseEventArgs> "onwheel" callback
+        let inline wheel (callback: WheelEventArgs -> Task) : Attr =
+            attr.task.callback<WheelEventArgs> "onwheel" callback
         /// <summary>Create an asynchronous handler for HTML event <c>mousewheel</c>.</summary>
         /// <param name="callback">The event callback.</param>
-        let inline mousewheel (callback: MouseEventArgs -> Task) : Attr =
-            attr.task.callback<MouseEventArgs> "onmousewheel" callback
+        let inline mousewheel (callback: WheelEventArgs -> Task) : Attr =
+            attr.task.callback<WheelEventArgs> "onmousewheel" callback
         /// <summary>Create an asynchronous handler for HTML event <c>contextmenu</c>.</summary>
         /// <param name="callback">The event callback.</param>
         let inline contextmenu (callback: MouseEventArgs -> Task) : Attr =
@@ -2632,8 +2632,8 @@ module on =
             attr.task.callback<ProgressEventArgs> "onprogress" callback
         /// <summary>Create an asynchronous handler for HTML event <c>error</c>.</summary>
         /// <param name="callback">The event callback.</param>
-        let inline error (callback: ProgressEventArgs -> Task) : Attr =
-            attr.task.callback<ProgressEventArgs> "onerror" callback
+        let inline error (callback: ErrorEventArgs -> Task) : Attr =
+            attr.task.callback<ErrorEventArgs> "onerror" callback
         /// <summary>Create an asynchronous handler for HTML event <c>activate</c>.</summary>
         /// <param name="callback">The event callback.</param>
         let inline activate (callback: EventArgs -> Task) : Attr =

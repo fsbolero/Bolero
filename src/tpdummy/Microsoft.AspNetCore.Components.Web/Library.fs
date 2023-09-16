@@ -8,6 +8,7 @@ type MouseEventArgs = class end
 type PointerEventArgs = class end
 type ProgressEventArgs = class end
 type TouchEventArgs = class end
+type WheelEventArgs = class inherit MouseEventArgs end
 
 namespace Microsoft.AspNetCore.Components.Web.Virtualization
 
