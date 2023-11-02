@@ -1,8 +1,10 @@
 group tests
 FSharp.Core
 Swashbuckle.AspNetCore
-FSharp.SystemTextJson.Swagger
 
 group tests-net8
 Microsoft.AspNetCore.OpenApi
+Microsoft.AspNetCore.Components
+Microsoft.AspNetCore.Components.WebAssembly
 Microsoft.AspNetCore.Components.WebAssembly.Server
+FSharp.SystemTextJson.Swagger

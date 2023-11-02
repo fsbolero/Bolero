@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
     <OutputType>Library</OutputType>
     <IsTrimmable>true</IsTrimmable>
     <!-- <DefineConstants>DEBUG_RENDERER;$(DefineConstants)</DefineConstants> -->
