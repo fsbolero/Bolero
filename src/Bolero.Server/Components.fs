@@ -65,13 +65,11 @@ module Rendering =
     let private emptyContent = Task.FromResult { new IHtmlContent with member _.WriteTo(_, _) = () }
 
     let internal renderComponentAsync (html: IHtmlHelper) (componentType: Type) (config: IBoleroHostConfig) (parameters: obj) =
-        let mode =
-            match config.IsServer, config.IsPrerendered with
-            | true,  true  -> RenderMode.ServerPrerendered
-            | true,  false -> RenderMode.Server
-            | false, true  -> RenderMode.WebAssemblyPrerendered
-            | false, false -> RenderMode.WebAssembly
-        html.RenderComponentAsync(componentType, mode, parameters)
+        match config.IsServer, config.IsPrerendered with
+        | true,  true  -> html.RenderComponentAsync(componentType, RenderMode.ServerPrerendered, parameters)
+        | true,  false -> html.RenderComponentAsync(componentType, RenderMode.Server, parameters)
+        | false, true  -> html.RenderComponentAsync(componentType, RenderMode.Static, parameters)
+        | false, false -> emptyContent
 
     type [<Struct>] RenderType =
         | FromConfig of IBoleroHostConfig
