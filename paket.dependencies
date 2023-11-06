@@ -26,7 +26,13 @@ source https://api.nuget.org/v3/index.json
 storage: none
 framework: net8.0
 
-nuget Microsoft.AspNetCore.Components.Web >= 8.0 preview
+nuget Elmish >= 4.0.1 < 5.0 lowest_matching: true
+nuget Microsoft.AspNetCore.Components.WebAssembly >= 8.0.0-rc.2.23480.2
+nuget Microsoft.JSInterop.WebAssembly >= 8.0.0-rc.2.23480.2
+nuget Microsoft.AspNetCore.Components.Web >= 8.0.0-rc.2.23480.2
+nuget Microsoft.Extensions.Http >= 8.0.0-rc.2.23479.6
+nuget FSharp.SystemTextJson >= 0.19.13
+nuget System.Text.Json >= 8.0.0-rc.2.23479.6
 
 group build
 source https://api.nuget.org/v3/index.json
@@ -84,9 +90,9 @@ source https://api.nuget.org/v3/index.json
 storage: none
 framework: net8.0
 
-nuget Microsoft.AspNetCore.OpenApi ~> 8.0 preview
-nuget Microsoft.AspNetCore.Components.Authorization ~> 8.0 preview
-nuget Microsoft.AspNetCore.Components.WebAssembly ~> 8.0 preview
-nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 8.0 preview
-nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 8.0 preview
-nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 8.0 preview
+nuget Microsoft.AspNetCore.OpenApi ~> 8.0.0-rc.2.23480.2
+nuget Microsoft.AspNetCore.Components.Authorization ~> 8.0-rc.2.23480.2
+nuget Microsoft.AspNetCore.Components.WebAssembly ~> 8.0-rc.2.23480.2
+nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 8.0-rc.2.23480.2
+nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 8.0-rc.2.23480.2
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 8.0-rc.2.23480.2

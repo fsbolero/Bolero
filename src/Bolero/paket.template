@@ -21,6 +21,11 @@ excludeddependencies
 include-pdbs true
 dependencies
     framework: net6.0
+        Microsoft.JSInterop.WebAssembly ~> 6.0
         Microsoft.AspNetCore.Components.WebAssembly ~> 6.0
     framework: net7.0
-        Microsoft.AspNetCore.Components.WebAssembly >= 7.0
+        Microsoft.JSInterop.WebAssembly ~> 7.0
+        Microsoft.AspNetCore.Components.WebAssembly ~> 7.0
+    framework: net8.0
+        Microsoft.JSInterop.WebAssembly >= 8.0-rc.2.23480.2
+        Microsoft.AspNetCore.Components.WebAssembly >= 8.0-rc.2.23480.2

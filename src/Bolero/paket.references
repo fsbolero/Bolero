@@ -5,3 +5,10 @@ Elmish
 Nerdbank.GitVersioning
 Microsoft.Extensions.Http
 FSharp.SystemTextJson
+
+group net8
+Elmish
+Microsoft.AspNetCore.Components.WebAssembly
+Microsoft.JSInterop.WebAssembly
+Microsoft.Extensions.Http
+FSharp.SystemTextJson

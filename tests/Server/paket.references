@@ -2,4 +2,6 @@ group tests
 FSharp.Core
 
 group tests-net8
+Microsoft.AspNetCore.Components
+Microsoft.AspNetCore.Components.WebAssembly
 Microsoft.AspNetCore.Components.WebAssembly.Server
