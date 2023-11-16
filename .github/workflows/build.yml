@@ -50,13 +50,30 @@ jobs:
           name: nuget
           path: build
 
-      - name: Report tests
-        uses: dorny/test-reporter@v1
+      - name: Upload test results
         if: always()
+        uses: actions/upload-artifact@v2
         with:
-          name: Unit tests
+          name: TestResults
           path: tests/Unit/TestResults/*.trx
-          reporter: dotnet-trx
+
+  report:
+    needs: build
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download test results
+      uses: actions/download-artifact@v2
+      with:
+        name: TestResults
+
+    - name: Report tests
+      uses: dorny/test-reporter@v1
+      with:
+        name: Unit tests
+        path: TestResults/*.trx
+        reporter: dotnet-trx
 
   prerelease:
     runs-on: ubuntu-latest
