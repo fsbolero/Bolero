@@ -231,22 +231,19 @@ and [<AbstractClass>]
             | None -> initModel, []
 
     override this.OnAfterRenderAsync(firstRender) =
-        if firstRender then
-            runProgramLoop()
-            if router.IsSome then
-                this.NavigationInterception.EnableNavigationInterceptionAsync()
-            else
-                Task.CompletedTask
-        else
+        task {
+            if firstRender then
+                runProgramLoop()
+                if router.IsSome then
+                    do! this.NavigationInterception.EnableNavigationInterceptionAsync()
+
             match routeHash with
-            | None ->
-                Task.CompletedTask
+            | None -> ()
             | Some h ->
                 routeHash <- None
-                task {
-                    let! elt = this.JSRuntime.InvokeAsync<IJSObjectReference>("document.getElementById", h)
-                    return! elt.InvokeVoidAsync("scrollIntoView")
-                }
+                let! elt = this.JSRuntime.InvokeAsync<IJSObjectReference>("document.getElementById", h)
+                return! elt.InvokeVoidAsync("scrollIntoView")
+        }
 
     override this.Render() =
         view
