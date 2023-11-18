@@ -29,5 +29,5 @@ dependencies
         Microsoft.JSInterop.WebAssembly ~> 7.0
         Microsoft.AspNetCore.Components.WebAssembly ~> 7.0
     framework: net8.0
-        Microsoft.JSInterop.WebAssembly ~> 8.0
-        Microsoft.AspNetCore.Components.WebAssembly ~> 8.0
+        Microsoft.JSInterop.WebAssembly >= 8.0
+        Microsoft.AspNetCore.Components.WebAssembly >= 8.0
