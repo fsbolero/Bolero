@@ -20,7 +20,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '8.0.100-rc.2.23502.2'
+          dotnet-version: '8.0.100'
 
       - name: NuGet cache
         uses: actions/cache@v1
@@ -37,7 +37,7 @@ jobs:
             git checkout "$(echo ${{github.ref}} | sed -E 's|^refs/heads/||')";
           fi
           # .NET 8 RC2 has a bug where it restores the wrong version of tools...
-          dotnet tool update paket --version 8.0.0-alpha002
+          dotnet tool update paket --version 8.0.0
           dotnet tool update nbgv --version 3.6.133
           # Ensure that the selenium chrome driver matches the installed chrome
           ./build.ps1 -t update-chromedriver
@@ -50,13 +50,30 @@ jobs:
           name: nuget
           path: build
 
-      - name: Report tests
-        uses: dorny/test-reporter@v1
+      - name: Upload test results
         if: always()
+        uses: actions/upload-artifact@v2
         with:
-          name: Unit tests
+          name: TestResults
           path: tests/Unit/TestResults/*.trx
-          reporter: dotnet-trx
+
+  report:
+    needs: build
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download test results
+      uses: actions/download-artifact@v2
+      with:
+        name: TestResults
+
+    - name: Report tests
+      uses: dorny/test-reporter@v1
+      with:
+        name: Unit tests
+        path: TestResults/*.trx
+        reporter: dotnet-trx
 
   prerelease:
     runs-on: ubuntu-latest
@@ -66,7 +83,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '8.0.100-rc.2.23502.2'
+          dotnet-version: '8.0.100'
 
       - name: Download nupkg
         uses: actions/download-artifact@v1
@@ -90,7 +107,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '8.0.100-rc.2.23502.2'
+          dotnet-version: '8.0.100'
 
       - name: Prepare
         run: |
