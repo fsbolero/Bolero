@@ -14,6 +14,8 @@ files
     bin/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Components.Web.dll ==> typeproviders/fsharp41/netstandard2.0
     ../Bolero.Html/bin/Release/net6.0/Bolero.Html.dll ==> lib/net6.0
     ../Bolero.Html/bin/Release/net6.0/Bolero.Html.xml ==> lib/net6.0
+    ../Bolero.Html/bin/Release/net8.0/Bolero.Html.dll ==> lib/net8.0
+    ../Bolero.Html/bin/Release/net8.0/Bolero.Html.xml ==> lib/net8.0
     Bolero.targets ==> build
     roots.xml ==> build
 excludeddependencies
@@ -27,5 +29,5 @@ dependencies
         Microsoft.JSInterop.WebAssembly ~> 7.0
         Microsoft.AspNetCore.Components.WebAssembly ~> 7.0
     framework: net8.0
-        Microsoft.JSInterop.WebAssembly >= 8.0-rc.2.23480.2
-        Microsoft.AspNetCore.Components.WebAssembly >= 8.0-rc.2.23480.2
+        Microsoft.JSInterop.WebAssembly ~> 8.0
+        Microsoft.AspNetCore.Components.WebAssembly ~> 8.0
