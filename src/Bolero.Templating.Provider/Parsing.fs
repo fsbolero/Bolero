@@ -307,7 +307,7 @@ let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : Parsed =
     | _ ->
         WithVars parsed.Vars [Attr(name, Concat parsed.Expr)]
 
-let rec ParseNode (node: HtmlNode) : Parsed =
+let rec ParseNode (optimizeHtml: bool) (node: HtmlNode) : Parsed =
     match node.NodeType with
     | HtmlNodeType.Element ->
         let name = node.Name
@@ -317,13 +317,9 @@ let rec ParseNode (node: HtmlNode) : Parsed =
             |> Parsed.Concat
         let children =
             node.ChildNodes
-            |> Seq.map ParseNode
+            |> Seq.map (ParseNode optimizeHtml)
             |> Parsed.Concat
-        if HasVars attrs || HasVars children then
-            (attrs, children)
-            ||> Parsed.Map2 (fun attrs children ->
-                [Elt (name, attrs, children)])
-        else
+        if optimizeHtml && not (HasVars attrs || HasVars children) then
             // Node has no vars, we can represent it as raw HTML for performance.
             let rec removeComments (n: HtmlNode) =
                 if isNull n then () else
@@ -333,15 +329,19 @@ let rec ParseNode (node: HtmlNode) : Parsed =
                 | _ -> n.Remove()
                 removeComments nxt
             NoVars [PlainHtml node.OuterHtml]
+        else
+            (attrs, children)
+            ||> Parsed.Map2 (fun attrs children ->
+                [Elt (name, attrs, children)])
     | HtmlNodeType.Text ->
         // Using .InnerHtml and RawHtml to properly interpret HTML entities.
         ParseText (node :?> HtmlTextNode).InnerHtml HoleType.Html
     | _ ->
         NoVars [] // Ignore comments
 
-let ParseOneTemplate (nodes: HtmlNodeCollection) : Parsed =
+let ParseOneTemplate (optimizeHtml: bool) (nodes: HtmlNodeCollection) : Parsed =
     nodes
-    |> Seq.map ParseNode
+    |> Seq.map (ParseNode optimizeHtml)
     |> Parsed.Concat
 
 type ParsedTemplates =
@@ -351,7 +351,7 @@ type ParsedTemplates =
         Nested: Map<string, Parsed>
     }
 
-let ParseDoc (filename: option<string>) (doc: HtmlDocument) : ParsedTemplates =
+let ParseDoc (optimizeHtml: bool) (filename: option<string>) (doc: HtmlDocument) : ParsedTemplates =
     let nested =
         let templateNodes =
             match doc.DocumentNode.SelectNodes("//template") with
@@ -366,12 +366,12 @@ let ParseDoc (filename: option<string>) (doc: HtmlDocument) : ParsedTemplates =
             | null ->
                 failwith "Nested template must have an id" // at {n.Line}:{n.LinePosition}"
             | id ->
-                let parsed = ParseOneTemplate n.ChildNodes
+                let parsed = ParseOneTemplate optimizeHtml n.ChildNodes
                 n.Remove()
                 (id, parsed)
         )
         |> Map.ofSeq
-    let main = ParseOneTemplate doc.DocumentNode.ChildNodes
+    let main = ParseOneTemplate optimizeHtml doc.DocumentNode.ChildNodes
     { Filename = filename; Main = main; Nested = nested }
 
 /// Get the HTML document for the given type provider argument, either inline or from a file.
@@ -389,6 +389,6 @@ let GetDoc (fileOrContent: string) (rootFolder: string) : option<string> * HtmlD
         Some (Path.GetRelativePath rootFolder fullPath), doc
 
 /// Parse a type provider argument into a set of templates.
-let ParseFileOrContent (fileOrContent: string) (rootFolder: string) : ParsedTemplates =
+let ParseFileOrContent (fileOrContent: string) (rootFolder: string) (optimizeHtml: bool) : ParsedTemplates =
     GetDoc fileOrContent rootFolder
-    ||> ParseDoc
+    ||> ParseDoc optimizeHtml
