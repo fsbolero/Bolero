@@ -62,18 +62,20 @@ type Template (cfg: TypeProviderConfig) as this =
 
     do try
         let templateTy = ProvidedTypeDefinition(thisAssembly, rootNamespace, "Template", None, isErased = false)
-        let sp = ProvidedStaticParameter("pathOrHtml", typeof<string>)
-        sp.AddXmlDoc("The path to an HTML file, or an HTML string directly.")
-        templateTy.DefineStaticParameters([sp], fun typename pars ->
+        let pathOrHtmlParam = ProvidedStaticParameter("pathOrHtml", typeof<string>)
+        pathOrHtmlParam.AddXmlDoc("The path to an HTML file, or an HTML string directly.")
+        let optimizeHtmlParam = ProvidedStaticParameter("optimizePlainHtml", typeof<bool>, false)
+        optimizeHtmlParam.AddXmlDoc("Optimize the rendering of HTML segments that don't contain any holes. Warning: this is incompatible with the use of CSS scopes.")
+        templateTy.DefineStaticParameters([pathOrHtmlParam; optimizeHtmlParam], fun typename pars ->
             match pars with
-            | [| :? string as pathOrHtml |] ->
+            | [| :? string as pathOrHtml; :? bool as optimizeHtml |] ->
                 let ty, _ =
                     cache.GetOrAdd(pathOrHtml, fun key ->
                         let asm = ProvidedAssembly()
                         let ty = ProvidedTypeDefinition(asm, rootNamespace, typename, Some typeof<TemplateNode>,
                                     isErased = false,
                                     hideObjectMethods = true)
-                        let content = Parsing.ParseFileOrContent pathOrHtml cfg.ResolutionFolder
+                        let content = Parsing.ParseFileOrContent pathOrHtml cfg.ResolutionFolder optimizeHtml
                         CodeGen.Populate ty content
                         asm.AddTypes([ty])
                         let fileWatcher = content.Filename |> Option.map (watchFileChanges key)
