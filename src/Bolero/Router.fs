@@ -974,4 +974,6 @@ type RouterExtensions =
     /// <returns>An <c>href</c> attribute pointing to the given endpoint.</returns>
     [<Extension>]
     static member HRef(this: Router<'ep, _, _>, endpoint: 'ep, [<Optional>] hash: string) : Attr =
-        Attr.Make "href" (this.Link(endpoint, hash))
+        Attr(fun _ tb i ->
+            tb.AddAttribute(i, "href", this.Link(endpoint, hash))
+            i + 1)

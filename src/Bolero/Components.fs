@@ -117,7 +117,7 @@ and [<AbstractClass>]
     inherit Component<'model>()
 
     let mutable oldModel = None
-    let mutable view = Node.Empty()
+    let mutable view = Node(fun _ _ s -> s)
     let mutable runProgramLoop = fun () -> ()
     let mutable dispatch = ignore<'msg>
     let mutable program = Unchecked.defaultof<Program<'model, 'msg>>

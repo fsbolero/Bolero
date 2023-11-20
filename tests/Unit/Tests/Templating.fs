@@ -238,6 +238,16 @@ module Templating =
         elt.Eventually <@ btn.Text = "Template ref is bound" @>
 
     [<Test>]
+    let ``Scoped CSS is propagated to elements that have holes``() =
+        let elt = elt.ById("holed-must-be-scoped")
+        testNotNull <@ elt.GetAttribute("dummy-scope") @>
+
+    [<Test>]
+    let ``Scoped CSS is propagated to elements that don't have holes``() =
+        let elt = elt.ById("non-holed-must-be-scoped")
+        testNotNull <@ elt.GetAttribute("dummy-scope") @>
+
+    [<Test>]
     let ``Regression #11: common hole in attrs and children``() =
         test <@ elt.ByClass("regression-11").Text = "regression-11" @>
 
