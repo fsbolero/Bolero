@@ -17,6 +17,7 @@ type RenderTreeBuilder =
     member _.OpenComponent(_: int, _: Type) : unit = raise (NotImplementedException())
     member _.CloseComponent() : unit = raise (NotImplementedException())
     member _.AddAttribute(_: int, _: string, _: obj) : unit = raise (NotImplementedException())
+    member _.AddAttribute(_: int, _: string) : unit = raise (NotImplementedException())
     member _.AddContent(_: int, _: string) : unit = raise (NotImplementedException())
     member _.AddMarkupContent(_: int, _: string) : unit = raise (NotImplementedException())
     member _.OpenRegion(_: int) : unit = raise (NotImplementedException())

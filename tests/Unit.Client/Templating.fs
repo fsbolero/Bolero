@@ -199,6 +199,19 @@ type RefTester() =
             Refs().Elt()
         }
 
+type TemplateForScopedCss = Template<"""
+<span id="holed-must-be-scoped">${Text}</span>
+<span id="non-holed-must-be-scoped"></span>
+""">
+
+type ScopedCssTester() =
+    inherit Component()
+
+    override _.CssScope = "dummy-scope"
+
+    override _.Render() =
+        TemplateForScopedCss().Text("content").Elt()
+
 type ``Regression #11`` = Template<"""<span class="${Hole}">${Hole}</span>""">
 
 type ``Regression #256`` = Template<"""
@@ -243,4 +256,5 @@ let Tests() =
         comp<EventTester>
         comp<BindTester>
         comp<RefTester>
+        comp<ScopedCssTester>
     }
