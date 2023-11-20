@@ -26,10 +26,6 @@ open System
 open FSharp.Reflection
 open Microsoft.AspNetCore.Components
 
-/// <summary>An HTML fragment.</summary>
-/// <category>HTML</category>
-type Node = delegate of obj * Rendering.RenderTreeBuilder * int -> int
-
 /// <exclude />
 [<Sealed; AbstractClass>]
 type Matcher<'T> private () =
@@ -51,6 +47,7 @@ type Matcher<'T> private () =
             let tagReader = FSharpValue.PreComputeUnionTagReader(typeof<'T>)
             fun (x: 'T) -> tagReader (box x)
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Node =
 
     /// <summary>Create an empty HTML fragment.</summary>
@@ -65,7 +62,15 @@ module Node =
     /// <seealso cref="M:Bolero.Html.elt" />
     let inline Elt name (attrs: seq<Attr>) (children: seq<Node>) = Node(fun comp tb i ->
         tb.OpenElement(i, name)
-        let mutable i = i + 1
+
+        match comp with
+        | :? Component as c ->
+            match c.CssScope with
+            | null -> ()
+            | s -> tb.AddAttribute(i + 1, s)
+        | _ -> ()
+
+        let mutable i = i + 2
         for attr in attrs do
             i <- attr.Invoke(comp, tb, i)
         for node in children do

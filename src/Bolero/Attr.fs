@@ -20,15 +20,7 @@
 
 namespace Bolero
 
-open Microsoft.AspNetCore.Components
-
-/// <summary>
-/// HTML attribute or Blazor component parameter.
-/// Use <see cref="T:Bolero.Html.attr" /> or <see cref="M:Bolero.Html.op_EqualsGreater" /> to create attributes.
-/// </summary>
-/// <category>HTML</category>
-type Attr = delegate of obj * Rendering.RenderTreeBuilder * int -> int
-
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Attr =
 
     /// <summary>Create an HTML attribute or a component parameter.</summary>

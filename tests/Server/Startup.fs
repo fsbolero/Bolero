@@ -33,7 +33,8 @@ type Startup() =
     member this.ConfigureServices(services: IServiceCollection) =
         services.AddMvc() |> ignore
         services.AddServerSideBlazor() |> ignore
-        services.AddBoleroHost(server = false) |> ignore
+        services.AddBoleroHost(prerendered = true) |> ignore
+        services.AddLogging() |> ignore
 
     member this.Configure(app: IApplicationBuilder) =
         app
