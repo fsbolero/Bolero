@@ -1,4 +1,4 @@
-﻿// $begin{copyright}
+// $begin{copyright}
 //
 // This file is part of Bolero
 //
@@ -86,7 +86,7 @@ let escapeDashes s =
         m.Groups[1].Value.ToUpperInvariant())
 
 let replace rows marker writeItem input =
-    Regex(sprintf """(?<=// BEGIN %s\r?\n)(?:\w|\W)*(?=// END %s)""" marker marker,
+    Regex($"""(?<=// BEGIN %s{marker}\r?\n)(?:\w|\W)*(?=// END %s{marker})""",
         RegexOptions.Multiline)
         .Replace(input, fun _ ->
             let s = StringBuilder()
@@ -107,9 +107,9 @@ Target.create "tags" (fun _ ->
         replace (Tags.GetSample().Rows) "TAGS" (fun s tag ->
             let esc = escapeDashes tag.Name
             let ident = if tag.NeedsEscape then "``" + esc + "``" else esc
-            s.AppendLine(sprintf """/// <summary>Computation expression to create an HTML <c>&lt;%s&gt;</c> element.</summary>""" tag.Name)
-             .AppendLine(        """/// <category>HTML tag names</category>""")
-             .AppendLine(sprintf "let %s : ElementBuilder = elt \"%s\"" ident tag.Name)
+            s.AppendLine($"""/// <summary>Computation expression to create an HTML <c>&lt;%s{tag.Name}&gt;</c> element.</summary>""")
+             .AppendLine( """/// <category>HTML tag names</category>""")
+             .AppendLine($"""let %s{ident} : ElementBuilder = elt "%s{tag.Name}" """)
              .AppendLine()
         )
         >> replace (Attrs.GetSample().Rows) "ATTRS" (fun s attr ->
@@ -118,38 +118,38 @@ Target.create "tags" (fun _ ->
                 if attr.NeedsRename then esc + "'"
                 elif attr.NeedsEscape then "``" + esc + "``"
                 else esc
-            s.AppendLine(sprintf """    /// <summary>Create an HTML <c>%s</c> attribute.</summary>""" attr.Name)
-             .AppendLine(        """    /// <param name="v">The value of the attribute.</param>""")
-             .AppendLine(sprintf """    let inline %s (v: obj) : Attr = "%s" => v""" ident attr.Name)
+            s.AppendLine($"""    /// <summary>Create an HTML <c>%s{attr.Name}</c> attribute.</summary>""")
+             .AppendLine( """    /// <param name="v">The value of the attribute.</param>""")
+             .AppendLine($"""    let inline %s{ident} (v: obj) : Attr = "%s{attr.Name}" => v""")
              .AppendLine()
         )
         >> replace (Events.GetSample().Rows) "EVENTS" (fun s event ->
             let esc = escapeDashes event.Name
-            s.AppendLine(sprintf """    /// <summary>Create a handler for HTML event <c>%s</c>.</summary>""" event.Name)
-             .AppendLine(        """    /// <param name="callback">The event callback.</param>""")
-             .AppendLine(sprintf """    let inline %s (callback: %sEventArgs -> unit) : Attr =""" esc event.Type)
-             .AppendLine(sprintf """        attr.callback<%sEventArgs> "on%s" callback""" event.Type esc)
+            s.AppendLine($"""    /// <summary>Create a handler for HTML event <c>%s{event.Name}</c>.</summary>""")
+             .AppendLine( """    /// <param name="callback">The event callback.</param>""")
+             .AppendLine($"""    let inline %s{esc} (callback: %s{event.Type}EventArgs -> unit) : Attr =""")
+             .AppendLine($"""        attr.callback<%s{event.Type}EventArgs> "on%s{esc}" callback""")
              .AppendLine()
         )
         >> replace (Events.GetSample().Rows) "ASYNCEVENTS" (fun s event ->
             let esc = escapeDashes event.Name
-            s.AppendLine(sprintf """        /// <summary>Create an asynchronous handler for HTML event <c>%s</c>.</summary>""" event.Name)
-             .AppendLine(        """        /// <param name="callback">The event callback.</param>""")
-             .AppendLine(sprintf """        let inline %s (callback: %sEventArgs -> Async<unit>) : Attr =""" esc event.Type)
-             .AppendLine(sprintf """            attr.async.callback<%sEventArgs> "on%s" callback""" event.Type esc)
+            s.AppendLine($"""        /// <summary>Create an asynchronous handler for HTML event <c>%s{event.Name}</c>.</summary>""")
+             .AppendLine( """        /// <param name="callback">The event callback.</param>""")
+             .AppendLine($"""        let inline %s{esc} (callback: %s{event.Type}EventArgs -> Async<unit>) : Attr =""")
+             .AppendLine($"""            attr.async.callback<%s{event.Type}EventArgs> "on%s{esc}" callback""")
         )
         >> replace (Events.GetSample().Rows) "TASKEVENTS" (fun s event ->
             let esc = escapeDashes event.Name
-            s.AppendLine(sprintf """        /// <summary>Create an asynchronous handler for HTML event <c>%s</c>.</summary>""" event.Name)
-             .AppendLine(        """        /// <param name="callback">The event callback.</param>""")
-             .AppendLine(sprintf """        let inline %s (callback: %sEventArgs -> Task) : Attr =""" esc event.Type)
-             .AppendLine(sprintf """            attr.task.callback<%sEventArgs> "on%s" callback""" event.Type esc)
+            s.AppendLine($"""        /// <summary>Create an asynchronous handler for HTML event <c>%s{event.Name}</c>.</summary>""")
+             .AppendLine( """        /// <param name="callback">The event callback.</param>""")
+             .AppendLine($"""        let inline %s{esc} (callback: %s{event.Type}EventArgs -> Task) : Attr =""")
+             .AppendLine($"""            attr.task.callback<%s{event.Type}EventArgs> "on%s{esc}" callback""")
         )
     )
     runTags "src/Bolero.Templating.Provider/Parsing.fs" (
         replace (Events.GetSample().Rows) "EVENTS" (fun s event ->
             if event.Type <> "" then
-                s.AppendLine(sprintf """        | "on%s" -> typeof<%sEventArgs>""" event.Name event.Type)
+                s.AppendLine($"""        | "on%s{event.Name}" -> typeof<%s{event.Type}EventArgs>""")
             else
                 s
         )
