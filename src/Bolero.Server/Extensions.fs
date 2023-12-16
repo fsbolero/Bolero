@@ -80,7 +80,7 @@ type ServerComponentsExtensions =
     /// <param name="page">The page to return.</param>
     [<Extension>]
     static member BoleroPage(_this: Controller, page: Node) =
-        new BoleroPageResult(page)
+        BoleroPageResult(page)
 
     /// <summary>Render the JavaScript tag needed by Bolero in a Razor page.</summary>
     /// <param name="config">The injected Bolero hosting configuration.</param>

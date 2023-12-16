@@ -138,7 +138,7 @@ let Update (myApi: MyApi) msg model =
 
 let router : Router<Page, Model, Message> =
     {
-        getEndPoint = fun m -> m.page
+        getEndPoint = _.page
         getRoute = function
             | Home -> "/"
             | Custom i -> $"/custom/{i}"
@@ -157,7 +157,7 @@ type Form = Template<"subdir/form.html">
 type Item() =
     inherit ElmishComponent<KeyValuePair<int, string>, Message>()
 
-    override __.View (KeyValue (k, v)) dispatch =
+    override _.View (KeyValue (k, v)) dispatch =
         Tpl.item().key(string k).value(v)
             .remove(fun _ -> dispatch (RemoveItem k))
             .Elt()

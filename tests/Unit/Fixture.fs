@@ -31,7 +31,6 @@ open OpenQA.Selenium.Chrome
 // open OpenQA.Selenium.Firefox
 open OpenQA.Selenium.Support.UI
 open Swensen.Unquote
-open Bolero.Tests
 
 /// Defines the setup/teardown for all tests that use the web server and Selenium.
 /// These web tests must be located in the namespace Bolero.Tests.Web

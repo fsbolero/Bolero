@@ -44,7 +44,7 @@ type ChildContentAttr = delegate of receiver: obj * builder: RenderTreeBuilder *
 /// <param name="receiver">The containing component.</param>
 /// <param name="builder">The rendering builder.</param>
 /// <param name="sequence">The rendering sequence number.</param>
-type ChildAndRefContent = delegate of receiver: obj * builder: Rendering.RenderTreeBuilder * sequence: int -> int
+type ChildAndRefContent = delegate of receiver: obj * builder: RenderTreeBuilder * sequence: int -> int
 
 type [<Struct; NoComparison; NoEquality>] AttrBuilder =
     member inline _.Yield([<InlineIfLambda>] attr: Attr) = attr

@@ -67,7 +67,7 @@ let WrapExpr (innerType: Parsing.HoleType) (outerType: Parsing.HoleType) (expr: 
 /// Map an expression's vars from its parent, wrapping the expression in let declarations.
 let WrapAndConvert (vars: Map<string, Expr>) (subst: list<Parsing.VarSubstitution>) convert expr =
     let vars, addLets = ((vars, id), subst) ||> List.fold (fun (vars, addLets) wrap ->
-        let unwrapped = vars.[wrap.name]
+        let unwrapped = vars[wrap.name]
         let wrapped = WrapExpr wrap.innerType wrap.outerType unwrapped
         let var = Var(wrap.name, TypeOf wrap.innerType)
         let addLets e = Expr.Let(var, defaultArg wrapped unwrapped, addLets e) |> Expr.Cast
@@ -84,7 +84,7 @@ let rec ConvertAttrTextPart (vars: Map<string, Expr>) (text: Parsing.Expr) : Exp
     | Parsing.PlainHtml text ->
         <@ text @>
     | Parsing.VarContent varName ->
-        let e : Expr<obj> = Expr.Coerce(vars.[varName], typeof<obj>) |> Expr.Cast
+        let e : Expr<obj> = Expr.Coerce(vars[varName], typeof<obj>) |> Expr.Cast
         <@ (%e).ToString() @>
     | Parsing.WrapVars (subst, text) ->
         WrapAndConvert vars subst ConvertAttrTextPart text
@@ -100,11 +100,11 @@ let rec ConvertAttrValue (vars: Map<string, Expr>) (text: Parsing.Expr) : Expr<o
     | Parsing.PlainHtml text ->
         box <@ text @>
     | Parsing.VarContent varName ->
-        box vars.[varName]
+        box vars[varName]
     | Parsing.Fst varName ->
-        box (Expr.TupleGet(vars.[varName], 0))
+        box (Expr.TupleGet(vars[varName], 0))
     | Parsing.Snd varName ->
-        box (Expr.TupleGet(vars.[varName], 1))
+        box (Expr.TupleGet(vars[varName], 1))
     | Parsing.WrapVars (subst, text) ->
         WrapAndConvert vars subst ConvertAttrValue text
     | Parsing.Attr _ | Parsing.Elt _ | Parsing.HtmlRef _ ->
@@ -119,11 +119,11 @@ let rec ConvertAttr (vars: Map<string, Expr>) (attr: Parsing.Expr) : Expr<Attr> 
         let value = ConvertAttrValue vars value
         <@ Attr.Make name %value @>
     | Parsing.VarContent varName ->
-        vars.[varName] |> Expr.Cast
+        vars[varName] |> Expr.Cast
     | Parsing.WrapVars (subst, attr) ->
         WrapAndConvert vars subst ConvertAttr attr
     | Parsing.HtmlRef varName ->
-        let ref = vars.[varName] |> Expr.Cast
+        let ref = vars[varName] |> Expr.Cast
         <@ Ref.MakeAttr(%ref) @>
     | Parsing.Fst _ | Parsing.Snd _ | Parsing.PlainHtml _ | Parsing.Elt _ ->
         failwith $"Invalid attribute: {attr}"
@@ -144,7 +144,7 @@ let rec ConvertNode (vars: Map<string, Expr>) (node: Parsing.Expr) : Expr<Node> 
         let children = TExpr.Array<Node> (Seq.map (ConvertNode vars) children)
         <@ Node.Elt name %attrs %children @>
     | Parsing.VarContent varName ->
-        vars.[varName] |> Expr.Cast
+        vars[varName] |> Expr.Cast
     | Parsing.WrapVars (subst, node) ->
         WrapAndConvert vars subst ConvertNode node
     | Parsing.Fst _ | Parsing.Snd _ | Parsing.Attr _ | Parsing.HtmlRef _ ->

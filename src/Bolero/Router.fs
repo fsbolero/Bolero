@@ -197,7 +197,7 @@ type PageModel<'T> =
         prop.SetValue(this, value)
 #else
     member internal this.SetModel(value) =
-        (Unsafe.AsRef<'T>(&this.Model)) <- value
+        Unsafe.AsRef<'T>(&this.Model) <- value
 #endif
 
 [<AutoOpen>]
@@ -299,7 +299,7 @@ module private RouterImpl =
                             if getTag x = 0 then
                                 None
                             else
-                                s.write (someDector x).[0]
+                                s.write <| (someDector x)[0]
                     }, ValueSome none
                 | false, _ -> fail (InvalidRouterKind.UnsupportedType ty)
             else

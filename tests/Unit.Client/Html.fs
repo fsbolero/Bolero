@@ -77,7 +77,7 @@ type BoleroComponent() =
                     condUnionState <-
                         match s.Length with
                         | 0 -> Empty
-                        | 1 -> OneChar s.[0]
+                        | 1 -> OneChar s[0]
                         | _ -> ManyChars s)
             }
             cond condUnionState <| function

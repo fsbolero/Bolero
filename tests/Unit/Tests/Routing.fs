@@ -1,7 +1,6 @@
 namespace Bolero.Tests.Web
 
 open System.Text.RegularExpressions
-open System.Threading
 open FSharp.Reflection
 open NUnit.Framework
 open OpenQA.Selenium
@@ -88,19 +87,19 @@ module Routing =
 
     let failingRouters = [
         failingRouter<``Invalid parameter syntax``> <| fun c ->
-            InvalidRouterKind.ParameterSyntax(c.[0], "{x")
+            InvalidRouterKind.ParameterSyntax(c[0], "{x")
         failingRouter<``Unknown parameter name``> <| fun c ->
-            InvalidRouterKind.UnknownField(c.[0], "y")
+            InvalidRouterKind.UnknownField(c[0], "y")
         failingRouter<``Duplicate field``> <| fun c ->
-            InvalidRouterKind.DuplicateField(c.[0], "x")
+            InvalidRouterKind.DuplicateField(c[0], "x")
         failingRouter<``Incomplete parameter list``> <| fun c ->
-            InvalidRouterKind.MissingField(c.[0], "y")
+            InvalidRouterKind.MissingField(c[0], "y")
         failingRouter<``Identical paths with different parameter names``> <| fun c ->
-            InvalidRouterKind.IdenticalPath(c.[1], c.[0])
+            InvalidRouterKind.IdenticalPath(c[1], c[0])
         failingRouter<``Mismatched type parameters in same position``> <| fun c ->
-            InvalidRouterKind.ParameterTypeMismatch(c.[1], "y", c.[0], "x")
+            InvalidRouterKind.ParameterTypeMismatch(c[1], "y", c[0], "x")
         failingRouter<``Rest parameter in non-final position``> <| fun c ->
-            InvalidRouterKind.RestNotLast(c.[0])
+            InvalidRouterKind.RestNotLast(c[0])
         failingRouter<Dictionary<int, int>> <| fun _ ->
             InvalidRouterKind.UnsupportedType typeof<Dictionary<int, int>>
     ]

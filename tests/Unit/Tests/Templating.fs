@@ -96,7 +96,7 @@ module Templating =
             Double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, ref 0.)
         let isValidPosition (pos: string) =
             let a = pos.Split(',')
-            isNumber a.[0] && isNumber a.[1]
+            isNumber a[0] && isNumber a[1]
 
         elt.ByClass("btn1").Click()
         elt.Eventually <@ state.Text = "clicked 1" @>

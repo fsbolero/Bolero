@@ -31,97 +31,97 @@ open Bolero.TemplatingInternals
 open Bolero.Templating.ConvertExpr
 
 let getThis (args: list<Expr>) : Expr<TemplateNode> =
-    TExpr.Coerce<TemplateNode>(args.[0])
+    TExpr.Coerce<TemplateNode>(args[0])
 
 let MakeCtor (holes: Parsing.Vars) =
     ProvidedConstructor([], fun args ->
         let holes = TExpr.Array<obj> [
             for KeyValue(_, type') in holes ->
                 match type' with
-                | Parsing.HoleType.String -> <@ box "" @>
-                | Parsing.HoleType.Html -> <@ box (Node.Empty()) @>
-                | Parsing.HoleType.Event _ -> <@ box (Events.NoOp<EventArgs>()) @>
-                | Parsing.HoleType.DataBinding _ -> <@ box (null, Events.NoOp<ChangeEventArgs>()) @>
-                | Parsing.HoleType.Attribute -> <@ box (Attr.Empty()) @>
-                | Parsing.HoleType.AttributeValue -> <@ null @>
-                | Parsing.HoleType.Ref -> <@ null @>
+                | HoleType.String -> <@ box "" @>
+                | HoleType.Html -> <@ box (Node.Empty()) @>
+                | HoleType.Event _ -> <@ box (Events.NoOp<EventArgs>()) @>
+                | HoleType.DataBinding _ -> <@ box (null, Events.NoOp<ChangeEventArgs>()) @>
+                | HoleType.Attribute -> <@ box (Attr.Empty()) @>
+                | HoleType.AttributeValue -> <@ null @>
+                | HoleType.Ref -> <@ null @>
         ]
         <@@ (%getThis args).Holes <- %holes @@>)
 
 /// Get the argument lists and bodies for methods that fill a hole of the given type.
-let HoleMethodBodies (holeType: Parsing.HoleType) : (ProvidedParameter list * (Expr list -> Expr)) list =
+let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list -> Expr)) list =
     let (=>) name ty = ProvidedParameter(name, ty)
     match holeType with
-    | Parsing.HoleType.String ->
+    | HoleType.String ->
         [
             ["value" => typeof<string>], fun args ->
-                <@@ box (%%args.[1]: string) @@>
+                <@@ box (%%args[1]: string) @@>
         ]
-    | Parsing.HoleType.Html ->
+    | HoleType.Html ->
         [
             ["value" => typeof<string>], fun args ->
-                <@@ box (Node.Text (%%args.[1]: string)) @@>
+                <@@ box (Node.Text (%%args[1]: string)) @@>
             ["value" => typeof<Node>], fun args ->
-                <@@ box (%%args.[1]: Node) @@>
+                <@@ box (%%args[1]: Node) @@>
         ]
-    | Parsing.HoleType.Event argTy ->
+    | HoleType.Event argTy ->
         [
             ["value" => EventHandlerOf argTy], fun args ->
-                Expr.Coerce(args.[1], typeof<obj>)
+                Expr.Coerce(args[1], typeof<obj>)
         ]
-    | Parsing.HoleType.DataBinding Parsing.BindingType.BindString ->
+    | HoleType.DataBinding BindingType.BindString ->
         [
             ["value" => typeof<string>; "set" => typeof<Action<string>>], fun args ->
-                <@@ box (box (%%args.[1]: string), Events.OnChange(%%args.[2])) @@>
+                <@@ box (box (%%args[1]: string), Events.OnChange(%%args[2])) @@>
         ]
-    | Parsing.HoleType.DataBinding Parsing.BindingType.BindNumber ->
+    | HoleType.DataBinding BindingType.BindNumber ->
         [
             ["value" => typeof<int>; "set" => typeof<Action<int>>], fun args ->
-                <@@ box (box (%%args.[1]: int), Events.OnChangeInt(%%args.[2])) @@>
+                <@@ box (box (%%args[1]: int), Events.OnChangeInt(%%args[2])) @@>
             ["value" => typeof<float>; "set" => typeof<Action<float>>], fun args ->
-                <@@ box (box (%%args.[1]: float), Events.OnChangeFloat(%%args.[2])) @@>
+                <@@ box (box (%%args[1]: float), Events.OnChangeFloat(%%args[2])) @@>
         ]
-    | Parsing.HoleType.DataBinding Parsing.BindingType.BindBool ->
+    | HoleType.DataBinding BindingType.BindBool ->
         [
             ["value" => typeof<bool>; "set" => typeof<Action<bool>>], fun args ->
-                <@@ box (box (%%args.[1]: bool), Events.OnChangeBool(%%args.[2])) @@>
+                <@@ box (box (%%args[1]: bool), Events.OnChangeBool(%%args[2])) @@>
         ]
-    | Parsing.HoleType.Attribute ->
+    | HoleType.Attribute ->
         [
             ["value" => typeof<Attr>], fun args ->
-                <@@ box (%%args.[1]: Attr) @@>
+                <@@ box (%%args[1]: Attr) @@>
             ["value" => typeof<list<Attr>>], fun args ->
-                <@@ box (Attr.Attrs(%%args.[1]: list<Attr>)) @@>
+                <@@ box (Attr.Attrs(%%args[1]: list<Attr>)) @@>
         ]
-    | Parsing.HoleType.AttributeValue ->
+    | HoleType.AttributeValue ->
         [
             ["value" => typeof<obj>], fun args ->
-                <@@ %%args.[1] @@>
+                <@@ %%args[1] @@>
         ]
-    | Parsing.HoleType.Ref ->
+    | HoleType.Ref ->
         [
             ["value" => typeof<HtmlRef>], fun args ->
-                <@@ box (%%args.[1]: HtmlRef) @@>
+                <@@ box (%%args[1]: HtmlRef) @@>
         ]
 
-let MakeHoleMethods (holeName: string) (holeType: Parsing.HoleType) (index: int) (containerTy: ProvidedTypeDefinition) =
+let MakeHoleMethods (holeName: string) (holeType: HoleType) (index: int) (containerTy: ProvidedTypeDefinition) =
     [
         for args, value in HoleMethodBodies holeType do
             yield ProvidedMethod(holeName, args, containerTy, fun args ->
                 let this = getThis args
-                <@@ (%this).Holes.[index] <- %%(value args)
+                <@@ (%this).Holes[index] <- %%(value args)
                     %this @@>) :> MemberInfo
     ]
 
-let MakeFinalMethod (filename: option<string>) (subTemplateName: option<string>) (content: Parsing.Parsed) =
+let MakeFinalMethod (filename: option<string>) (subTemplateName: option<string>) (content: Parsed) =
     ProvidedMethod("Elt", [], typeof<Node>, fun args ->
         let this = getThis args
         let directExpr =
             let vars = content.Vars |> Map.map (fun k v -> Var(k, TypeOf v))
             let varExprs = vars |> Map.map (fun _ v -> Expr.Var v)
-            ((0, ConvertNode varExprs (Parsing.Concat content.Expr) :> Expr), vars)
+            ((0, ConvertNode varExprs (Concat content.Expr) :> Expr), vars)
             ||> Seq.fold (fun (i, e) (KeyValue(_, var)) ->
-                let value = <@@ (%this).Holes.[i] @@>
+                let value = <@@ (%this).Holes[i] @@>
                 let value = Expr.Coerce(value, var.Type)
                 i + 1, Expr.Let(var, value, e)
             )

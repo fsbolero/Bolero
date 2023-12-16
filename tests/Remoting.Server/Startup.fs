@@ -27,8 +27,6 @@ open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
-open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Mvc
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
@@ -47,14 +45,14 @@ module Page =
             ``base`` { attr.href "/" }
         }
         body {
-            div { attr.id "main"; comp<Client.MyApp> }
+            div { attr.id "main"; comp<MyApp> }
             script { attr.src "_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js" }
             boleroScript
         }
     }
 
 type MyApiHandler(log: ILogger<MyApiHandler>, ctx: IRemoteContext) =
-    inherit RemoteHandler<Client.MyApi>()
+    inherit RemoteHandler<MyApi>()
 
     let mutable items = Map.empty
 
@@ -105,7 +103,7 @@ type Startup() =
         services.AddSwaggerForSystemTextJson(JsonFSharpOptions()) |> ignore
         services.AddEndpointsApiExplorer() |> ignore
 
-    member this.Configure(app: IApplicationBuilder, env: IHostEnvironment, log: ILogger<Startup>) =
+    member this.Configure(app: IApplicationBuilder, env: IHostEnvironment) =
         app.UseAuthentication()
             .UseStaticFiles()
             .UseSwagger()

@@ -239,14 +239,14 @@ let ParseText (t: string) (varType: HoleType) : Parsed =
     let mutable vars = Map.empty
     for p in parse do
         if p.Index > lastHoleEnd then
-            parts.Add(PlainHtml t.[lastHoleEnd..p.Index - 1])
-        let varName = p.Groups.[1].Value
+            parts.Add(PlainHtml t[lastHoleEnd..p.Index - 1])
+        let varName = p.Groups[1].Value
         if not (Map.containsKey varName vars) then
             vars <- Map.add varName varType vars
         parts.Add(VarContent varName)
         lastHoleEnd <- p.Index + p.Length
     if lastHoleEnd < t.Length then
-        parts.Add(PlainHtml t.[lastHoleEnd..t.Length - 1])
+        parts.Add(PlainHtml t[lastHoleEnd..t.Length - 1])
     WithVars vars (parts.ToArray() |> List.ofSeq)
 
 /// None if this is not a data binding.

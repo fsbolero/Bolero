@@ -45,18 +45,18 @@ module Utility =
     type ArbitraryModifiers =
         static member Alphanum() =
             { new Arbitrary<char[]>() with
-                override __.Generator =
+                override _.Generator =
                     Gen.oneof [
                         Gen.choose(0, 25) |> Gen.map (fun i -> char (int 'a' + i))
                         Gen.choose(0, 25) |> Gen.map (fun i -> char (int 'A' + i))
                         Gen.choose(0, 9) |> Gen.map (fun i -> char (int '0' + i))
                     ]
                     |> Gen.arrayOf
-                override __.Shrinker x =
+                override _.Shrinker x =
                     if Array.isEmpty x then
                         Seq.empty
                     else
-                        Seq.singleton x.[1..]
+                        Seq.singleton x[1..]
             }
             |> Arb.convert
                 (String >> Alphanum)

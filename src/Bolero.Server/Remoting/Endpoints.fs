@@ -182,8 +182,8 @@ type internal RemotingEndpointDataSource() =
 
     override _.Endpoints =
         endpointBuilders
-        |> Seq.collect (fun b -> b.ApplyFinally())
-        |> Seq.map (fun b -> b.Build())
+        |> Seq.collect _.ApplyFinally()
+        |> Seq.map _.Build()
         |> Array.ofSeq
         :> IReadOnlyList<Endpoint>
 

@@ -31,7 +31,6 @@ open System.Threading.Tasks
 open Microsoft.AspNetCore.Components
 #if NET8_0
 open Microsoft.AspNetCore.Components.Endpoints
-open Microsoft.AspNetCore.Components.Web
 #endif
 open Microsoft.AspNetCore.Components.RenderTree
 open Microsoft.AspNetCore.Components.Rendering
