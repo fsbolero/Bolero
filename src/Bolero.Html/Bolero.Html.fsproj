@@ -6,6 +6,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>Bolero</RootNamespace>
     <IsTrimmable>true</IsTrimmable>
+    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Trimmable.fs" Link="Trimmable.fs" />
