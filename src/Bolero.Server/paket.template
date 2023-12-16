@@ -11,6 +11,10 @@ interproject-references fix
 excludeddependencies
     nerdbank.gitversioning
 include-pdbs true
+files
+    obj\Release\net6.0\ref\Bolero.Server.dll ==> ref/net6.0
+    obj\Release\net7.0\ref\Bolero.Server.dll ==> ref/net7.0
+    obj\Release\net8.0\ref\Bolero.Server.dll ==> ref/net8.0
 dependencies
     framework: net6.0
     framework: net7.0
