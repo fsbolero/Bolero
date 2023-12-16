@@ -8,10 +8,10 @@ description
 authors
     Loic Denuziere
 files
-    bin/Release/typeproviders/fsharp41/netstandard2.0/Bolero.Templating.Provider.dll ==> typeproviders/fsharp41/netstandard2.0
-    bin/Release/typeproviders/fsharp41/netstandard2.0/HtmlAgilityPack.dll ==> typeproviders/fsharp41/netstandard2.0
-    bin/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Components.dll ==> typeproviders/fsharp41/netstandard2.0
-    bin/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Components.Web.dll ==> typeproviders/fsharp41/netstandard2.0
+    obj/Release/typeproviders/fsharp41/netstandard2.0/Bolero.Templating.Provider.dll ==> typeproviders/fsharp41/netstandard2.0
+    obj/Release/typeproviders/fsharp41/netstandard2.0/HtmlAgilityPack.dll ==> typeproviders/fsharp41/netstandard2.0
+    obj/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Components.dll ==> typeproviders/fsharp41/netstandard2.0
+    obj/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Components.Web.dll ==> typeproviders/fsharp41/netstandard2.0
     ../Bolero.Html/bin/Release/net6.0/Bolero.Html.dll ==> lib/net6.0
     ../Bolero.Html/bin/Release/net6.0/Bolero.Html.xml ==> lib/net6.0
     ../Bolero.Html/bin/Release/net8.0/Bolero.Html.dll ==> lib/net8.0
