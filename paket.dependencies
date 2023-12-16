@@ -8,14 +8,14 @@ nuget FSharp.Core >= 6.0 content: none
 nuget FSharp.SystemTextJson >= 0.19.13
 nuget HtmlAgilityPack >= 1.11.39
 nuget Elmish >= 4.0.1 < 5.0
-nuget Microsoft.AspNetCore.Components.Authorization >= 6.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 6.0
+nuget Microsoft.AspNetCore.Components.Authorization >= 6.0.25
+nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 6.0.25
 nuget Microsoft.Extensions.Configuration.Binder >= 6.0
 nuget Microsoft.Extensions.Http >= 6.0
-nuget Microsoft.AspNetCore.Components >= 6.0
-nuget Microsoft.AspNetCore.Components.Web >= 6.0
-nuget Microsoft.AspNetCore.Components.WebAssembly >= 6.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.Server >= 6.0
+nuget Microsoft.AspNetCore.Components >= 6.0.25
+nuget Microsoft.AspNetCore.Components.Web >= 6.0.25
+nuget Microsoft.AspNetCore.Components.WebAssembly >= 6.0.25
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server >= 6.0.25
 nuget System.Text.Json >= 6.0
 nuget Nerdbank.GitVersioning copy_local: true, lowest_matching: false
 github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
