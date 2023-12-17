@@ -94,7 +94,7 @@ type RemotingExtensions =
         (fields, Ok [])
         ||> Array.foldBack (fun field res ->
             let fail fmt =
-                let msg = sprintf fmt (ty.FullName + "." + field.Name)
+                let msg = sprintf fmt ($"{ty.FullName}.{field.Name}")
                 match res with
                 | Ok _ -> Error [msg]
                 | Error e -> Error (msg :: e)
