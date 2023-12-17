@@ -8,6 +8,7 @@ FSharp.SystemTextJson
 
 group net8
 Elmish
+Microsoft.AspNetCore.Components
 Microsoft.AspNetCore.Components.WebAssembly
 Microsoft.JSInterop.WebAssembly
 Microsoft.Extensions.Http
