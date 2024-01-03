@@ -32,6 +32,7 @@ nuget FSharp.Core >= 6.0 content: none
 nuget Elmish >= 4.0.1 < 5.0
 nuget Microsoft.AspNetCore.Components.WebAssembly >= 8.0.0
 nuget Microsoft.JSInterop.WebAssembly >= 8.0.0
+nuget Microsoft.AspNetCore.Components >= 8.0.0
 nuget Microsoft.AspNetCore.Components.Web >= 8.0.0
 nuget Microsoft.Extensions.Http >= 8.0.0
 nuget FSharp.SystemTextJson >= 0.19.13

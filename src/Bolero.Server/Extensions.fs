@@ -88,7 +88,9 @@ type ServerComponentsExtensions =
     static member RenderBoleroScript(html: IHtmlHelper, config: IBoleroHostConfig) =
         html.Raw(BoleroHostConfig.Body(config))
 
-    /// <summary>Configure the hosting of server-side and WebAssembly Bolero components.</summary>
+    /// <summary>
+    /// Configure the hosting of server-side and WebAssembly Bolero components using Bolero's legacy render mode handling.
+    /// </summary>
     /// <param name="server">If true, use server-side Bolero; if false, use WebAssembly. Default is false.</param>
     /// <param name="prerendered">If true, prerender the initial view in the served HTML. Default is true.</param>
     /// <param name="devToggle">
@@ -111,8 +113,20 @@ type ServerComponentsExtensions =
         else
             this.AddSingleton(
                 { new IBoleroHostConfig with
+                    member _.IsInteractiveRender = false
                     member _.IsServer = server
                     member _.IsPrerendered = prerendered })
+
+    /// <summary>
+    /// Configure the hosting of Bolero components using interactive render modes.
+    /// </summary>
+    [<Extension>]
+    static member AddBoleroComponents(this: IServiceCollection) =
+        this.AddSingleton(
+            { new IBoleroHostConfig with
+                member _.IsInteractiveRender = true
+                member _.IsServer = false
+                member _.IsPrerendered = false })
 
     /// <summary>
     /// Adds a route endpoint that will match requests for non-file-names with the lowest possible priority.

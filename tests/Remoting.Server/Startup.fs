@@ -35,6 +35,8 @@ open Bolero.Server
 open FSharp.SystemTextJson.Swagger
 
 module Page =
+    open Microsoft.AspNetCore.Components
+    open Microsoft.AspNetCore.Components.Web
     open Bolero.Html
     open Bolero.Server.Html
 
@@ -45,11 +47,16 @@ module Page =
             ``base`` { attr.href "/" }
         }
         body {
-            div { attr.id "main"; comp<MyApp> }
+            div { attr.id "main"; comp<MyApp> { attr.renderMode RenderMode.InteractiveAuto } }
             script { attr.src "_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js" }
             boleroScript
         }
     }
+
+    [<Route "/{*path}">]
+    type Page() =
+        inherit Bolero.Component()
+        override _.Render() = index
 
 type MyApiHandler(log: ILogger<MyApiHandler>, ctx: IRemoteContext) =
     inherit RemoteHandler<MyApi>()
@@ -91,14 +98,16 @@ type MyApiHandler(log: ILogger<MyApiHandler>, ctx: IRemoteContext) =
 type Startup() =
 
     member this.ConfigureServices(services: IServiceCollection) =
-        services.AddMvc() |> ignore
+        services.AddRazorComponents()
+            .AddInteractiveServerComponents()
+            .AddInteractiveWebAssemblyComponents()
+        |> ignore
         services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie()
             |> ignore
         services
             .AddBoleroRemoting<MyApiHandler>()
-            .AddBoleroHost()
-            .AddServerSideBlazor()
+            .AddBoleroComponents()
         |> ignore
         services.AddSwaggerForSystemTextJson(JsonFSharpOptions()) |> ignore
         services.AddEndpointsApiExplorer() |> ignore
@@ -110,13 +119,16 @@ type Startup() =
             .UseSwaggerUI()
             .UseRouting()
             .UseAuthorization()
-            .UseBlazorFrameworkFiles()
+            .UseAntiforgery()
             .UseEndpoints(fun endpoints ->
-                endpoints.MapBlazorHub() |> ignore
                 endpoints.MapBoleroRemoting()
                     .WithOpenApi()
                 |> ignore
-                endpoints.MapFallbackToBolero(Page.index) |> ignore)
+                endpoints.MapRazorComponents<Page.Page>()
+                    .AddInteractiveServerRenderMode()
+                    .AddInteractiveWebAssemblyRenderMode()
+                    .AddAdditionalAssemblies(typeof<MyApp>.Assembly)
+                |> ignore)
         |> ignore
 
         if env.IsDevelopment() then

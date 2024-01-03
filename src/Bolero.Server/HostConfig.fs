@@ -24,12 +24,24 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Hosting
 
 /// <summary>
-/// The Bolero hosting configuration set by <see cref="M:Bolero.Server.ServerComponentsExtensions.AddBoleroHost" />.
+/// The Bolero hosting configuration set by <see cref="M:Bolero.Server.ServerComponentsExtensions.AddBoleroHost" />
+/// or <see cref="M:Bolero.Server.ServerComponentsExtensions.AddBoleroComponents" />.
 /// </summary>
 type IBoleroHostConfig =
-    /// <summary>If true, use server-side Bolero; if false, use WebAssembly.</summary>
+    /// <summary>
+    /// If true, use Bolero with interactive render modes, and bypass <see cref="P:IsServer"/> and <see cref="P:IsPrerendered"/>.
+    /// If false, use Bolero's legacy render mode handling.
+    /// </summary>
+    abstract IsInteractiveRender: bool
+    /// <summary>
+    /// If true, use server-side Bolero; if false, use WebAssembly.
+    /// Only applies if <see cref="IsInteractiveRender"/> is false.
+    /// </summary>
     abstract IsServer: bool
-    /// <summary>If true, prerender the initial view in the served HTML.</summary>
+    /// <summary>
+    /// If true, prerender the initial view in the served HTML.
+    /// Only applies if <see cref="IsInteractiveRender"/> is false.
+    /// </summary>
     abstract IsPrerendered: bool
 
 /// <exclude />
@@ -56,7 +68,11 @@ type BoleroHostConfig(baseConfig: IBoleroHostBaseConfig, env: IHostEnvironment, 
     interface IBoleroHostConfig with
         member this.IsServer = this.IsServer
         member this.IsPrerendered = this.IsPrerendered
+        member this.IsInteractiveRender = false
 
     static member internal Body(config: IBoleroHostConfig) =
-        let k = if config.IsServer then "server" else "webassembly"
+        let k =
+            if config.IsInteractiveRender then "web"
+            elif config.IsServer then "server"
+            else "webassembly"
         $"""<script src="_framework/blazor.{k}.js"></script>"""
