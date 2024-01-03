@@ -128,3 +128,12 @@ module Html =
     /// preceded by the standard "html" doctype declaration.
     /// </summary>
     let doctypeHtml = DoctypeHtmlBuilder()
+
+#if NET8_0_OR_GREATER
+    module attr =
+
+        let renderMode (mode: IComponentRenderMode) =
+            Attr(fun _ b i ->
+                b.AddComponentRenderMode(mode)
+                i)
+#endif

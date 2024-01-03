@@ -35,6 +35,8 @@ open Bolero.Server
 open FSharp.SystemTextJson.Swagger
 
 module Page =
+    open Microsoft.AspNetCore.Components
+    open Microsoft.AspNetCore.Components.Web
     open Bolero.Html
     open Bolero.Server.Html
 
@@ -45,12 +47,13 @@ module Page =
             ``base`` { attr.href "/" }
         }
         body {
-            div { attr.id "main"; comp<MyApp> }
+            div { attr.id "main"; comp<MyApp> { attr.renderMode RenderMode.InteractiveAuto } }
             script { attr.src "_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js" }
             boleroScript
         }
     }
 
+    [<Route "/{*path}">]
     type Page() =
         inherit Bolero.Component()
         override _.Render() = index

@@ -21,7 +21,6 @@
 module Bolero.Tests.Remoting.Client
 
 open System.Collections.Generic
-open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Authorization
 open Bolero
 open Bolero.Html
@@ -221,7 +220,6 @@ let Display model dispatch =
         }
     }
 
-[<BoleroRenderMode(BoleroRenderMode.Auto); Route "/{*path}">]
 type MyApp() =
     inherit ProgramComponent<Model, Message>()
 
