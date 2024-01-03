@@ -130,8 +130,18 @@ module Html =
     let doctypeHtml = DoctypeHtmlBuilder()
 
 #if NET8_0_OR_GREATER
+    /// HTML attributes.
     module attr =
 
+        /// <summary>
+        /// Define the render mode to use for this component.
+        /// Must be used on a component in a server-side page that uses interactive render modes.
+        /// </summary>
+        /// <param name="mode">
+        /// The render mode.
+        /// Usually one of the modes defined in <see cref="T:Microsoft.AspNetCore.Components.Web.RenderMode"/>.
+        /// </param>
+        /// <seealso cref="M:Bolero.Server.ServerComponentsExtensions.AddBoleroComponents(Microsoft.Extensions.DependencyInjection.IServiceCollection)"/>
         let renderMode (mode: IComponentRenderMode) =
             Attr(fun _ b i ->
                 b.AddComponentRenderMode(mode)
