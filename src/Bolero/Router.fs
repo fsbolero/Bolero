@@ -190,15 +190,8 @@ exception InvalidRouter of kind: InvalidRouterKind with
 type PageModel<'T> =
     { Model: 'T }
 
-#if NET8_0
-    static let prop = typeof<PageModel<'T>>.GetProperty("Model")
-
-    member internal this.SetModel(value) =
-        prop.SetValue(this, value)
-#else
     member internal this.SetModel(value) =
         Unsafe.AsRef<'T>(&this.Model) <- value
-#endif
 
 [<AutoOpen>]
 module private RouterImpl =

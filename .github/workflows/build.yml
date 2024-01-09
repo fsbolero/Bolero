@@ -20,7 +20,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '8.0.100'
+          dotnet-version: '8.0.101'
 
       - name: NuGet cache
         uses: actions/cache@v1
@@ -73,7 +73,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '8.0.100'
+          dotnet-version: '8.0.101'
 
       - name: Download nupkg
         uses: actions/download-artifact@v1
@@ -97,7 +97,7 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '8.0.100'
+          dotnet-version: '8.0.101'
 
       - name: Prepare
         run: |
