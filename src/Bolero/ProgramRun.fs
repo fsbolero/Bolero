@@ -105,8 +105,17 @@ module internal Program' =
 
         reentered <- true
         setState model dispatch
-        fun () ->
+        let mutable cmd = cmd
+
+        let updateInitState m cmd' =
+            setState m dispatch
+            state <- m
+            cmd <- cmd @ cmd'
+
+        let run () =
             cmd |> Cmd.exec (fun ex -> onError ("Error intitializing:", ex)) dispatch
             activeSubs <- Subs.diff activeSubs sub |> Subs.Fx.change onError dispatch
             processMsgs ()
             reentered <- false
+
+        updateInitState, model, run
