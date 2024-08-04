@@ -22,6 +22,7 @@ namespace Bolero.Tests.Remoting
 
 open System
 open System.Text.Json.Serialization
+open System.Threading.Tasks
 open Bolero.Tests.Remoting.Client
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Authentication.Cookies
@@ -40,6 +41,18 @@ module Page =
     open Bolero.Html
     open Bolero.Server.Html
 
+    type MyStreamedComponent() =
+        inherit Components.StreamRenderingComponent<string>()
+
+        override _.InitialModel = "loading..."
+
+        override _.LoadModel(_initialModel) = task {
+            do! Task.Delay (TimeSpan.FromSeconds 2)
+            return "loaded!"
+        }
+
+        override _.Render(model) = div { $"Static stream content {model}" }
+
     let index = doctypeHtml {
         head {
             title { "Bolero (remoting)" }
@@ -47,7 +60,8 @@ module Page =
             ``base`` { attr.href "/" }
         }
         body {
-            div { attr.id "main"; comp<MyApp> { attr.renderMode RenderMode.InteractiveAuto } }
+            div { attr.id "main"; comp<MyApp> { attr.renderMode (InteractiveWebAssemblyRenderMode(prerender = false)) } }
+            comp<MyStreamedComponent>
             script { attr.src "_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js" }
             boleroScript
         }

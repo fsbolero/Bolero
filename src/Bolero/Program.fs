@@ -23,7 +23,47 @@
 module Bolero.Program
 
 open System.Reflection
+open System.Threading.Tasks
 open Elmish
+
+/// <summary>
+/// Create a simple program for a component that uses StreamRendering.
+/// </summary>
+/// <param name="initialModel">The model that is shown initially.</param>
+/// <param name="load">Load the model to be stream-rendered.</param>
+/// <param name="update">The Elmish update function.</param>
+/// <param name="view">The Elmish view function.</param>
+let mkSimpleStreamRendering
+        (initialModel: 'model)
+        (load: 'model -> Task<'model>)
+        (update: 'msg -> 'model -> 'model)
+        (view: 'model -> Dispatch<'msg> -> Node)
+        : Program<'model, 'msg> =
+    Program.mkSimple (fun (comp: ProgramComponent<'model, 'msg>) ->
+            comp.StreamingInit <- Some (fun x -> task {
+                let! model = load x
+                return model, Cmd.none
+            })
+            initialModel)
+        update view
+
+/// <summary>
+/// Create a program for a component that uses StreamRendering.
+/// </summary>
+/// <param name="initialModel">The model that is shown initially.</param>
+/// <param name="load">Load the model to be stream-rendered.</param>
+/// <param name="update">The Elmish update function.</param>
+/// <param name="view">The Elmish view function.</param>
+let mkStreamRendering
+        (initialModel: 'model)
+        (load: 'model -> Task<'model * Cmd<'msg>>)
+        (update: 'msg -> 'model -> 'model * Cmd<'msg>)
+        (view: 'model -> Dispatch<'msg> -> Node)
+        : Program<'model, 'msg>  =
+    Program.mkProgram (fun (comp: ProgramComponent<'model, 'msg>) ->
+            comp.StreamingInit <- Some load
+            initialModel, [])
+        update view
 
 /// <summary>
 /// Attach `router` to `program` when it is run as the `Program` of a `ProgramComponent`.

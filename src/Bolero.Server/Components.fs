@@ -59,6 +59,30 @@ type BoleroScript() =
     override this.BuildRenderTree(builder) =
         builder.AddMarkupContent(0, BoleroHostConfig.Body(this.Config))
 
+#if NET8_0_OR_GREATER
+[<AbstractClass; StreamRendering true>]
+type StreamRenderingComponent<'model>() =
+    inherit Component<'model>()
+
+    let mutable model = Unchecked.defaultof<'model>
+
+    abstract InitialModel : 'model
+
+    abstract LoadModel : 'model -> Task<'model>
+
+    abstract Render : 'model -> Node
+
+    override this.OnInitializedAsync() =
+        model <- this.InitialModel
+        task {
+            let! newModel = this.LoadModel(model)
+            model <- newModel
+        }
+
+    override this.Render() =
+        this.Render(model)
+#endif
+
 module Rendering =
 
     let private emptyContent = Task.FromResult { new IHtmlContent with member _.WriteTo(_, _) = () }
