@@ -45,14 +45,14 @@ jobs:
           DOTNET_RUNTIME_IDENTIFIER=linux-x64 ./build.ps1 -t all
 
       - name: Upload nupkg
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4.4.0
         with:
           name: nuget
           path: build
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4.4.0
         with:
           name: TestResults
           path: tests/Unit/TestResults/*.trx
@@ -76,7 +76,7 @@ jobs:
           dotnet-version: '8.0.100'
 
       - name: Download nupkg
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: nuget
 
