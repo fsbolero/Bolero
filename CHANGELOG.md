@@ -11,7 +11,13 @@
 
     * Alternately, `Bolero.Server.Html.attr.renderMode` can be used to indicate the render mode of the component it is applied to.
 
+* Add `Program.mkStreamRendering` and `Program.mkSimpleStreamRendering` functions.
+
+* Add `StreamRenderingComponent` base class with members `InitialModel: 'model` and `LoadModel: 'model -> Task<'model>`.
+
 * [#279](https://github.com/fsbolero/Bolero/issues/279) Re-enable the generation of reference assemblies.
+
+* [#355](https://github.com/fsbolero/Bolero/issues/355) Fix CSS isolation on rebuild.
 
 ## 0.23
 
