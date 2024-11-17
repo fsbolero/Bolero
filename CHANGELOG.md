@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.24
+
+* [#347](https://github.com/fsbolero/Bolero/issues/347) Add Blazor Interactive Render Modes.
+
+    * `IServiceCollection.AddBoleroComponents()` to be called instead of `IServiceCollection.AddBoleroHost()` to use interactive render modes.
+      When that is used, `boleroScript` will include `blazor.web.js` instead of `blazor.server.js` or `blazor.webassembly.js`.
+
+    * `BoleroRenderModeAttribute` can be used to indicate the render mode of the component it is applied to.
+
+    * Alternately, `Bolero.Server.Html.attr.renderMode` can be used to indicate the render mode of the component it is applied to.
+
+* Add `Program.mkStreamRendering` and `Program.mkSimpleStreamRendering` functions.
+
+* Add `StreamRenderingComponent` base class with members `InitialModel: 'model` and `LoadModel: 'model -> Task<'model>`.
+
+* [#279](https://github.com/fsbolero/Bolero/issues/279) Re-enable the generation of reference assemblies.
+
+* [#355](https://github.com/fsbolero/Bolero/issues/355) Fix CSS isolation on rebuild.
+
 ## 0.23
 
 * [#308](https://github.com/fsbolero/Bolero/issues/308) Add router functions to decide what to do when the URL is invalid.

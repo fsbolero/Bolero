@@ -20,13 +20,17 @@
 
 module Bolero.Tests.Remoting.Client
 
+open System
 open System.Collections.Generic
+open System.Threading.Tasks
+open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Authorization
 open Bolero
 open Bolero.Html
 open Bolero.Remoting
 open Bolero.Remoting.Client
 open Elmish
+open Microsoft.Extensions.Logging
 
 type MyApi =
     {
@@ -220,22 +224,27 @@ let Display model dispatch =
         }
     }
 
+[<StreamRendering true>] //; BoleroRenderMode(BoleroRenderMode.Server, prerender = false)>]
 type MyApp() =
     inherit ProgramComponent<Model, Message>()
 
-    override this.Program =
-        let myApi = this.Remote<MyApi>()
-        Program.mkProgram (fun _ -> InitModel, Cmd.batch [
+    let load model = task {
+        do! Task.Delay 2000
+        return { model with currentKey = 42 }, Cmd.batch [
             Cmd.ofMsg RefreshItems
             Cmd.ofMsg GetLogin
-        ]) (Update myApi) Display
+        ]
+    }
+
+    override this.Program =
+        let myApi = this.Remote<MyApi>()
+        Program.mkStreamRendering InitModel load (Update myApi) Display
         |> Program.withRouter router
 
 
 open Microsoft.AspNetCore.Components.WebAssembly.Hosting
 open Microsoft.Extensions.DependencyInjection
 open System.Security.Claims
-open System.Threading.Tasks
 
 type DummyAuthProvider() =
     inherit AuthenticationStateProvider()

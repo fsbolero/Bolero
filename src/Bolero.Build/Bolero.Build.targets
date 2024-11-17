@@ -15,6 +15,10 @@
     <_BoleroApplyCssScopesBeforeTargets>ResolveScopedCssOutputs;CoreCompile</_BoleroApplyCssScopesBeforeTargets>
   </PropertyGroup>
 
+  <ItemGroup Condition="Exists('$(_BoleroScopedCssSourceFile)')">
+    <CompileBefore Include="$(_BoleroScopedCssSourceFile)" />
+  </ItemGroup>
+
   <UsingTask AssemblyFile="$(BoleroTaskAssemblyPath)" TaskName="Bolero.Build.BoleroStripFSharpMetadata"
              Condition="'$(BoleroStripAssemblies)' != 'False'" />
   <UsingTask AssemblyFile="$(BoleroTaskAssemblyPath)" TaskName="Bolero.Build.BoleroApplyCssScopes" />
@@ -25,7 +29,7 @@
   </Target>
 
   <!-- Generate the CSS Scope identifier for *.bolero.css -->
-  <Target Name="_BoleroComputeCssScope" DependsOnTargets="$(_BoleroComputeCssScopeDependsOn)">
+  <Target Name="_BoleroComputeCssScope" DependsOnTargets="$(_BoleroComputeCssScopeDependsOn)" BeforeTargets="$(_BoleroApplyCssScopesBeforeTargets)">
     <ComputeCssScope ScopedCssInput="@(BoleroScopedCss)" Targetname="$(TargetName)">
       <Output TaskParameter="ScopedCss" ItemName="_BoleroScopedCss" />
     </ComputeCssScope>

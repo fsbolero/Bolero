@@ -194,8 +194,7 @@ and [<AbstractClass>]
                 with _ -> () // fails if run in prerender
         )
 
-    override this.OnInitialized() =
-        base.OnInitialized()
+    override this.OnInitializedAsync() =
         let setDispatch d =
             dispatch <- d
         program <-
@@ -207,11 +206,24 @@ and [<AbstractClass>]
                 id id
                 (fun _ model dispatch -> setState model dispatch)
                 id id
-        runProgramLoop <- Program'.runFirstRender this program
+
+        let updateInitState, initModel, loop = Program'.runFirstRender this program
+        runProgramLoop <- loop
         setState <- fun model dispatch ->
             match oldModel with
             | Some oldModel when this.ShouldRender(oldModel, model) -> this.ForceSetState(model, dispatch)
             | _ -> ()
+
+        match this.StreamingInit with
+        | None ->
+            Task.CompletedTask
+        | Some init ->
+            task {
+                let! model, cmd = init initModel
+                updateInitState model cmd
+            }
+
+    member val internal StreamingInit : ('model -> Task<'model * Cmd<'msg>>) option = None with get, set
 
     member internal this.InitRouter
         (
