@@ -15,7 +15,8 @@
     <_BoleroApplyCssScopesBeforeTargets>ResolveScopedCssOutputs;CoreCompile</_BoleroApplyCssScopesBeforeTargets>
   </PropertyGroup>
 
-  <ItemGroup Condition="Exists('$(_BoleroScopedCssSourceFile)')">
+  <!-- Include the generated CssScopes.fs at the beginning of the build -->
+  <ItemGroup>
     <CompileBefore Include="$(_BoleroScopedCssSourceFile)" />
   </ItemGroup>
 
@@ -40,7 +41,6 @@
           Inputs="@(_BoleroScopedCss);$(MSBuildThisFileFullPath)" Outputs="$(_BoleroScopedCssSourceFile)">
     <BoleroApplyCssScopes ScopedCss="@(_BoleroScopedCss)" ScopedCssSourceFile="$(_BoleroScopedCssSourceFile)" />
     <ItemGroup>
-      <CompileBefore Include="$(_BoleroScopedCssSourceFile)" />
       <_ScopedCss Include="@(_BoleroScopedCss)" />
     </ItemGroup>
   </Target>
