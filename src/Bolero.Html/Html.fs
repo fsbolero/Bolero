@@ -18,8 +18,8 @@
 //
 // $end{copyright}
 
-/// Create HTML elements, attributes and event handlers.
-/// [category: HTML]
+/// <summary>Create HTML elements, attributes and event handlers.</summary>
+/// <category>HTML</category>
 module Bolero.Html
 
 open System.Threading.Tasks
