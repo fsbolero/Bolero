@@ -102,7 +102,7 @@ type Router<'ep, 'model, 'msg> =
 
 /// <summary>Declare how an F# union case matches to a URI.</summary>
 /// <category>Routing</category>
-[<AttributeUsage(AttributeTargets.Property, AllowMultiple = false)>]
+[<AttributeUsage(AttributeTargets.Property ||| AttributeTargets.Method, AllowMultiple = false)>]
 type EndPointAttribute(path, query) =
     inherit Attribute()
 
@@ -125,7 +125,7 @@ type EndPointAttribute(path, query) =
 /// Declare that the given field of an F# union case matches the entire remainder of the URL path.
 /// </summary>
 /// <category>Routing</category>
-[<AttributeUsage(AttributeTargets.Property, AllowMultiple = false)>]
+[<AttributeUsage(AttributeTargets.Property ||| AttributeTargets.Method, AllowMultiple = false)>]
 type WildcardAttribute
     /// <summary>
     /// Declare that the given field of an F# union case matches the entire remainder of the URL path.
