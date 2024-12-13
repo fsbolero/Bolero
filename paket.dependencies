@@ -1,42 +1,26 @@
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: netstandard2.0, net6.0, net7.0
+framework: netstandard2.0, net8.0
 lowest_matching: true
 strategy: min
 
-nuget FSharp.Core >= 6.0 content: none
+nuget FSharp.Core >= 8.0 content: none
 nuget FSharp.SystemTextJson >= 0.19.13
 nuget HtmlAgilityPack >= 1.11.39
 nuget Elmish >= 4.0.1 < 5.0
-nuget Microsoft.AspNetCore.Components.Authorization >= 6.0.25
-nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 6.0.25
-nuget Microsoft.Extensions.Configuration.Binder >= 6.0
-nuget Microsoft.Extensions.Http >= 6.0
-nuget Microsoft.AspNetCore.Components >= 6.0.25
-nuget Microsoft.AspNetCore.Components.Web >= 6.0.25
-nuget Microsoft.AspNetCore.Components.WebAssembly >= 6.0.25
-nuget Microsoft.AspNetCore.Components.WebAssembly.Server >= 6.0.25
-nuget System.Text.Json >= 6.0
-nuget Nerdbank.GitVersioning copy_local: true, lowest_matching: false
-github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
-github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
-
-group net8
-source https://api.nuget.org/v3/index.json
-storage: none
-framework: net8.0
-lowest_matching: true
-strategy: min
-
-nuget FSharp.Core >= 6.0 content: none
-nuget Elmish >= 4.0.1 < 5.0
-nuget Microsoft.AspNetCore.Components.WebAssembly >= 8.0.0
+nuget Microsoft.AspNetCore.Components.Authorization >= 8.0.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 8.0.0
+nuget Microsoft.Extensions.Configuration.Binder >= 8.0.0
+nuget Microsoft.Extensions.Http >= 8.0.0
 nuget Microsoft.JSInterop.WebAssembly >= 8.0.0
 nuget Microsoft.AspNetCore.Components >= 8.0.0
 nuget Microsoft.AspNetCore.Components.Web >= 8.0.0
-nuget Microsoft.Extensions.Http >= 8.0.0
-nuget FSharp.SystemTextJson >= 0.19.13
-nuget System.Text.Json >= 8.0.0
+nuget Microsoft.AspNetCore.Components.WebAssembly >= 8.0.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server >= 8.0.0
+nuget System.Text.Json >= 8.0.5
+nuget Nerdbank.GitVersioning copy_local: true, lowest_matching: false
+github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
+github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 
 group build
 source https://api.nuget.org/v3/index.json
@@ -61,7 +45,7 @@ nuget FSharp.Data ~> 3.0-beta
 group tests
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: net7.0, net8.0
+framework: net8.0
 
 nuget FSharp.Core
 nuget Elmish ~> 4.0
@@ -78,27 +62,17 @@ nuget Swashbuckle.AspNetCore
 nuget Unquote
 nuget System.Text.Encodings.Web prerelease
 nuget System.Text.Json prerelease
-
-group tests-net7
-source https://api.nuget.org/v3/index.json
-storage: none
-framework: net7.0
-
-nuget Microsoft.AspNetCore.OpenApi ~> 7.0
-nuget Microsoft.AspNetCore.Components.Authorization ~> 7.0
-nuget Microsoft.AspNetCore.Components.WebAssembly ~> 7.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 7.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 7.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 7.0
-
-group tests-net8
-source https://api.nuget.org/v3/index.json
-storage: none
-framework: net8.0
-
+nuget Microsoft.AspNetCore.Authorization ~> 8.0.0
 nuget Microsoft.AspNetCore.OpenApi ~> 8.0.0
+nuget Microsoft.AspNetCore.Components ~> 8.0
+nuget Microsoft.AspNetCore.Components.Analyzers ~> 8.0
 nuget Microsoft.AspNetCore.Components.Authorization ~> 8.0
+nuget Microsoft.AspNetCore.Components.Forms ~> 8.0
+nuget Microsoft.AspNetCore.Components.Web ~> 8.0
 nuget Microsoft.AspNetCore.Components.WebAssembly ~> 8.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 8.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 8.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 8.0
+nuget Microsoft.AspNetCore.Metadata ~> 8.0
+nuget Microsoft.JSInterop ~> 8.0
+nuget Microsoft.JSInterop.WebAssembly ~> 8.0
