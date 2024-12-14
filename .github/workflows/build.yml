@@ -36,9 +36,6 @@ jobs:
           if echo "${{github.ref}}" | grep -q "^refs/heads/"; then
             git checkout "$(echo ${{github.ref}} | sed -E 's|^refs/heads/||')";
           fi
-          # .NET 8 RC2 has a bug where it restores the wrong version of tools...
-          dotnet tool update paket --version 8.0.0
-          dotnet tool update nbgv --version 3.6.133
           # Ensure that the selenium chrome driver matches the installed chrome
           ./build.ps1 -t update-chromedriver
           # Build
