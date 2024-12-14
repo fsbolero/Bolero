@@ -19,6 +19,8 @@
 
 * [#355](https://github.com/fsbolero/Bolero/issues/355) Fix CSS isolation on rebuild.
 
+* Fix AttributeTargets for `EndPoint` and `Wildcard`.
+
 ## 0.23
 
 * [#308](https://github.com/fsbolero/Bolero/issues/308) Add router functions to decide what to do when the URL is invalid.
