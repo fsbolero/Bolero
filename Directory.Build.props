@@ -3,5 +3,7 @@
     <Company>IntelliFactory</Company>
     <!-- UseSharedCompilation=true causes problems with locked Bolero.Build.dll -->
     <UseSharedCompilation>false</UseSharedCompilation>
+    <!-- Parallel tests try and fail to use the same port -->
+    <TestTfmsInParallel>false</TestTfmsInParallel>
   </PropertyGroup>
 </Project>

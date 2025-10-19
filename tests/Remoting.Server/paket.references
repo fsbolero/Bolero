@@ -1,4 +1,4 @@
-group tests
+group tests-net9
 FSharp.Core
 Swashbuckle.AspNetCore
 FSharp.SystemTextJson.Swagger

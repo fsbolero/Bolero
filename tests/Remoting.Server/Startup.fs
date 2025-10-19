@@ -47,7 +47,7 @@ module Page =
         override _.InitialModel = "loading..."
 
         override _.LoadModel(_initialModel) = task {
-            do! Task.Delay (TimeSpan.FromSeconds 2)
+            do! Task.Delay (TimeSpan.FromSeconds 2.)
             return "loaded!"
         }
 

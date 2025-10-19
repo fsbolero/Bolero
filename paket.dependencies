@@ -1,6 +1,6 @@
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: netstandard2.0, net8.0
+framework: netstandard2.0, net9.0
 lowest_matching: true
 strategy: min
 
@@ -8,19 +8,41 @@ nuget FSharp.Core >= 8.0 content: none
 nuget FSharp.SystemTextJson >= 0.19.13
 nuget HtmlAgilityPack >= 1.11.39
 nuget Elmish >= 4.0.1 < 5.0
+nuget Microsoft.AspNetCore.Components.Authorization >= 9.0.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 9.0.0
+nuget Microsoft.Extensions.Configuration.Binder >= 9.0.0
+nuget Microsoft.Extensions.Http >= 9.0.0
+nuget Microsoft.JSInterop.WebAssembly >= 9.0.0
+nuget Microsoft.AspNetCore.Components >= 9.0.0
+nuget Microsoft.AspNetCore.Components.Web >= 9.0.0
+nuget Microsoft.AspNetCore.Components.WebAssembly >= 9.0.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server >= 9.0.0
+nuget System.Text.Json >= 9.0.0
+nuget Nerdbank.GitVersioning copy_local: true, lowest_matching: false
+github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
+github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
+
+group net8
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: net8.0
+lowest_matching: true
+strategy: min
+
+nuget FSharp.Core >= 8.0 content: none
+nuget FSharp.SystemTextJson >= 0.19.13
+nuget Elmish >= 4.0.1 < 5.0
 nuget Microsoft.AspNetCore.Components.Authorization >= 8.0.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 8.0.0
 nuget Microsoft.Extensions.Configuration.Binder >= 8.0.0
 nuget Microsoft.Extensions.Http >= 8.0.0
+nuget Microsoft.JSInterop >= 8.0.0
 nuget Microsoft.JSInterop.WebAssembly >= 8.0.0
 nuget Microsoft.AspNetCore.Components >= 8.0.0
 nuget Microsoft.AspNetCore.Components.Web >= 8.0.0
 nuget Microsoft.AspNetCore.Components.WebAssembly >= 8.0.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Server >= 8.0.0
 nuget System.Text.Json >= 8.0.5
-nuget Nerdbank.GitVersioning copy_local: true, lowest_matching: false
-github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fsi
-github fsprojects/FSharp.TypeProviders.SDK src/ProvidedTypes.fs
 
 group build
 source https://api.nuget.org/v3/index.json
@@ -42,7 +64,7 @@ nuget Fake.DotNet.Cli
 nuget Fake.DotNet.Paket
 nuget FSharp.Data ~> 3.0-beta
 
-group tests
+group tests-net8
 source https://api.nuget.org/v3/index.json
 storage: none
 framework: net8.0
@@ -64,6 +86,7 @@ nuget System.Text.Encodings.Web prerelease
 nuget System.Text.Json prerelease
 nuget Microsoft.AspNetCore.Authorization ~> 8.0.0
 nuget Microsoft.AspNetCore.OpenApi ~> 8.0.0
+nuget Microsoft.OpenApi ~> 1.0
 nuget Microsoft.AspNetCore.Components ~> 8.0
 nuget Microsoft.AspNetCore.Components.Analyzers ~> 8.0
 nuget Microsoft.AspNetCore.Components.Authorization ~> 8.0
@@ -76,3 +99,39 @@ nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 8.0
 nuget Microsoft.AspNetCore.Metadata ~> 8.0
 nuget Microsoft.JSInterop ~> 8.0
 nuget Microsoft.JSInterop.WebAssembly ~> 8.0
+
+group tests-net9
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: net9.0
+
+nuget FSharp.Core
+nuget Elmish ~> 4.0
+nuget FsCheck.NUnit ~> 2.12
+nuget FSharp.SystemTextJson.Swagger
+nuget Microsoft.NET.Test.Sdk 15.8.0
+nuget nunit ~> 3.10
+nuget NUnit3TestAdapter ~> 3.10
+nuget Selenium.Support
+nuget Selenium.WebDriver
+nuget Selenium.WebDriver.ChromeDriver
+nuget Swashbuckle.AspNetCore
+# nuget Selenium.WebDriver.GeckoDriver.Win64
+nuget Unquote
+nuget System.Text.Encodings.Web prerelease
+nuget System.Text.Json prerelease
+nuget Microsoft.AspNetCore.Authorization ~> 9.0.0
+nuget Microsoft.AspNetCore.OpenApi ~> 9.0.0
+nuget Microsoft.OpenApi ~> 1.0
+nuget Microsoft.AspNetCore.Components ~> 9.0
+nuget Microsoft.AspNetCore.Components.Analyzers ~> 9.0
+nuget Microsoft.AspNetCore.Components.Authorization ~> 9.0
+nuget Microsoft.AspNetCore.Components.Forms ~> 9.0
+nuget Microsoft.AspNetCore.Components.Web ~> 9.0
+nuget Microsoft.AspNetCore.Components.WebAssembly ~> 9.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 9.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 9.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 9.0
+nuget Microsoft.AspNetCore.Metadata ~> 9.0
+nuget Microsoft.JSInterop ~> 9.0
+nuget Microsoft.JSInterop.WebAssembly ~> 9.0

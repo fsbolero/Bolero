@@ -1,5 +1,4 @@
 namespace Bolero
-#if NET8_0_OR_GREATER
 
 open System.Runtime.InteropServices
 open Microsoft.AspNetCore.Components
@@ -38,5 +37,3 @@ type BoleroRenderModeAttribute
         | BoleroRenderMode.WebAssembly -> InteractiveWebAssemblyRenderMode(prerender)
         | BoleroRenderMode.Auto -> InteractiveAutoRenderMode(prerender)
         | _ -> failwith $"Invalid InteractiveRenderMode: {mode}"
-
-#endif
