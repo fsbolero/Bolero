@@ -129,7 +129,6 @@ module Html =
     /// </summary>
     let doctypeHtml = DoctypeHtmlBuilder()
 
-#if NET8_0_OR_GREATER
     /// HTML attributes.
     module attr =
 
@@ -146,4 +145,3 @@ module Html =
             Attr(fun _ b i ->
                 b.AddComponentRenderMode(mode)
                 i)
-#endif

@@ -29,9 +29,7 @@ open System.Text
 open System.Text.Encodings.Web
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Components
-#if NET8_0
 open Microsoft.AspNetCore.Components.Endpoints
-#endif
 open Microsoft.AspNetCore.Components.RenderTree
 open Microsoft.AspNetCore.Components.Rendering
 open Microsoft.AspNetCore.Html
@@ -59,7 +57,6 @@ type BoleroScript() =
     override this.BuildRenderTree(builder) =
         builder.AddMarkupContent(0, BoleroHostConfig.Body(this.Config))
 
-#if NET8_0_OR_GREATER
 [<AbstractClass; StreamRendering true>]
 type StreamRenderingComponent<'model>() =
     inherit Component<'model>()
@@ -81,7 +78,6 @@ type StreamRenderingComponent<'model>() =
 
     override this.Render() =
         this.Render(model)
-#endif
 
 module Rendering =
 
@@ -105,9 +101,7 @@ module Rendering =
             (htmlHelper: IHtmlHelper)
             (renderType: RenderType)
             (parameters: obj)
-#if NET8_0
             (prerenderer: IComponentPrerenderer)
-#endif
             = task {
         (htmlHelper :?> IViewContextAware).Contextualize(ViewContext(HttpContext = httpContext))
         let! htmlContent =
@@ -115,11 +109,7 @@ module Rendering =
             | FromConfig config -> renderComponentAsync htmlHelper componentType config parameters
             | Page -> htmlHelper.RenderComponentAsync(componentType, RenderMode.Static, parameters)
         use writer = new StringWriter(sb)
-#if NET8_0
         return! prerenderer.Dispatcher.InvokeAsync(fun () -> htmlContent.WriteTo(writer, HtmlEncoder.Default))
-#else
-        htmlContent.WriteTo(writer, HtmlEncoder.Default)
-#endif
     }
 
     let private selfClosingElements = HashSet [ "area"; "base"; "br"; "col"; "embed"; "hr"; "img"; "input"; "link"; "meta"; "param"; "source"; "track"; "wbr" ]
@@ -212,20 +202,12 @@ module Rendering =
     /// <param name="htmlHelper">The Razor HTML helper.</param>
     /// <param name="boleroConfig">The Bolero configuration.</param>
     /// <returns>A string containing the HTML representation of the page.</returns>
-    let renderPage (page: Node) httpContext htmlHelper boleroConfig
-#if NET8_0
-            (prerenderer: IComponentPrerenderer)
-#endif
-        =
+    let renderPage (page: Node) httpContext htmlHelper boleroConfig (prerenderer: IComponentPrerenderer) =
         let renderComp =
             { new IRenderComponents with
                 member _.RenderComponent(ty, sb, attributes, forceStatic) =
                     let renderType = if forceStatic then Page else FromConfig boleroConfig
-                    (renderCompTo sb ty httpContext htmlHelper renderType attributes
-#if NET8_0
-                        prerenderer
-#endif
-                     ).GetAwaiter().GetResult()
+                    (renderCompTo sb ty httpContext htmlHelper renderType attributes prerenderer).GetAwaiter().GetResult()
                     sb }
         renderWith renderComp page
 

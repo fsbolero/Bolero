@@ -1,7 +1,7 @@
-﻿// Due to this issue, we need to reimplement a variant of Program.runWith:
-// https://github.com/elmish/elmish/issues/210
-// As soon as the above issue is solved, this file can go.
+// This is required before net9 due to the absence of RendererInfo.IsInteractive.
+// See https://github.com/elmish/elmish/issues/210
 namespace Elmish
+#if !NET9_0_OR_GREATER
 
 [<Struct>]
 type internal RingState<'item> =
@@ -119,3 +119,5 @@ module internal Program' =
             reentered <- false
 
         updateInitState, model, run
+
+#endif

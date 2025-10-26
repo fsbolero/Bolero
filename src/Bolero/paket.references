@@ -6,3 +6,12 @@ Nerdbank.GitVersioning
 Microsoft.Extensions.Http
 FSharp.SystemTextJson
 Microsoft.AspNetCore.Components
+
+group net8
+FSharp.Core
+FSharp.SystemTextJson
+Elmish
+Microsoft.AspNetCore.Components
+Microsoft.AspNetCore.Components.WebAssembly
+Microsoft.JSInterop.WebAssembly
+Microsoft.Extensions.Http
