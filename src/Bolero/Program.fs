@@ -78,8 +78,7 @@ let withRouter
     |> Program.map
         (fun init comp ->
             let model, initCmd = init comp
-            let update = typeof<Program<'model, 'msg>>.GetProperty("update", BindingFlags.NonPublic ||| BindingFlags.Instance).GetValue(program) :?> _
-            let model, compCmd = comp.InitRouter(router, update, model)
+            let model, compCmd = comp.InitRouter(router, Program.update program, model)
             model, initCmd @ compCmd)
         id id id id id
 
