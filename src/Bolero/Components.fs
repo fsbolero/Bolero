@@ -118,7 +118,9 @@ and [<AbstractClass>]
 
     let mutable oldModel = None
     let mutable view = Node(fun _ _ s -> s)
+#if !NET9_0_OR_GREATER
     let mutable runProgramLoop = fun () -> ()
+#endif
     let mutable dispatch = ignore<'msg>
     let mutable program = Unchecked.defaultof<Program<'model, 'msg>>
     let mutable router = None : option<IRouter<'model, 'msg>>
@@ -194,9 +196,52 @@ and [<AbstractClass>]
                 with _ -> () // fails if run in prerender
         )
 
+#if NET9_0_OR_GREATER
+    override this.OnInitializedAsync() =
+        program <- this.Program
+        let initModel, initCmd = Program.init program this
+        view <- Program.view program initModel (fun cmd -> dispatch cmd)
+        oldModel <- Some initModel
+        let isInteractive = this.RendererInfo.IsInteractive
+
+        task {
+            if isInteractive then
+                let setDispatch d =
+                    dispatch <- d
+
+                setState <- fun model dispatch ->
+                    match oldModel with
+                    | Some oldModel when this.ShouldRender(oldModel, model) -> this.ForceSetState(model, dispatch)
+                    | _ -> ()
+
+                match this.StreamingInit with
+                | None ->
+                    program <-
+                        program
+                        |> Program.map
+                            (fun _ _ -> initModel, setDispatch :: initCmd)
+                            id id
+                            (fun _ model dispatch -> setState model dispatch)
+                            id id
+
+                | Some streamInit ->
+                    let! streamedModel, streamedCmd = streamInit initModel
+                    view <- Program.view program streamedModel (fun cmd -> dispatch cmd)
+                    oldModel <- Some streamedModel
+                    program <-
+                        program
+                        |> Program.map
+                               (fun _ _ -> streamedModel, setDispatch :: initCmd @ streamedCmd)
+                               id id
+                               (fun _ model dispatch -> setState model dispatch)
+                               id id
+        }
+
+#else
     override this.OnInitializedAsync() =
         let setDispatch d =
             dispatch <- d
+
         program <-
             this.Program
             |> Program.map
@@ -222,6 +267,7 @@ and [<AbstractClass>]
                 let! model, cmd = init initModel
                 updateInitState model cmd
             }
+#endif
 
     member val internal StreamingInit : ('model -> Task<'model * Cmd<'msg>>) option = None with get, set
 
@@ -245,7 +291,11 @@ and [<AbstractClass>]
     override this.OnAfterRenderAsync(firstRender) =
         task {
             if firstRender then
+#if NET9_0_OR_GREATER
+                Program.runWith this program
+#else
                 runProgramLoop()
+#endif
                 if router.IsSome then
                     do! this.NavigationInterception.EnableNavigationInterceptionAsync()
 

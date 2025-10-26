@@ -2,6 +2,7 @@
 // https://github.com/elmish/elmish/issues/210
 // As soon as the above issue is solved, this file can go.
 namespace Elmish
+#if !NET9_0_OR_GREATER
 
 [<Struct>]
 type internal RingState<'item> =
@@ -119,3 +120,5 @@ module internal Program' =
             reentered <- false
 
         updateInitState, model, run
+
+#endif
