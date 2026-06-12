@@ -1,4 +1,4 @@
-group tests-net9
+group tests-net10
 FSharp.Core
 Microsoft.AspNetCore.Components
 Microsoft.AspNetCore.Components.WebAssembly

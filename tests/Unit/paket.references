@@ -1,17 +1,4 @@
-group tests-net8
-FsCheck.NUnit
-nunit
-NUnit3TestAdapter
-Microsoft.NET.Test.Sdk
-Selenium.Support
-Selenium.WebDriver
-Selenium.WebDriver.ChromeDriver
-Unquote
-Microsoft.AspNetCore.Components
-Microsoft.AspNetCore.Components.WebAssembly
-Microsoft.AspNetCore.Components.WebAssembly.Server
-
-group tests-net9
+group tests-net10
 FsCheck.NUnit
 nunit
 NUnit3TestAdapter

@@ -135,3 +135,39 @@ nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 9.0
 nuget Microsoft.AspNetCore.Metadata ~> 9.0
 nuget Microsoft.JSInterop ~> 9.0
 nuget Microsoft.JSInterop.WebAssembly ~> 9.0
+
+group tests-net10
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: net10.0
+
+nuget FSharp.Core
+nuget Elmish ~> 4.0
+nuget FsCheck.NUnit ~> 2.12
+nuget FSharp.SystemTextJson.Swagger
+nuget Microsoft.NET.Test.Sdk 17.12.0
+nuget nunit ~> 3.10
+nuget NUnit3TestAdapter ~> 4.6
+nuget Selenium.Support
+nuget Selenium.WebDriver
+nuget Selenium.WebDriver.ChromeDriver
+nuget Swashbuckle.AspNetCore
+# nuget Selenium.WebDriver.GeckoDriver.Win64
+nuget Unquote
+nuget System.Text.Encodings.Web prerelease
+nuget System.Text.Json prerelease
+nuget Microsoft.AspNetCore.Authorization ~> 10.0.0
+nuget Microsoft.AspNetCore.OpenApi ~> 10.0.0
+nuget Microsoft.OpenApi ~> 2.0
+nuget Microsoft.AspNetCore.Components ~> 10.0
+nuget Microsoft.AspNetCore.Components.Analyzers ~> 10.0
+nuget Microsoft.AspNetCore.Components.Authorization ~> 10.0
+nuget Microsoft.AspNetCore.Components.Forms ~> 10.0
+nuget Microsoft.AspNetCore.Components.Web ~> 10.0
+nuget Microsoft.AspNetCore.Components.WebAssembly ~> 10.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 10.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 10.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 10.0
+nuget Microsoft.AspNetCore.Metadata ~> 10.0
+nuget Microsoft.JSInterop ~> 10.0
+nuget Microsoft.JSInterop.WebAssembly ~> 10.0

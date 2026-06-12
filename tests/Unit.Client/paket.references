@@ -1,11 +1,4 @@
-group tests-net8
-FSharp.Core
-Elmish
-Microsoft.AspNetCore.Components.Authorization
-Microsoft.AspNetCore.Components.WebAssembly.Authentication
-Microsoft.AspNetCore.Components.WebAssembly
-
-group tests-net9
+group tests-net10
 FSharp.Core
 Elmish
 Microsoft.AspNetCore.Components.Authorization

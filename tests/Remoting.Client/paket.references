@@ -1,4 +1,4 @@
-group tests-net9
+group tests-net10
 FSharp.Core
 Elmish
 Microsoft.Extensions.Configuration.Binder
