@@ -3,16 +3,18 @@
   "isRoot": true,
   "tools": {
     "paket": {
-      "version": "9.0.2",
+      "version": "10.3.1",
       "commands": [
         "paket"
-      ]
+      ],
+      "rollForward": false
     },
     "nbgv": {
       "version": "3.6.133",
       "commands": [
         "nbgv"
-      ]
+      ],
+      "rollForward": false
     }
   }
 }

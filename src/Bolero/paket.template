@@ -12,17 +12,17 @@ files
     obj/Release/typeproviders/fsharp41/netstandard2.0/HtmlAgilityPack.dll ==> typeproviders/fsharp41/netstandard2.0
     obj/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Components.dll ==> typeproviders/fsharp41/netstandard2.0
     obj/Release/typeproviders/fsharp41/netstandard2.0/Microsoft.AspNetCore.Components.Web.dll ==> typeproviders/fsharp41/netstandard2.0
-    ../Bolero.Html/bin/Release/net8.0/Bolero.Html.dll ==> lib/net8.0
-    ../Bolero.Html/bin/Release/net8.0/Bolero.Html.xml ==> lib/net8.0
-    obj/Release/net8.0/ref/Bolero.dll ==> ref/net8.0
-    ../Bolero.Html/obj/Release/net8.0/ref/Bolero.Html.dll ==> ref/net8.0
+    ../Bolero.Html/bin/Release/net10.0/Bolero.Html.dll ==> lib/net10.0
+    ../Bolero.Html/bin/Release/net10.0/Bolero.Html.xml ==> lib/net10.0
+    obj/Release/net10.0/ref/Bolero.dll ==> ref/net10.0
+    ../Bolero.Html/obj/Release/net10.0/ref/Bolero.Html.dll ==> ref/net10.0
     Bolero.targets ==> build
     roots.xml ==> build
 excludeddependencies
     nerdbank.gitversioning
 include-pdbs true
 dependencies
-    framework: net8.0
-        Microsoft.JSInterop.WebAssembly >= 8.0
-        Microsoft.AspNetCore.Components.WebAssembly >= 8.0
-        Microsoft.AspNetCore.Components >= 8.0
+    framework: net10.0
+        Microsoft.JSInterop.WebAssembly >= 10.0
+        Microsoft.AspNetCore.Components.WebAssembly >= 10.0
+        Microsoft.AspNetCore.Components >= 10.0
