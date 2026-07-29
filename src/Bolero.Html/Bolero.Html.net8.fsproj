@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <OutputType>Library</OutputType>
     <RootNamespace>Bolero</RootNamespace>
@@ -14,7 +14,7 @@
     <Compile Include="Html.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Bolero\Bolero.fsproj" />
+    <ProjectReference Include="..\Bolero\Bolero.net8.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

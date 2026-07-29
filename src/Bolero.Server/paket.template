@@ -12,8 +12,18 @@ excludeddependencies
     nerdbank.gitversioning
 include-pdbs true
 files
+    obj/Release/net8.0/ref/Bolero.Server.dll ==> ref/net8.0
+    obj/Release/net9.0/ref/Bolero.Server.dll ==> ref/net9.0
     obj/Release/net10.0/ref/Bolero.Server.dll ==> ref/net10.0
 dependencies
+    framework: net8.0
+        Microsoft.AspNetCore.Components.Web >= 8.0
+        Microsoft.AspNetCore.Components.WebAssembly >= 8.0
+        Microsoft.JSInterop.WebAssembly >= 8.0
+    framework: net9.0
+        Microsoft.AspNetCore.Components.Web >= 9.0
+        Microsoft.AspNetCore.Components.WebAssembly >= 9.0
+        Microsoft.JSInterop.WebAssembly >= 9.0
     framework: net10.0
         Microsoft.AspNetCore.Components.Web >= 10.0
         Microsoft.AspNetCore.Components.WebAssembly >= 10.0

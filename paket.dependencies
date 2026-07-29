@@ -42,7 +42,29 @@ nuget Microsoft.AspNetCore.Components >= 8.0.0
 nuget Microsoft.AspNetCore.Components.Web >= 8.0.0
 nuget Microsoft.AspNetCore.Components.WebAssembly >= 8.0.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Server >= 8.0.0
-nuget System.Text.Json >= 8.0.5
+nuget System.Text.Json >= 10.0.0
+
+group net9
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: net9.0
+lowest_matching: true
+strategy: min
+
+nuget FSharp.Core >= 9.0 content: none
+nuget FSharp.SystemTextJson >= 0.19.13
+nuget Elmish >= 4.0.1 < 5.0
+nuget Microsoft.AspNetCore.Components.Authorization >= 9.0.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication >= 9.0.0
+nuget Microsoft.Extensions.Configuration.Binder >= 9.0.0
+nuget Microsoft.Extensions.Http >= 9.0.0
+nuget Microsoft.JSInterop >= 9.0.0
+nuget Microsoft.JSInterop.WebAssembly >= 9.0.0
+nuget Microsoft.AspNetCore.Components >= 9.0.0
+nuget Microsoft.AspNetCore.Components.Web >= 9.0.0
+nuget Microsoft.AspNetCore.Components.WebAssembly >= 9.0.0
+nuget Microsoft.AspNetCore.Components.WebAssembly.Server >= 9.0.0
+nuget System.Text.Json >= 10.0.0
 
 group build
 source https://api.nuget.org/v3/index.json
@@ -82,8 +104,7 @@ nuget Selenium.WebDriver.ChromeDriver
 nuget Swashbuckle.AspNetCore
 # nuget Selenium.WebDriver.GeckoDriver.Win64
 nuget Unquote
-nuget System.Text.Encodings.Web prerelease
-nuget System.Text.Json prerelease
+nuget System.Reflection.Metadata ~> 8.0.0
 nuget Microsoft.AspNetCore.Authorization ~> 8.0.0
 nuget Microsoft.AspNetCore.OpenApi ~> 8.0.0
 nuget Microsoft.OpenApi ~> 1.0
@@ -118,8 +139,6 @@ nuget Selenium.WebDriver.ChromeDriver
 nuget Swashbuckle.AspNetCore
 # nuget Selenium.WebDriver.GeckoDriver.Win64
 nuget Unquote
-nuget System.Text.Encodings.Web prerelease
-nuget System.Text.Json prerelease
 nuget Microsoft.AspNetCore.Authorization ~> 9.0.0
 nuget Microsoft.AspNetCore.OpenApi ~> 9.0.0
 nuget Microsoft.OpenApi ~> 1.0
@@ -154,8 +173,6 @@ nuget Selenium.WebDriver.ChromeDriver
 nuget Swashbuckle.AspNetCore
 # nuget Selenium.WebDriver.GeckoDriver.Win64
 nuget Unquote
-nuget System.Text.Encodings.Web prerelease
-nuget System.Text.Json prerelease
 nuget Microsoft.AspNetCore.Authorization ~> 10.0.0
 nuget Microsoft.AspNetCore.OpenApi ~> 10.0.0
 nuget Microsoft.OpenApi ~> 2.0
