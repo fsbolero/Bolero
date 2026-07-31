@@ -7,3 +7,4 @@ Microsoft.AspNetCore.OpenApi
 Microsoft.AspNetCore.Components
 Microsoft.AspNetCore.Components.WebAssembly
 Microsoft.AspNetCore.Components.WebAssembly.Server
+Microsoft.AspNetCore.Components.WebAssembly.Authentication
