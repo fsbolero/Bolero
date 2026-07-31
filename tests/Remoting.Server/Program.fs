@@ -23,12 +23,6 @@ namespace Bolero.Tests.Remoting
 open System
 open System.Threading.Tasks
 open Bolero.Tests.Remoting.Client
-open Microsoft.AspNetCore
-open Microsoft.AspNetCore.Authentication.Cookies
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
-open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Bolero.Remoting.Server
 open Bolero.Server
@@ -107,51 +101,43 @@ type MyApiHandler(log: ILogger<MyApiHandler>, ctx: IRemoteContext) =
             }
         }
 
-type Startup() =
+module Main =
+    open Microsoft.AspNetCore.Authentication.Cookies
+    open Microsoft.AspNetCore.Builder
+    open Microsoft.Extensions.DependencyInjection
+    open Microsoft.Extensions.Hosting
 
-    member this.ConfigureServices(services: IServiceCollection) =
-        services.AddRazorComponents()
+    #nowarn 20 // ignore method return values
+
+    [<EntryPoint>]
+    let Main args =
+        let builder = WebApplication.CreateBuilder(args)
+
+        builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents()
             .AddInteractiveWebAssemblyComponents()
-        |> ignore
-        services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+        builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
             .AddCookie()
-            |> ignore
-        services
+        builder.Services
             .AddBoleroRemoting<MyApiHandler>()
             .AddBoleroComponents()
-        |> ignore
-        services.AddSwaggerGen() |> ignore
-        services.AddEndpointsApiExplorer() |> ignore
+        builder.Services.AddSwaggerGen()
+        builder.Services.AddEndpointsApiExplorer()
 
-    member this.Configure(app: IApplicationBuilder, env: IHostEnvironment) =
-        app.UseAuthentication()
-            .UseStaticFiles()
-            .UseSwagger()
-            .UseSwaggerUI()
-            .UseRouting()
-            .UseAuthorization()
-            .UseAntiforgery()
-            .UseEndpoints(fun endpoints ->
-                endpoints.MapBoleroRemoting()
-                    .WithOpenApi()
-                |> ignore
-                endpoints.MapRazorComponents<Page.Page>()
-                    .AddInteractiveServerRenderMode()
-                    .AddInteractiveWebAssemblyRenderMode()
-                    .AddAdditionalAssemblies(typeof<MyApp>.Assembly)
-                |> ignore)
-        |> ignore
+        let app = builder.Build()
 
-        if env.IsDevelopment() then
+        app.UseAntiforgery()
+        app.UseStaticFiles()
+        app.MapStaticAssets()
+        app.MapBoleroRemoting()
+        app.MapRazorComponents<Page.Page>()
+            .AddInteractiveServerRenderMode()
+            .AddInteractiveWebAssemblyRenderMode()
+            .AddAdditionalAssemblies(typeof<MyApp>.Assembly)
+
+        if app.Environment.IsDevelopment() then
             app.UseDeveloperExceptionPage()
                 .UseWebAssemblyDebugging()
 
-module Main =
-    [<EntryPoint>]
-    let Main args =
-        WebHost.CreateDefaultBuilder(args)
-            .UseStartup<Startup>()
-            .Build()
-            .Run()
+        app.Run()
         0

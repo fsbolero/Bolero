@@ -258,7 +258,6 @@ module Program =
     [<EntryPoint>]
     let Main args =
         let builder = WebAssemblyHostBuilder.CreateDefault(args)
-        builder.RootComponents.Add<MyApp>("#main")
         builder.Services.AddBoleroRemoting<MyApi>(builder.HostEnvironment) |> ignore
         builder.Services.AddBoleroRemoting(configureHttpClient = fun http ->
             http.BaseAddress <- System.Uri "http://this-shouldnt-be-used-by-myapi") |> ignore
