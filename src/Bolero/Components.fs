@@ -123,6 +123,7 @@ and [<AbstractClass>]
 #endif
     let mutable dispatch = ignore<'msg>
     let mutable program = Unchecked.defaultof<Program<'model, 'msg>>
+    let mutable firstAfterRenderDone = false
     let mutable router = None : option<IRouter<'model, 'msg>>
     let mutable routeHash = None : option<string>
     let mutable setState = fun model dispatch ->
@@ -198,44 +199,48 @@ and [<AbstractClass>]
 
 #if NET9_0_OR_GREATER
     override this.OnInitializedAsync() =
-        program <- this.Program
-        let initModel, initCmd = Program.init program this
-        view <- Program.view program initModel (fun cmd -> dispatch cmd)
+        let theProgram = this.Program
+        let initModel, initCmd = Program.init theProgram this
+        view <- Program.view theProgram initModel (fun cmd -> dispatch cmd)
         oldModel <- Some initModel
         let isInteractive = this.RendererInfo.IsInteractive
 
-        task {
-            if isInteractive then
-                let setDispatch d =
-                    dispatch <- d
+        if isInteractive then
+            let setDispatch d =
+                dispatch <- d
 
-                setState <- fun model dispatch ->
-                    match oldModel with
-                    | Some oldModel when this.ShouldRender(oldModel, model) -> this.ForceSetState(model, dispatch)
-                    | _ -> ()
+            setState <- fun model dispatch ->
+                match oldModel with
+                | Some oldModel when this.ShouldRender(oldModel, model) -> this.ForceSetState(model, dispatch)
+                | _ -> ()
 
-                match this.StreamingInit with
-                | None ->
-                    program <-
-                        program
-                        |> Program.map
-                            (fun _ _ -> initModel, setDispatch :: initCmd)
-                            id id
-                            (fun _ model dispatch -> setState model dispatch)
-                            id id
+            match this.StreamingInit with
+            | None ->
+                program <-
+                    theProgram
+                    |> Program.map
+                        (fun _ _ -> initModel, setDispatch :: initCmd)
+                        id id
+                        (fun _ model dispatch -> setState model dispatch)
+                        id id
+                Task.CompletedTask
 
-                | Some streamInit ->
+            | Some streamInit ->
+                task {
                     let! streamedModel, streamedCmd = streamInit initModel
-                    view <- Program.view program streamedModel (fun cmd -> dispatch cmd)
+                    view <- Program.view theProgram streamedModel (fun cmd -> dispatch cmd)
                     oldModel <- Some streamedModel
                     program <-
-                        program
+                        theProgram
                         |> Program.map
                                (fun _ _ -> streamedModel, setDispatch :: initCmd @ streamedCmd)
                                id id
                                (fun _ model dispatch -> setState model dispatch)
                                id id
-        }
+                    this.StateHasChanged()
+                }
+        else
+            Task.CompletedTask
 
 #else
     override this.OnInitializedAsync() =
@@ -290,7 +295,7 @@ and [<AbstractClass>]
 
     override this.OnAfterRenderAsync(firstRender) =
         task {
-            if firstRender then
+            if not firstAfterRenderDone && not (isNull (box program)) then
 #if NET9_0_OR_GREATER
                 Program.runWith this program
 #else
@@ -298,6 +303,8 @@ and [<AbstractClass>]
 #endif
                 if router.IsSome then
                     do! this.NavigationInterception.EnableNavigationInterceptionAsync()
+
+                firstAfterRenderDone <- true
 
             match routeHash with
             | None -> ()
