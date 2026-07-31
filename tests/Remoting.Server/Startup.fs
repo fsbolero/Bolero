@@ -21,7 +21,6 @@
 namespace Bolero.Tests.Remoting
 
 open System
-open System.Text.Json.Serialization
 open System.Threading.Tasks
 open Bolero.Tests.Remoting.Client
 open Microsoft.AspNetCore
@@ -33,7 +32,6 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Bolero.Remoting.Server
 open Bolero.Server
-open FSharp.SystemTextJson.Swagger
 
 module Page =
     open Microsoft.AspNetCore.Components
@@ -123,7 +121,7 @@ type Startup() =
             .AddBoleroRemoting<MyApiHandler>()
             .AddBoleroComponents()
         |> ignore
-        services.AddSwaggerForSystemTextJson(JsonFSharpOptions()) |> ignore
+        services.AddSwaggerGen() |> ignore
         services.AddEndpointsApiExplorer() |> ignore
 
     member this.Configure(app: IApplicationBuilder, env: IHostEnvironment) =

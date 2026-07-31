@@ -94,7 +94,6 @@ framework: net8.0, net9.0, net10.0
 nuget FSharp.Core
 nuget Elmish ~> 4.0
 nuget FsCheck.NUnit ~> 2.12
-nuget FSharp.SystemTextJson.Swagger
 nuget Microsoft.OpenApi ~> 2.0
 nuget Microsoft.NET.Test.Sdk 15.8.0
 nuget nunit ~> 3.10

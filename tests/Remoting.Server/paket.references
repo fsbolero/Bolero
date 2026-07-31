@@ -1,7 +1,6 @@
 group tests-common
 FSharp.Core
 Swashbuckle.AspNetCore
-FSharp.SystemTextJson.Swagger
 
 group tests-net10
 Microsoft.AspNetCore.OpenApi
