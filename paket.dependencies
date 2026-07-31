@@ -86,15 +86,16 @@ nuget Fake.DotNet.Cli
 nuget Fake.DotNet.Paket
 nuget FSharp.Data ~> 3.0-beta
 
-group tests-net8
+group tests-common
 source https://api.nuget.org/v3/index.json
 storage: none
-framework: net8.0
+framework: net8.0, net9.0, net10.0
 
 nuget FSharp.Core
 nuget Elmish ~> 4.0
 nuget FsCheck.NUnit ~> 2.12
 nuget FSharp.SystemTextJson.Swagger
+nuget Microsoft.OpenApi ~> 2.0
 nuget Microsoft.NET.Test.Sdk 15.8.0
 nuget nunit ~> 3.10
 nuget NUnit3TestAdapter ~> 3.10
@@ -104,10 +105,16 @@ nuget Selenium.WebDriver.ChromeDriver
 nuget Swashbuckle.AspNetCore
 # nuget Selenium.WebDriver.GeckoDriver.Win64
 nuget Unquote
+
+group tests-net8
+source https://api.nuget.org/v3/index.json
+storage: none
+framework: net8.0
+
 nuget System.Reflection.Metadata ~> 8.0.0
 nuget Microsoft.AspNetCore.Authorization ~> 8.0.0
 nuget Microsoft.AspNetCore.OpenApi ~> 8.0.0
-nuget Microsoft.OpenApi ~> 1.0
+nuget Microsoft.OpenApi ~> 2.0
 nuget Microsoft.AspNetCore.Components ~> 8.0
 nuget Microsoft.AspNetCore.Components.Analyzers ~> 8.0
 nuget Microsoft.AspNetCore.Components.Authorization ~> 8.0
@@ -125,22 +132,9 @@ source https://api.nuget.org/v3/index.json
 storage: none
 framework: net9.0
 
-nuget FSharp.Core
-nuget Elmish ~> 4.0
-nuget FsCheck.NUnit ~> 2.12
-nuget FSharp.SystemTextJson.Swagger
-nuget Microsoft.NET.Test.Sdk 15.8.0
-nuget nunit ~> 3.10
-nuget NUnit3TestAdapter ~> 3.10
-nuget Selenium.Support
-nuget Selenium.WebDriver
-nuget Selenium.WebDriver.ChromeDriver
-nuget Swashbuckle.AspNetCore
-# nuget Selenium.WebDriver.GeckoDriver.Win64
-nuget Unquote
 nuget Microsoft.AspNetCore.Authorization ~> 9.0.0
 nuget Microsoft.AspNetCore.OpenApi ~> 9.0.0
-nuget Microsoft.OpenApi ~> 1.0
+nuget Microsoft.OpenApi ~> 2.0
 nuget Microsoft.AspNetCore.Components ~> 9.0
 nuget Microsoft.AspNetCore.Components.Analyzers ~> 9.0
 nuget Microsoft.AspNetCore.Components.Authorization ~> 9.0
@@ -158,19 +152,6 @@ source https://api.nuget.org/v3/index.json
 storage: none
 framework: net10.0
 
-nuget FSharp.Core
-nuget Elmish ~> 4.0
-nuget FsCheck.NUnit ~> 2.12
-nuget FSharp.SystemTextJson.Swagger
-nuget Microsoft.NET.Test.Sdk 17.12.0
-nuget nunit ~> 3.10
-nuget NUnit3TestAdapter ~> 4.6
-nuget Selenium.Support
-nuget Selenium.WebDriver
-nuget Selenium.WebDriver.ChromeDriver
-nuget Swashbuckle.AspNetCore
-# nuget Selenium.WebDriver.GeckoDriver.Win64
-nuget Unquote
 nuget Microsoft.AspNetCore.Authorization ~> 10.0.0
 nuget Microsoft.AspNetCore.OpenApi ~> 10.0.0
 nuget Microsoft.OpenApi ~> 2.0
