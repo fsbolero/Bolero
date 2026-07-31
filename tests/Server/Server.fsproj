@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <BlazorLinkOnBuild>false</BlazorLinkOnBuild>
+    <RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
