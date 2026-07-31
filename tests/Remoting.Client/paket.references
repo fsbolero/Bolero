@@ -5,4 +5,3 @@ Microsoft.Extensions.Configuration.Binder
 Microsoft.AspNetCore.Components.WebAssembly.DevServer
 Microsoft.AspNetCore.Components.Authorization
 Microsoft.AspNetCore.Components.WebAssembly
-Microsoft.AspNetCore.Components.WebAssembly.Authentication

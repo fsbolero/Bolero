@@ -114,7 +114,6 @@ nuget Microsoft.AspNetCore.Components.Authorization ~> 8.0
 nuget Microsoft.AspNetCore.Components.Forms ~> 8.0
 nuget Microsoft.AspNetCore.Components.Web ~> 8.0
 nuget Microsoft.AspNetCore.Components.WebAssembly ~> 8.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 8.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 8.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 8.0
 nuget Microsoft.AspNetCore.Metadata ~> 8.0
@@ -148,7 +147,6 @@ nuget Microsoft.AspNetCore.Components.Authorization ~> 9.0
 nuget Microsoft.AspNetCore.Components.Forms ~> 9.0
 nuget Microsoft.AspNetCore.Components.Web ~> 9.0
 nuget Microsoft.AspNetCore.Components.WebAssembly ~> 9.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 9.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 9.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 9.0
 nuget Microsoft.AspNetCore.Metadata ~> 9.0
@@ -182,7 +180,6 @@ nuget Microsoft.AspNetCore.Components.Authorization ~> 10.0
 nuget Microsoft.AspNetCore.Components.Forms ~> 10.0
 nuget Microsoft.AspNetCore.Components.Web ~> 10.0
 nuget Microsoft.AspNetCore.Components.WebAssembly ~> 10.0
-nuget Microsoft.AspNetCore.Components.WebAssembly.Authentication ~> 10.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.DevServer ~> 10.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 10.0
 nuget Microsoft.AspNetCore.Metadata ~> 10.0
