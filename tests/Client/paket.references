@@ -1,5 +1,7 @@
-group tests-net9
+group tests-common
 FSharp.Core
 Elmish
+
+group tests-net10
 Microsoft.AspNetCore.Components.WebAssembly
 Microsoft.AspNetCore.Components.WebAssembly.DevServer

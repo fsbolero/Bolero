@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+<Project>
   <Import Project="..\..\src\Bolero.Build\Bolero.Build.props" />
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <__BlazorSdkVersion Condition="'$(TargetFramework)' == 'net8.0'">8.0.0</__BlazorSdkVersion>
+    <__BlazorSdkVersion Condition="'$(TargetFramework)' == 'net9.0'">9.0.0</__BlazorSdkVersion>
+    <__BlazorSdkVersion Condition="'$(TargetFramework)' == 'net10.0'">10.0.0</__BlazorSdkVersion>
+  </PropertyGroup>
+  <Sdk Name="Microsoft.NET.Sdk.BlazorWebAssembly" Version="$(__BlazorSdkVersion)" />
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <BoleroTaskAssemblyPath>$(MSBuildThisFileDirectory)..\..\src\Bolero.Build\bin\$(Configuration)\netstandard2.0\Bolero.Build.dll</BoleroTaskAssemblyPath>
     <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
   </PropertyGroup>

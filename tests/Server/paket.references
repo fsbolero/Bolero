@@ -1,5 +1,7 @@
-group tests-net9
+group tests-common
 FSharp.Core
+
+group tests-net10
 Microsoft.AspNetCore.Components
 Microsoft.AspNetCore.Components.WebAssembly
 Microsoft.AspNetCore.Components.WebAssembly.Server
