@@ -54,7 +54,7 @@ module Page =
         }
     }
 
-type Startup() =
+module Startup =
 
     let mutable items = Map.empty
 
@@ -90,26 +90,50 @@ type Startup() =
             }
         }
 
-    member this.ConfigureServices(services: IServiceCollection) =
-        services.AddControllersWithViews() |> ignore
-        services
-            .AddAuthorization()
-            .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie()
-                .Services
-            .AddBoleroRemoting(remoteHandler)
-            .AddBoleroHost(prerendered = false)
-            .AddServerSideBlazor()
-        |> ignore
+    #nowarn 20 // ignore method return values
 
-    member this.Configure(app: IApplicationBuilder) =
-        app .UseAuthentication()
-            .UseStaticFiles()
-            .UseRouting()
-            .UseAuthorization()
-            .UseBlazorFrameworkFiles()
-            .UseEndpoints(fun endpoints ->
-                endpoints.MapBlazorHub() |> ignore
-                endpoints.MapBoleroRemoting() |> ignore
-                endpoints.MapFallbackToBolero(Page.index) |> ignore)
-        |> ignore
+    let configureServices (services: IServiceCollection) =
+        services.AddControllersWithViews()
+        services.AddAuthorization()
+        services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie()
+        services.AddBoleroRemoting(remoteHandler)
+        services.AddBoleroHost(prerendered = false)
+        services.AddServerSideBlazor()
+
+    let buildApp (app: WebApplication) =
+        app.UseStaticFiles()
+#if NET9_0_OR_GREATER
+        app.MapStaticAssets()
+#endif
+        app.UseBlazorFrameworkFiles()
+        app.MapBlazorHub()
+        app.MapBoleroRemoting()
+        app.MapFallbackToBolero(Page.index)
+
+//
+// type Startup() =
+//
+//     member this.ConfigureServices(services: IServiceCollection) =
+//         services.AddControllersWithViews() |> ignore
+//         services
+//             .AddAuthorization()
+//             .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+//                 .AddCookie()
+//                 .Services
+//             .AddBoleroRemoting(Startup.remoteHandler)
+//             .AddBoleroHost(prerendered = false)
+//             .AddServerSideBlazor()
+//         |> ignore
+//
+//     member this.Configure(app: IApplicationBuilder) =
+//         app .UseAuthentication()
+//             .UseStaticFiles()
+//             .UseRouting()
+//             .UseAuthorization()
+//             .UseBlazorFrameworkFiles()
+//             .UseEndpoints(fun endpoints ->
+//                 endpoints.MapBlazorHub() |> ignore
+//                 endpoints.MapBoleroRemoting() |> ignore
+//                 endpoints.MapFallbackToBolero(Page.index) |> ignore)
+//         |> ignore

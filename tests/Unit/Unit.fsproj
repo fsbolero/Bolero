@@ -10,6 +10,7 @@
     <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <GenerateProgramFile>false</GenerateProgramFile>
+    <RequiresAspNetWebAssets>true</RequiresAspNetWebAssets>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Utility.fs" />
@@ -28,5 +29,13 @@
     <ProjectReference Include="..\..\src\Bolero.Server\Bolero.Server.fsproj" />
     <ProjectReference Include="..\Unit.Client\Unit.Client.fsproj" />
   </ItemGroup>
+  <Target Name="_FixStaticWebAssetsFile" AfterTargets="Build">
+    <Copy SourceFiles="$(OutputPath)\Unit.staticwebassets.endpoints.json"
+          DestinationFiles="$(OutputPath)\testhost.staticwebassets.endpoints.json"
+          Condition="'$(TargetFramework)' != ''" />
+    <Copy SourceFiles="$(OutputPath)\Unit.staticwebassets.runtime.json"
+          DestinationFiles="$(OutputPath)\testhost.staticwebassets.runtime.json"
+          Condition="'$(TargetFramework)' != ''" />
+  </Target>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

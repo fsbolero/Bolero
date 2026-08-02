@@ -21,13 +21,16 @@
 // Run the unit test app to test things manually
 module Bolero.Tests.Web.Program
 
-open Microsoft.AspNetCore
-open Microsoft.AspNetCore.Hosting
+open Microsoft.AspNetCore.Builder
+
+#nowarn 20 // ignore method return values
 
 [<EntryPoint>]
 let Main args =
-    WebHost.CreateDefaultBuilder(args)
-        .UseStartup<Startup>()
-        .Build()
-        .Run()
+
+    let builder = WebApplication.CreateBuilder(args)
+    Startup.configureServices builder.Services
+    let app = builder.Build()
+    Startup.buildApp app
+    app.Run()
     0

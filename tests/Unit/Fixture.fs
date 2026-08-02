@@ -22,9 +22,9 @@ namespace Bolero.Tests.Web
 
 open System
 open System.Threading.Tasks
-open Microsoft.AspNetCore
-open Microsoft.AspNetCore.Hosting
+open Microsoft.AspNetCore.Builder
 open FSharp.Quotations
+open Microsoft.Extensions.Hosting
 open NUnit.Framework
 open OpenQA.Selenium
 open OpenQA.Selenium.Chrome
@@ -38,7 +38,7 @@ open Swensen.Unquote
 [<SetUpFixture>]
 type WebFixture() =
 
-    static let mutable server = Unchecked.defaultof<IWebHost>
+    static let mutable server = Unchecked.defaultof<IHost>
 
     static let mutable driver = Unchecked.defaultof<WebDriver>
 
@@ -47,7 +47,7 @@ type WebFixture() =
     static let startChrome() =
         async {
             let options = ChromeOptions()
-            options.AddArguments ["headless"; "disable-gpu"]
+            // options.AddArguments ["headless"; "disable-gpu"]
             driver <- new ChromeDriver(Environment.CurrentDirectory, options)
         }
 
@@ -68,12 +68,13 @@ type WebFixture() =
             let! _ = Async.Parallel [
                 startChrome()
                 async {
-                    server <- WebHost.CreateDefaultBuilder([||])
-                        .UseContentRoot(__SOURCE_DIRECTORY__)
-                        .UseStaticWebAssets()
-                        .UseStartup<Startup>()
-                        .UseUrls(url)
-                        .Build()
+                    let builder = WebApplication.CreateBuilder([||])
+                    builder.Environment.ContentRootPath <- __SOURCE_DIRECTORY__
+                    Startup.configureServices builder.Services |> ignore
+                    let app = builder.Build()
+                    app.Urls.Add(url)
+                    Startup.buildApp app |> ignore
+                    server <- app
                     return! server.StartAsync() |> Async.AwaitTask
                 }
             ]
