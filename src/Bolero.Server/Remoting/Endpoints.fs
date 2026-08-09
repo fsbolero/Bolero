@@ -68,6 +68,24 @@ type internal RemoteMethodInfo(method: IRemoteMethodMetadata) =
     override this.Name = method.Name
     override this.ReflectedType = null
 
+    interface IAcceptsMetadata with
+        member _.ContentTypes = ["application/json"]
+        member _.RequestType = method.ArgumentType
+        member _.IsOptional = false
+
+    interface IProducesResponseTypeMetadata with
+        member _.ContentTypes = ["application/json"]
+        member _.StatusCode = 200
+        member _.Type = method.ReturnType
+
+    interface IHttpMethodMetadata with
+        member _.AcceptCorsPreflight = true
+        member _.HttpMethods = ["POST"]
+
+#if NET10_0_OR_GREATER
+    interface IDisableCookieRedirectMetadata
+#endif
+
 type internal RemotingServiceEndpointBuilder(service: RemotingService, buildEndpoint: Action<IRemoteMethodMetadata, IEndpointConventionBuilder>) =
 
     let endpoints =
@@ -76,20 +94,8 @@ type internal RemotingServiceEndpointBuilder(service: RemotingService, buildEndp
             let path = RoutePatternFactory.Parse $"{service.BasePath}/{methodName}"
             let endpoint = RouteEndpointBuilder(method.Handler, path, 0)
             endpoint.DisplayName <- $"Remote method {method.Name} on service {method.Service.Type.Name}"
-            ([ { new IAcceptsMetadata with
-                   member _.ContentTypes = ["application/json"]
-                   member _.RequestType = method.ArgumentType
-                   member _.IsOptional = false }
-               { new IProducesResponseTypeMetadata with
-                   member _.ContentTypes = ["application/json"]
-                   member _.StatusCode = 200
-                   member _.Type = method.ReturnType }
-               { new IHttpMethodMetadata with
-                   member _.AcceptCorsPreflight = true
-                   member _.HttpMethods = ["POST"] }
-               RemoteMethodInfo(method)
-               method ] : obj list)
-            |> List.iter endpoint.Metadata.Add
+            endpoint.Metadata.Add(RemoteMethodInfo(method))
+            endpoint.Metadata.Add(method)
 
             match method.Function with
             | :? IAuthorizedMethodHandler as handler ->
