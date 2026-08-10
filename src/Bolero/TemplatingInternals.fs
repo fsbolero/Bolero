@@ -33,9 +33,10 @@ type Events =
         Action<'T>(ignore)
 
     static member OnChange(f: Action<string>) =
-        Action<ChangeEventArgs>(fun e ->
-            f.Invoke(unbox<string> e.Value)
-        )
+        fun (receiver: obj) ->
+            box (EventCallback.Factory.Create(receiver, Action<ChangeEventArgs>(fun e ->
+                f.Invoke(unbox<string> e.Value)
+            )))
 
     static member OnChangeInt(f: Action<int>) =
         Events.OnChange(fun s ->
@@ -52,9 +53,10 @@ type Events =
         )
 
     static member OnChangeBool(f: Action<bool>) =
-        Action<ChangeEventArgs>(fun e ->
-            f.Invoke(unbox<bool> e.Value)
-        )
+        fun (receiver: obj) ->
+            box (EventCallback.Factory.Create(receiver, Action<ChangeEventArgs>(fun e ->
+                f.Invoke(unbox<bool> e.Value)
+            )))
 
 type Ref =
 

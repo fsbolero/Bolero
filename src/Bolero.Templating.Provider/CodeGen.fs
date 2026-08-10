@@ -22,6 +22,7 @@ module Bolero.Templating.CodeGen
 
 open System
 open System.Reflection
+open System.Threading.Tasks
 open Bolero.Templating.Parsing
 open FSharp.Quotations
 open Microsoft.AspNetCore.Components
@@ -40,13 +41,17 @@ let MakeCtor (holes: Parsing.Vars) =
                 match type' with
                 | HoleType.String -> <@ box "" @>
                 | HoleType.Html -> <@ box (Node.Empty()) @>
-                | HoleType.Event _ -> <@ box (Events.NoOp<EventArgs>()) @>
-                | HoleType.DataBinding _ -> <@ box (null, Events.NoOp<ChangeEventArgs>()) @>
+                | HoleType.Event _ -> <@ box (fun (_: obj) -> null: obj) @>
+                | HoleType.DataBinding _ -> <@ box (null, fun (_: obj) -> null: obj) @>
                 | HoleType.Attribute -> <@ box (Attr.Empty()) @>
                 | HoleType.AttributeValue -> <@ null @>
                 | HoleType.Ref -> <@ null @>
         ]
         <@@ (%getThis args).Holes <- %holes @@>)
+
+/// Event handler type whose argument is the given type.
+let EventHandlerOf (argType: Type) : Type =
+    ProvidedTypeBuilder.MakeGenericType(typedefof<Action<_>>, [argType])
 
 /// Get the argument lists and bodies for methods that fill a hole of the given type.
 let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list -> Expr)) list =
@@ -65,9 +70,16 @@ let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list
                 <@@ box (%%args[1]: Node) @@>
         ]
     | HoleType.Event argTy ->
+        let eventCallbackFactoryMethods = typeof<EventCallbackFactory>.GetMethods(BindingFlags.Instance ||| BindingFlags.Public)
+        let eventCallbackFactoryField = typeof<EventCallback>.GetField("Factory", BindingFlags.Static ||| BindingFlags.Public)
         [
             ["value" => EventHandlerOf argTy], fun args ->
-                Expr.Coerce(args[1], typeof<obj>)
+                let meth = eventCallbackFactoryMethods |> Array.find (fun m ->
+                    m.Name = "Create" && m.GetParameters().[1].ParameterType.GetGenericTypeDefinition() = typedefof<Action<_>>)
+                let meth = meth.MakeGenericMethod([|argTy|])
+                let receiver = Var("r", typeof<obj>, false)
+                let eventCallback = Expr.Call(Expr.FieldGet(eventCallbackFactoryField), meth, [Expr.Var receiver; args[1]])
+                Expr.Coerce(Expr.Lambda(receiver, Expr.Coerce(eventCallback, typeof<obj>)), typeof<obj>)
         ]
     | HoleType.DataBinding BindingType.BindString ->
         [
