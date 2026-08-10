@@ -71,7 +71,7 @@ let buildArgs o =
 Target.description "Run the compilation phase proper"
 Target.create "corebuild" (fun o ->
     dotnet "paket" ["restore"]
-    dotnet "build" ("Bolero.sln" :: buildArgs o)
+    dotnet "build" ("Bolero.slnx" :: buildArgs o)
 )
 
 let [<Literal>] tagsFile = slnDir + "/src/Bolero/tags.csv"

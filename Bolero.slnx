@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Solution>
+  <Folder Name="/build/">
+    <File Path="build.ps1" />
+    <File Path="Directory.Build.props" />
+    <File Path="global.json" />
+    <File Path="paket.dependencies" />
+    <File Path="paket.lock" />
+    <Project Path=".build/build.fsproj" />
+  </Folder>
+  <Folder Name="/docs/">
+    <File Path="CHANGELOG.md" />
+    <File Path="CONTRIBUTING.md" />
+    <File Path="LICENSE.md" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Bolero.Build/Bolero.Build.csproj" />
+    <Project Path="src/Bolero.Html/Bolero.Html.fsproj" />
+    <Project Path="src/Bolero.Server/Bolero.Server.fsproj" />
+    <Project Path="src/Bolero.Templating.Provider/Bolero.Templating.Provider.fsproj" />
+    <Project Path="src/Bolero/Bolero.fsproj" />
+  </Folder>
+  <Folder Name="/src/tpdummy/">
+    <Project Path="src/tpdummy/Microsoft.AspNetCore.Components.Web/Microsoft.AspNetCore.Components.Web.fsproj" />
+    <Project Path="src/tpdummy/Microsoft.AspNetCore.Components/Microsoft.AspNetCore.Components.fsproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Client/Client.fsproj" />
+    <Project Path="tests/Remoting.Client/Remoting.Client.fsproj" />
+    <Project Path="tests/Remoting.Server/Remoting.Server.fsproj" />
+    <Project Path="tests/Server/Server.fsproj" />
+    <Project Path="tests/Unit.Client/Unit.Client.fsproj" />
+    <Project Path="tests/Unit/Unit.fsproj" />
+  </Folder>
+</Solution>
