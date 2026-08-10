@@ -191,8 +191,8 @@ type RefTester() =
                 .Class("template-ref")
                 .Click(fun _ ->
                     match elt.Value with
-                    | Some elt -> this.JSRuntime.InvokeVoidAsync("setContent", elt, "Template ref is bound") |> ignore
-                    | None -> ())
+                    | Some elt -> this.JSRuntime.InvokeVoidAsync("setContent", elt, "Template ref is bound").AsTask()
+                    | None -> Task.CompletedTask)
                 .Elt()
 
             // Check that not passing the ref doesn't break anything.

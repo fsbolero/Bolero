@@ -31,6 +31,7 @@ open Bolero.Remoting
 open Bolero.Remoting.Client
 open Elmish
 open Microsoft.Extensions.Logging
+open Microsoft.JSInterop
 
 type MyApi =
     {
@@ -166,14 +167,16 @@ type Item() =
             .remove(fun _ -> dispatch (RemoveItem k))
             .Elt()
 
-let Display model dispatch =
+let Display (js: IJSRuntime) model (dispatch: Dispatch<Message>) =
     let form =
         Form()
             .key(string model.currentKey)
             .setKey(fun e -> dispatch (SetCurrentKey (int (e.Value :?> string))))
             .value(string model.currentValue)
             .setValue(fun e -> dispatch (SetCurrentValue (e.Value :?> string)))
-            .add(fun _ -> dispatch AddItem)
+            .add(fun e ->
+                dispatch AddItem
+                js.InvokeAsync("console.log", e).AsTask() :> Task)
             .Elt()
     concat {
         Tpl()
@@ -238,7 +241,7 @@ type MyApp() =
 
     override this.Program =
         let myApi = this.Remote<MyApi>()
-        Program.mkStreamRendering InitModel load (Update myApi) Display
+        Program.mkStreamRendering InitModel load (Update myApi) (Display this.JSRuntime)
         |> Program.withRouter router
 
 

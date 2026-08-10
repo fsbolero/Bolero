@@ -53,6 +53,10 @@ let MakeCtor (holes: Parsing.Vars) =
 let EventHandlerOf (argType: Type) : Type =
     ProvidedTypeBuilder.MakeGenericType(typedefof<Action<_>>, [argType])
 
+/// Event handler type whose argument is the given type.
+let TaskEventHandlerOf (argType: Type) : Type =
+    ProvidedTypeBuilder.MakeGenericType(typedefof<Func<_, _>>, [argType; typeof<Task>])
+
 /// Get the argument lists and bodies for methods that fill a hole of the given type.
 let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list -> Expr)) list =
     let (=>) name ty = ProvidedParameter(name, ty)
@@ -72,10 +76,22 @@ let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list
     | HoleType.Event argTy ->
         let eventCallbackFactoryMethods = typeof<EventCallbackFactory>.GetMethods(BindingFlags.Instance ||| BindingFlags.Public)
         let eventCallbackFactoryField = typeof<EventCallback>.GetField("Factory", BindingFlags.Static ||| BindingFlags.Public)
+        let eventCallbackTaskMethod() =
+            eventCallbackFactoryMethods |> Array.find (fun m ->
+                m.Name = "Create" &&
+                let t = m.GetParameters().[1].ParameterType
+                t.GetGenericTypeDefinition() = typedefof<Func<_, _>> &&
+                t.GetGenericArguments().[1] = typeof<Task>)
         [
             ["value" => EventHandlerOf argTy], fun args ->
                 let meth = eventCallbackFactoryMethods |> Array.find (fun m ->
                     m.Name = "Create" && m.GetParameters().[1].ParameterType.GetGenericTypeDefinition() = typedefof<Action<_>>)
+                let meth = meth.MakeGenericMethod([|argTy|])
+                let receiver = Var("r", typeof<obj>, false)
+                let eventCallback = Expr.Call(Expr.FieldGet(eventCallbackFactoryField), meth, [Expr.Var receiver; args[1]])
+                Expr.Coerce(Expr.Lambda(receiver, Expr.Coerce(eventCallback, typeof<obj>)), typeof<obj>)
+            ["value" => TaskEventHandlerOf argTy], fun args ->
+                let meth = eventCallbackTaskMethod()
                 let meth = meth.MakeGenericMethod([|argTy|])
                 let receiver = Var("r", typeof<obj>, false)
                 let eventCallback = Expr.Call(Expr.FieldGet(eventCallbackFactoryField), meth, [Expr.Var receiver; args[1]])
