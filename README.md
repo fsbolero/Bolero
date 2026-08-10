@@ -19,14 +19,14 @@ It includes:
 
 To get started, you need the following installed:
 
-* .NET SDK 6.0. Download it [here](https://dotnet.microsoft.com/download).
+* .NET SDK 10.0. Download it [here](https://dotnet.microsoft.com/download).
 
 Then, to create and run a sample application:
 
 * Install the Bolero project templates:
 
     ```shell
-    dotnet new -i Bolero.Templates
+    dotnet new install Bolero.Templates
     ```
 * Create a new project:
 
