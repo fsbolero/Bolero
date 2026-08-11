@@ -95,6 +95,8 @@ let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list
                 <@@ box (box (%%args[1]: string), Events.OnChange(%%args[2])) @@>
             ["value" => typeof<string>; "set" => typeof<Func<string, Task>>], fun args ->
                 <@@ box (box (%%args[1]: string), Events.TaskOnChange(%%args[2])) @@>
+            ["value" => typeof<string>; "set" => typeof<Func<string, Async<unit>>>], fun args ->
+                <@@ box (box (%%args[1]: string), Events.AsyncOnChange(%%args[2])) @@>
         ]
     | HoleType.DataBinding BindingType.BindNumber ->
         [
@@ -102,10 +104,15 @@ let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list
                 <@@ box (box (%%args[1]: int), Events.OnChangeInt(%%args[2])) @@>
             ["value" => typeof<int>; "set" => typeof<Func<int, Task>>], fun args ->
                 <@@ box (box (%%args[1]: int), Events.TaskOnChangeInt(%%args[2])) @@>
+            ["value" => typeof<int>; "set" => typeof<Func<int, Async<unit>>>], fun args ->
+                <@@ box (box (%%args[1]: int), Events.AsyncOnChangeInt(%%args[2])) @@>
+
             ["value" => typeof<float>; "set" => typeof<Action<float>>], fun args ->
                 <@@ box (box (%%args[1]: float), Events.OnChangeFloat(%%args[2])) @@>
             ["value" => typeof<float>; "set" => typeof<Func<float, Task>>], fun args ->
                 <@@ box (box (%%args[1]: float), Events.TaskOnChangeFloat(%%args[2])) @@>
+            ["value" => typeof<float>; "set" => typeof<Func<float, Async<unit>>>], fun args ->
+                <@@ box (box (%%args[1]: float), Events.AsyncOnChangeFloat(%%args[2])) @@>
         ]
     | HoleType.DataBinding BindingType.BindBool ->
         [
@@ -113,6 +120,8 @@ let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list
                 <@@ box (box (%%args[1]: bool), Events.OnChangeBool(%%args[2])) @@>
             ["value" => typeof<bool>; "set" => typeof<Func<bool, Task>>], fun args ->
                 <@@ box (box (%%args[1]: bool), Events.TaskOnChangeBool(%%args[2])) @@>
+            ["value" => typeof<bool>; "set" => typeof<Func<bool, Async<unit>>>], fun args ->
+                <@@ box (box (%%args[1]: bool), Events.AsyncOnChangeBool(%%args[2])) @@>
         ]
     | HoleType.Attribute ->
         [

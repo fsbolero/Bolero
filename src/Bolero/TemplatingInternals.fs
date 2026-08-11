@@ -58,6 +58,12 @@ type Events =
                 f.Invoke(unbox<string> e.Value)
             )))
 
+    static member AsyncOnChange(f: Func<string, Async<unit>>) =
+        fun (receiver: obj) ->
+            box (EventCallback.Factory.Create(receiver, Func<ChangeEventArgs, Task>(fun e ->
+                f.Invoke(unbox<string> e.Value) |> Async.StartImmediateAsTask :> Task
+            )))
+
     static member OnChangeInt(f: Action<int>) =
         Events.OnChange(fun s ->
             match Int32.TryParse(s) with
@@ -70,6 +76,13 @@ type Events =
             match Int32.TryParse(s) with
             | true, x -> f.Invoke(x)
             | false, _ -> Task.CompletedTask
+        )
+
+    static member AsyncOnChangeInt(f: Func<int, Async<unit>>) =
+        Events.AsyncOnChange(fun s ->
+            match Int32.TryParse(s) with
+            | true, x -> f.Invoke(x)
+            | false, _ -> async.Return()
         )
 
     static member OnChangeFloat(f: Action<float>) =
@@ -86,6 +99,13 @@ type Events =
             | false, _ -> Task.CompletedTask
         )
 
+    static member AsyncOnChangeFloat(f: Func<float, Async<unit>>) =
+        Events.AsyncOnChange(fun s ->
+            match Double.TryParse(s) with
+            | true, x -> f.Invoke(x)
+            | false, _ -> async.Return()
+        )
+
     static member OnChangeBool(f: Action<bool>) =
         fun (receiver: obj) ->
             box (EventCallback.Factory.Create(receiver, Action<ChangeEventArgs>(fun e ->
@@ -96,6 +116,12 @@ type Events =
         fun (receiver: obj) ->
             box (EventCallback.Factory.Create(receiver, Func<ChangeEventArgs, Task>(fun e ->
                 f.Invoke(unbox<bool> e.Value)
+            )))
+
+    static member AsyncOnChangeBool(f: Func<bool, Async<unit>>) =
+        fun (receiver: obj) ->
+            box (EventCallback.Factory.Create(receiver, Func<ChangeEventArgs, Task>(fun e ->
+                f.Invoke(unbox<bool> e.Value) |> Async.StartImmediateAsTask :> Task
             )))
 
 type Ref =
