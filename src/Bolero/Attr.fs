@@ -32,6 +32,15 @@ module Attr =
         tb.AddAttribute(i, name, box value)
         i + 1)
 
+    /// <summary>Create an HTML attribute or a component parameter.</summary>
+    /// <param name="name">The name of the attribute or parameter.</param>
+    /// <param name="value">The value of the attribute or parameter. Takes the receiving or containing component as argument.</param>
+    /// <returns>An HTML attribute or component parameter.</returns>
+    /// <seealso cref="M:Bolero.Html.op_EqualsGreater" />
+    let inline MakeWithReceiver<'T> (name: string) (value: obj -> 'T) = Attr(fun r tb i ->
+        tb.AddAttribute(i, name, box (value r))
+        i + 1)
+
     /// <summary>Group multiple HTML attributes and component parameters as a single value.</summary>
     /// <param name="attrs">The HTML attributes and component parameters.</param>
     /// <returns>An Attr value representing all the given HTML attributes and component parameters.</returns>

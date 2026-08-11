@@ -139,6 +139,7 @@ type Expr =
     | PlainHtml of string
     | Elt of name: string * attrs: list<Expr> * children: list<Expr>
     | Attr of name: string * value: Expr
+    | EventHandler of name: string * value: Expr * argType: Type
     | VarContent of varName: string
     | WrapVars of vars: list<VarSubstitution> * expr: Expr
     | Fst of varName: string
@@ -277,7 +278,7 @@ let (|DataBinding|_|) (ownerNode: HtmlNode) (attrName: string) : option<BindingT
 
 let MakeEventHandler (attrName: string) (varName: string) : Parsed =
     let argType = HoleType.EventArg attrName
-    WithVars (Map [varName, Event argType]) [Attr(attrName, VarContent varName)]
+    WithVars (Map [varName, Event argType]) [EventHandler(attrName, VarContent varName, argType)]
 
 let MakeDataBinding (varName: string) (valType: BindingType) (eventName: string) : Parsed =
     let valueAttrName =
@@ -286,7 +287,7 @@ let MakeDataBinding (varName: string) (valType: BindingType) (eventName: string)
         | BindingType.BindBool -> "checked"
     WithVars (Map [varName, DataBinding valType]) [
         Attr(valueAttrName, Fst varName)
-        Attr(eventName, Snd varName)
+        EventHandler(eventName, Snd varName, typeof<ChangeEventArgs>)
     ]
 
 let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : Parsed =

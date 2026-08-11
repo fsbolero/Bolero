@@ -224,7 +224,7 @@ type ViewItem() =
             .Url(router.Link (Item (k, Router.noModel)))
             .Elt()
 
-let viewCollection model dispatch =
+let viewCollection model (dispatch: Dispatch<Message>) =
     let items =
         if model.revOrder then
             Seq.rev model.items
@@ -328,7 +328,7 @@ let viewVirtual model dispatch =
         }
     }
 
-let view js model dispatch =
+let view js model (dispatch: Dispatch<Message>) =
     concat {
         rawHtml """
             <div style="color:gray">The links below should have blue background based on the current page.</div>

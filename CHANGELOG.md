@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.25
+* [#148](https://github.com/fsbolero/Bolero/issues/148) Add overloads for template event holes and bind setters returning `Task` and `Async<unit>`.
+
 ## 0.24
 
 * [#347](https://github.com/fsbolero/Bolero/issues/347) Add Blazor Interactive Render Modes.

@@ -23,23 +23,25 @@ module Bolero.Templating.ConvertExpr
 #nowarn "3220" // Using .Item1 instead of fst inside quotations for nicer output IL
 
 open System
+open System.Reflection
 open FSharp.Quotations
-open Microsoft.AspNetCore.Components
-open ProviderImplementation.ProvidedTypes
 open Bolero
 open Bolero.TemplatingInternals
+open Microsoft.AspNetCore.Components
+open Microsoft.FSharp.Reflection
 
-/// Event handler type whose argument is the given type.
-let EventHandlerOf (argType: Type) : Type =
-    ProvidedTypeBuilder.MakeGenericType(typedefof<Action<_>>, [argType])
+let EventCallbackOf (ty: Type) =
+    FSharpType.MakeFunctionType(
+        typeof<obj>,
+        typedefof<EventCallback<_>>.MakeGenericType(ty))
 
 /// Get the .NET type corresponding to a hole type.
 let TypeOf (holeType: Parsing.HoleType) : Type =
     match holeType with
     | Parsing.String -> typeof<string>
     | Parsing.Html -> typeof<Node>
-    | Parsing.Event argType -> EventHandlerOf argType
-    | Parsing.DataBinding _ -> typeof<obj * Action<ChangeEventArgs>>
+    | Parsing.Event ty -> EventCallbackOf ty
+    | Parsing.DataBinding _ -> typeof<obj * (obj -> EventCallback<ChangeEventArgs>)>
     | Parsing.Attribute -> typeof<Attr>
     | Parsing.AttributeValue -> typeof<obj>
     | Parsing.Ref -> typeof<HtmlRef>
@@ -53,14 +55,14 @@ let WrapExpr (innerType: Parsing.HoleType) (outerType: Parsing.HoleType) (expr: 
         <@@ Node.Text %%expr @@>
     | Parsing.AttributeValue, Parsing.String ->
         Expr.Coerce(expr, typeof<obj>)
-    | Parsing.Event argTy, Parsing.Event _ ->
-        Expr.Coerce(expr, EventHandlerOf argTy)
+    | Parsing.Event ty, Parsing.Event _ ->
+        Expr.Coerce(expr, EventCallbackOf ty)
     | Parsing.String, Parsing.DataBinding _ ->
-        <@@ (%%expr: obj * Action<ChangeEventArgs>).Item1 @@>
+        <@@ (%%expr: obj * (obj -> EventCallback<ChangeEventArgs>)).Item1 @@>
     | Parsing.Html, Parsing.DataBinding _ ->
-        <@@ Node.Text ((%%expr: obj * Action<ChangeEventArgs>).Item1.ToString()) @@>
+        <@@ Node.Text ((%%expr: obj * (obj -> EventCallback<ChangeEventArgs>)).Item1.ToString()) @@>
     | Parsing.AttributeValue, Parsing.DataBinding _ ->
-        <@@ (%%expr: obj * Action<ChangeEventArgs>).Item1.ToString() @@>
+        <@@ (%%expr: obj * (obj -> EventCallback<ChangeEventArgs>)).Item1.ToString() @@>
     | a, b -> failwith $"Hole name used multiple times with incompatible types ({a}, {b})"
     |> Some
 
@@ -88,7 +90,7 @@ let rec ConvertAttrTextPart (vars: Map<string, Expr>) (text: Parsing.Expr) : Exp
         <@ (%e).ToString() @>
     | Parsing.WrapVars (subst, text) ->
         WrapAndConvert vars subst ConvertAttrTextPart text
-    | Parsing.Fst _ | Parsing.Snd _ | Parsing.Attr _ | Parsing.Elt _ | Parsing.HtmlRef _ ->
+    | Parsing.Fst _ | Parsing.Snd _ | Parsing.Attr _ | Parsing.EventHandler _ | Parsing.Elt _ | Parsing.HtmlRef _ ->
         failwith $"Invalid text: {text}"
 
 let rec ConvertAttrValue (vars: Map<string, Expr>) (text: Parsing.Expr) : Expr<obj> =
@@ -107,7 +109,7 @@ let rec ConvertAttrValue (vars: Map<string, Expr>) (text: Parsing.Expr) : Expr<o
         box (Expr.TupleGet(vars[varName], 1))
     | Parsing.WrapVars (subst, text) ->
         WrapAndConvert vars subst ConvertAttrValue text
-    | Parsing.Attr _ | Parsing.Elt _ | Parsing.HtmlRef _ ->
+    | Parsing.Attr _ | Parsing.EventHandler _ | Parsing.Elt _ | Parsing.HtmlRef _ ->
         failwith $"Invalid attr value: {text}"
 
 let rec ConvertAttr (vars: Map<string, Expr>) (attr: Parsing.Expr) : Expr<Attr> =
@@ -118,6 +120,15 @@ let rec ConvertAttr (vars: Map<string, Expr>) (attr: Parsing.Expr) : Expr<Attr> 
     | Parsing.Attr (name, value) ->
         let value = ConvertAttrValue vars value
         <@ Attr.Make name %value @>
+    | Parsing.EventHandler (name, value, argTy) ->
+        let value = ConvertAttrValue vars value
+        let makeWithReceiver =
+            typeof<Attr>.Assembly
+                .GetType("Bolero.AttrModule")
+                .GetMethod("MakeWithReceiver", BindingFlags.Static ||| BindingFlags.Public)
+                .MakeGenericMethod(typedefof<EventCallback<_>>.MakeGenericType(argTy))
+        Expr.Call(makeWithReceiver, [Expr.Value(name); Expr.Coerce(value, EventCallbackOf argTy)])
+        |> Expr.Cast<Attr>
     | Parsing.VarContent varName ->
         vars[varName] |> Expr.Cast
     | Parsing.WrapVars (subst, attr) ->
@@ -147,6 +158,6 @@ let rec ConvertNode (vars: Map<string, Expr>) (node: Parsing.Expr) : Expr<Node> 
         vars[varName] |> Expr.Cast
     | Parsing.WrapVars (subst, node) ->
         WrapAndConvert vars subst ConvertNode node
-    | Parsing.Fst _ | Parsing.Snd _ | Parsing.Attr _ | Parsing.HtmlRef _ ->
+    | Parsing.Fst _ | Parsing.Snd _ | Parsing.Attr _ | Parsing.EventHandler _ | Parsing.HtmlRef _ ->
         failwith $"Invalid node: {node}"
 

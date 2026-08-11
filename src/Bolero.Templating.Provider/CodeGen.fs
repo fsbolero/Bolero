@@ -22,6 +22,7 @@ module Bolero.Templating.CodeGen
 
 open System
 open System.Reflection
+open System.Threading.Tasks
 open Bolero.Templating.Parsing
 open FSharp.Quotations
 open Microsoft.AspNetCore.Components
@@ -33,6 +34,8 @@ open Bolero.Templating.ConvertExpr
 let getThis (args: list<Expr>) : Expr<TemplateNode> =
     TExpr.Coerce<TemplateNode>(args[0])
 
+let noOpHandler = typeof<Events>.GetMethod("NoOpHandler", BindingFlags.Static ||| BindingFlags.Public)
+
 let MakeCtor (holes: Parsing.Vars) =
     ProvidedConstructor([], fun args ->
         let holes = TExpr.Array<obj> [
@@ -40,13 +43,25 @@ let MakeCtor (holes: Parsing.Vars) =
                 match type' with
                 | HoleType.String -> <@ box "" @>
                 | HoleType.Html -> <@ box (Node.Empty()) @>
-                | HoleType.Event _ -> <@ box (Events.NoOp<EventArgs>()) @>
-                | HoleType.DataBinding _ -> <@ box (null, Events.NoOp<ChangeEventArgs>()) @>
+                | HoleType.Event ty -> TExpr.Coerce<obj>(Expr.Call(noOpHandler.MakeGenericMethod(ty), []))
+                | HoleType.DataBinding _ -> <@ box (null, fun (_: obj) -> Events.NoOpHandler<ChangeEventArgs>()) @>
                 | HoleType.Attribute -> <@ box (Attr.Empty()) @>
                 | HoleType.AttributeValue -> <@ null @>
                 | HoleType.Ref -> <@ null @>
         ]
         <@@ (%getThis args).Holes <- %holes @@>)
+
+/// Event handler type whose argument is the given type.
+let EventHandlerOf (argType: Type) : Type =
+    ProvidedTypeBuilder.MakeGenericType(typedefof<Action<_>>, [argType])
+
+/// Event handler type whose argument is the given type.
+let TaskEventHandlerOf (argType: Type) : Type =
+    ProvidedTypeBuilder.MakeGenericType(typedefof<Func<_, _>>, [argType; typeof<Task>])
+
+/// Event handler type whose argument is the given type.
+let AsyncEventHandlerOf (argType: Type) : Type =
+    ProvidedTypeBuilder.MakeGenericType(typedefof<Func<_, _>>, [argType; typeof<Async<unit>>])
 
 /// Get the argument lists and bodies for methods that fill a hole of the given type.
 let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list -> Expr)) list =
@@ -67,24 +82,48 @@ let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list
     | HoleType.Event argTy ->
         [
             ["value" => EventHandlerOf argTy], fun args ->
-                Expr.Coerce(args[1], typeof<obj>)
+                let m = typeof<Events>.GetMethod("Handler").MakeGenericMethod(argTy)
+                Expr.Coerce(Expr.Call(m, [args[1]]), typeof<obj>)
+            ["value" => TaskEventHandlerOf argTy], fun args ->
+                let m = typeof<Events>.GetMethod("TaskHandler").MakeGenericMethod(argTy)
+                Expr.Coerce(Expr.Call(m, [args[1]]), typeof<obj>)
+            ["value" => AsyncEventHandlerOf argTy], fun args ->
+                let m = typeof<Events>.GetMethod("AsyncHandler").MakeGenericMethod(argTy)
+                Expr.Coerce(Expr.Call(m, [args[1]]), typeof<obj>)
         ]
     | HoleType.DataBinding BindingType.BindString ->
         [
             ["value" => typeof<string>; "set" => typeof<Action<string>>], fun args ->
                 <@@ box (box (%%args[1]: string), Events.OnChange(%%args[2])) @@>
+            ["value" => typeof<string>; "set" => typeof<Func<string, Task>>], fun args ->
+                <@@ box (box (%%args[1]: string), Events.TaskOnChange(%%args[2])) @@>
+            ["value" => typeof<string>; "set" => typeof<Func<string, Async<unit>>>], fun args ->
+                <@@ box (box (%%args[1]: string), Events.AsyncOnChange(%%args[2])) @@>
         ]
     | HoleType.DataBinding BindingType.BindNumber ->
         [
             ["value" => typeof<int>; "set" => typeof<Action<int>>], fun args ->
                 <@@ box (box (%%args[1]: int), Events.OnChangeInt(%%args[2])) @@>
+            ["value" => typeof<int>; "set" => typeof<Func<int, Task>>], fun args ->
+                <@@ box (box (%%args[1]: int), Events.TaskOnChangeInt(%%args[2])) @@>
+            ["value" => typeof<int>; "set" => typeof<Func<int, Async<unit>>>], fun args ->
+                <@@ box (box (%%args[1]: int), Events.AsyncOnChangeInt(%%args[2])) @@>
+
             ["value" => typeof<float>; "set" => typeof<Action<float>>], fun args ->
                 <@@ box (box (%%args[1]: float), Events.OnChangeFloat(%%args[2])) @@>
+            ["value" => typeof<float>; "set" => typeof<Func<float, Task>>], fun args ->
+                <@@ box (box (%%args[1]: float), Events.TaskOnChangeFloat(%%args[2])) @@>
+            ["value" => typeof<float>; "set" => typeof<Func<float, Async<unit>>>], fun args ->
+                <@@ box (box (%%args[1]: float), Events.AsyncOnChangeFloat(%%args[2])) @@>
         ]
     | HoleType.DataBinding BindingType.BindBool ->
         [
             ["value" => typeof<bool>; "set" => typeof<Action<bool>>], fun args ->
                 <@@ box (box (%%args[1]: bool), Events.OnChangeBool(%%args[2])) @@>
+            ["value" => typeof<bool>; "set" => typeof<Func<bool, Task>>], fun args ->
+                <@@ box (box (%%args[1]: bool), Events.TaskOnChangeBool(%%args[2])) @@>
+            ["value" => typeof<bool>; "set" => typeof<Func<bool, Async<unit>>>], fun args ->
+                <@@ box (box (%%args[1]: bool), Events.AsyncOnChangeBool(%%args[2])) @@>
         ]
     | HoleType.Attribute ->
         [
@@ -109,8 +148,8 @@ let MakeHoleMethods (holeName: string) (holeType: HoleType) (index: int) (contai
         for args, value in HoleMethodBodies holeType do
             yield ProvidedMethod(holeName, args, containerTy, fun args ->
                 let this = getThis args
-                <@@ (%this).Holes[index] <- %%(value args)
-                    %this @@>) :> MemberInfo
+                Expr.Sequential(<@@ (%this).Holes[index] <- %%(value args) @@>, args[0])
+            ) :> MemberInfo
     ]
 
 let MakeFinalMethod (filename: option<string>) (subTemplateName: option<string>) (content: Parsed) =

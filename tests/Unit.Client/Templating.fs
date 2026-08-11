@@ -73,7 +73,7 @@ type EventTester() =
     override this.Render() =
         Events()
             .Click1(fun e -> this.OnClick(1, e))
-            .Click2(fun e -> this.OnClick(2, e))
+            .Click2(fun e -> async { this.OnClick(2, e) })
             .CurrentState(currentState)
             .ClickPosition(lastPosition)
             .Elt()
@@ -165,10 +165,10 @@ type BindTester() =
 
     override this.Render() =
         Binds()
-            .Var1(this.Var1, fun (v: string) -> this.Var1 <- v)
-            .Var2(this.Var2, fun (v: int) -> this.Var2 <- v)
-            .Var3(this.Var3, fun (v: float) -> this.Var3 <- v)
-            .Var4(this.Var4, fun (v: bool) -> this.Var4 <- v)
+            .Var1(this.Var1, fun (v: string) -> this.Var1 <- v; Task.CompletedTask)
+            .Var2(this.Var2, fun (v: int) -> this.Var2 <- v; Task.CompletedTask)
+            .Var3(this.Var3, fun (v: float) -> async { this.Var3 <- v })
+            .Var4(this.Var4, fun (v: bool) -> async { this.Var4 <- v })
             .VarOnchange1(this.VarOnchange1, fun (v: string) -> this.VarOnchange1 <- v)
             .VarOnchange2(this.VarOnchange2, fun (v: int) -> this.VarOnchange2 <- v)
             .VarOnchange3(this.VarOnchange3, fun (v: float) -> this.VarOnchange3 <- v)
@@ -191,8 +191,8 @@ type RefTester() =
                 .Class("template-ref")
                 .Click(fun _ ->
                     match elt.Value with
-                    | Some elt -> this.JSRuntime.InvokeVoidAsync("setContent", elt, "Template ref is bound") |> ignore
-                    | None -> ())
+                    | Some elt -> this.JSRuntime.InvokeVoidAsync("setContent", elt, "Template ref is bound").AsTask()
+                    | None -> Task.CompletedTask)
                 .Elt()
 
             // Check that not passing the ref doesn't break anything.

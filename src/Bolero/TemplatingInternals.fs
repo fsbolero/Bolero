@@ -22,6 +22,7 @@
 module Bolero.TemplatingInternals
 
 open System
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Components
 
 /// This indirection resolves two problems:
@@ -29,19 +30,60 @@ open Microsoft.AspNetCore.Components
 /// 2. Generative TPs have problems with `_ -> unit`, see https://github.com/fsprojects/FSharp.TypeProviders.SDK/issues/279
 type Events =
 
-    static member NoOp<'T>() =
-        Action<'T>(ignore)
+    static member NoOpHandler<'T>() =
+        fun (receiver: obj) ->
+            EventCallback.Factory.Create(receiver, Action<'T>(ignore))
+
+    static member Handler<'T>(f: Action<'T>) =
+        fun (receiver: obj) ->
+            EventCallback.Factory.Create(receiver, f)
+
+    static member TaskHandler<'T>(f: Func<'T, Task>) =
+        fun (receiver: obj) ->
+            EventCallback.Factory.Create(receiver, f)
+
+    static member AsyncHandler<'T>(f: Func<'T, Async<unit>>) =
+        fun (receiver: obj) ->
+            EventCallback.Factory.Create(receiver, Func<'T, Task>(fun x ->
+                f.Invoke(x) |> Async.StartImmediateAsTask :> Task))
 
     static member OnChange(f: Action<string>) =
-        Action<ChangeEventArgs>(fun e ->
-            f.Invoke(unbox<string> e.Value)
-        )
+        fun (receiver: obj) ->
+            EventCallback.Factory.Create(receiver, Action<ChangeEventArgs>(fun e ->
+                f.Invoke(unbox<string> e.Value)
+            ))
+
+    static member TaskOnChange(f: Func<string, Task>) =
+        fun (receiver: obj) ->
+            EventCallback.Factory.Create(receiver, Func<ChangeEventArgs, Task>(fun e ->
+                f.Invoke(unbox<string> e.Value)
+            ))
+
+    static member AsyncOnChange(f: Func<string, Async<unit>>) =
+        fun (receiver: obj) ->
+            EventCallback.Factory.Create(receiver, Func<ChangeEventArgs, Task>(fun e ->
+                f.Invoke(unbox<string> e.Value) |> Async.StartImmediateAsTask :> Task
+            ))
 
     static member OnChangeInt(f: Action<int>) =
         Events.OnChange(fun s ->
             match Int32.TryParse(s) with
             | true, x -> f.Invoke(x)
             | false, _ -> ()
+        )
+
+    static member TaskOnChangeInt(f: Func<int, Task>) =
+        Events.TaskOnChange(fun s ->
+            match Int32.TryParse(s) with
+            | true, x -> f.Invoke(x)
+            | false, _ -> Task.CompletedTask
+        )
+
+    static member AsyncOnChangeInt(f: Func<int, Async<unit>>) =
+        Events.AsyncOnChange(fun s ->
+            match Int32.TryParse(s) with
+            | true, x -> f.Invoke(x)
+            | false, _ -> async.Return()
         )
 
     static member OnChangeFloat(f: Action<float>) =
@@ -51,10 +93,37 @@ type Events =
             | false, _ -> ()
         )
 
-    static member OnChangeBool(f: Action<bool>) =
-        Action<ChangeEventArgs>(fun e ->
-            f.Invoke(unbox<bool> e.Value)
+    static member TaskOnChangeFloat(f: Func<float, Task>) =
+        Events.TaskOnChange(fun s ->
+            match Double.TryParse(s) with
+            | true, x -> f.Invoke(x)
+            | false, _ -> Task.CompletedTask
         )
+
+    static member AsyncOnChangeFloat(f: Func<float, Async<unit>>) =
+        Events.AsyncOnChange(fun s ->
+            match Double.TryParse(s) with
+            | true, x -> f.Invoke(x)
+            | false, _ -> async.Return()
+        )
+
+    static member OnChangeBool(f: Action<bool>) =
+        fun (receiver: obj) ->
+            EventCallback.Factory.Create(receiver, Action<ChangeEventArgs>(fun e ->
+                f.Invoke(unbox<bool> e.Value)
+            ))
+
+    static member TaskOnChangeBool(f: Func<bool, Task>) =
+        fun (receiver: obj) ->
+            EventCallback.Factory.Create(receiver, Func<ChangeEventArgs, Task>(fun e ->
+                f.Invoke(unbox<bool> e.Value)
+            ))
+
+    static member AsyncOnChangeBool(f: Func<bool, Async<unit>>) =
+        fun (receiver: obj) ->
+            EventCallback.Factory.Create(receiver, Func<ChangeEventArgs, Task>(fun e ->
+                f.Invoke(unbox<bool> e.Value) |> Async.StartImmediateAsTask :> Task
+            ))
 
 type Ref =
 
