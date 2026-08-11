@@ -1,7 +1,16 @@
 # Changelog
 
 ## 0.25
+
 * [#148](https://github.com/fsbolero/Bolero/issues/148) Add overloads for template event holes and bind setters returning `Task` and `Async<unit>`.
+
+* [#374](https://github.com/fsbolero/Bolero/issues/374) On .NET 9 or newer, use `RenderInfo` to not need custom Elmish `Program.run`.
+
+* [#367](https://github.com/fsbolero/Bolero/issues/367) Drop support .NET 6 and 7.
+
+* [#375](https://github.com/fsbolero/Bolero/issues/375) Support .NET 10.
+
+* [#381](https://github.com/fsbolero/Bolero/issues/381) Add `IDisableCookieRedirectMetadata` to remote endpoints.
 
 ## 0.24
 
