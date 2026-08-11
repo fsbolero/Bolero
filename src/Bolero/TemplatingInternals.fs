@@ -22,6 +22,7 @@
 module Bolero.TemplatingInternals
 
 open System
+open System.Threading.Tasks
 open Microsoft.AspNetCore.Components
 
 /// This indirection resolves two problems:
@@ -31,6 +32,14 @@ type Events =
 
     static member NoOp<'T>() =
         Action<'T>(ignore)
+
+    static member Handler<'T>(f: Action<'T>) =
+        fun (receiver: obj) ->
+            box (EventCallback.Factory.Create(receiver, f))
+
+    static member TaskHandler<'T>(f: Func<'T, Task>) =
+        fun (receiver: obj) ->
+            box (EventCallback.Factory.Create(receiver, f))
 
     static member OnChange(f: Action<string>) =
         fun (receiver: obj) ->

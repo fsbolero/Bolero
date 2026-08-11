@@ -74,28 +74,13 @@ let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list
                 <@@ box (%%args[1]: Node) @@>
         ]
     | HoleType.Event argTy ->
-        let eventCallbackFactoryMethods = typeof<EventCallbackFactory>.GetMethods(BindingFlags.Instance ||| BindingFlags.Public)
-        let eventCallbackFactoryField = typeof<EventCallback>.GetField("Factory", BindingFlags.Static ||| BindingFlags.Public)
-        let eventCallbackTaskMethod() =
-            eventCallbackFactoryMethods |> Array.find (fun m ->
-                m.Name = "Create" &&
-                let t = m.GetParameters().[1].ParameterType
-                t.GetGenericTypeDefinition() = typedefof<Func<_, _>> &&
-                t.GetGenericArguments().[1] = typeof<Task>)
         [
             ["value" => EventHandlerOf argTy], fun args ->
-                let meth = eventCallbackFactoryMethods |> Array.find (fun m ->
-                    m.Name = "Create" && m.GetParameters().[1].ParameterType.GetGenericTypeDefinition() = typedefof<Action<_>>)
-                let meth = meth.MakeGenericMethod([|argTy|])
-                let receiver = Var("r", typeof<obj>, false)
-                let eventCallback = Expr.Call(Expr.FieldGet(eventCallbackFactoryField), meth, [Expr.Var receiver; args[1]])
-                Expr.Coerce(Expr.Lambda(receiver, Expr.Coerce(eventCallback, typeof<obj>)), typeof<obj>)
+                let m = typeof<Events>.GetMethod("Handler").MakeGenericMethod(argTy)
+                Expr.Coerce(Expr.Call(m, [args[1]]), typeof<obj>)
             ["value" => TaskEventHandlerOf argTy], fun args ->
-                let meth = eventCallbackTaskMethod()
-                let meth = meth.MakeGenericMethod([|argTy|])
-                let receiver = Var("r", typeof<obj>, false)
-                let eventCallback = Expr.Call(Expr.FieldGet(eventCallbackFactoryField), meth, [Expr.Var receiver; args[1]])
-                Expr.Coerce(Expr.Lambda(receiver, Expr.Coerce(eventCallback, typeof<obj>)), typeof<obj>)
+                let m = typeof<Events>.GetMethod("TaskHandler").MakeGenericMethod(argTy)
+                Expr.Coerce(Expr.Call(m, [args[1]]), typeof<obj>)
         ]
     | HoleType.DataBinding BindingType.BindString ->
         [
