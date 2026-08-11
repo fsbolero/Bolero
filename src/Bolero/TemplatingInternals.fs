@@ -24,6 +24,7 @@ module Bolero.TemplatingInternals
 open System
 open System.Threading.Tasks
 open Microsoft.AspNetCore.Components
+open Microsoft.AspNetCore.Components.Rendering
 
 /// This indirection resolves two problems:
 /// 1. TPs can't generate delegate constructor calls;
@@ -124,6 +125,22 @@ type Events =
             EventCallback.Factory.Create(receiver, Func<ChangeEventArgs, Task>(fun e ->
                 f.Invoke(unbox<bool> e.Value) |> Async.StartImmediateAsTask :> Task
             ))
+
+type Nodes =
+    static member Region(f: obj -> RenderTreeBuilder -> unit) =
+        Node(fun r b i ->
+            b.OpenRegion(i)
+            f r b
+            b.CloseRegion()
+            i + 1)
+
+    static member inline AddCssScope(c: obj, b: RenderTreeBuilder, i: int) =
+        match c with
+        | :? Component as c ->
+            match c.CssScope with
+            | null -> ()
+            | s -> b.AddAttribute(i, s)
+        | _ -> ()
 
 type Ref =
 

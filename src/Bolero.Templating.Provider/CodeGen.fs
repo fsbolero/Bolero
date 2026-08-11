@@ -29,7 +29,6 @@ open Microsoft.AspNetCore.Components
 open ProviderImplementation.ProvidedTypes
 open Bolero
 open Bolero.TemplatingInternals
-open Bolero.Templating.ConvertExpr
 
 let getThis (args: list<Expr>) : Expr<TemplateNode> =
     TExpr.Coerce<TemplateNode>(args[0])
@@ -156,9 +155,14 @@ let MakeFinalMethod (filename: option<string>) (subTemplateName: option<string>)
     ProvidedMethod("Elt", [], typeof<Node>, fun args ->
         let this = getThis args
         let directExpr =
-            let vars = content.Vars |> Map.map (fun k v -> Var(k, TypeOf v))
+            let vars = content.Vars |> Map.map (fun k v -> Var(k, ConvertExpr.TypeOf v))
             let varExprs = vars |> Map.map (fun _ v -> Expr.Var v)
-            ((0, ConvertNode varExprs (Concat content.Expr) :> Expr), vars)
+            let node =
+                if content.Sequential then
+                    ConvertExprSequential.ConvertNode varExprs (Concat content.Expr) :> Expr
+                else
+                    ConvertExpr.ConvertNode varExprs (Concat content.Expr) :> Expr
+            ((0, node), vars)
             ||> Seq.fold (fun (i, e) (KeyValue(_, var)) ->
                 let value = <@@ (%this).Holes[i] @@>
                 let value = Expr.Coerce(value, var.Type)

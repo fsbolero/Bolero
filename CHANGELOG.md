@@ -12,6 +12,8 @@
 
 * [#381](https://github.com/fsbolero/Bolero/issues/381) Add `IDisableCookieRedirectMetadata` to remote endpoints.
 
+* [#384](https://github.com/fsbolero/Bolero/issues/384) When possible, generate more efficient sequential code from the templating type provider.
+
 ## 0.24
 
 * [#347](https://github.com/fsbolero/Bolero/issues/347) Add Blazor Interactive Render Modes.
