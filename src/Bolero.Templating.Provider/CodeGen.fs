@@ -86,18 +86,26 @@ let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list
         [
             ["value" => typeof<string>; "set" => typeof<Action<string>>], fun args ->
                 <@@ box (box (%%args[1]: string), Events.OnChange(%%args[2])) @@>
+            ["value" => typeof<string>; "set" => typeof<Func<string, Task>>], fun args ->
+                <@@ box (box (%%args[1]: string), Events.TaskOnChange(%%args[2])) @@>
         ]
     | HoleType.DataBinding BindingType.BindNumber ->
         [
             ["value" => typeof<int>; "set" => typeof<Action<int>>], fun args ->
                 <@@ box (box (%%args[1]: int), Events.OnChangeInt(%%args[2])) @@>
+            ["value" => typeof<int>; "set" => typeof<Func<int, Task>>], fun args ->
+                <@@ box (box (%%args[1]: int), Events.TaskOnChangeInt(%%args[2])) @@>
             ["value" => typeof<float>; "set" => typeof<Action<float>>], fun args ->
                 <@@ box (box (%%args[1]: float), Events.OnChangeFloat(%%args[2])) @@>
+            ["value" => typeof<float>; "set" => typeof<Func<float, Task>>], fun args ->
+                <@@ box (box (%%args[1]: float), Events.TaskOnChangeFloat(%%args[2])) @@>
         ]
     | HoleType.DataBinding BindingType.BindBool ->
         [
             ["value" => typeof<bool>; "set" => typeof<Action<bool>>], fun args ->
                 <@@ box (box (%%args[1]: bool), Events.OnChangeBool(%%args[2])) @@>
+            ["value" => typeof<bool>; "set" => typeof<Func<bool, Task>>], fun args ->
+                <@@ box (box (%%args[1]: bool), Events.TaskOnChangeBool(%%args[2])) @@>
         ]
     | HoleType.Attribute ->
         [

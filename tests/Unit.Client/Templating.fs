@@ -165,10 +165,10 @@ type BindTester() =
 
     override this.Render() =
         Binds()
-            .Var1(this.Var1, fun (v: string) -> this.Var1 <- v)
-            .Var2(this.Var2, fun (v: int) -> this.Var2 <- v)
-            .Var3(this.Var3, fun (v: float) -> this.Var3 <- v)
-            .Var4(this.Var4, fun (v: bool) -> this.Var4 <- v)
+            .Var1(this.Var1, fun (v: string) -> this.Var1 <- v; Task.CompletedTask)
+            .Var2(this.Var2, fun (v: int) -> this.Var2 <- v; Task.CompletedTask)
+            .Var3(this.Var3, fun (v: float) -> this.Var3 <- v; Task.CompletedTask)
+            .Var4(this.Var4, fun (v: bool) -> this.Var4 <- v; Task.CompletedTask)
             .VarOnchange1(this.VarOnchange1, fun (v: string) -> this.VarOnchange1 <- v)
             .VarOnchange2(this.VarOnchange2, fun (v: int) -> this.VarOnchange2 <- v)
             .VarOnchange3(this.VarOnchange3, fun (v: float) -> this.VarOnchange3 <- v)

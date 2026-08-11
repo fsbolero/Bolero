@@ -47,11 +47,24 @@ type Events =
                 f.Invoke(unbox<string> e.Value)
             )))
 
+    static member TaskOnChange(f: Func<string, Task>) =
+        fun (receiver: obj) ->
+            box (EventCallback.Factory.Create(receiver, Func<ChangeEventArgs, Task>(fun e ->
+                f.Invoke(unbox<string> e.Value)
+            )))
+
     static member OnChangeInt(f: Action<int>) =
         Events.OnChange(fun s ->
             match Int32.TryParse(s) with
             | true, x -> f.Invoke(x)
             | false, _ -> ()
+        )
+
+    static member TaskOnChangeInt(f: Func<int, Task>) =
+        Events.TaskOnChange(fun s ->
+            match Int32.TryParse(s) with
+            | true, x -> f.Invoke(x)
+            | false, _ -> Task.CompletedTask
         )
 
     static member OnChangeFloat(f: Action<float>) =
@@ -61,9 +74,22 @@ type Events =
             | false, _ -> ()
         )
 
+    static member TaskOnChangeFloat(f: Func<float, Task>) =
+        Events.TaskOnChange(fun s ->
+            match Double.TryParse(s) with
+            | true, x -> f.Invoke(x)
+            | false, _ -> Task.CompletedTask
+        )
+
     static member OnChangeBool(f: Action<bool>) =
         fun (receiver: obj) ->
             box (EventCallback.Factory.Create(receiver, Action<ChangeEventArgs>(fun e ->
+                f.Invoke(unbox<bool> e.Value)
+            )))
+
+    static member TaskOnChangeBool(f: Func<bool, Task>) =
+        fun (receiver: obj) ->
+            box (EventCallback.Factory.Create(receiver, Func<ChangeEventArgs, Task>(fun e ->
                 f.Invoke(unbox<bool> e.Value)
             )))
 
