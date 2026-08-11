@@ -169,13 +169,14 @@ type Parsed =
     {
         Vars: Vars
         Expr: list<Expr>
+        Sequential: bool
     }
 
-let NoVars e =
-    { Vars = Map.empty; Expr = e }
+let NoVars e s =
+    { Vars = Map.empty; Expr = e; Sequential = s }
 
-let WithVars vars e =
-    { Vars = vars; Expr = e }
+let WithVars vars e s =
+    { Vars = vars; Expr = e; Sequential = s }
 
 let HasVars p =
     not (Map.isEmpty p.Vars)
@@ -223,18 +224,21 @@ module Parsed =
             |> Seq.collect (substVars vars)
             |> mergeConsecutiveTexts
             |> List.ofSeq
-        WithVars vars exprs
+        let sequential =
+            p
+            |> Seq.forall _.Sequential
+        WithVars vars exprs sequential
 
     let Map2 (f: list<Expr> -> list<Expr> -> list<Expr>) (p1: Parsed) (p2: Parsed) : Parsed =
         let vars = Vars.Merge p1.Vars p2.Vars
         let e1 = substVars vars p1
         let e2 = substVars vars p2
-        WithVars vars (f e1 e2)
+        WithVars vars (f e1 e2) (p1.Sequential && p2.Sequential)
 
 /// Parse a piece of text, which can be either a text node or an attribute value.
 let ParseText (t: string) (varType: HoleType) : Parsed =
     let parse = HoleRE.Matches(t) |> Seq.cast<Match> |> Array.ofSeq
-    if Array.isEmpty parse then NoVars [PlainHtml t] else
+    if Array.isEmpty parse then NoVars [PlainHtml t] true else
     let parts = ResizeArray()
     let mutable lastHoleEnd = 0
     let mutable vars = Map.empty
@@ -248,7 +252,7 @@ let ParseText (t: string) (varType: HoleType) : Parsed =
         lastHoleEnd <- p.Index + p.Length
     if lastHoleEnd < t.Length then
         parts.Add(PlainHtml t[lastHoleEnd..t.Length - 1])
-    WithVars vars (parts.ToArray() |> List.ofSeq)
+    WithVars vars (parts.ToArray() |> List.ofSeq) true
 
 /// None if this is not a data binding.
 /// Some None if this is a data binding without specified event.
@@ -278,7 +282,7 @@ let (|DataBinding|_|) (ownerNode: HtmlNode) (attrName: string) : option<BindingT
 
 let MakeEventHandler (attrName: string) (varName: string) : Parsed =
     let argType = HoleType.EventArg attrName
-    WithVars (Map [varName, Event argType]) [EventHandler(attrName, VarContent varName, argType)]
+    WithVars (Map [varName, Event argType]) [EventHandler(attrName, VarContent varName, argType)] true
 
 let MakeDataBinding (varName: string) (valType: BindingType) (eventName: string) : Parsed =
     let valueAttrName =
@@ -288,7 +292,7 @@ let MakeDataBinding (varName: string) (valType: BindingType) (eventName: string)
     WithVars (Map [varName, DataBinding valType]) [
         Attr(valueAttrName, Fst varName)
         EventHandler(eventName, Snd varName, typeof<ChangeEventArgs>)
-    ]
+    ] true
 
 let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : Parsed =
     let name = attr.Name
@@ -298,15 +302,15 @@ let ParseAttribute (ownerNode: HtmlNode) (attr: HtmlAttribute) : Parsed =
         MakeDataBinding varName valType eventName
     | _, [VarContent varName] ->
         if name = "attr" then
-            WithVars (Map [varName, Attribute]) parsed.Expr
+            WithVars (Map [varName, Attribute]) parsed.Expr false
         elif name = "ref" then
-            WithVars (Map [varName, HoleType.Ref]) [HtmlRef varName]
+            WithVars (Map [varName, HoleType.Ref]) [HtmlRef varName] true
         elif name.StartsWith "on" then
             MakeEventHandler name varName
         else
-            WithVars (Map [varName, AttributeValue]) [Attr(name, VarContent varName)]
+            WithVars (Map [varName, AttributeValue]) [Attr(name, VarContent varName)] true
     | _ ->
-        WithVars parsed.Vars [Attr(name, Concat parsed.Expr)]
+        WithVars parsed.Vars [Attr(name, Concat parsed.Expr)] true
 
 let rec ParseNode (optimizeHtml: bool) (node: HtmlNode) : Parsed =
     match node.NodeType with
@@ -329,7 +333,7 @@ let rec ParseNode (optimizeHtml: bool) (node: HtmlNode) : Parsed =
                 | HtmlNodeType.Text | HtmlNodeType.Element -> ()
                 | _ -> n.Remove()
                 removeComments nxt
-            NoVars [PlainHtml node.OuterHtml]
+            NoVars [PlainHtml node.OuterHtml] true
         else
             (attrs, children)
             ||> Parsed.Map2 (fun attrs children ->
@@ -338,7 +342,7 @@ let rec ParseNode (optimizeHtml: bool) (node: HtmlNode) : Parsed =
         // Using .InnerHtml and RawHtml to properly interpret HTML entities.
         ParseText (node :?> HtmlTextNode).InnerHtml HoleType.Html
     | _ ->
-        NoVars [] // Ignore comments
+        NoVars [] true // Ignore comments
 
 let ParseOneTemplate (optimizeHtml: bool) (nodes: HtmlNodeCollection) : Parsed =
     nodes
