@@ -73,7 +73,7 @@ type EventTester() =
     override this.Render() =
         Events()
             .Click1(fun e -> this.OnClick(1, e))
-            .Click2(fun e -> this.OnClick(2, e))
+            .Click2(fun e -> async { this.OnClick(2, e) })
             .CurrentState(currentState)
             .ClickPosition(lastPosition)
             .Elt()

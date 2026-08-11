@@ -41,6 +41,11 @@ type Events =
         fun (receiver: obj) ->
             box (EventCallback.Factory.Create(receiver, f))
 
+    static member AsyncHandler<'T>(f: Func<'T, Async<unit>>) =
+        fun (receiver: obj) ->
+            box (EventCallback.Factory.Create(receiver, Func<'T, Task>(fun x ->
+                f.Invoke(x) |> Async.StartImmediateAsTask :> Task)))
+
     static member OnChange(f: Action<string>) =
         fun (receiver: obj) ->
             box (EventCallback.Factory.Create(receiver, Action<ChangeEventArgs>(fun e ->

@@ -57,6 +57,10 @@ let EventHandlerOf (argType: Type) : Type =
 let TaskEventHandlerOf (argType: Type) : Type =
     ProvidedTypeBuilder.MakeGenericType(typedefof<Func<_, _>>, [argType; typeof<Task>])
 
+/// Event handler type whose argument is the given type.
+let AsyncEventHandlerOf (argType: Type) : Type =
+    ProvidedTypeBuilder.MakeGenericType(typedefof<Func<_, _>>, [argType; typeof<Async<unit>>])
+
 /// Get the argument lists and bodies for methods that fill a hole of the given type.
 let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list -> Expr)) list =
     let (=>) name ty = ProvidedParameter(name, ty)
@@ -80,6 +84,9 @@ let HoleMethodBodies (holeType: HoleType) : (ProvidedParameter list * (Expr list
                 Expr.Coerce(Expr.Call(m, [args[1]]), typeof<obj>)
             ["value" => TaskEventHandlerOf argTy], fun args ->
                 let m = typeof<Events>.GetMethod("TaskHandler").MakeGenericMethod(argTy)
+                Expr.Coerce(Expr.Call(m, [args[1]]), typeof<obj>)
+            ["value" => AsyncEventHandlerOf argTy], fun args ->
+                let m = typeof<Events>.GetMethod("AsyncHandler").MakeGenericMethod(argTy)
                 Expr.Coerce(Expr.Call(m, [args[1]]), typeof<obj>)
         ]
     | HoleType.DataBinding BindingType.BindString ->
