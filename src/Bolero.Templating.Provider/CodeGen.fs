@@ -148,8 +148,8 @@ let MakeHoleMethods (holeName: string) (holeType: HoleType) (index: int) (contai
         for args, value in HoleMethodBodies holeType do
             yield ProvidedMethod(holeName, args, containerTy, fun args ->
                 let this = getThis args
-                <@@ (%this).Holes[index] <- %%(value args)
-                    %this @@>) :> MemberInfo
+                Expr.Sequential(<@@ (%this).Holes[index] <- %%(value args) @@>, args[0])
+            ) :> MemberInfo
     ]
 
 let MakeFinalMethod (filename: option<string>) (subTemplateName: option<string>) (content: Parsed) =
