@@ -23,17 +23,25 @@ module Bolero.Templating.ConvertExpr
 #nowarn "3220" // Using .Item1 instead of fst inside quotations for nicer output IL
 
 open System
+open System.Reflection
 open FSharp.Quotations
 open Bolero
 open Bolero.TemplatingInternals
+open Microsoft.AspNetCore.Components
+open Microsoft.FSharp.Reflection
+
+let EventCallbackOf (ty: Type) =
+    FSharpType.MakeFunctionType(
+        typeof<obj>,
+        typedefof<EventCallback<_>>.MakeGenericType(ty))
 
 /// Get the .NET type corresponding to a hole type.
 let TypeOf (holeType: Parsing.HoleType) : Type =
     match holeType with
     | Parsing.String -> typeof<string>
     | Parsing.Html -> typeof<Node>
-    | Parsing.Event _ -> typeof<obj -> obj>
-    | Parsing.DataBinding _ -> typeof<obj * (obj -> obj)>
+    | Parsing.Event ty -> EventCallbackOf ty
+    | Parsing.DataBinding _ -> typeof<obj * (obj -> EventCallback<ChangeEventArgs>)>
     | Parsing.Attribute -> typeof<Attr>
     | Parsing.AttributeValue -> typeof<obj>
     | Parsing.Ref -> typeof<HtmlRef>
@@ -47,14 +55,14 @@ let WrapExpr (innerType: Parsing.HoleType) (outerType: Parsing.HoleType) (expr: 
         <@@ Node.Text %%expr @@>
     | Parsing.AttributeValue, Parsing.String ->
         Expr.Coerce(expr, typeof<obj>)
-    | Parsing.Event _, Parsing.Event _ ->
-        Expr.Coerce(expr, typeof<obj -> obj>)
+    | Parsing.Event ty, Parsing.Event _ ->
+        Expr.Coerce(expr, EventCallbackOf ty)
     | Parsing.String, Parsing.DataBinding _ ->
-        <@@ (%%expr: obj * (obj -> obj)).Item1 @@>
+        <@@ (%%expr: obj * (obj -> EventCallback<ChangeEventArgs>)).Item1 @@>
     | Parsing.Html, Parsing.DataBinding _ ->
-        <@@ Node.Text ((%%expr: obj * (obj -> obj)).Item1.ToString()) @@>
+        <@@ Node.Text ((%%expr: obj * (obj -> EventCallback<ChangeEventArgs>)).Item1.ToString()) @@>
     | Parsing.AttributeValue, Parsing.DataBinding _ ->
-        <@@ (%%expr: obj * (obj -> obj)).Item1.ToString() @@>
+        <@@ (%%expr: obj * (obj -> EventCallback<ChangeEventArgs>)).Item1.ToString() @@>
     | a, b -> failwith $"Hole name used multiple times with incompatible types ({a}, {b})"
     |> Some
 
@@ -112,9 +120,15 @@ let rec ConvertAttr (vars: Map<string, Expr>) (attr: Parsing.Expr) : Expr<Attr> 
     | Parsing.Attr (name, value) ->
         let value = ConvertAttrValue vars value
         <@ Attr.Make name %value @>
-    | Parsing.EventHandler (name, value) ->
+    | Parsing.EventHandler (name, value, argTy) ->
         let value = ConvertAttrValue vars value
-        <@ Attr.MakeWithReceiver name (unbox<obj -> obj> %value) @>
+        let makeWithReceiver =
+            typeof<Attr>.Assembly
+                .GetType("Bolero.AttrModule")
+                .GetMethod("MakeWithReceiver", BindingFlags.Static ||| BindingFlags.Public)
+                .MakeGenericMethod(typedefof<EventCallback<_>>.MakeGenericType(argTy))
+        Expr.Call(makeWithReceiver, [Expr.Value(name); Expr.Coerce(value, EventCallbackOf argTy)])
+        |> Expr.Cast<Attr>
     | Parsing.VarContent varName ->
         vars[varName] |> Expr.Cast
     | Parsing.WrapVars (subst, attr) ->

@@ -34,6 +34,8 @@ open Bolero.Templating.ConvertExpr
 let getThis (args: list<Expr>) : Expr<TemplateNode> =
     TExpr.Coerce<TemplateNode>(args[0])
 
+let noOpHandler = typeof<Events>.GetMethod("NoOpHandler", BindingFlags.Static ||| BindingFlags.Public)
+
 let MakeCtor (holes: Parsing.Vars) =
     ProvidedConstructor([], fun args ->
         let holes = TExpr.Array<obj> [
@@ -41,8 +43,8 @@ let MakeCtor (holes: Parsing.Vars) =
                 match type' with
                 | HoleType.String -> <@ box "" @>
                 | HoleType.Html -> <@ box (Node.Empty()) @>
-                | HoleType.Event _ -> <@ box (fun (_: obj) -> null: obj) @>
-                | HoleType.DataBinding _ -> <@ box (null, fun (_: obj) -> null: obj) @>
+                | HoleType.Event ty -> TExpr.Coerce<obj>(Expr.Call(noOpHandler.MakeGenericMethod(ty), []))
+                | HoleType.DataBinding _ -> <@ box (null, fun (_: obj) -> Events.NoOpHandler<ChangeEventArgs>()) @>
                 | HoleType.Attribute -> <@ box (Attr.Empty()) @>
                 | HoleType.AttributeValue -> <@ null @>
                 | HoleType.Ref -> <@ null @>
