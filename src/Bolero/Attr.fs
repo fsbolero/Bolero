@@ -20,6 +20,8 @@
 
 namespace Bolero
 
+/// <summary>Functions to create HTML attributes.</summary>
+/// <category>HTML</category>
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Attr =
 
@@ -27,7 +29,7 @@ module Attr =
     /// <param name="name">The name of the attribute or parameter.</param>
     /// <param name="value">The value of the attribute or parameter.</param>
     /// <returns>An HTML attribute or component parameter.</returns>
-    /// <seealso cref="M:Bolero.Html.op_EqualsGreater" />
+    /// <remarks>It is generally recommended to use <see cref="M:Bolero.Html.op_EqualsGreater" /> instead.</remarks>
     let inline Make (name: string) (value: 'T) = Attr(fun _ tb i ->
         tb.AddAttribute(i, name, box value)
         i + 1)
@@ -36,7 +38,6 @@ module Attr =
     /// <param name="name">The name of the attribute or parameter.</param>
     /// <param name="value">The value of the attribute or parameter. Takes the receiving or containing component as argument.</param>
     /// <returns>An HTML attribute or component parameter.</returns>
-    /// <seealso cref="M:Bolero.Html.op_EqualsGreater" />
     let inline MakeWithReceiver<'T> (name: string) (value: obj -> 'T) = Attr(fun r tb i ->
         tb.AddAttribute(i, name, box (value r))
         i + 1)
@@ -44,7 +45,7 @@ module Attr =
     /// <summary>Group multiple HTML attributes and component parameters as a single value.</summary>
     /// <param name="attrs">The HTML attributes and component parameters.</param>
     /// <returns>An Attr value representing all the given HTML attributes and component parameters.</returns>
-    /// <seealso cref="M:Bolero.Html.attrs" />
+    /// <remarks>It is generally recommended to use <see cref="M:Bolero.Html.attrs" /> instead.</remarks>
     let inline Attrs (attrs: seq<Attr>) = Attr(fun comp tb i ->
         let mutable i = i
         for attr in attrs do
@@ -53,5 +54,5 @@ module Attr =
 
     /// <summary>Create an Attr value representing no attributes or parameters.</summary>
     /// <returns>An Attr value representing no attributes or parameters.</returns>
-    /// <seealso cref="M:Bolero.Html.attr.empty" />
+    /// <remarks>It is generally recommended to use <see cref="M:Bolero.Html.attr.empty" /> instead.</remarks>
     let inline Empty() = Attr(fun _ _ i -> i)

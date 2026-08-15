@@ -109,7 +109,7 @@ Target.create "tags" (fun _ ->
             let ident = if tag.NeedsEscape then "``" + esc + "``" else esc
             s.AppendLine($"""/// <summary>Computation expression to create an HTML <c>&lt;%s{tag.Name}&gt;</c> element.</summary>""")
              .AppendLine( """/// <category>HTML tag names</category>""")
-             .AppendLine($"""let %s{ident} : ElementBuilder = elt "%s{tag.Name}" """)
+             .AppendLine(  $"let %s{ident} : ElementBuilder = elt \"%s{tag.Name}\"")
              .AppendLine()
         )
         >> replace (Attrs.GetSample().Rows) "ATTRS" (fun s attr ->
@@ -120,6 +120,7 @@ Target.create "tags" (fun _ ->
                 else esc
             s.AppendLine($"""    /// <summary>Create an HTML <c>%s{attr.Name}</c> attribute.</summary>""")
              .AppendLine( """    /// <param name="v">The value of the attribute.</param>""")
+             .AppendLine( """    /// <category>HTML attribute names</category>""")
              .AppendLine($"""    let inline %s{ident} (v: obj) : Attr = "%s{attr.Name}" => v""")
              .AppendLine()
         )

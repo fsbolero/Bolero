@@ -34,6 +34,10 @@ open Elmish
 type Component() =
     inherit ComponentBase()
 
+    /// <summary>
+    /// The CSS scope for this component.
+    /// The style defined in <c>{CssScope}.bolero.css</c> will be applied.
+    /// </summary>
     abstract CssScope : string
     default _.CssScope = null
 
@@ -53,6 +57,7 @@ type Component<'model>() =
     /// <summary>
     /// The custom equality check. By default, uses reference equality.
     /// </summary>
+    /// <category>Blazor parameters</category>
     [<Parameter>]
     member val Equal = (fun m1 m2 -> obj.ReferenceEquals(m1, m2)) with get, set
 
@@ -73,10 +78,12 @@ type ElmishComponent<'model, 'msg>() =
     member val internal OldModel = Unchecked.defaultof<'model> with get, set
 
     /// <summary>The current value of the Elmish model. Can be just a part of the full program's model.</summary>
+    /// <category>Blazor parameters</category>
     [<Parameter>]
     member val Model = Unchecked.defaultof<'model> with get, set
 
     /// <summary>The Elmish dispatch function.</summary>
+    /// <category>Blazor parameters</category>
     [<Parameter>]
     member val Dispatch = Unchecked.defaultof<Dispatch<'msg>> with get, set
 
@@ -133,15 +140,20 @@ and [<AbstractClass>]
     /// <exclude />
     [<Inject>]
     member val NavigationManager = Unchecked.defaultof<NavigationManager> with get, set
+
     /// <exclude />
     [<Inject>]
     member val Services = Unchecked.defaultof<IServiceProvider> with get, set
+
     /// <summary>The JavaScript interoperation runtime. Provided by dependency injection.</summary>
     [<Inject>]
     member val JSRuntime = Unchecked.defaultof<IJSRuntime> with get, set
+
     /// <exclude />
     [<Inject>]
     member val NavigationInterception = Unchecked.defaultof<INavigationInterception> with get, set
+
+    /// <exclude />
     [<Inject>]
     member val private Log = Unchecked.defaultof<ILogger<ProgramComponent<'model, 'msg>>> with get, set
 
@@ -317,6 +329,7 @@ and [<AbstractClass>]
     override this.Render() =
         view
 
+    /// <exclude />
     member this.Rerender() =
         match oldModel with
         | None -> ()

@@ -4,6 +4,10 @@ open System.Runtime.InteropServices
 open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Web
 
+/// <summary>
+/// Define how a component is rendered in interactive render mode.
+/// </summary>
+/// <category>Components</category>
 type BoleroRenderMode =
     /// <summary>
     /// Render the component and run its interactivity on the server side.
@@ -21,6 +25,7 @@ type BoleroRenderMode =
 /// <summary>
 /// Define how a component is rendered in interactive render mode.
 /// </summary>
+/// <category>Components</category>
 type BoleroRenderModeAttribute
     /// <summary>
     /// Define how a component is rendered in interactive render mode.
