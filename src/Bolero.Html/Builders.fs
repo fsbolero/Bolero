@@ -26,6 +26,11 @@ open Microsoft.AspNetCore.Components
 open Microsoft.AspNetCore.Components.Rendering
 open Bolero
 
+/// <namespacedoc>
+/// <exclude />
+/// </namespacedoc>
+module private Marker = do ()
+
 /// <summary>Render the current element or component's reference.</summary>
 /// <param name="receiver">The containing component.</param>
 /// <param name="builder">The rendering builder.</param>

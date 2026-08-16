@@ -902,6 +902,7 @@ module attr =
     /// <summary>Create an HTML <c>aria-X</c> attribute.</summary>
     /// <param name="name">The attribute name, minus the <c>aria-</c> prefix.</param>
     /// <param name="v">The attribute value.</param>
+    /// <category>HTML attribute names</category>
     let inline aria name (v: obj) = ("aria-" + name) => v
 
     /// <summary>
@@ -916,6 +917,7 @@ module attr =
             builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Action<'T>(value)))
             sequence + 1)
 
+    /// <summary>Callback attributes returning type <see cref="T:Microsoft.FSharp.Control.FSharpAsync`1" />.</summary>
     module async =
 
         /// <summary>
@@ -930,6 +932,7 @@ module attr =
                 builder.AddAttribute<'T>(sequence, name, EventCallback.Factory.Create(receiver, Func<'T, Task>(fun x -> Async.StartImmediateAsTask (value x) :> Task)))
                 sequence + 1)
 
+    /// <summary>Callback attributes returning type <see cref="System.Threading.Tasks.Task" />.</summary>
     module task =
 
         /// <summary>
@@ -972,478 +975,597 @@ module attr =
 // BEGIN ATTRS
     /// <summary>Create an HTML <c>accept</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline accept (v: obj) : Attr = "accept" => v
 
     /// <summary>Create an HTML <c>accept-charset</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline acceptCharset (v: obj) : Attr = "accept-charset" => v
 
     /// <summary>Create an HTML <c>accesskey</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline accesskey (v: obj) : Attr = "accesskey" => v
 
     /// <summary>Create an HTML <c>action</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline action (v: obj) : Attr = "action" => v
 
     /// <summary>Create an HTML <c>align</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline align (v: obj) : Attr = "align" => v
 
     /// <summary>Create an HTML <c>allow</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline allow (v: obj) : Attr = "allow" => v
 
     /// <summary>Create an HTML <c>alt</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline alt (v: obj) : Attr = "alt" => v
 
     /// <summary>Create an HTML <c>async</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline async' (v: obj) : Attr = "async" => v
 
     /// <summary>Create an HTML <c>autocapitalize</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline autocapitalize (v: obj) : Attr = "autocapitalize" => v
 
     /// <summary>Create an HTML <c>autocomplete</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline autocomplete (v: obj) : Attr = "autocomplete" => v
 
     /// <summary>Create an HTML <c>autofocus</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline autofocus (v: obj) : Attr = "autofocus" => v
 
     /// <summary>Create an HTML <c>autoplay</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline autoplay (v: obj) : Attr = "autoplay" => v
 
     /// <summary>Create an HTML <c>bgcolor</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline bgcolor (v: obj) : Attr = "bgcolor" => v
 
     /// <summary>Create an HTML <c>border</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline border (v: obj) : Attr = "border" => v
 
     /// <summary>Create an HTML <c>buffered</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline buffered (v: obj) : Attr = "buffered" => v
 
     /// <summary>Create an HTML <c>challenge</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline challenge (v: obj) : Attr = "challenge" => v
 
     /// <summary>Create an HTML <c>charset</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline charset (v: obj) : Attr = "charset" => v
 
     /// <summary>Create an HTML <c>checked</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline ``checked`` (v: obj) : Attr = "checked" => v
 
     /// <summary>Create an HTML <c>cite</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline cite (v: obj) : Attr = "cite" => v
 
     /// <summary>Create an HTML <c>class</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline ``class`` (v: obj) : Attr = "class" => v
 
     /// <summary>Create an HTML <c>code</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline code (v: obj) : Attr = "code" => v
 
     /// <summary>Create an HTML <c>codebase</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline codebase (v: obj) : Attr = "codebase" => v
 
     /// <summary>Create an HTML <c>color</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline color (v: obj) : Attr = "color" => v
 
     /// <summary>Create an HTML <c>cols</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline cols (v: obj) : Attr = "cols" => v
 
     /// <summary>Create an HTML <c>colspan</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline colspan (v: obj) : Attr = "colspan" => v
 
     /// <summary>Create an HTML <c>content</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline content (v: obj) : Attr = "content" => v
 
     /// <summary>Create an HTML <c>contenteditable</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline contenteditable (v: obj) : Attr = "contenteditable" => v
 
     /// <summary>Create an HTML <c>contextmenu</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline contextmenu (v: obj) : Attr = "contextmenu" => v
 
     /// <summary>Create an HTML <c>controls</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline controls (v: obj) : Attr = "controls" => v
 
     /// <summary>Create an HTML <c>coords</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline coords (v: obj) : Attr = "coords" => v
 
     /// <summary>Create an HTML <c>crossorigin</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline crossorigin (v: obj) : Attr = "crossorigin" => v
 
     /// <summary>Create an HTML <c>csp</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline csp (v: obj) : Attr = "csp" => v
 
     /// <summary>Create an HTML <c>data</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline data (v: obj) : Attr = "data" => v
 
     /// <summary>Create an HTML <c>datetime</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline datetime (v: obj) : Attr = "datetime" => v
 
     /// <summary>Create an HTML <c>decoding</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline decoding (v: obj) : Attr = "decoding" => v
 
     /// <summary>Create an HTML <c>default</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline ``default`` (v: obj) : Attr = "default" => v
 
     /// <summary>Create an HTML <c>defer</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline defer (v: obj) : Attr = "defer" => v
 
     /// <summary>Create an HTML <c>dir</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline dir (v: obj) : Attr = "dir" => v
 
     /// <summary>Create an HTML <c>dirname</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline dirname (v: obj) : Attr = "dirname" => v
 
     /// <summary>Create an HTML <c>disabled</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline disabled (v: obj) : Attr = "disabled" => v
 
     /// <summary>Create an HTML <c>download</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline download (v: obj) : Attr = "download" => v
 
     /// <summary>Create an HTML <c>draggable</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline draggable (v: obj) : Attr = "draggable" => v
 
     /// <summary>Create an HTML <c>dropzone</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline dropzone (v: obj) : Attr = "dropzone" => v
 
     /// <summary>Create an HTML <c>enctype</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline enctype (v: obj) : Attr = "enctype" => v
 
     /// <summary>Create an HTML <c>for</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline ``for`` (v: obj) : Attr = "for" => v
 
     /// <summary>Create an HTML <c>form</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline form (v: obj) : Attr = "form" => v
 
     /// <summary>Create an HTML <c>formaction</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline formaction (v: obj) : Attr = "formaction" => v
 
     /// <summary>Create an HTML <c>headers</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline headers (v: obj) : Attr = "headers" => v
 
     /// <summary>Create an HTML <c>height</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline height (v: obj) : Attr = "height" => v
 
     /// <summary>Create an HTML <c>hidden</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline hidden (v: obj) : Attr = "hidden" => v
 
     /// <summary>Create an HTML <c>high</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline high (v: obj) : Attr = "high" => v
 
     /// <summary>Create an HTML <c>href</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline href (v: obj) : Attr = "href" => v
 
     /// <summary>Create an HTML <c>hreflang</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline hreflang (v: obj) : Attr = "hreflang" => v
 
     /// <summary>Create an HTML <c>http-equiv</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline httpEquiv (v: obj) : Attr = "http-equiv" => v
 
     /// <summary>Create an HTML <c>icon</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline icon (v: obj) : Attr = "icon" => v
 
     /// <summary>Create an HTML <c>id</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline id (v: obj) : Attr = "id" => v
 
     /// <summary>Create an HTML <c>importance</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline importance (v: obj) : Attr = "importance" => v
 
     /// <summary>Create an HTML <c>integrity</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline integrity (v: obj) : Attr = "integrity" => v
 
     /// <summary>Create an HTML <c>ismap</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline ismap (v: obj) : Attr = "ismap" => v
 
     /// <summary>Create an HTML <c>itemprop</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline itemprop (v: obj) : Attr = "itemprop" => v
 
     /// <summary>Create an HTML <c>keytype</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline keytype (v: obj) : Attr = "keytype" => v
 
     /// <summary>Create an HTML <c>kind</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline kind (v: obj) : Attr = "kind" => v
 
     /// <summary>Create an HTML <c>label</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline label (v: obj) : Attr = "label" => v
 
     /// <summary>Create an HTML <c>lang</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline lang (v: obj) : Attr = "lang" => v
 
     /// <summary>Create an HTML <c>language</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline language (v: obj) : Attr = "language" => v
 
     /// <summary>Create an HTML <c>lazyload</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline lazyload (v: obj) : Attr = "lazyload" => v
 
     /// <summary>Create an HTML <c>list</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline list (v: obj) : Attr = "list" => v
 
     /// <summary>Create an HTML <c>loop</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline loop (v: obj) : Attr = "loop" => v
 
     /// <summary>Create an HTML <c>low</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline low (v: obj) : Attr = "low" => v
 
     /// <summary>Create an HTML <c>manifest</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline manifest (v: obj) : Attr = "manifest" => v
 
     /// <summary>Create an HTML <c>max</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline max (v: obj) : Attr = "max" => v
 
     /// <summary>Create an HTML <c>maxlength</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline maxlength (v: obj) : Attr = "maxlength" => v
 
     /// <summary>Create an HTML <c>media</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline media (v: obj) : Attr = "media" => v
 
     /// <summary>Create an HTML <c>method</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline method (v: obj) : Attr = "method" => v
 
     /// <summary>Create an HTML <c>min</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline min (v: obj) : Attr = "min" => v
 
     /// <summary>Create an HTML <c>minlength</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline minlength (v: obj) : Attr = "minlength" => v
 
     /// <summary>Create an HTML <c>multiple</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline multiple (v: obj) : Attr = "multiple" => v
 
     /// <summary>Create an HTML <c>muted</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline muted (v: obj) : Attr = "muted" => v
 
     /// <summary>Create an HTML <c>name</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline name (v: obj) : Attr = "name" => v
 
     /// <summary>Create an HTML <c>novalidate</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline novalidate (v: obj) : Attr = "novalidate" => v
 
     /// <summary>Create an HTML <c>open</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline ``open`` (v: obj) : Attr = "open" => v
 
     /// <summary>Create an HTML <c>optimum</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline optimum (v: obj) : Attr = "optimum" => v
 
     /// <summary>Create an HTML <c>pattern</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline pattern (v: obj) : Attr = "pattern" => v
 
     /// <summary>Create an HTML <c>ping</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline ping (v: obj) : Attr = "ping" => v
 
     /// <summary>Create an HTML <c>placeholder</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline placeholder (v: obj) : Attr = "placeholder" => v
 
     /// <summary>Create an HTML <c>poster</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline poster (v: obj) : Attr = "poster" => v
 
     /// <summary>Create an HTML <c>preload</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline preload (v: obj) : Attr = "preload" => v
 
     /// <summary>Create an HTML <c>readonly</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline readonly (v: obj) : Attr = "readonly" => v
 
     /// <summary>Create an HTML <c>rel</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline rel (v: obj) : Attr = "rel" => v
 
     /// <summary>Create an HTML <c>required</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline required (v: obj) : Attr = "required" => v
 
     /// <summary>Create an HTML <c>reversed</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline reversed (v: obj) : Attr = "reversed" => v
 
     /// <summary>Create an HTML <c>rows</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline rows (v: obj) : Attr = "rows" => v
 
     /// <summary>Create an HTML <c>rowspan</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline rowspan (v: obj) : Attr = "rowspan" => v
 
     /// <summary>Create an HTML <c>sandbox</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline sandbox (v: obj) : Attr = "sandbox" => v
 
     /// <summary>Create an HTML <c>scope</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline scope (v: obj) : Attr = "scope" => v
 
     /// <summary>Create an HTML <c>selected</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline selected (v: obj) : Attr = "selected" => v
 
     /// <summary>Create an HTML <c>shape</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline shape (v: obj) : Attr = "shape" => v
 
     /// <summary>Create an HTML <c>size</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline size (v: obj) : Attr = "size" => v
 
     /// <summary>Create an HTML <c>sizes</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline sizes (v: obj) : Attr = "sizes" => v
 
     /// <summary>Create an HTML <c>slot</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline slot (v: obj) : Attr = "slot" => v
 
     /// <summary>Create an HTML <c>span</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline span (v: obj) : Attr = "span" => v
 
     /// <summary>Create an HTML <c>spellcheck</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline spellcheck (v: obj) : Attr = "spellcheck" => v
 
     /// <summary>Create an HTML <c>src</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline src (v: obj) : Attr = "src" => v
 
     /// <summary>Create an HTML <c>srcdoc</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline srcdoc (v: obj) : Attr = "srcdoc" => v
 
     /// <summary>Create an HTML <c>srclang</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline srclang (v: obj) : Attr = "srclang" => v
 
     /// <summary>Create an HTML <c>srcset</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline srcset (v: obj) : Attr = "srcset" => v
 
     /// <summary>Create an HTML <c>start</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline start (v: obj) : Attr = "start" => v
 
     /// <summary>Create an HTML <c>step</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline step (v: obj) : Attr = "step" => v
 
     /// <summary>Create an HTML <c>style</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline style (v: obj) : Attr = "style" => v
 
     /// <summary>Create an HTML <c>summary</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline summary (v: obj) : Attr = "summary" => v
 
     /// <summary>Create an HTML <c>tabindex</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline tabindex (v: obj) : Attr = "tabindex" => v
 
     /// <summary>Create an HTML <c>target</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline target (v: obj) : Attr = "target" => v
 
     /// <summary>Create an HTML <c>title</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline title (v: obj) : Attr = "title" => v
 
     /// <summary>Create an HTML <c>translate</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline translate (v: obj) : Attr = "translate" => v
 
     /// <summary>Create an HTML <c>type</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline ``type`` (v: obj) : Attr = "type" => v
 
     /// <summary>Create an HTML <c>usemap</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline usemap (v: obj) : Attr = "usemap" => v
 
     /// <summary>Create an HTML <c>value</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline value (v: obj) : Attr = "value" => v
 
     /// <summary>Create an HTML <c>width</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline width (v: obj) : Attr = "width" => v
 
     /// <summary>Create an HTML <c>wrap</c> attribute.</summary>
     /// <param name="v">The value of the attribute.</param>
+    /// <category>HTML attribute names</category>
     let inline wrap (v: obj) : Attr = "wrap" => v
 
 // END ATTRS

@@ -47,11 +47,14 @@ type Matcher<'T> private () =
             let tagReader = FSharpValue.PreComputeUnionTagReader(typeof<'T>)
             fun (x: 'T) -> tagReader (box x)
 
+/// <summary>Functions to create HTML fragments.</summary>
+/// <category>HTML</category>
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Node =
 
     /// <summary>Create an empty HTML fragment.</summary>
     /// <returns>An empty HTML fragment.</returns>
+    /// <remarks>It is generally recommended to use <see cref="M:Bolero.Html.empty" /> instead.</remarks>
     let inline Empty() = Node(fun _ _ i -> i)
 
     /// <summary>Create an HTML element using a list of attributes and a list of children.</summary>
@@ -59,7 +62,7 @@ module Node =
     /// <param name="attrs">The attributes of the HTML element.</param>
     /// <param name="children">The children of the HTML element.</param>
     /// <returns>An HTML element.</returns>
-    /// <seealso cref="M:Bolero.Html.elt" />
+    /// <remarks>It is generally recommended to use <see cref="M:Bolero.Html.elt" /> instead.</remarks>
     let inline Elt name (attrs: seq<Attr>) (children: seq<Node>) = Node(fun comp tb i ->
         tb.OpenElement(i, name)
 
@@ -81,7 +84,7 @@ module Node =
     /// <summary>Create an HTML text node.</summary>
     /// <param name="text">The text of the node.</param>
     /// <returns>An HTML text node.</returns>
-    /// <seealso cref="M:Bolero.Html.text" />
+    /// <remarks>It is generally recommended to use <see cref="M:Bolero.Html.text" /> instead.</remarks>
     let inline Text (text: string) = Node(fun _ tb i ->
         tb.AddContent(i, text)
         i + 1)
@@ -89,7 +92,7 @@ module Node =
     /// <summary>Create an HTML fragment from raw HTML.</summary>
     /// <param name="html">The raw HTML.</param>
     /// <returns>An HTML fragment.</returns>
-    /// <seealso cref="M:Bolero.Html.rawHtml" />
+    /// <remarks>It is generally recommended to use <see cref="M:Bolero.Html.rawHtml" /> instead.</remarks>
     let inline RawHtml (html: string) = Node(fun _ tb i ->
         tb.AddMarkupContent(i, html)
         i + 1)
@@ -98,7 +101,7 @@ module Node =
     /// <param name="cond">The condition.</param>
     /// <param name="node">The HTML fragment whose structure depends on the condition.</param>
     /// <returns>The same HTML fragment wrapped in a way that Blazor can render.</returns>
-    /// <seealso cref="M:Bolero.Html.cond" />
+    /// <remarks>It is generally recommended to use <see cref="M:Bolero.Html.cond" /> instead.</remarks>
     [<Obsolete "Use Node.Match">]
     let inline Cond (cond: bool) ([<InlineIfLambda>] node: Node) = Node(fun comp tb i ->
         tb.OpenRegion(if cond then i else i + 1)
@@ -111,7 +114,7 @@ module Node =
     /// <param name="value">The boolean or union value.</param>
     /// <param name="node">The HTML fragment whose structure depends on the boolean or union value.</param>
     /// <returns>The same HTML fragment wrapped in a way that Blazor can render.</returns>
-    /// <seealso cref="M:Bolero.Html.cond" />
+    /// <remarks>It is generally recommended to use <see cref="M:Bolero.Html.cond" /> instead.</remarks>
     let inline Match (value: 'T) ([<InlineIfLambda>] node: Node) = Node(fun comp tb i ->
         let caseCount = Matcher<'T>.CaseCount
         let matchedCase = Matcher<'T>.TagReader value
@@ -123,7 +126,7 @@ module Node =
     /// <summary>Create an HTML fragment that is the concatenation of given HTML fragments.</summary>
     /// <param name="nodes">The HTML fragments.</param>
     /// <returns>The concatenated HTML fragments.</returns>
-    /// <seealso cref="M:Bolero.Html.concat" />
+    /// <remarks>It is generally recommended to use <see cref="M:Bolero.Html.concat" /> instead.</remarks>
     /// <remarks>
     /// This function can be used to build a concatenation of fragments whose structure does not vary across renders.
     /// To concatenate fragments based on a variable list of values, use <see cref="M:ForEach" /> instead.
@@ -140,6 +143,10 @@ module Node =
     /// <param name="items">The items used to generate HTML fragments.</param>
     /// <param name="mkNode">The function that generates an HTML fragment from an item.</param>
     /// <returns>The HTML fragments generated and concatenated into one.</returns>
+    /// <remarks>
+    /// It is generally recommended to use either <see cref="M:Bolero.Html.forEach" />,
+    /// or a <c>for .. in</c> loop inside a computation expression such as <see cref="M:Bolero.Html.concat" /> instead.
+    /// </remarks>
     let inline ForEach (items: seq<'T>) ([<InlineIfLambda>] mkNode: 'T -> Node) = Node(fun comp tb i ->
         tb.OpenRegion(i)
         for item in items do
@@ -150,7 +157,7 @@ module Node =
     /// <summary>Wrap a Blazor RenderFragment in a Bolero Node.</summary>
     /// <param name="fragment">The Blazor RenderFragment.</param>
     /// <returns>A Bolero Node representing the Blazor RenderFragment.</returns>
-    /// <seealso cref="M:Bolero.Html.fragment" />
+    /// <remarks>It is generally recommended to use <see cref="M:Bolero.Html.fragment" /> instead.</remarks>
     let inline Fragment (fragment: RenderFragment) = Node(fun _ tb i ->
         tb.OpenRegion(i)
         fragment.Invoke(tb)

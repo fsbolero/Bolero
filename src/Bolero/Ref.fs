@@ -23,6 +23,7 @@ namespace Bolero
 open System
 open Microsoft.AspNetCore.Components
 
+/// <exclude />
 type [<AbstractClass>] Ref() =
     /// <exclude />
     abstract Render : Rendering.RenderTreeBuilder * int -> int

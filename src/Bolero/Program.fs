@@ -20,6 +20,9 @@
 
 /// <summary>Functions to enable the router in an Elmish program.</summary>
 /// <category>Elmish</category>
+/// <namespacedoc>
+/// <summary>Core functionality.</summary>
+/// </namespacedoc>
 module Bolero.Program
 
 open System.Reflection
