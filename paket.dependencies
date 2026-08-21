@@ -43,6 +43,7 @@ nuget Microsoft.AspNetCore.Components.Web ~> 8.0.0
 nuget Microsoft.AspNetCore.Components.WebAssembly ~> 8.0.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 8.0.0
 nuget System.Text.Json >= 10.0.0
+nuget Nerdbank.GitVersioning copy_local: true, lowest_matching: false
 
 group net9
 source https://api.nuget.org/v3/index.json
@@ -65,6 +66,7 @@ nuget Microsoft.AspNetCore.Components.Web ~> 9.0.0
 nuget Microsoft.AspNetCore.Components.WebAssembly ~> 9.0.0
 nuget Microsoft.AspNetCore.Components.WebAssembly.Server ~> 9.0.0
 nuget System.Text.Json >= 10.0.0
+nuget Nerdbank.GitVersioning copy_local: true, lowest_matching: false
 
 group build
 source https://api.nuget.org/v3/index.json

@@ -15,6 +15,7 @@ Microsoft.AspNetCore.Components
 Microsoft.AspNetCore.Components.WebAssembly
 Microsoft.JSInterop.WebAssembly
 Microsoft.Extensions.Http
+Nerdbank.GitVersioning
 
 group net9
 FSharp.Core
@@ -24,3 +25,4 @@ Microsoft.AspNetCore.Components
 Microsoft.AspNetCore.Components.WebAssembly
 Microsoft.JSInterop.WebAssembly
 Microsoft.Extensions.Http
+Nerdbank.GitVersioning
