@@ -526,6 +526,7 @@ NUGET
     Microsoft.JSInterop (8.0)
     Microsoft.JSInterop.WebAssembly (8.0)
       Microsoft.JSInterop (>= 8.0)
+    Nerdbank.GitVersioning (3.10.91) - copy_local: true
     System.Diagnostics.DiagnosticSource (8.0)
     System.IO.Pipelines (10.0)
     System.Text.Encodings.Web (10.0)
@@ -636,6 +637,7 @@ NUGET
     Microsoft.JSInterop (9.0)
     Microsoft.JSInterop.WebAssembly (9.0)
       Microsoft.JSInterop (>= 9.0)
+    Nerdbank.GitVersioning (3.10.91) - copy_local: true
     System.IO.Pipelines (10.0)
     System.Text.Encodings.Web (10.0)
     System.Text.Json (10.0)

@@ -2,3 +2,4 @@ FSharp.Core
 HtmlAgilityPack
 File:ProvidedTypes.fsi
 File:ProvidedTypes.fs
+Nerdbank.GitVersioning

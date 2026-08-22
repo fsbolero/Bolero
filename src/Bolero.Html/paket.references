@@ -1,1 +1,7 @@
 Nerdbank.GitVersioning
+
+group net8
+Nerdbank.GitVersioning
+
+group net9
+Nerdbank.GitVersioning
