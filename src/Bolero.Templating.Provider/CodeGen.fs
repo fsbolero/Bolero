@@ -43,7 +43,7 @@ let MakeCtor (holes: Parsing.Vars) =
                 | HoleType.String -> <@ box "" @>
                 | HoleType.Html -> <@ box (Node.Empty()) @>
                 | HoleType.Event ty -> TExpr.Coerce<obj>(Expr.Call(noOpHandler.MakeGenericMethod(ty), []))
-                | HoleType.DataBinding _ -> <@ box (null, fun (_: obj) -> Events.NoOpHandler<ChangeEventArgs>()) @>
+                | HoleType.DataBinding _ -> <@ box (null, Events.NoOpHandler<ChangeEventArgs>()) @>
                 | HoleType.Attribute -> <@ box (Attr.Empty()) @>
                 | HoleType.AttributeValue -> <@ null @>
                 | HoleType.Ref -> <@ null @>
