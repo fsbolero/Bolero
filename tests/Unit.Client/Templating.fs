@@ -103,6 +103,8 @@ type Binds = Template<"""
         <input type="checkbox" class="input4-2" bind="${Var4}">
         <span class="display4">${Var4}</span>
 
+        <input class="input-unbound" bind="${VarUnbound}">
+
     <!-- onchange -->
         <input class="input-onchange1-1" bind-onchange="${VarOnchange1}">
         <input class="input-onchange1-2" bind-onchange="${VarOnchange1}">

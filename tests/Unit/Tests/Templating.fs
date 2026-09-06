@@ -210,6 +210,11 @@ module Templating =
         elt.Eventually <@ isChecked inp2 = initial @>
 
     [<Test>]
+    let ``Empty bind hole``() =
+        let elt = elt.Inner(By.ClassName "binds")
+        elt.ByClass("input-unbound").Click()
+
+    [<Test>]
     let ``Nested template is instantiated``() =
         testNotNull <@ elt.ByClass("nested1") @>
 
